@@ -1,0 +1,89 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it, vi } from "vitest";
+import { handleEventsRequest } from "../app/api/events/route";
+import { TicketmasterClientError } from "../lib/ticketmaster";
+
+const projectRoot = resolve(import.meta.dirname, "..");
+
+describe("GET /api/events", () => {
+  it("is implemented as an App Router route", () => {
+    expect(existsSync(resolve(projectRoot, "app/api/events/route.ts"))).toBe(true);
+  });
+
+  it("exposes the framework GET handler and a testable request boundary", async () => {
+    const route = await import("../app/api/events/route");
+
+    expect(route.GET).toBeTypeOf("function");
+    expect(route.handleEventsRequest).toBeTypeOf("function");
+  });
+
+  it("returns normalized Auckland events without server credentials", async () => {
+    const payload = {
+      events: [
+        {
+          id: "event-1",
+          name: "Auckland Live",
+          url: "https://www.ticketmaster.co.nz/event/event-1",
+          imageUrl: null,
+          start: {
+            localDate: "2026-08-01",
+            localTime: null,
+            dateTime: null,
+            timezone: "Pacific/Auckland",
+          },
+          status: "onsale",
+          category: "Music",
+          venue: null,
+        },
+      ],
+      page: { size: 1, totalElements: 1, totalPages: 1, number: 0 },
+    };
+    const loadEvents = vi.fn().mockResolvedValue(payload);
+
+    const response = await handleEventsRequest(
+      new Request("http://localhost/api/events?size=12"),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: 12 });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=300");
+    const body = await response.json();
+    expect(body).toEqual(payload);
+    expect(JSON.stringify(body)).not.toContain("TICKETMASTER_API_KEY");
+  });
+
+  it.each([
+    ["CONFIG_REQUIRED", 503, "Event data is not configured yet."],
+    ["UPSTREAM_AUTH", 502, "Event data is temporarily unavailable."],
+    ["UPSTREAM_BUSY", 503, "Event data is busy. Please try again shortly."],
+    ["UPSTREAM_TIMEOUT", 504, "Event data took too long to respond."],
+    ["UPSTREAM_ERROR", 502, "Event data is temporarily unavailable."],
+  ] as const)("returns a safe %s response", async (code, status, message) => {
+    const loadEvents = vi.fn().mockRejectedValue(new TicketmasterClientError(code, status));
+
+    const response = await handleEventsRequest(new Request("http://localhost/api/events"), loadEvents);
+    const body = await response.json();
+
+    expect(response.status).toBe(status);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body).toEqual({ error: { code, message } });
+    expect(JSON.stringify(body)).not.toContain("apikey");
+    expect(JSON.stringify(body)).not.toContain("stack");
+  });
+
+  it("hides unexpected server failures", async () => {
+    const loadEvents = vi.fn().mockRejectedValue(new Error("private internal details"));
+
+    const response = await handleEventsRequest(new Request("http://localhost/api/events"), loadEvents);
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body).toEqual({
+      error: { code: "INTERNAL_ERROR", message: "Event data is temporarily unavailable." },
+    });
+    expect(JSON.stringify(body)).not.toContain("private internal details");
+  });
+});
