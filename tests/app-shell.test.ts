@@ -18,7 +18,7 @@ describe("Next.js application shell", () => {
   it("keeps the Ticketmaster key out of browser-facing files", () => {
     const envExample = readFileSync(resolve(projectRoot, ".env.example"), "utf8");
 
-    expect(envExample).toBe("TICKETMASTER_API_KEY=\n");
+    expect(envExample.trimEnd()).toBe("TICKETMASTER_API_KEY=");
     expect(envExample).not.toContain("NEXT_PUBLIC_");
   });
 });
