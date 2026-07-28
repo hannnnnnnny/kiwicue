@@ -1,0 +1,18 @@
+# Dependencies
+/node_modules/
+
+# Next.js output
+/.next/
+/out/
+/next-env.d.ts
+
+# Test output
+/coverage/
+
+# Local environment values
+.env.local
+.env.*.local
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
