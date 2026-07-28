@@ -16,10 +16,10 @@ const copy = {
     live: "LIVE NOW",
     coverageLabel: "KiwiCue coverage",
     signals: [
-      { label: "Concerts", note: "Tours, gigs and live music" },
-      { label: "Theatre", note: "Plays, comedy and performance" },
-      { label: "Markets", note: "Food, makers and weekend finds" },
-      { label: "Festivals", note: "Culture, community and city life" },
+      { category: "concerts", label: "Concerts", note: "Tours, gigs and live music", ariaLabel: "Explore Concerts" },
+      { category: "theatre", label: "Theatre", note: "Plays, comedy and performance", ariaLabel: "Explore Theatre" },
+      { category: "markets", label: "Markets", note: "Food, makers and weekend finds", ariaLabel: "Explore Markets" },
+      { category: "festivals", label: "Festivals", note: "Culture, community and city life", ariaLabel: "Explore Festivals" },
     ],
     why: "Why KiwiCue",
     promiseTitle: "Sorted for timing, not engagement.",
@@ -41,10 +41,10 @@ const copy = {
     live: "实时更新",
     coverageLabel: "KiwiCue 活动范围",
     signals: [
-      { label: "演唱会", note: "巡演、现场音乐与演出" },
-      { label: "话剧演出", note: "戏剧、喜剧与舞台表演" },
-      { label: "市集", note: "美食、手作与周末发现" },
-      { label: "节日活动", note: "文化、社区与城市生活" },
+      { category: "concerts", label: "演唱会", note: "巡演、现场音乐与演出", ariaLabel: "查看演唱会" },
+      { category: "theatre", label: "话剧演出", note: "戏剧、喜剧与舞台表演", ariaLabel: "查看话剧演出" },
+      { category: "markets", label: "市集", note: "美食、手作与周末发现", ariaLabel: "查看市集" },
+      { category: "festivals", label: "节日活动", note: "文化、社区与城市生活", ariaLabel: "查看节日活动" },
     ],
     why: "为什么是 KiwiCue",
     promiseTitle: "按时间价值排序，不按互动量排序。",
@@ -92,11 +92,16 @@ export function HomeContent() {
           </div>
           <div className="signal-list">
             {content.signals.map((signal, index) => (
-              <div className="signal-row" key={signal.label}>
+              <Link
+                className="signal-row"
+                href={`/events?category=${signal.category}`}
+                key={signal.category}
+                aria-label={signal.ariaLabel}
+              >
                 <span className="signal-number">0{index + 1}</span>
-                <div><strong>{signal.label}</strong><small>{signal.note}</small></div>
+                <span className="signal-copy"><strong>{signal.label}</strong><small>{signal.note}</small></span>
                 <span aria-hidden="true">→</span>
-              </div>
+              </Link>
             ))}
           </div>
         </aside>

@@ -62,7 +62,8 @@ describe("Auckland event explorer", () => {
 
     vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
     const EventsPage = pageModule.default;
-    render(<EventsPage />);
+    const page = await EventsPage();
+    render(page);
 
     expect(screen.getByRole("heading", { name: "What’s on, before it’s gone" })).toBeInTheDocument();
     expect(screen.getByText("Auckland · Next 30 days")).toBeInTheDocument();
@@ -143,6 +144,58 @@ describe("Auckland event explorer", () => {
       expect.objectContaining({ headers: { accept: "application/json" } }),
     );
     expect(String(fetchMock.mock.calls[0][0])).not.toContain("ticketmaster.com");
+  });
+
+  it("requests the selected category from the same-origin API", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(eventResult), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<EventExplorer category="concerts" />);
+
+    expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/events?size=24&category=concerts",
+      expect.objectContaining({ headers: { accept: "application/json" } }),
+    );
+  });
+
+  it("does not refetch when only the interface language changes", async () => {
+    const requestEvents = vi.fn().mockResolvedValue(eventResult);
+    render(
+      <LanguageProvider>
+        <LanguageToggle />
+        <EventExplorer category="concerts" requestEvents={requestEvents} />
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+
+    expect(requestEvents).toHaveBeenCalledTimes(1);
+    expect(requestEvents).toHaveBeenCalledWith("concerts");
+  });
+
+  it("names an empty selected category in both languages", async () => {
+    const requestEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
+    });
+    render(
+      <LanguageProvider>
+        <LanguageToggle />
+        <EventExplorer category="markets" requestEvents={requestEvents} />
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "No markets on our radar yet" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+
+    expect(screen.getByRole("heading", { name: "暂时没有找到市集" })).toBeInTheDocument();
   });
 
   it("switches the loading and event-detail states to Chinese", async () => {

@@ -23,20 +23,45 @@ describe("bilingual route content", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Auckland events, before you miss them" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Explore Concerts" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
+    expect(screen.getByRole("link", { name: "Explore Theatre" })).toHaveAttribute(
+      "href",
+      "/events?category=theatre",
+    );
+    expect(screen.getByRole("link", { name: "Explore Markets" })).toHaveAttribute(
+      "href",
+      "/events?category=markets",
+    );
+    expect(screen.getByRole("link", { name: "Explore Festivals" })).toHaveAttribute(
+      "href",
+      "/events?category=festivals",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "在错过之前，发现奥克兰" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看奥克兰活动" })).toHaveAttribute("href", "/events");
+    expect(screen.getByRole("link", { name: "查看演唱会" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
+    expect(screen.getByRole("link", { name: "查看节日活动" })).toHaveAttribute(
+      "href",
+      "/events?category=festivals",
+    );
     expect(screen.getByText("奥克兰首发")).toBeInTheDocument();
   });
 
-  it("switches the event-page framing without changing the data request", () => {
+  it("switches the event-page framing without changing the data request", async () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const page = await EventsPage();
 
     render(
       <LanguageProvider>
-        <EventsPage />
+        {page}
       </LanguageProvider>,
     );
 
@@ -48,5 +73,25 @@ describe("bilingual route content", () => {
     expect(screen.getByText("奥克兰 · 未来 30 天")).toBeInTheDocument();
     expect(screen.getByText("最早发生优先")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows one validated category and ignores duplicated categories", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const filteredPage = await EventsPage({
+      searchParams: Promise.resolve({ category: "concerts" }),
+    });
+
+    render(<LanguageProvider>{filteredPage}</LanguageProvider>);
+
+    expect(screen.getByText("Concerts")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View all events" })).toHaveAttribute("href", "/events");
+
+    cleanup();
+    const invalidPage = await EventsPage({
+      searchParams: Promise.resolve({ category: ["concerts", "theatre"] }),
+    });
+    render(<LanguageProvider>{invalidPage}</LanguageProvider>);
+
+    expect(screen.queryByRole("link", { name: "View all events" })).not.toBeInTheDocument();
   });
 });

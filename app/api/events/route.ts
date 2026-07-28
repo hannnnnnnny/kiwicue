@@ -1,11 +1,18 @@
 import type { AucklandEventsResult } from "../../../lib/events";
 import {
+  parseEventCategory,
+  type EventCategory,
+} from "../../../lib/event-categories";
+import {
   fetchAucklandEvents,
   TicketmasterClientError,
   type TicketmasterErrorCode,
 } from "../../../lib/ticketmaster";
 
-type LoadEvents = (options: { size?: number }) => Promise<AucklandEventsResult>;
+type LoadEvents = (options: {
+  size?: number;
+  category?: EventCategory;
+}) => Promise<AucklandEventsResult>;
 
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
   CONFIG_REQUIRED: "Event data is not configured yet.",
@@ -19,11 +26,19 @@ export async function handleEventsRequest(
   request: Request,
   loadEvents: LoadEvents = fetchAucklandEvents,
 ): Promise<Response> {
-  const rawSize = new URL(request.url).searchParams.get("size");
+  const url = new URL(request.url);
+  const rawSize = url.searchParams.get("size");
   const parsedSize = rawSize === null || rawSize.trim() === "" ? undefined : Number(rawSize);
   const size = parsedSize !== undefined && Number.isFinite(parsedSize) ? parsedSize : undefined;
+  const categoryValues = url.searchParams.getAll("category");
+  const category = parseEventCategory(
+    categoryValues.length === 1 ? categoryValues[0] : null,
+  );
   try {
-    const payload = await loadEvents({ size });
+    const payload = await loadEvents({
+      size,
+      ...(category ? { category } : {}),
+    });
 
     return Response.json(payload, {
       headers: {

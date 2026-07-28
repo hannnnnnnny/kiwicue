@@ -42,8 +42,11 @@ h1 { max-width: 780px; margin: 22px 0 26px; font-family: Georgia, "Times New Rom
 .signal-card::before { content: ""; position: absolute; inset: -30px -30px auto auto; width: 90px; height: 90px; border-top: 1px solid var(--orange); border-right: 1px solid var(--orange); pointer-events: none; }
 .signal-card-top { display: flex; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .12em; }
 .live-label { color: var(--orange); }
-.signal-row { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; min-height: 92px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.signal-row { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; min-height: 92px; padding: 16px 20px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; transition: background 160ms ease, color 160ms ease; }
 .signal-row:last-child { border-bottom: 0; }
+.signal-row:hover { background: rgba(211, 255, 63, .08); color: var(--acid); }
+.signal-row:focus-visible { outline: 3px solid var(--acid); outline-offset: -3px; }
+.signal-copy { min-width: 0; }
 .signal-number { color: #697069; font-family: Georgia, serif; font-style: italic; }
 .signal-row strong, .signal-row small { display: block; }
 .signal-row strong { margin-bottom: 6px; font-size: 1.1rem; }
@@ -99,6 +102,10 @@ footer { display: flex; justify-content: space-between; padding: 28px 0 38px; bo
 .events-ticker span { display: flex; align-items: center; justify-content: center; min-height: 52px; border-right: 1px solid var(--line); color: #92988e; font-size: .68rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .events-ticker span:last-child { border-right: 0; }
 .events-ticker i { width: 6px; height: 6px; margin-right: 10px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 14px var(--acid); }
+.active-filter { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: rgba(211, 255, 63, .035); color: var(--muted); }
+.active-filter strong { color: var(--ink); }
+.active-filter a { color: var(--acid); font-weight: 800; text-decoration: none; }
+.active-filter a:focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
 
 .event-state, .event-feed { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
 .event-state { min-height: 430px; display: grid; align-content: center; justify-items: center; padding: 80px 20px; text-align: center; }

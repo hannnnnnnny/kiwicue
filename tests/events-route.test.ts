@@ -54,6 +54,38 @@ describe("GET /api/events", () => {
     expect(JSON.stringify(body)).not.toContain("TICKETMASTER_API_KEY");
   });
 
+  it("passes one validated category to the server client", async () => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
+    });
+
+    await handleEventsRequest(
+      new Request("http://localhost/api/events?size=24&category=concerts"),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: 24, category: "concerts" });
+  });
+
+  it.each([
+    "category=Music",
+    "category=concerts&category=theatre",
+    "category=",
+  ])("does not forward unsupported category input: %s", async (query) => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
+    });
+
+    await handleEventsRequest(
+      new Request(`http://localhost/api/events?size=24&${query}`),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: 24 });
+  });
+
   it.each([
     ["CONFIG_REQUIRED", 503, "Event data is not configured yet."],
     ["UPSTREAM_AUTH", 502, "Event data is temporarily unavailable."],

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { parseEventCategory } from "../lib/event-categories";
 import {
   buildAucklandEventsUrl,
   fetchAucklandEvents,
@@ -43,6 +44,34 @@ describe("Ticketmaster Discovery client", () => {
     expect(url.searchParams.get("size")).toBe("50");
     expect(url.searchParams.get("startDateTime")).toBe("2026-07-29T00:00:00Z");
     expect(url.searchParams.get("endDateTime")).toBe("2026-08-28T00:00:00Z");
+  });
+
+  it("accepts only the four public category keys", () => {
+    expect(parseEventCategory("concerts")).toBe("concerts");
+    expect(parseEventCategory("theatre")).toBe("theatre");
+    expect(parseEventCategory("markets")).toBe("markets");
+    expect(parseEventCategory("festivals")).toBe("festivals");
+    expect(parseEventCategory("Music")).toBeNull();
+    expect(parseEventCategory(["concerts", "theatre"])).toBeNull();
+    expect(parseEventCategory(undefined)).toBeNull();
+  });
+
+  it.each([
+    ["concerts", "classificationName", "Music"],
+    ["theatre", "classificationName", "Arts & Theatre"],
+    ["markets", "keyword", "market"],
+    ["festivals", "keyword", "festival"],
+  ] as const)("maps %s to the Ticketmaster %s filter", (category, parameter, expected) => {
+    const url = buildAucklandEventsUrl({
+      apiKey: "server-key",
+      now: new Date("2026-07-29T00:00:00Z"),
+      category,
+    });
+
+    expect(url.searchParams.get(parameter)).toBe(expected);
+    expect(url.searchParams.get("city")).toBe("Auckland");
+    expect(url.searchParams.get("countryCode")).toBe("NZ");
+    expect(url.searchParams.get("sort")).toBe("date,asc");
   });
 
   it("normalizes only the event fields KiwiCue needs", () => {
