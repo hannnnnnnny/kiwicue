@@ -1,4 +1,5 @@
 import "server-only";
+import type { EventCategory } from "./event-categories";
 import type { AucklandEventsResult, KiwiCueEvent } from "./events";
 
 export type { AucklandEventsResult, KiwiCueEvent } from "./events";
@@ -55,6 +56,12 @@ interface TicketmasterResponsePayload {
 
 const DISCOVERY_EVENTS_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const CATEGORY_FILTERS: Record<EventCategory, readonly [string, string]> = {
+  concerts: ["classificationName", "Music"],
+  theatre: ["classificationName", "Arts & Theatre"],
+  markets: ["keyword", "market"],
+  festivals: ["keyword", "festival"],
+};
 
 function toDiscoveryDateTime(date: Date): string {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
@@ -79,10 +86,12 @@ export function buildAucklandEventsUrl({
   apiKey,
   now = new Date(),
   size = 24,
+  category,
 }: {
   apiKey: string;
   now?: Date;
   size?: number;
+  category?: EventCategory | null;
 }): URL {
   const url = new URL(DISCOVERY_EVENTS_URL);
   const end = new Date(now.getTime() + THIRTY_DAYS_MS);
@@ -98,6 +107,11 @@ export function buildAucklandEventsUrl({
     startDateTime: toDiscoveryDateTime(now),
     endDateTime: toDiscoveryDateTime(end),
   }).toString();
+
+  if (category) {
+    const [parameter, value] = CATEGORY_FILTERS[category];
+    url.searchParams.set(parameter, value);
+  }
 
   return url;
 }
@@ -140,11 +154,13 @@ export async function fetchAucklandEvents({
   fetchImpl = fetch,
   now = new Date(),
   size = 24,
+  category,
 }: {
   apiKey?: string;
   fetchImpl?: typeof fetch;
   now?: Date;
   size?: number;
+  category?: EventCategory | null;
 } = {}): Promise<AucklandEventsResult> {
   if (!apiKey.trim()) {
     throw new TicketmasterClientError("CONFIG_REQUIRED", 503);
@@ -154,7 +170,7 @@ export async function fetchAucklandEvents({
   const timeout = setTimeout(() => controller.abort(), 8_000);
 
   try {
-    const response = await fetchImpl(buildAucklandEventsUrl({ apiKey, now, size }), {
+    const response = await fetchImpl(buildAucklandEventsUrl({ apiKey, now, size, category }), {
       headers: { accept: "application/json" },
       signal: controller.signal,
     });
