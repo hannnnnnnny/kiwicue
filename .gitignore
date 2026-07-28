@@ -6,6 +6,9 @@
 /out/
 /next-env.d.ts
 
+# Vercel local project metadata
+/.vercel/
+
 # Test output
 /coverage/
 
