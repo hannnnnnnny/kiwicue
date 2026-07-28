@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage, type Language } from "../../components/language-provider";
+import type { EventCategory } from "../../lib/event-categories";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 
 type ExplorerState =
@@ -10,8 +11,11 @@ type ExplorerState =
   | { status: "empty"; events: [] }
   | { status: "error"; events: [] };
 
-async function requestEventsFromApi(): Promise<AucklandEventsResult> {
-  const response = await fetch("/api/events?size=24", {
+async function requestEventsFromApi(category?: EventCategory): Promise<AucklandEventsResult> {
+  const params = new URLSearchParams({ size: "24" });
+  if (category) params.set("category", category);
+
+  const response = await fetch(`/api/events?${params.toString()}`, {
     headers: { accept: "application/json" },
   });
   const body = await response.json() as AucklandEventsResult | { error?: { message?: string } };
@@ -62,6 +66,11 @@ const copy = {
   },
 } as const;
 
+const categoryNames = {
+  en: { concerts: "concerts", theatre: "theatre events", markets: "markets", festivals: "festivals" },
+  zh: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动" },
+} as const;
+
 function formatEventDate(localDate: string, language: Language): string {
   const [year, month, day] = localDate.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -97,9 +106,11 @@ function formatEventTime(localTime: string | null, language: Language): string {
 }
 
 export function EventExplorer({
+  category = null,
   requestEvents = requestEventsFromApi,
 }: {
-  requestEvents?: () => Promise<AucklandEventsResult>;
+  category?: EventCategory | null;
+  requestEvents?: (category?: EventCategory) => Promise<AucklandEventsResult>;
 }) {
   const { language } = useLanguage();
   const content = copy[language];
@@ -109,7 +120,7 @@ export function EventExplorer({
   useEffect(() => {
     let cancelled = false;
 
-    requestEvents()
+    requestEvents(category ?? undefined)
       .then((result) => {
         if (cancelled) return;
         setState(result.events.length
@@ -123,7 +134,7 @@ export function EventExplorer({
     return () => {
       cancelled = true;
     };
-  }, [attempt, requestEvents]);
+  }, [attempt, requestEvents, category]);
 
   function retry() {
     setState({ status: "loading", events: [] });
@@ -199,10 +210,16 @@ export function EventExplorer({
   }
 
   if (state.status === "empty") {
+    const emptyTitle = category
+      ? language === "en"
+        ? `No ${categoryNames.en[category]} on our radar yet`
+        : `暂时没有找到${categoryNames.zh[category]}`
+      : content.emptyTitle;
+
     return (
       <section className="event-state event-empty" aria-live="polite">
         <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
-        <h2>{content.emptyTitle}</h2>
+        <h2>{emptyTitle}</h2>
         <p>{content.emptyBody}</p>
       </section>
     );

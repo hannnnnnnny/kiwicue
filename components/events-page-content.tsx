@@ -99,7 +99,7 @@ export function EventsPageContent({ category }: { category: EventCategory | null
         </div>
       )}
 
-      <EventExplorer />
+      <EventExplorer category={category} />
 
       <footer>
         <span>KiwiCue / 纽村小报</span>
