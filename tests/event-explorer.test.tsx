@@ -3,6 +3,9 @@ import { resolve } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EventExplorer } from "../app/events/event-explorer";
+import { LanguageProvider } from "../components/language-provider";
+import { LanguageToggle } from "../components/language-toggle";
+import type { AucklandEventsResult } from "../lib/events";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const eventResult = {
@@ -28,8 +31,19 @@ const eventResult = {
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
+
+function renderChineseExplorer(requestEvents: () => Promise<AucklandEventsResult>) {
+  render(
+    <LanguageProvider>
+      <LanguageToggle />
+      <EventExplorer requestEvents={requestEvents} />
+    </LanguageProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+}
 
 describe("Auckland event explorer", () => {
   it("provides a route and a client-side explorer", () => {
@@ -129,5 +143,53 @@ describe("Auckland event explorer", () => {
       expect.objectContaining({ headers: { accept: "application/json" } }),
     );
     expect(String(fetchMock.mock.calls[0][0])).not.toContain("ticketmaster.com");
+  });
+
+  it("switches the loading and event-detail states to Chinese", async () => {
+    const pendingRequest = vi.fn(() => new Promise<typeof eventResult>(() => undefined));
+
+    renderChineseExplorer(pendingRequest);
+
+    expect(screen.getByRole("status")).toHaveTextContent("正在扫描奥克兰近期活动");
+
+    cleanup();
+    localStorage.clear();
+    document.documentElement.lang = "en";
+    const readyRequest = vi.fn().mockResolvedValue(eventResult);
+    renderChineseExplorer(readyRequest);
+
+    expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
+    expect(screen.getByText("8月1日周六")).toBeInTheDocument();
+    expect(screen.getByText("19:30")).toBeInTheDocument();
+    expect(screen.getByText("找到 1 个活动 · 最早发生优先")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "在 Ticketmaster 查看 Harbour Lights" })).toHaveAttribute(
+      "href",
+      "https://www.ticketmaster.co.nz/event/event-1",
+    );
+  });
+
+  it("switches empty and recoverable error states to Chinese", async () => {
+    const emptyRequest = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
+    });
+
+    renderChineseExplorer(emptyRequest);
+
+    expect(await screen.findByRole("heading", { name: "雷达上暂时没有活动" })).toBeInTheDocument();
+
+    cleanup();
+    localStorage.clear();
+    document.documentElement.lang = "en";
+    const recoverableRequest = vi.fn()
+      .mockRejectedValueOnce(new Error("private network details"))
+      .mockResolvedValueOnce(eventResult);
+    renderChineseExplorer(recoverableRequest);
+
+    expect(await screen.findByRole("heading", { name: "暂时无法获取奥克兰活动" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "重新扫描活动" }));
+
+    expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
+    expect(recoverableRequest).toHaveBeenCalledTimes(2);
   });
 });

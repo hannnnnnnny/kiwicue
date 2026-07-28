@@ -19,10 +19,14 @@ a { color: inherit; }
 main { min-height: 100vh; overflow: hidden; }
 .site-header, .hero, .promise, footer { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
 .site-header { height: 82px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.header-actions { display: flex; align-items: center; gap: 18px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); font-weight: 800; letter-spacing: -.03em; text-decoration: none; }
 .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; background: var(--acid); color: #0b0d0b; border-radius: 50%; font-family: Georgia, serif; font-style: italic; }
 .pilot-badge { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
 .pilot-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 16px var(--acid); }
+.language-toggle { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 9px 12px; font: inherit; font-size: .72rem; font-weight: 800; letter-spacing: .08em; cursor: pointer; }
+.language-toggle:hover { border-color: var(--acid); color: var(--acid); }
+.language-toggle:focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
 
 .hero { min-height: 700px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(330px, .85fr); align-items: center; gap: 72px; padding-block: 80px; }
 .eyebrow { color: var(--acid); font-size: .76rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
@@ -66,7 +70,9 @@ footer { display: flex; justify-content: space-between; padding: 28px 0 38px; bo
 @media (max-width: 520px) {
   .site-header, .hero, .promise, footer { width: min(100% - 28px, 1180px); }
   .site-header { height: 70px; }
+  .header-actions { gap: 9px; }
   .pilot-badge { font-size: .64rem; }
+  .language-toggle { padding: 8px 9px; font-size: .66rem; }
   .hero { padding-block: 56px 80px; }
   h1 { font-size: clamp(3rem, 17vw, 4.6rem); }
   .primary-action { width: 100%; }
