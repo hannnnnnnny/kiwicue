@@ -62,7 +62,8 @@ describe("Auckland event explorer", () => {
 
     vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
     const EventsPage = pageModule.default;
-    render(<EventsPage />);
+    const page = await EventsPage();
+    render(page);
 
     expect(screen.getByRole("heading", { name: "What’s on, before it’s gone" })).toBeInTheDocument();
     expect(screen.getByText("Auckland · Next 30 days")).toBeInTheDocument();

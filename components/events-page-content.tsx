@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { EventExplorer } from "../app/events/event-explorer";
+import type { EventCategory } from "../lib/event-categories";
 import { LanguageToggle } from "./language-toggle";
 import { useLanguage } from "./language-provider";
+
+const categoryLabels = {
+  en: { concerts: "Concerts", theatre: "Theatre", markets: "Markets", festivals: "Festivals" },
+  zh: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动" },
+} as const;
 
 const copy = {
   en: {
@@ -48,7 +54,7 @@ const copy = {
   },
 } as const;
 
-export function EventsPageContent() {
+export function EventsPageContent({ category }: { category: EventCategory | null }) {
   const { language } = useLanguage();
   const content = copy[language];
 
@@ -83,6 +89,15 @@ export function EventsPageContent() {
         <span><i aria-hidden="true" /> {content.tickerSource}</span>
         <span>{content.tickerCount}</span>
       </div>
+
+      {category && (
+        <div className="active-filter">
+          <span>
+            {language === "en" ? "Showing" : "正在查看"}: <strong>{categoryLabels[language][category]}</strong>
+          </span>
+          <Link href="/events">{language === "en" ? "View all events" : "查看全部活动"}</Link>
+        </div>
+      )}
 
       <EventExplorer />
 
