@@ -94,8 +94,12 @@ describe("GET /api/events", () => {
     "q=one&q=two",
     `q=${"a".repeat(101)}`,
     "q=bad%00query",
+    "q=Taylor%09Swift",
+    "q=Taylor%0ASwift",
     "venue=one&venue=two",
     "venue=bad%20venue",
+    "venue=%09venue-1",
+    "venue=venue-1%0A",
   ])("does not forward unsafe search input: %s", async (query) => {
     const loadEvents = vi.fn().mockResolvedValue(emptyResult);
 

@@ -10,17 +10,18 @@ export type EventSearchFilters = {
 
 export function parseEventKeyword(value: PublicValue): string | null {
   if (typeof value !== "string") return null;
+  if (CONTROL_CHARACTERS.test(value)) return null;
   const normalized = value.normalize("NFC").trim().replace(/\s+/gu, " ");
   if (
     !normalized ||
-    [...normalized].length > 100 ||
-    CONTROL_CHARACTERS.test(normalized)
+    [...normalized].length > 100
   ) return null;
   return normalized;
 }
 
 export function parseVenueId(value: PublicValue): string | null {
   if (typeof value !== "string") return null;
+  if (CONTROL_CHARACTERS.test(value)) return null;
   const normalized = value.trim();
   return VENUE_ID.test(normalized) ? normalized : null;
 }

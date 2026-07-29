@@ -10,7 +10,17 @@ describe("event search parameters", () => {
     expect(parseEventKeyword(value)).toBe(expected);
   });
 
-  it.each([null, undefined, "", "   ", ["Taylor", "Swift"], "a".repeat(101), "bad\u0000query"])(
+  it.each([
+    null,
+    undefined,
+    "",
+    "   ",
+    ["Taylor", "Swift"],
+    "a".repeat(101),
+    "bad\u0000query",
+    "Taylor\tSwift",
+    "Taylor\nSwift",
+  ])(
     "rejects an absent or unsafe event keyword",
     (value) => expect(parseEventKeyword(value)).toBeNull(),
   );
@@ -22,7 +32,17 @@ describe("event search parameters", () => {
     expect(parseVenueId(value)).toBe(expected);
   });
 
-  it.each([null, undefined, "", "bad venue", ["one", "two"], "a".repeat(81), "\u573a\u9986"])(
+  it.each([
+    null,
+    undefined,
+    "",
+    "bad venue",
+    ["one", "two"],
+    "a".repeat(81),
+    "\u573a\u9986",
+    "\tvenue-1",
+    "venue-1\n",
+  ])(
     "rejects an absent or unsafe venue ID",
     (value) => expect(parseVenueId(value)).toBeNull(),
   );
