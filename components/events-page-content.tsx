@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { EventExplorer } from "../app/events/event-explorer";
 import type { EventCategory } from "../lib/event-categories";
+import { EventSearchPanel } from "./event-search-panel";
 import { LanguageToggle } from "./language-toggle";
 import { useLanguage } from "./language-provider";
 
@@ -54,7 +55,7 @@ const copy = {
   },
 } as const;
 
-export function EventsPageContent({ category }: {
+export function EventsPageContent({ category, keyword, venueId }: {
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
@@ -103,6 +104,7 @@ export function EventsPageContent({ category }: {
         </div>
       )}
 
+      <EventSearchPanel category={category} keyword={keyword} venueId={venueId} />
       <EventExplorer category={category} />
 
       <footer>

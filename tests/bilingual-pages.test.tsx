@@ -4,9 +4,16 @@ import HomePage from "../app/page";
 import EventsPage, { parseEventPageSearchParams } from "../app/events/page";
 import { LanguageProvider } from "../components/language-provider";
 
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+}));
+
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.lang = "en";
+  router.push.mockReset();
 });
 
 afterEach(() => {
@@ -86,6 +93,8 @@ describe("bilingual route content", () => {
     );
 
     expect(screen.getByRole("heading", { name: "What’s on, before it’s gone" })).toBeInTheDocument();
+    expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
@@ -93,7 +102,10 @@ describe("bilingual route content", () => {
     expect(screen.getByText("奥克兰 · 未来 365 天")).toBeInTheDocument();
     expect(screen.getByText("每批最多 50 个")).toBeInTheDocument();
     expect(screen.getByText("最早发生优先")).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
+    expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
+    expect(screen.getByLabelText("场馆")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("shows one validated category and ignores duplicated categories", async () => {
@@ -106,6 +118,10 @@ describe("bilingual route content", () => {
 
     expect(screen.getByText("Concerts")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View all events" })).toHaveAttribute("href", "/events");
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
 
     cleanup();
     const invalidPage = await EventsPage({

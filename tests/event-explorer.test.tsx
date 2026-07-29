@@ -8,6 +8,12 @@ import { LanguageToggle } from "../components/language-toggle";
 import type { EventCategory } from "../lib/event-categories";
 import type { AucklandEventsResult } from "../lib/events";
 
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+}));
+
 const projectRoot = resolve(import.meta.dirname, "..");
 const eventResult = {
   events: [
@@ -73,6 +79,7 @@ function deferred<T>() {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  router.push.mockReset();
   vi.unstubAllGlobals();
 });
 
