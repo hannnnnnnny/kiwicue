@@ -60,7 +60,11 @@ describe("collectAucklandVenues", () => {
   });
 
   it("fails closed instead of returning a partial catalogue after 128 batches", async () => {
-    const loadFeed = vi.fn<VenueFeedLoader>().mockResolvedValue(result([], "still-more"));
+    let batch = 0;
+    const loadFeed = vi.fn<VenueFeedLoader>().mockImplementation(async () => {
+      batch += 1;
+      return result([], `cursor-${batch}`);
+    });
     const wait = vi.fn().mockResolvedValue(undefined);
     await expect(collectAucklandVenues({
       apiKey: "test-key",
@@ -71,5 +75,30 @@ describe("collectAucklandVenues", () => {
     })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
     expect(loadFeed).toHaveBeenCalledTimes(128);
     expect(wait).toHaveBeenCalledTimes(127);
+  });
+
+  it("excludes malformed venues and returns trimmed venue names", async () => {
+    const loadFeed = vi.fn<VenueFeedLoader>().mockResolvedValue(result([
+      event("1", { id: "invalid venue id", name: "Invalid ID" }),
+      event("2", { id: "blank", name: "" }),
+      event("3", { id: "whitespace", name: "  \t  " }),
+      event("4", { id: "valid_venue-1", name: "  The Powerstation  " }),
+    ], null));
+
+    await expect(collectAucklandVenues({ apiKey: "test-key", now, loadFeed })).resolves.toEqual([
+      { id: "valid_venue-1", name: "The Powerstation" },
+    ]);
+  });
+
+  it("fails before waiting or loading a repeated continuation cursor", async () => {
+    const loadFeed = vi.fn<VenueFeedLoader>()
+      .mockResolvedValueOnce(result([], "repeat"))
+      .mockResolvedValueOnce(result([], "repeat"));
+    const wait = vi.fn().mockResolvedValue(undefined);
+
+    await expect(collectAucklandVenues({ apiKey: "test-key", now, loadFeed, wait }))
+      .rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
+    expect(loadFeed).toHaveBeenCalledTimes(2);
+    expect(wait).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { parseVenueId } from "./event-search-params";
 import type { AucklandEventsResult, AucklandVenue } from "./events";
 import { TicketmasterClientError } from "./ticketmaster";
 import { fetchAucklandEventFeed } from "./ticketmaster-event-feed";
@@ -25,10 +26,15 @@ export async function collectAucklandVenues({
   wait?: (milliseconds: number) => Promise<void>;
 } = {}): Promise<AucklandVenue[]> {
   const venues = new Map<string, AucklandVenue>();
+  const loadedCursors = new Set<string>();
   let cursor: string | null = null;
 
   for (let batch = 0; batch < maxBatches; batch += 1) {
+    if (cursor && loadedCursors.has(cursor)) {
+      throw new TicketmasterClientError("UPSTREAM_ERROR", 502);
+    }
     if (batch > 0) await wait(200);
+    if (cursor) loadedCursors.add(cursor);
     const result = await loadFeed({
       apiKey,
       now,
@@ -36,8 +42,10 @@ export async function collectAucklandVenues({
       ...(cursor ? { cursor } : {}),
     });
     for (const event of result.events) {
-      if (event.venue && !venues.has(event.venue.id)) {
-        venues.set(event.venue.id, { id: event.venue.id, name: event.venue.name });
+      const venueId = event.venue ? parseVenueId(event.venue.id) : null;
+      const venueName = event.venue?.name.trim();
+      if (venueId && venueName && !venues.has(venueId)) {
+        venues.set(venueId, { id: venueId, name: venueName });
       }
     }
     cursor = result.nextCursor;
