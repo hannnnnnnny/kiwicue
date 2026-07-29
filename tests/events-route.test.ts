@@ -5,6 +5,11 @@ import { handleEventsRequest } from "../app/api/events/route";
 import { TicketmasterClientError } from "../lib/ticketmaster";
 
 const projectRoot = resolve(import.meta.dirname, "..");
+const emptyResult = {
+  events: [],
+  page: { size: 50, totalElements: 0, totalPages: 0, number: 0 },
+  nextCursor: null,
+};
 
 describe("GET /api/events", () => {
   it("is implemented as an App Router route", () => {
@@ -68,6 +73,40 @@ describe("GET /api/events", () => {
     );
 
     expect(loadEvents).toHaveBeenCalledWith({ size: 24, category: "concerts" });
+  });
+
+  it("forwards one normalized activity query and venue ID", async () => {
+    const loadEvents = vi.fn().mockResolvedValue(emptyResult);
+
+    await handleEventsRequest(
+      new Request("http://localhost/api/events?size=50&q=%20Taylor%20%20Swift%20&venue=venue-1"),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({
+      size: 50,
+      keyword: "Taylor Swift",
+      venueId: "venue-1",
+    });
+  });
+
+  it.each([
+    "q=one&q=two",
+    `q=${"a".repeat(101)}`,
+    "q=bad%00query",
+    "q=Taylor%09Swift",
+    "q=Taylor%0ASwift",
+    "q=Taylor%C2%85Swift",
+    "venue=one&venue=two",
+    "venue=bad%20venue",
+    "venue=%09venue-1",
+    "venue=venue-1%0A",
+  ])("does not forward unsafe search input: %s", async (query) => {
+    const loadEvents = vi.fn().mockResolvedValue(emptyResult);
+
+    await handleEventsRequest(new Request(`http://localhost/api/events?${query}`), loadEvents);
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: undefined });
   });
 
   it("forwards one bounded continuation cursor", async () => {

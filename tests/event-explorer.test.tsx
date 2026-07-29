@@ -8,6 +8,12 @@ import { LanguageToggle } from "../components/language-toggle";
 import type { EventCategory } from "../lib/event-categories";
 import type { AucklandEventsResult } from "../lib/events";
 
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+}));
+
 const projectRoot = resolve(import.meta.dirname, "..");
 const eventResult = {
   events: [
@@ -24,7 +30,7 @@ const eventResult = {
       },
       status: "onsale",
       category: "Music",
-      venue: { name: "The Civic", city: "Auckland", address: "269 Queen Street" },
+      venue: { id: "venue-civic", name: "The Civic", city: "Auckland", address: "269 Queen Street" },
     },
   ],
   page: { size: 1, totalElements: 1, totalPages: 1, number: 0 },
@@ -33,6 +39,8 @@ const eventResult = {
 
 type RequestEvents = (options: {
   category?: EventCategory;
+  keyword?: string;
+  venueId?: string;
   cursor?: string;
 }) => Promise<AucklandEventsResult>;
 
@@ -73,6 +81,8 @@ function deferred<T>() {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  sessionStorage.clear();
+  router.push.mockReset();
   vi.unstubAllGlobals();
 });
 
@@ -97,7 +107,7 @@ describe("Auckland event explorer", () => {
     expect(explorerModule.EventExplorer).toBeTypeOf("function");
   });
 
-  it("frames the feed as an Auckland next-30-days briefing", async () => {
+  it("frames the feed as an all-upcoming Auckland briefing", async () => {
     const pageModule = await import("../app/events/page");
     expect(pageModule.default).toBeTypeOf("function");
 
@@ -107,7 +117,7 @@ describe("Auckland event explorer", () => {
     render(page);
 
     expect(screen.getByRole("heading", { name: "What’s on, before it’s gone" })).toBeInTheDocument();
-    expect(screen.getByText("Auckland · Next 365 days")).toBeInTheDocument();
+    expect(screen.getByText("Auckland · All upcoming")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to KiwiCue home" })).toHaveAttribute("href", "/");
   });
 
@@ -131,14 +141,14 @@ describe("Auckland event explorer", () => {
     expect(screen.getByText("7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Music")).toBeInTheDocument();
     expect(screen.getByText("The Civic · Auckland")).toBeInTheDocument();
-    expect(screen.getByText("1 Ticketmaster event in the next year · 1 shown")).toBeInTheDocument();
+    expect(screen.getByText("1 upcoming Ticketmaster event · 1 shown")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View Harbour Lights on Ticketmaster" })).toHaveAttribute(
       "href",
       "https://www.ticketmaster.co.nz/event/event-1",
     );
   });
 
-  it("shows the full Ticketmaster year total and an explicit remaining count", async () => {
+  it("shows the full upcoming Ticketmaster total and an explicit remaining count", async () => {
     const requestEvents = vi.fn().mockResolvedValue(
       pagedResult(Array.from({ length: 50 }, (_, index) => numberedEvent(index + 1)), 81, "page-two"),
     );
@@ -146,7 +156,7 @@ describe("Auckland event explorer", () => {
     render(<EventExplorer requestEvents={requestEvents} />);
 
     expect(await screen.findByRole("heading", { name: "Event 1" })).toBeInTheDocument();
-    expect(screen.getByText("81 Ticketmaster events in the next year · 50 shown")).toBeInTheDocument();
+    expect(screen.getByText("81 upcoming Ticketmaster events · 50 shown")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Show 31 more events" })).toBeInTheDocument();
     expect(requestEvents).toHaveBeenCalledWith({});
   });
@@ -173,6 +183,51 @@ describe("Auckland event explorer", () => {
     expect(screen.queryByRole("button", { name: "Show 31 more events" })).not.toBeInTheDocument();
     expect(screen.getByText("All Ticketmaster events are shown")).toBeInTheDocument();
     expect(requestEvents).toHaveBeenNthCalledWith(2, { cursor: "page-two" });
+  });
+
+  it("requests applied activity, venue, and category filters", async () => {
+    const requestEvents = vi.fn().mockResolvedValue(eventResult);
+
+    render(
+      <EventExplorer
+        category="concerts"
+        keyword="Taylor Swift"
+        venueId="venue-1"
+        requestEvents={requestEvents}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "Harbour Lights" });
+    expect(requestEvents).toHaveBeenCalledWith({
+      category: "concerts",
+      keyword: "Taylor Swift",
+      venueId: "venue-1",
+    });
+    expect(screen.getByText("1 matching Ticketmaster event · 1 shown")).toBeInTheDocument();
+  });
+
+  it("retains every applied filter when appending", async () => {
+    const requestEvents = vi.fn()
+      .mockResolvedValueOnce(pagedResult([numberedEvent(1)], 2, "page-two"))
+      .mockResolvedValueOnce(pagedResult([numberedEvent(2)], 2, null));
+
+    render(
+      <EventExplorer
+        category="concerts"
+        keyword="Taylor Swift"
+        venueId="venue-1"
+        requestEvents={requestEvents}
+      />,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
+
+    expect(await screen.findByRole("heading", { name: "Event 2" })).toBeInTheDocument();
+    expect(requestEvents).toHaveBeenNthCalledWith(2, {
+      category: "concerts",
+      keyword: "Taylor Swift",
+      venueId: "venue-1",
+      cursor: "page-two",
+    });
   });
 
   it("allows only one append request at a time", async () => {
@@ -248,7 +303,57 @@ describe("Auckland event explorer", () => {
     expect(screen.queryByRole("heading", { name: "Concert event" })).not.toBeInTheDocument();
   });
 
-  it("uses bilingual year totals, remaining count, and completion copy", async () => {
+  it("ignores a stale result after the activity search changes", async () => {
+    const stale = deferred<AucklandEventsResult>();
+    const requestEvents = vi.fn<RequestEvents>((options) =>
+      options.keyword === "old"
+        ? stale.promise
+        : Promise.resolve(pagedResult([{ ...numberedEvent(2), name: "New result" }], 1, null)),
+    );
+    const view = render(<EventExplorer keyword="old" requestEvents={requestEvents} />);
+
+    view.rerender(<EventExplorer keyword="new" requestEvents={requestEvents} />);
+
+    expect(await screen.findByRole("heading", { name: "New result" })).toBeInTheDocument();
+    stale.resolve(pagedResult([{ ...numberedEvent(1), name: "Old result" }], 1, null));
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "Old result" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("focuses the result summary once after a submitted search", async () => {
+    sessionStorage.setItem("kiwicue:focus-results", "1");
+    const requestEvents = vi.fn().mockResolvedValue(eventResult);
+    const view = render(<EventExplorer keyword="Taylor" requestEvents={requestEvents} />);
+
+    const summary = await screen.findByText("1 matching Ticketmaster event · 1 shown");
+    await waitFor(() => expect(summary).toHaveFocus());
+    expect(summary).toHaveAttribute("id", "event-results-summary");
+    expect(summary).toHaveAttribute("tabindex", "-1");
+    expect(sessionStorage.getItem("kiwicue:focus-results")).toBeNull();
+
+    const sourceLink = screen.getByRole("link", { name: "View Harbour Lights on Ticketmaster" });
+    sourceLink.focus();
+    view.rerender(<EventExplorer keyword="Taylor" requestEvents={requestEvents} />);
+    expect(sourceLink).toHaveFocus();
+  });
+
+  it("does not steal focus on a first visit", async () => {
+    const requestEvents = vi.fn().mockResolvedValue(eventResult);
+    render(
+      <>
+        <button type="button">Existing focus</button>
+        <EventExplorer requestEvents={requestEvents} />
+      </>,
+    );
+    const existingFocus = screen.getByRole("button", { name: "Existing focus" });
+    existingFocus.focus();
+
+    await screen.findByText("1 upcoming Ticketmaster event · 1 shown");
+    expect(existingFocus).toHaveFocus();
+  });
+
+  it("uses bilingual upcoming totals, remaining count, and completion copy", async () => {
     const requestEvents = vi.fn()
       .mockResolvedValueOnce(pagedResult([numberedEvent(1)], 2, "page-two"))
       .mockResolvedValueOnce(pagedResult([numberedEvent(2)], 2, null));
@@ -261,7 +366,7 @@ describe("Auckland event explorer", () => {
 
     await screen.findByRole("heading", { name: "Event 1" });
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
-    expect(screen.getByText("未来一年 Ticketmaster 共 2 个活动 · 已显示 1 个")).toBeInTheDocument();
+    expect(screen.getByText("Ticketmaster 当前可查 2 个未来活动 · 已显示 1 个")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "再显示 1 个活动" }));
     expect(await screen.findByText("Ticketmaster 活动已全部显示")).toBeInTheDocument();
   });
@@ -298,8 +403,23 @@ describe("Auckland event explorer", () => {
 
     render(<EventExplorer requestEvents={requestEvents} />);
 
-    expect(await screen.findByRole("heading", { name: "Nothing on our radar yet" })).toBeInTheDocument();
-    expect(screen.getByText("Try again soon—new Auckland events are added throughout the week.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "No upcoming events found" })).toBeInTheDocument();
+    expect(screen.getByText("Check back soon—new Auckland events are added throughout the week.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("explains an empty filtered result without implying a technical error", async () => {
+    const requestEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 50, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    });
+
+    render(<EventExplorer keyword="NoSuchActivity" requestEvents={requestEvents} />);
+
+    expect(await screen.findByRole("heading", { name: "No matching events found" })).toBeInTheDocument();
+    expect(screen.getByText("Try changing or clearing your filters.")).toBeInTheDocument();
+    expect(screen.queryByText(/temporarily|unavailable|technical/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -339,20 +459,38 @@ describe("Auckland event explorer", () => {
     expect(String(fetchMock.mock.calls[0][0])).not.toContain("ticketmaster.com");
   });
 
-  it("requests the selected category from the same-origin API", async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify(eventResult), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
-    );
+  it("requests and appends every filter from the same-origin API in a fixed order", async () => {
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify(pagedResult([numberedEvent(1)], 2, "page two")),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify(pagedResult([numberedEvent(2)], 2, null)),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EventExplorer category="concerts" />);
+    render(
+      <EventExplorer
+        category="concerts"
+        keyword="Taylor Swift"
+        venueId="venue-1"
+      />,
+    );
 
-    expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
+    expect(await screen.findByRole("heading", { name: "Event 2" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/events?size=50&category=concerts",
+      "/api/events?size=50&category=concerts&q=Taylor+Swift&venue=venue-1",
+      expect.objectContaining({ headers: { accept: "application/json" } }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/events?size=50&category=concerts&q=Taylor+Swift&venue=venue-1&cursor=page+two",
       expect.objectContaining({ headers: { accept: "application/json" } }),
     );
   });
@@ -373,7 +511,7 @@ describe("Auckland event explorer", () => {
     expect(requestEvents).toHaveBeenCalledWith({ category: "concerts" });
   });
 
-  it("names an empty selected category in both languages", async () => {
+  it("uses matching empty-result copy in both languages", async () => {
     const requestEvents = vi.fn().mockResolvedValue({
       events: [],
       page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
@@ -386,10 +524,11 @@ describe("Auckland event explorer", () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: "No markets on our radar yet" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "No matching events found" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
-    expect(screen.getByRole("heading", { name: "暂时没有找到市集" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "没有找到匹配的活动" })).toBeInTheDocument();
+    expect(screen.getByText("请更改或清除筛选条件后再试。")).toBeInTheDocument();
   });
 
   it("switches the loading and event-detail states to Chinese", async () => {
@@ -408,7 +547,7 @@ describe("Auckland event explorer", () => {
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
     expect(screen.getByText("8月1日周六")).toBeInTheDocument();
     expect(screen.getByText("19:30")).toBeInTheDocument();
-    expect(screen.getByText("未来一年 Ticketmaster 共 1 个活动 · 已显示 1 个")).toBeInTheDocument();
+    expect(screen.getByText("Ticketmaster 当前可查 1 个未来活动 · 已显示 1 个")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "在 Ticketmaster 查看 Harbour Lights" })).toHaveAttribute(
       "href",
       "https://www.ticketmaster.co.nz/event/event-1",
@@ -424,7 +563,7 @@ describe("Auckland event explorer", () => {
 
     renderChineseExplorer(emptyRequest);
 
-    expect(await screen.findByRole("heading", { name: "雷达上暂时没有活动" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "暂时没有未来活动" })).toBeInTheDocument();
 
     cleanup();
     localStorage.clear();

@@ -15,6 +15,8 @@ export type TicketmasterErrorCode =
   | "UPSTREAM_TIMEOUT"
   | "UPSTREAM_ERROR";
 
+export type TicketmasterSort = "date,asc" | "date,desc";
+
 export class TicketmasterClientError extends Error {
   constructor(
     public readonly code: TicketmasterErrorCode,
@@ -41,6 +43,7 @@ interface TicketmasterEventPayload {
   }>;
   _embedded?: {
     venues?: Array<{
+      id?: string;
       name?: string;
       city?: { name?: string };
       address?: { line1?: string };
@@ -59,7 +62,6 @@ interface TicketmasterResponsePayload {
 }
 
 const DISCOVERY_EVENTS_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
-const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const CATEGORY_FILTERS: Record<EventCategory, readonly [string, string]> = {
   concerts: ["classificationName", "Music"],
   theatre: ["classificationName", "Arts & Theatre"],
@@ -99,6 +101,9 @@ export function buildAucklandEventsUrl({
   startDateTime,
   endDateTime,
   category,
+  keyword,
+  venueId,
+  sort,
 }: {
   apiKey: string;
   now?: Date;
@@ -107,15 +112,17 @@ export function buildAucklandEventsUrl({
   startDateTime?: Date;
   endDateTime?: Date;
   category?: EventCategory | null;
+  keyword?: string | null;
+  venueId?: string | null;
+  sort?: TicketmasterSort;
 }): URL {
   const url = new URL(DISCOVERY_EVENTS_URL);
   const start = new Date((startDateTime ?? now).getTime());
-  const end = new Date((endDateTime ?? new Date(start.getTime() + YEAR_MS)).getTime());
+  const end = endDateTime ? new Date(endDateTime.getTime()) : null;
 
   if (
     !Number.isFinite(start.getTime()) ||
-    !Number.isFinite(end.getTime()) ||
-    end.getTime() <= start.getTime()
+    (end && (!Number.isFinite(end.getTime()) || end <= start))
   ) {
     throw new TicketmasterClientError("UPSTREAM_ERROR", 502);
   }
@@ -126,15 +133,25 @@ export function buildAucklandEventsUrl({
     city: "Auckland",
     locale: "*",
     includeTest: "no",
-    sort: "date,asc",
+    includeTBA: "no",
+    includeTBD: "no",
+    sort: sort ?? "date,asc",
     size: String(clampSize(size)),
     page: String(clampPage(page)),
     startDateTime: toDiscoveryDateTime(start),
-    endDateTime: toDiscoveryDateTime(end),
   }).toString();
 
-  if (category) {
-    const [parameter, value] = CATEGORY_FILTERS[category];
+  const normalizedKeyword = keyword?.normalize("NFC").trim().replace(/\s+/gu, " ");
+  const categoryFilter = category ? CATEGORY_FILTERS[category] : null;
+  const categoryKeyword = categoryFilter?.[0] === "keyword" ? categoryFilter[1] : null;
+  const upstreamKeyword = [normalizedKeyword, categoryKeyword].filter(Boolean).join(" ");
+
+  if (end) url.searchParams.set("endDateTime", toDiscoveryDateTime(end));
+  if (upstreamKeyword) url.searchParams.set("keyword", upstreamKeyword);
+  if (venueId) url.searchParams.set("venueId", venueId);
+
+  if (categoryFilter && categoryFilter[0] !== "keyword") {
+    const [parameter, value] = categoryFilter;
     url.searchParams.set(parameter, value);
   }
 
@@ -164,8 +181,9 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
     },
     status: event.dates?.status?.code ?? "unknown",
     category: classification?.segment?.name ?? classification?.genre?.name ?? "Other",
-    venue: venue?.name && venue.city?.name
+    venue: venue?.id && venue.name && venue.city?.name
       ? {
+          id: venue.id,
           name: venue.name,
           city: venue.city.name,
           address: venue.address?.line1 ?? null,
@@ -183,6 +201,9 @@ export async function fetchAucklandEvents({
   startDateTime,
   endDateTime,
   category,
+  keyword,
+  venueId,
+  sort,
 }: {
   apiKey?: string;
   fetchImpl?: typeof fetch;
@@ -192,6 +213,9 @@ export async function fetchAucklandEvents({
   startDateTime?: Date;
   endDateTime?: Date;
   category?: EventCategory | null;
+  keyword?: string | null;
+  venueId?: string | null;
+  sort?: TicketmasterSort;
 } = {}): Promise<TicketmasterPageResult> {
   if (!apiKey.trim()) {
     throw new TicketmasterClientError("CONFIG_REQUIRED", 503);
@@ -209,6 +233,9 @@ export async function fetchAucklandEvents({
       startDateTime,
       endDateTime,
       category,
+      keyword,
+      venueId,
+      sort,
     }), {
       headers: { accept: "application/json" },
       signal: controller.signal,

@@ -2,22 +2,26 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { parseEventCategory, type EventCategory } from "./event-categories";
+import { parseEventKeyword, parseVenueId } from "./event-search-params";
 
 const CURSOR_VERSION = 1;
 const MAX_CURSOR_LENGTH = 4096;
 const MAX_RANGES = 32;
-const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const MAX_ANCHOR_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 export type EventTimeRange = {
   start: string;
-  end: string;
+  end: string | null;
 };
 
 export type EventFeedCursorState = {
   anchor: string;
   category: EventCategory | null;
+  keyword: string | null;
+  venueId: string | null;
+  scope: "unbounded";
+  horizonEnd: string | null;
   totalElements: number;
   size: number;
   page: number;
@@ -54,6 +58,10 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
     "v",
     "anchor",
     "category",
+    "keyword",
+    "venueId",
+    "scope",
+    "horizonEnd",
     "totalElements",
     "size",
     "page",
@@ -66,10 +74,29 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
     : parseEventCategory(typeof value.category === "string" ? value.category : null);
   if (value.category !== null && !category) return null;
 
+  const keyword = value.keyword === null ? null : parseEventKeyword(
+    typeof value.keyword === "string" ? value.keyword : null,
+  );
+  if (value.keyword !== null && keyword !== value.keyword) return null;
+
+  const venueId = value.venueId === null ? null : parseVenueId(
+    typeof value.venueId === "string" ? value.venueId : null,
+  );
+  if (value.venueId !== null && venueId !== value.venueId) return null;
+  if (value.scope !== "unbounded") return null;
+
   const anchor = canonicalDate(value.anchor);
   if (!anchor) return null;
   const age = now.getTime() - anchor.getTime();
   if (age > MAX_ANCHOR_AGE_MS || age < -MAX_CLOCK_SKEW_MS) return null;
+
+  const horizonEnd = value.horizonEnd === null
+    ? null
+    : canonicalDate(value.horizonEnd);
+  if (
+    value.horizonEnd !== null &&
+    (!horizonEnd || horizonEnd.getTime() <= anchor.getTime())
+  ) return null;
 
   if (
     typeof value.totalElements !== "number" ||
@@ -94,27 +121,43 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
     value.ranges.length > MAX_RANGES
   ) return null;
 
-  const yearEnd = anchor.getTime() + YEAR_MS;
   const ranges: EventTimeRange[] = [];
+  let previousEnd: Date | null = null;
   for (const candidate of value.ranges) {
     if (!isRecord(candidate) || !hasExactKeys(candidate, ["start", "end"])) {
       return null;
     }
     const start = canonicalDate(candidate.start);
+    if (!start || start.getTime() < anchor.getTime()) return null;
+
+    if (!horizonEnd) {
+      if (
+        value.ranges.length !== 1 ||
+        start.getTime() !== anchor.getTime() ||
+        candidate.end !== null
+      ) return null;
+      ranges.push({ start: start.toISOString(), end: null });
+      continue;
+    }
+
     const end = canonicalDate(candidate.end);
     if (
-      !start ||
       !end ||
-      start.getTime() < anchor.getTime() ||
-      end.getTime() > yearEnd ||
-      end.getTime() <= start.getTime()
+      end.getTime() > horizonEnd.getTime() ||
+      end.getTime() <= start.getTime() ||
+      (previousEnd && start.getTime() < previousEnd.getTime())
     ) return null;
     ranges.push({ start: start.toISOString(), end: end.toISOString() });
+    previousEnd = end;
   }
 
   return {
     anchor: anchor.toISOString(),
     category,
+    keyword,
+    venueId,
+    scope: "unbounded",
+    horizonEnd: horizonEnd?.toISOString() ?? null,
     totalElements: value.totalElements,
     size: value.size,
     page: value.page,

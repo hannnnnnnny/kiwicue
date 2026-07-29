@@ -3,16 +3,19 @@ import {
   parseEventCategory,
   type EventCategory,
 } from "../../../lib/event-categories";
+import { parseEventKeyword, parseVenueId } from "../../../lib/event-search-params";
 import {
   TicketmasterClientError,
   type TicketmasterErrorCode,
 } from "../../../lib/ticketmaster";
-import { fetchAucklandYearEvents } from "../../../lib/ticketmaster-year-feed";
+import { fetchAucklandEventFeed } from "../../../lib/ticketmaster-event-feed";
 
 type LoadEvents = (options: {
   size?: number;
   category?: EventCategory;
   cursor?: string;
+  keyword?: string;
+  venueId?: string;
 }) => Promise<AucklandEventsResult>;
 
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
@@ -25,7 +28,7 @@ const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
 
 export async function handleEventsRequest(
   request: Request,
-  loadEvents: LoadEvents = fetchAucklandYearEvents,
+  loadEvents: LoadEvents = fetchAucklandEventFeed,
 ): Promise<Response> {
   const url = new URL(request.url);
   const sizeValues = url.searchParams.getAll("size");
@@ -38,6 +41,10 @@ export async function handleEventsRequest(
   const category = parseEventCategory(
     categoryValues.length === 1 ? categoryValues[0] : null,
   );
+  const queryValues = url.searchParams.getAll("q");
+  const keyword = parseEventKeyword(queryValues.length === 1 ? queryValues[0] : null);
+  const venueValues = url.searchParams.getAll("venue");
+  const venueId = parseVenueId(venueValues.length === 1 ? venueValues[0] : null);
   const cursorValues = url.searchParams.getAll("cursor");
   const cursorCandidate = cursorValues.length === 1
     ? cursorValues[0].trim()
@@ -49,6 +56,8 @@ export async function handleEventsRequest(
     const payload = await loadEvents({
       size,
       ...(category ? { category } : {}),
+      ...(keyword ? { keyword } : {}),
+      ...(venueId ? { venueId } : {}),
       ...(cursor ? { cursor } : {}),
     });
 

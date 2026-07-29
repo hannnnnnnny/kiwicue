@@ -1,12 +1,19 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import HomePage from "../app/page";
-import EventsPage from "../app/events/page";
+import EventsPage, { parseEventPageSearchParams } from "../app/events/page";
 import { LanguageProvider } from "../components/language-provider";
+
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+}));
 
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.lang = "en";
+  router.push.mockReset();
 });
 
 afterEach(() => {
@@ -15,6 +22,24 @@ afterEach(() => {
 });
 
 describe("bilingual route content", () => {
+  it("parses one validated event search and venue filter", () => {
+    expect(parseEventPageSearchParams({
+      q: "  Taylor   Swift ",
+      venue: "venue-1",
+      category: "concerts",
+    })).toEqual({
+      category: "concerts",
+      keyword: "Taylor Swift",
+      venueId: "venue-1",
+    });
+
+    expect(parseEventPageSearchParams({
+      q: ["Taylor", "Swift"],
+      venue: ["one", "two"],
+      category: ["concerts", "theatre"],
+    })).toEqual({ category: null, keyword: null, venueId: null });
+  });
+
   it("switches the home page from English to the approved Chinese identity", () => {
     render(
       <LanguageProvider>
@@ -23,7 +48,7 @@ describe("bilingual route content", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Auckland events, before you miss them" })).toBeInTheDocument();
-    expect(screen.getByText("AKL — NEXT 365 DAYS")).toBeInTheDocument();
+    expect(screen.getByText("AKL — ALL UPCOMING")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explore Concerts" })).toHaveAttribute(
       "href",
       "/events?category=concerts",
@@ -54,7 +79,8 @@ describe("bilingual route content", () => {
       "/events?category=festivals",
     );
     expect(screen.getByText("奥克兰首发")).toBeInTheDocument();
-    expect(screen.getByText("奥克兰 — 未来 365 天")).toBeInTheDocument();
+    expect(screen.getByText("奥克兰 — 全部未来活动")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/365|one year|一年|未来 365 天/i);
   });
 
   it("switches the event-page framing without changing the data request", async () => {
@@ -68,14 +94,23 @@ describe("bilingual route content", () => {
     );
 
     expect(screen.getByRole("heading", { name: "What’s on, before it’s gone" })).toBeInTheDocument();
+    expect(screen.getByText("All upcoming Ticketmaster events")).toBeInTheDocument();
+    expect(screen.getByText("Auckland · All upcoming")).toBeInTheDocument();
+    expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "奥克兰有什么，别等错过才发现" })).toBeInTheDocument();
-    expect(screen.getByText("奥克兰 · 未来 365 天")).toBeInTheDocument();
+    expect(screen.getByText("Ticketmaster 当前可查的全部未来活动")).toBeInTheDocument();
+    expect(screen.getByText("奥克兰 · 全部未来活动")).toBeInTheDocument();
     expect(screen.getByText("每批最多 50 个")).toBeInTheDocument();
     expect(screen.getByText("最早发生优先")).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
+    expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
+    expect(screen.getByLabelText("场馆")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(document.body).not.toHaveTextContent(/365|one year|一年|未来 365 天/i);
   });
 
   it("shows one validated category and ignores duplicated categories", async () => {
@@ -88,6 +123,7 @@ describe("bilingual route content", () => {
 
     expect(screen.getByText("Concerts")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View all events" })).toHaveAttribute("href", "/events");
+    expect(screen.queryByRole("link", { name: "Clear filters" })).not.toBeInTheDocument();
 
     cleanup();
     const invalidPage = await EventsPage({
@@ -96,5 +132,29 @@ describe("bilingual route content", () => {
     render(<LanguageProvider>{invalidPage}</LanguageProvider>);
 
     expect(screen.queryByRole("link", { name: "View all events" })).not.toBeInTheDocument();
+  });
+
+  it("shows a category-preserving clear link for either applied search filter", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const keywordPage = await EventsPage({
+      searchParams: Promise.resolve({ category: "concerts", q: "Taylor" }),
+    });
+
+    render(<LanguageProvider>{keywordPage}</LanguageProvider>);
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
+
+    cleanup();
+    const venuePage = await EventsPage({
+      searchParams: Promise.resolve({ category: "concerts", venue: "venue-1" }),
+    });
+    render(<LanguageProvider>{venuePage}</LanguageProvider>);
+
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
   });
 });

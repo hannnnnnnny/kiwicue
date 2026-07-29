@@ -12,7 +12,7 @@ const copy = {
     intro: "One timely, well-sorted view of concerts, theatre, markets, festivals and local events—without hoping an algorithm shows you the post before it is too late.",
     action: "Explore Auckland events",
     actionNote: "Live event discovery is connected now.",
-    scope: "AKL — NEXT 365 DAYS",
+    scope: "AKL — ALL UPCOMING",
     live: "LIVE NOW",
     coverageLabel: "KiwiCue coverage",
     signals: [
@@ -37,7 +37,7 @@ const copy = {
     intro: "把演唱会、话剧、集市、节日和本地活动放进一个及时、好排序的入口——不用再赌算法会不会在活动结束后才推给你。",
     action: "查看奥克兰活动",
     actionNote: "实时活动信息现已接通。",
-    scope: "奥克兰 — 未来 365 天",
+    scope: "奥克兰 — 全部未来活动",
     live: "实时更新",
     coverageLabel: "KiwiCue 活动范围",
     signals: [
