@@ -131,6 +131,46 @@ describe("GET /api/events", () => {
   });
 
   it.each([
+    "size=-1",
+    "size=1.5",
+    "size=words",
+    "size=",
+    "size=10&size=20",
+  ])("does not forward malformed or duplicated size input: %s", async (query) => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 50, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    });
+
+    await handleEventsRequest(
+      new Request(`http://localhost/api/events?${query}`),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: undefined });
+  });
+
+  it.each([
+    ["size=0", 1],
+    ["size=50", 50],
+    ["size=999", 50],
+  ])("clamps one integer size input to the public range: %s", async (query, expected) => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: expected, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    });
+
+    await handleEventsRequest(
+      new Request(`http://localhost/api/events?${query}`),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: expected });
+  });
+
+  it.each([
     ["CONFIG_REQUIRED", 503, "Event data is not configured yet."],
     ["UPSTREAM_AUTH", 502, "Event data is temporarily unavailable."],
     ["UPSTREAM_BUSY", 503, "Event data is busy. Please try again shortly."],

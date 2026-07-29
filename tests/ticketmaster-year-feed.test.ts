@@ -65,7 +65,7 @@ describe("Ticketmaster year feed", () => {
       endDateTime: yearEnd,
     }));
 
-    const cursor = decodeEventFeedCursor(first.nextCursor ?? "", now);
+    const cursor = decodeEventFeedCursor(first.nextCursor ?? "", "test-key", now);
     expect(cursor?.page).toBe(1);
 
     const second = await fetchAucklandYearEvents({
@@ -110,7 +110,7 @@ describe("Ticketmaster year feed", () => {
     }));
     expect(loadPage.mock.calls.every(([options]) => options.size * options.page < 1000)).toBe(true);
 
-    const cursor = decodeEventFeedCursor(result.nextCursor ?? "", now);
+    const cursor = decodeEventFeedCursor(result.nextCursor ?? "", "test-key", now);
     expect(cursor?.ranges[0]).toEqual({
       start: "2026-08-01T00:00:00.000Z",
       end: "2026-09-01T00:00:00.000Z",
@@ -149,6 +149,7 @@ describe("Ticketmaster year feed", () => {
   it("advances across adjacent ranges and eventually returns a null cursor", async () => {
     const cursor = encodeEventFeedCursor({
       anchor: now.toISOString(),
+      category: null,
       totalElements: 2,
       size: 50,
       page: 0,
@@ -156,7 +157,7 @@ describe("Ticketmaster year feed", () => {
         { start: now.toISOString(), end: "2026-08-01T00:00:00.000Z" },
         { start: "2026-08-01T00:00:00.000Z", end: "2026-09-01T00:00:00.000Z" },
       ],
-    });
+    }, "test-key");
     const loadPage = vi.fn<TicketmasterPageLoader>(async () =>
       pageResult([event("boundary-event")], 0, 1, 1),
     );
@@ -177,5 +178,26 @@ describe("Ticketmaster year feed", () => {
     expect(first.events[0].id).toBe("boundary-event");
     expect(second.events[0].id).toBe("boundary-event");
     expect(second.nextCursor).toBeNull();
+  });
+
+  it("rejects a continuation cursor when its category changes", async () => {
+    const loadPage = vi.fn<TicketmasterPageLoader>(async () =>
+      pageResult([event("concert")], 0, 81, 2),
+    );
+    const first = await fetchAucklandYearEvents({
+      apiKey: "test-key",
+      now,
+      category: "concerts",
+      loadPage,
+    });
+
+    await expect(fetchAucklandYearEvents({
+      apiKey: "test-key",
+      now,
+      category: "markets",
+      cursor: first.nextCursor ?? "",
+      loadPage,
+    })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
+    expect(loadPage).toHaveBeenCalledTimes(1);
   });
 });

@@ -77,9 +77,10 @@ function nextCursor(
   state: EventFeedCursorState,
   ranges: EventTimeRange[],
   page: number,
+  secret: string,
 ): string | null {
   if (ranges.length === 0) return null;
-  return encodeEventFeedCursor({ ...state, ranges, page });
+  return encodeEventFeedCursor({ ...state, ranges, page }, secret);
 }
 
 export async function fetchAucklandYearEvents({
@@ -92,11 +93,14 @@ export async function fetchAucklandYearEvents({
 }: FetchAucklandYearEventsOptions = {}): Promise<AucklandEventsResult> {
   const anchor = new Date(now.getTime());
   const yearEnd = new Date(anchor.getTime() + YEAR_MS);
-  const decoded = cursor ? decodeEventFeedCursor(cursor, anchor) : null;
+  const requestedCategory = category ?? null;
+  const decoded = cursor ? decodeEventFeedCursor(cursor, apiKey, anchor) : null;
   if (cursor && !decoded) throw safeFailure();
+  if (decoded && decoded.category !== requestedCategory) throw safeFailure();
 
   const state: EventFeedCursorState = decoded ?? {
     anchor: anchor.toISOString(),
+    category: requestedCategory,
     totalElements: 0,
     size: normalizeSize(requestedSize),
     page: 0,
@@ -130,7 +134,7 @@ export async function fetchAucklandYearEvents({
       page,
       startDateTime,
       endDateTime,
-      ...(category ? { category } : {}),
+      ...(state.category ? { category: state.category } : {}),
     });
 
     if (probingFullYear) {
@@ -167,6 +171,7 @@ export async function fetchAucklandYearEvents({
       { ...state, totalElements },
       followingRanges,
       followingPage,
+      apiKey,
     );
 
     if (pageResult.events.length === 0 && continuation) {

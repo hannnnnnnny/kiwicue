@@ -28,9 +28,12 @@ export async function handleEventsRequest(
   loadEvents: LoadEvents = fetchAucklandYearEvents,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const rawSize = url.searchParams.get("size");
-  const parsedSize = rawSize === null || rawSize.trim() === "" ? undefined : Number(rawSize);
-  const size = parsedSize !== undefined && Number.isFinite(parsedSize) ? parsedSize : undefined;
+  const sizeValues = url.searchParams.getAll("size");
+  const rawSize = sizeValues.length === 1 ? sizeValues[0].trim() : "";
+  const parsedSize = /^\d+$/.test(rawSize) ? Number(rawSize) : undefined;
+  const size = parsedSize !== undefined && Number.isSafeInteger(parsedSize)
+    ? Math.min(50, Math.max(1, parsedSize))
+    : undefined;
   const categoryValues = url.searchParams.getAll("category");
   const category = parseEventCategory(
     categoryValues.length === 1 ? categoryValues[0] : null,
