@@ -7,6 +7,8 @@ import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 
 type RequestEventsOptions = {
   category?: EventCategory;
+  keyword?: string;
+  venueId?: string;
   cursor?: string;
 };
 
@@ -29,10 +31,14 @@ type ExplorerState =
 
 async function requestEventsFromApi({
   category,
+  keyword,
+  venueId,
   cursor,
 }: RequestEventsOptions): Promise<AucklandEventsResult> {
   const params = new URLSearchParams({ size: "50" });
   if (category) params.set("category", category);
+  if (keyword) params.set("q", keyword);
+  if (venueId) params.set("venue", venueId);
   if (cursor) params.set("cursor", cursor);
 
   const response = await fetch(`/api/events?${params.toString()}`, {
@@ -51,7 +57,7 @@ const copy = {
   en: {
     loading: "Scanning Auckland for what is next",
     timePending: "Time to be confirmed",
-    count: (total: number, shown: number) => `${total} Ticketmaster ${total === 1 ? "event" : "events"} in the next year · ${shown} shown`,
+    count: (isFiltered: boolean, total: number, shown: number) => `${total} ${isFiltered ? "matching" : "upcoming"} Ticketmaster ${total === 1 ? "event" : "events"} · ${shown} shown`,
     sources: "Official source links included",
     venuePending: "Auckland venue to be confirmed",
     linkLabel: (name: string) => `View ${name} on Ticketmaster`,
@@ -63,8 +69,10 @@ const copy = {
     retryMore: "Retry loading more events",
     complete: "All Ticketmaster events are shown",
     emptyCode: "AKL / 00",
-    emptyTitle: "Nothing on our radar yet",
-    emptyBody: "Try again soon—new Auckland events are added throughout the week.",
+    upcomingEmptyTitle: "No upcoming events found",
+    upcomingEmptyBody: "Check back soon—new Auckland events are added throughout the week.",
+    matchingEmptyTitle: "No matching events found",
+    matchingEmptyBody: "Try changing or clearing your filters.",
     errorCode: "SIGNAL LOST",
     errorTitle: "Auckland events are temporarily out of range",
     errorBody: "We could not refresh the event feed. Your Ticketmaster key and technical details remain private.",
@@ -74,7 +82,9 @@ const copy = {
   zh: {
     loading: "正在扫描奥克兰近期活动",
     timePending: "时间待定",
-    count: (total: number, shown: number) => `未来一年 Ticketmaster 共 ${total} 个活动 · 已显示 ${shown} 个`,
+    count: (isFiltered: boolean, total: number, shown: number) => isFiltered
+      ? `Ticketmaster 共找到 ${total} 个匹配活动 · 已显示 ${shown} 个`
+      : `Ticketmaster 当前可查 ${total} 个未来活动 · 已显示 ${shown} 个`,
     sources: "包含官方来源链接",
     venuePending: "奥克兰场馆待确认",
     linkLabel: (name: string) => `在 Ticketmaster 查看 ${name}`,
@@ -86,19 +96,16 @@ const copy = {
     retryMore: "重新加载更多活动",
     complete: "Ticketmaster 活动已全部显示",
     emptyCode: "奥克兰 / 00",
-    emptyTitle: "雷达上暂时没有活动",
-    emptyBody: "请稍后再来，本周还会陆续加入新的奥克兰活动。",
+    upcomingEmptyTitle: "暂时没有未来活动",
+    upcomingEmptyBody: "请稍后再来，本周还会陆续加入新的奥克兰活动。",
+    matchingEmptyTitle: "没有找到匹配的活动",
+    matchingEmptyBody: "请更改或清除筛选条件后再试。",
     errorCode: "信号暂时中断",
     errorTitle: "暂时无法获取奥克兰活动",
     errorBody: "活动信息刷新失败。你的 Ticketmaster 密钥和技术详情仍然保密。",
     retryLabel: "重新扫描活动",
     retryText: "重新扫描",
   },
-} as const;
-
-const categoryNames = {
-  en: { concerts: "concerts", theatre: "theatre events", markets: "markets", festivals: "festivals" },
-  zh: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动" },
 } as const;
 
 function formatEventDate(localDate: string, language: Language): string {
@@ -145,11 +152,29 @@ function appendUniqueEvents(current: KiwiCueEvent[], incoming: KiwiCueEvent[]): 
   return [...current, ...uniqueIncoming];
 }
 
+function buildRequestOptions(
+  category: EventCategory | null,
+  keyword: string | null,
+  venueId: string | null,
+  cursor?: string,
+): RequestEventsOptions {
+  const options: RequestEventsOptions = {};
+  if (category) options.category = category;
+  if (keyword) options.keyword = keyword;
+  if (venueId) options.venueId = venueId;
+  if (cursor) options.cursor = cursor;
+  return options;
+}
+
 export function EventExplorer({
   category = null,
+  keyword = null,
+  venueId = null,
   requestEvents = requestEventsFromApi,
 }: {
   category?: EventCategory | null;
+  keyword?: string | null;
+  venueId?: string | null;
   requestEvents?: RequestEvents;
 }) {
   const { language } = useLanguage();
@@ -158,7 +183,14 @@ export function EventExplorer({
   const [attempt, setAttempt] = useState(0);
   const generationRef = useRef(0);
   const appendInFlightRef = useRef(false);
-  const requestKey = `${category ?? "all"}:${attempt}`;
+  const resultsSummaryRef = useRef<HTMLParagraphElement>(null);
+  const requestKey = JSON.stringify({
+    category: category ?? null,
+    keyword: keyword ?? null,
+    venueId: venueId ?? null,
+    attempt,
+  });
+  const isFiltered = Boolean(keyword || venueId || category);
   const stateForRequest: ExplorerState = state.status !== "loading" && state.requestKey === requestKey
     ? state
     : { status: "loading", events: [] };
@@ -168,7 +200,7 @@ export function EventExplorer({
     let cancelled = false;
     appendInFlightRef.current = false;
 
-    const options: RequestEventsOptions = category ? { category } : {};
+    const options = buildRequestOptions(category, keyword, venueId);
     requestEvents(options)
       .then((result) => {
         if (cancelled || generation !== generationRef.current) return;
@@ -192,7 +224,14 @@ export function EventExplorer({
     return () => {
       cancelled = true;
     };
-  }, [requestKey, requestEvents, category]);
+  }, [requestKey, requestEvents, category, keyword, venueId]);
+
+  useEffect(() => {
+    if (stateForRequest.status !== "ready") return;
+    if (sessionStorage.getItem("kiwicue:focus-results") !== "1") return;
+    sessionStorage.removeItem("kiwicue:focus-results");
+    resultsSummaryRef.current?.focus();
+  }, [requestKey, stateForRequest.status]);
 
   function retry() {
     setAttempt((currentAttempt) => currentAttempt + 1);
@@ -214,9 +253,7 @@ export function EventExplorer({
       : current);
 
     try {
-      const options: RequestEventsOptions = category
-        ? { category, cursor }
-        : { cursor };
+      const options = buildRequestOptions(category, keyword, venueId, cursor);
       const result = await requestEvents(options);
       if (generation !== generationRef.current) return;
 
@@ -261,7 +298,9 @@ export function EventExplorer({
     return (
       <section className="event-feed" aria-live="polite">
         <div className="event-feed-toolbar">
-          <p>{content.count(stateForRequest.totalElements, stateForRequest.events.length)}</p>
+          <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1}>
+            {content.count(isFiltered, stateForRequest.totalElements, stateForRequest.events.length)}
+          </p>
           <span><i aria-hidden="true" /> {content.sources}</span>
         </div>
         <ol className="event-list">
@@ -337,17 +376,11 @@ export function EventExplorer({
   }
 
   if (stateForRequest.status === "empty") {
-    const emptyTitle = category
-      ? language === "en"
-        ? `No ${categoryNames.en[category]} on our radar yet`
-        : `暂时没有找到${categoryNames.zh[category]}`
-      : content.emptyTitle;
-
     return (
       <section className="event-state event-empty" aria-live="polite">
         <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
-        <h2>{emptyTitle}</h2>
-        <p>{content.emptyBody}</p>
+        <h2>{isFiltered ? content.matchingEmptyTitle : content.upcomingEmptyTitle}</h2>
+        <p>{isFiltered ? content.matchingEmptyBody : content.upcomingEmptyBody}</p>
       </section>
     );
   }

@@ -19,15 +19,15 @@ const copy = {
     eyebrow: "Auckland event signal / Live discovery",
     titleLead: "What’s on, ",
     titleAccent: "before it’s gone",
-    intro: "A full year of upcoming concerts, theatre, festivals and live events in one chronological feed—so the useful date reaches you before the recommendation does.",
+    intro: "All upcoming Ticketmaster concerts, theatre, festivals and live events in one chronological feed—so the useful date reaches you before the recommendation does.",
     scopeLabel: "Current event search scope",
     locationLabel: "Location",
     location: "Auckland",
     windowLabel: "Window",
-    window: "Next 365 days",
+    window: "All upcoming Ticketmaster events",
     orderLabel: "Order",
     order: "Soonest first",
-    tickerWindow: "Auckland · Next 365 days",
+    tickerWindow: "Auckland · All upcoming",
     tickerSource: "Live source check",
     tickerCount: "Up to 50 per batch",
     tickerLabel: "Event feed status",
@@ -39,15 +39,15 @@ const copy = {
     eyebrow: "奥克兰活动雷达 / 实时发现",
     titleLead: "奥克兰有什么，",
     titleAccent: "别等错过才发现",
-    intro: "把未来 365 天的演唱会、话剧、节日和现场活动按日期排好，让有用的信息赶在过期之前到达。",
+    intro: "把 Ticketmaster 当前可查的全部未来活动按日期排好，让有用的信息赶在过期之前到达。",
     scopeLabel: "当前活动搜索范围",
     locationLabel: "地点",
     location: "奥克兰",
     windowLabel: "范围",
-    window: "未来 365 天",
+    window: "Ticketmaster 当前可查的全部未来活动",
     orderLabel: "排序",
     order: "最早发生优先",
-    tickerWindow: "奥克兰 · 未来 365 天",
+    tickerWindow: "奥克兰 · 全部未来活动",
     tickerSource: "实时来源检查",
     tickerCount: "每批最多 50 个",
     tickerLabel: "活动信息状态",
@@ -105,7 +105,7 @@ export function EventsPageContent({ category, keyword, venueId }: {
       )}
 
       <EventSearchPanel category={category} keyword={keyword} venueId={venueId} />
-      <EventExplorer category={category} />
+      <EventExplorer category={category} keyword={keyword} venueId={venueId} />
 
       <footer>
         <span>KiwiCue / 纽村小报</span>
