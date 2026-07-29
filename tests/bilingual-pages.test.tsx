@@ -23,6 +23,7 @@ describe("bilingual route content", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Auckland events, before you miss them" })).toBeInTheDocument();
+    expect(screen.getByText("AKL — NEXT 365 DAYS")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explore Concerts" })).toHaveAttribute(
       "href",
       "/events?category=concerts",
@@ -53,6 +54,7 @@ describe("bilingual route content", () => {
       "/events?category=festivals",
     );
     expect(screen.getByText("奥克兰首发")).toBeInTheDocument();
+    expect(screen.getByText("奥克兰 — 未来 365 天")).toBeInTheDocument();
   });
 
   it("switches the event-page framing without changing the data request", async () => {
@@ -70,7 +72,8 @@ describe("bilingual route content", () => {
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "奥克兰有什么，别等错过才发现" })).toBeInTheDocument();
-    expect(screen.getByText("奥克兰 · 未来 30 天")).toBeInTheDocument();
+    expect(screen.getByText("奥克兰 · 未来 365 天")).toBeInTheDocument();
+    expect(screen.getByText("每批最多 50 个")).toBeInTheDocument();
     expect(screen.getByText("最早发生优先")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(1);
   });

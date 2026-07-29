@@ -18,12 +18,18 @@ export interface KiwiCueEvent {
   } | null;
 }
 
-export interface AucklandEventsResult {
+export interface EventPageMetadata {
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  number: number;
+}
+
+export interface TicketmasterPageResult {
   events: KiwiCueEvent[];
-  page: {
-    size: number;
-    totalElements: number;
-    totalPages: number;
-    number: number;
-  };
+  page: EventPageMetadata;
+}
+
+export interface AucklandEventsResult extends TicketmasterPageResult {
+  nextCursor: string | null;
 }

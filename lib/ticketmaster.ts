@@ -1,8 +1,12 @@
 import "server-only";
 import type { EventCategory } from "./event-categories";
-import type { AucklandEventsResult, KiwiCueEvent } from "./events";
+import type { KiwiCueEvent, TicketmasterPageResult } from "./events";
 
-export type { AucklandEventsResult, KiwiCueEvent } from "./events";
+export type {
+  AucklandEventsResult,
+  KiwiCueEvent,
+  TicketmasterPageResult,
+} from "./events";
 
 export type TicketmasterErrorCode =
   | "CONFIG_REQUIRED"
@@ -55,7 +59,7 @@ interface TicketmasterResponsePayload {
 }
 
 const DISCOVERY_EVENTS_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const CATEGORY_FILTERS: Record<EventCategory, readonly [string, string]> = {
   concerts: ["classificationName", "Music"],
   theatre: ["classificationName", "Arts & Theatre"],
@@ -72,6 +76,11 @@ function clampSize(size = 24): number {
   return Math.min(50, Math.max(1, Math.trunc(size)));
 }
 
+function clampPage(page = 0): number {
+  if (!Number.isFinite(page) || !Number.isInteger(page) || page < 0) return 0;
+  return page;
+}
+
 function errorForStatus(status: number): TicketmasterClientError {
   if (status === 401 || status === 403) {
     return new TicketmasterClientError("UPSTREAM_AUTH", 502);
@@ -86,15 +95,30 @@ export function buildAucklandEventsUrl({
   apiKey,
   now = new Date(),
   size = 24,
+  page = 0,
+  startDateTime,
+  endDateTime,
   category,
 }: {
   apiKey: string;
   now?: Date;
   size?: number;
+  page?: number;
+  startDateTime?: Date;
+  endDateTime?: Date;
   category?: EventCategory | null;
 }): URL {
   const url = new URL(DISCOVERY_EVENTS_URL);
-  const end = new Date(now.getTime() + THIRTY_DAYS_MS);
+  const start = new Date((startDateTime ?? now).getTime());
+  const end = new Date((endDateTime ?? new Date(start.getTime() + YEAR_MS)).getTime());
+
+  if (
+    !Number.isFinite(start.getTime()) ||
+    !Number.isFinite(end.getTime()) ||
+    end.getTime() <= start.getTime()
+  ) {
+    throw new TicketmasterClientError("UPSTREAM_ERROR", 502);
+  }
 
   url.search = new URLSearchParams({
     apikey: apiKey,
@@ -104,7 +128,8 @@ export function buildAucklandEventsUrl({
     includeTest: "no",
     sort: "date,asc",
     size: String(clampSize(size)),
-    startDateTime: toDiscoveryDateTime(now),
+    page: String(clampPage(page)),
+    startDateTime: toDiscoveryDateTime(start),
     endDateTime: toDiscoveryDateTime(end),
   }).toString();
 
@@ -154,14 +179,20 @@ export async function fetchAucklandEvents({
   fetchImpl = fetch,
   now = new Date(),
   size = 24,
+  page = 0,
+  startDateTime,
+  endDateTime,
   category,
 }: {
   apiKey?: string;
   fetchImpl?: typeof fetch;
   now?: Date;
   size?: number;
+  page?: number;
+  startDateTime?: Date;
+  endDateTime?: Date;
   category?: EventCategory | null;
-} = {}): Promise<AucklandEventsResult> {
+} = {}): Promise<TicketmasterPageResult> {
   if (!apiKey.trim()) {
     throw new TicketmasterClientError("CONFIG_REQUIRED", 503);
   }
@@ -170,7 +201,15 @@ export async function fetchAucklandEvents({
   const timeout = setTimeout(() => controller.abort(), 8_000);
 
   try {
-    const response = await fetchImpl(buildAucklandEventsUrl({ apiKey, now, size, category }), {
+    const response = await fetchImpl(buildAucklandEventsUrl({
+      apiKey,
+      now,
+      size,
+      page,
+      startDateTime,
+      endDateTime,
+      category,
+    }), {
       headers: { accept: "application/json" },
       signal: controller.signal,
     });
@@ -183,15 +222,15 @@ export async function fetchAucklandEvents({
     const events = (payload._embedded?.events ?? [])
       .map(normalizeTicketmasterEvent)
       .filter((event): event is KiwiCueEvent => event !== null);
-    const page = payload.page ?? {};
+    const responsePage = payload.page ?? {};
 
     return {
       events,
       page: {
-        size: page.size ?? events.length,
-        totalElements: page.totalElements ?? events.length,
-        totalPages: page.totalPages ?? (events.length ? 1 : 0),
-        number: page.number ?? 0,
+        size: responsePage.size ?? events.length,
+        totalElements: responsePage.totalElements ?? events.length,
+        totalPages: responsePage.totalPages ?? (events.length ? 1 : 0),
+        number: responsePage.number ?? 0,
       },
     };
   } catch (error) {

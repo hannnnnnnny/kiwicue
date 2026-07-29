@@ -38,6 +38,7 @@ describe("GET /api/events", () => {
         },
       ],
       page: { size: 1, totalElements: 1, totalPages: 1, number: 0 },
+      nextCursor: "next-safe-cursor",
     };
     const loadEvents = vi.fn().mockResolvedValue(payload);
 
@@ -58,6 +59,7 @@ describe("GET /api/events", () => {
     const loadEvents = vi.fn().mockResolvedValue({
       events: [],
       page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
     });
 
     await handleEventsRequest(
@@ -68,6 +70,47 @@ describe("GET /api/events", () => {
     expect(loadEvents).toHaveBeenCalledWith({ size: 24, category: "concerts" });
   });
 
+  it("forwards one bounded continuation cursor", async () => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 50, totalElements: 81, totalPages: 2, number: 1 },
+      nextCursor: null,
+    });
+
+    await handleEventsRequest(
+      new Request(
+        "http://localhost/api/events?size=50&category=concerts&cursor=opaque-cursor",
+      ),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({
+      size: 50,
+      category: "concerts",
+      cursor: "opaque-cursor",
+    });
+  });
+
+  it.each([
+    "cursor=",
+    "cursor=%20%20%20",
+    "cursor=one&cursor=two",
+    `cursor=${"a".repeat(4097)}`,
+  ])("does not forward an invalid continuation cursor: %s", async (query) => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 50, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    });
+
+    await handleEventsRequest(
+      new Request(`http://localhost/api/events?size=50&${query}`),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: 50 });
+  });
+
   it.each([
     "category=Music",
     "category=concerts&category=theatre",
@@ -76,6 +119,7 @@ describe("GET /api/events", () => {
     const loadEvents = vi.fn().mockResolvedValue({
       events: [],
       page: { size: 24, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
     });
 
     await handleEventsRequest(
@@ -84,6 +128,46 @@ describe("GET /api/events", () => {
     );
 
     expect(loadEvents).toHaveBeenCalledWith({ size: 24 });
+  });
+
+  it.each([
+    "size=-1",
+    "size=1.5",
+    "size=words",
+    "size=",
+    "size=10&size=20",
+  ])("does not forward malformed or duplicated size input: %s", async (query) => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: 50, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    });
+
+    await handleEventsRequest(
+      new Request(`http://localhost/api/events?${query}`),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: undefined });
+  });
+
+  it.each([
+    ["size=0", 1],
+    ["size=50", 50],
+    ["size=999", 50],
+  ])("clamps one integer size input to the public range: %s", async (query, expected) => {
+    const loadEvents = vi.fn().mockResolvedValue({
+      events: [],
+      page: { size: expected, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    });
+
+    await handleEventsRequest(
+      new Request(`http://localhost/api/events?${query}`),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: expected });
   });
 
   it.each([
