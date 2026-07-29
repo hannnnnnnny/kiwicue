@@ -31,6 +31,7 @@ describe("Ticketmaster Discovery client", () => {
       apiKey: "test-key",
       now: new Date("2026-07-29T00:00:00.123Z"),
       size: 200,
+      page: 3,
     });
 
     expect(url.origin).toBe("https://app.ticketmaster.com");
@@ -42,9 +43,37 @@ describe("Ticketmaster Discovery client", () => {
     expect(url.searchParams.get("includeTest")).toBe("no");
     expect(url.searchParams.get("sort")).toBe("date,asc");
     expect(url.searchParams.get("size")).toBe("50");
+    expect(url.searchParams.get("page")).toBe("3");
     expect(url.searchParams.get("startDateTime")).toBe("2026-07-29T00:00:00Z");
-    expect(url.searchParams.get("endDateTime")).toBe("2026-08-28T00:00:00Z");
+    expect(url.searchParams.get("endDateTime")).toBe("2027-07-29T00:00:00Z");
   });
+
+  it("uses explicit range bounds for subdivided year queries", () => {
+    const url = buildAucklandEventsUrl({
+      apiKey: "test-key",
+      now: new Date("2026-07-29T00:00:00Z"),
+      startDateTime: new Date("2026-09-01T00:00:00.321Z"),
+      endDateTime: new Date("2026-10-01T00:00:00.999Z"),
+      page: 2,
+    });
+
+    expect(url.searchParams.get("startDateTime")).toBe("2026-09-01T00:00:00Z");
+    expect(url.searchParams.get("endDateTime")).toBe("2026-10-01T00:00:00Z");
+    expect(url.searchParams.get("page")).toBe("2");
+  });
+
+  it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "falls back to page zero for unsafe page value %s",
+    (page) => {
+      const url = buildAucklandEventsUrl({
+        apiKey: "test-key",
+        now: new Date("2026-07-29T00:00:00Z"),
+        page,
+      });
+
+      expect(url.searchParams.get("page")).toBe("0");
+    },
+  );
 
   it("accepts only the four public category keys", () => {
     expect(parseEventCategory("concerts")).toBe("concerts");
@@ -132,6 +161,18 @@ describe("Ticketmaster Discovery client", () => {
       code: "CONFIG_REQUIRED",
       status: 503,
     });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("rejects a reversed explicit range before making a request", async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+
+    await expect(fetchAucklandEvents({
+      apiKey: "test-key",
+      fetchImpl,
+      startDateTime: new Date("2026-10-01T00:00:00Z"),
+      endDateTime: new Date("2026-09-01T00:00:00Z"),
+    })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
