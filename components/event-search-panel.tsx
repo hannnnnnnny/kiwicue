@@ -193,6 +193,7 @@ function SearchForm({
           <div className="event-search-field event-search-field-name">
             <label htmlFor="event-search-name">{content.activityLabel}</label>
             <input
+              className="event-search-input"
               id="event-search-name"
               name="q"
               type="search"
@@ -208,6 +209,7 @@ function SearchForm({
           <div className="event-search-field event-search-field-venue">
             <label htmlFor="event-search-venue">{content.venueLabel}</label>
             <select
+              className="event-search-select"
               id="event-search-venue"
               name="venue"
               value={draftVenue}
@@ -231,9 +233,11 @@ function SearchForm({
           <button className="event-search-submit" type="submit" disabled={submitting}>
             {submitting ? content.searching : content.search}
           </button>
-          <Link className="event-search-clear" href={searchHref(category, null, null)}>
-            {content.clear}
-          </Link>
+          {(keyword || venueId) && (
+            <Link className="event-search-clear" href={searchHref(category, null, null)}>
+              {content.clear}
+            </Link>
+          )}
         </div>
       </form>
     </section>

@@ -53,8 +53,13 @@ describe("EventSearchPanel", () => {
     renderPanel({ category: "concerts", keyword: "Taylor", venueId: "s" });
 
     expect(screen.getByLabelText("Activity name")).toHaveValue("Taylor");
+    expect(screen.getByLabelText("Activity name")).toHaveClass("event-search-input");
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     expect(await screen.findByLabelText("Venue")).toHaveValue("s");
+    expect(screen.getByLabelText("Venue")).toHaveClass("event-search-select");
+    expect(screen.getByRole("button", { name: "Search events" })).toHaveClass(
+      "event-search-submit",
+    );
     expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
       "All venues",
       "Aotea Centre",
@@ -81,13 +86,22 @@ describe("EventSearchPanel", () => {
     expect(screen.getByRole("button", { name: "Searching events" })).toBeDisabled();
   });
 
-  it("keeps category while clearing activity and venue filters", () => {
-    renderPanel({ category: "concerts", keyword: "Taylor", venueId: "s" });
+  it.each([
+    { keyword: "Taylor", venueId: null },
+    { keyword: null, venueId: "s" },
+  ] as const)("keeps category while clearing an applied $keyword/$venueId filter", (filters) => {
+    renderPanel({ category: "concerts", ...filters });
 
     expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
       "href",
       "/events?category=concerts",
     );
+  });
+
+  it("omits clear when no activity or venue filter is applied", () => {
+    renderPanel({ category: "concerts", keyword: null, venueId: null });
+
+    expect(screen.queryByRole("link", { name: "Clear filters" })).not.toBeInTheDocument();
   });
 
   it("keeps name search usable when venues fail", async () => {

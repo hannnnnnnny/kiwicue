@@ -118,10 +118,7 @@ describe("bilingual route content", () => {
 
     expect(screen.getByText("Concerts")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View all events" })).toHaveAttribute("href", "/events");
-    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
-      "href",
-      "/events?category=concerts",
-    );
+    expect(screen.queryByRole("link", { name: "Clear filters" })).not.toBeInTheDocument();
 
     cleanup();
     const invalidPage = await EventsPage({
@@ -130,5 +127,29 @@ describe("bilingual route content", () => {
     render(<LanguageProvider>{invalidPage}</LanguageProvider>);
 
     expect(screen.queryByRole("link", { name: "View all events" })).not.toBeInTheDocument();
+  });
+
+  it("shows a category-preserving clear link for either applied search filter", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const keywordPage = await EventsPage({
+      searchParams: Promise.resolve({ category: "concerts", q: "Taylor" }),
+    });
+
+    render(<LanguageProvider>{keywordPage}</LanguageProvider>);
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
+
+    cleanup();
+    const venuePage = await EventsPage({
+      searchParams: Promise.resolve({ category: "concerts", venue: "venue-1" }),
+    });
+    render(<LanguageProvider>{venuePage}</LanguageProvider>);
+
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/events?category=concerts",
+    );
   });
 });
