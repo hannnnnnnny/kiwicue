@@ -4,14 +4,15 @@ import {
   type EventCategory,
 } from "../../../lib/event-categories";
 import {
-  fetchAucklandEvents,
   TicketmasterClientError,
   type TicketmasterErrorCode,
 } from "../../../lib/ticketmaster";
+import { fetchAucklandYearEvents } from "../../../lib/ticketmaster-year-feed";
 
 type LoadEvents = (options: {
   size?: number;
   category?: EventCategory;
+  cursor?: string;
 }) => Promise<AucklandEventsResult>;
 
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
@@ -24,7 +25,7 @@ const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
 
 export async function handleEventsRequest(
   request: Request,
-  loadEvents: LoadEvents = fetchAucklandEvents,
+  loadEvents: LoadEvents = fetchAucklandYearEvents,
 ): Promise<Response> {
   const url = new URL(request.url);
   const rawSize = url.searchParams.get("size");
@@ -34,10 +35,18 @@ export async function handleEventsRequest(
   const category = parseEventCategory(
     categoryValues.length === 1 ? categoryValues[0] : null,
   );
+  const cursorValues = url.searchParams.getAll("cursor");
+  const cursorCandidate = cursorValues.length === 1
+    ? cursorValues[0].trim()
+    : "";
+  const cursor = cursorCandidate && cursorCandidate.length <= 4096
+    ? cursorCandidate
+    : undefined;
   try {
     const payload = await loadEvents({
       size,
       ...(category ? { category } : {}),
+      ...(cursor ? { cursor } : {}),
     });
 
     return Response.json(payload, {
