@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import HomePage from "../app/page";
-import EventsPage from "../app/events/page";
+import EventsPage, { parseEventPageSearchParams } from "../app/events/page";
 import { LanguageProvider } from "../components/language-provider";
 
 beforeEach(() => {
@@ -15,6 +15,24 @@ afterEach(() => {
 });
 
 describe("bilingual route content", () => {
+  it("parses one validated event search and venue filter", () => {
+    expect(parseEventPageSearchParams({
+      q: "  Taylor   Swift ",
+      venue: "venue-1",
+      category: "concerts",
+    })).toEqual({
+      category: "concerts",
+      keyword: "Taylor Swift",
+      venueId: "venue-1",
+    });
+
+    expect(parseEventPageSearchParams({
+      q: ["Taylor", "Swift"],
+      venue: ["one", "two"],
+      category: ["concerts", "theatre"],
+    })).toEqual({ category: null, keyword: null, venueId: null });
+  });
+
   it("switches the home page from English to the approved Chinese identity", () => {
     render(
       <LanguageProvider>

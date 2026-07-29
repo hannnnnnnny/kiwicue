@@ -54,7 +54,11 @@ const copy = {
   },
 } as const;
 
-export function EventsPageContent({ category }: { category: EventCategory | null }) {
+export function EventsPageContent({ category }: {
+  category: EventCategory | null;
+  keyword: string | null;
+  venueId: string | null;
+}) {
   const { language } = useLanguage();
   const content = copy[language];
 
