@@ -193,3 +193,28 @@ footer { display: flex; justify-content: space-between; padding: 28px 0 38px; bo
 @media (prefers-reduced-motion: reduce) {
   .loading-pulse, .event-skeletons i { animation: none !important; }
 }
+
+/* Large, deliberate search controls for the Auckland event signal. */
+.event-search-panel { width: min(1180px, calc(100% - 40px)); margin: 42px auto 0; padding: 24px; border: 1px solid var(--line); background: #0d100d; }
+.event-search-fields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr); gap: 18px; }
+.event-search-field { display: grid; gap: 9px; }
+.event-search-field label { color: var(--ink); font-weight: 800; }
+.event-search-help, .event-search-status, .event-search-helper, .event-search-venue-status { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.event-search-input { min-height: 56px; }
+.event-search-select { min-height: 56px; }
+.event-search-input, .event-search-select { width: 100%; border: 1px solid #465046; border-radius: 0; background: #090b09; color: var(--ink); font: inherit; padding: 0 16px; transition: border-color 160ms ease, background 160ms ease; }
+.event-search-input:hover, .event-search-select:hover:not(:disabled) { border-color: var(--acid); }
+.event-search-input:focus-visible, .event-search-select:focus-visible, .event-search-submit:focus-visible, .event-search-clear:focus-visible { outline: 3px solid var(--acid); outline-offset: 3px; }
+.event-search-actions { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 14px; margin-top: 22px; }
+.event-search-submit { min-height: 56px; border: 1px solid var(--acid); background: var(--acid); color: #090b09; cursor: pointer; font: inherit; font-weight: 900; transition: background 160ms ease, transform 160ms ease; }
+.event-search-submit:hover:not(:disabled) { background: #e4ff83; transform: translateY(-2px); }
+.event-search-clear { min-height: 56px; display: inline-flex; align-items: center; justify-content: center; padding: 0 20px; border: 1px solid #465046; color: var(--ink); font-weight: 800; text-decoration: none; transition: border-color 160ms ease, color 160ms ease; }
+.event-search-clear:hover { border-color: var(--acid); color: var(--acid); }
+.event-search-submit:disabled, .event-search-select:disabled { cursor: wait; opacity: .62; }
+
+@media (max-width: 620px) {
+  .event-search-panel { width: min(100% - 28px, 1180px); padding: 20px; }
+  .event-search-fields { grid-template-columns: 1fr; }
+  .event-search-actions { grid-template-columns: 1fr; }
+  .event-search-clear { width: 100%; }
+}
