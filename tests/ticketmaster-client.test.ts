@@ -77,6 +77,18 @@ describe("Ticketmaster Discovery client", () => {
     expect(url.searchParams.get("sort")).toBe("date,desc");
   });
 
+  it("combines a user keyword with a keyword-backed category", () => {
+    const url = buildAucklandEventsUrl({
+      apiKey: "test-key",
+      now: new Date("2026-07-29T00:00:00.000Z"),
+      keyword: "Taylor Swift",
+      category: "markets",
+    });
+
+    expect(url.searchParams.get("keyword")).toBe("Taylor Swift market");
+    expect(url.searchParams.getAll("keyword")).toEqual(["Taylor Swift market"]);
+  });
+
   it("uses explicit range bounds for subdivided year queries", () => {
     const url = buildAucklandEventsUrl({
       apiKey: "test-key",

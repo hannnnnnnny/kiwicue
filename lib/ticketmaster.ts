@@ -141,12 +141,17 @@ export function buildAucklandEventsUrl({
     startDateTime: toDiscoveryDateTime(start),
   }).toString();
 
+  const normalizedKeyword = keyword?.normalize("NFC").trim().replace(/\s+/gu, " ");
+  const categoryFilter = category ? CATEGORY_FILTERS[category] : null;
+  const categoryKeyword = categoryFilter?.[0] === "keyword" ? categoryFilter[1] : null;
+  const upstreamKeyword = [normalizedKeyword, categoryKeyword].filter(Boolean).join(" ");
+
   if (end) url.searchParams.set("endDateTime", toDiscoveryDateTime(end));
-  if (keyword) url.searchParams.set("keyword", keyword);
+  if (upstreamKeyword) url.searchParams.set("keyword", upstreamKeyword);
   if (venueId) url.searchParams.set("venueId", venueId);
 
-  if (category) {
-    const [parameter, value] = CATEGORY_FILTERS[category];
+  if (categoryFilter && categoryFilter[0] !== "keyword") {
+    const [parameter, value] = categoryFilter;
     url.searchParams.set(parameter, value);
   }
 

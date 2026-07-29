@@ -24,7 +24,7 @@ const eventResult = {
       },
       status: "onsale",
       category: "Music",
-      venue: { name: "The Civic", city: "Auckland", address: "269 Queen Street" },
+      venue: { id: "venue-civic", name: "The Civic", city: "Auckland", address: "269 Queen Street" },
     },
   ],
   page: { size: 1, totalElements: 1, totalPages: 1, number: 0 },
