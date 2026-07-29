@@ -7,7 +7,7 @@ import {
   TicketmasterClientError,
   type TicketmasterErrorCode,
 } from "../../../lib/ticketmaster";
-import { fetchAucklandYearEvents } from "../../../lib/ticketmaster-year-feed";
+import { fetchAucklandEventFeed } from "../../../lib/ticketmaster-event-feed";
 
 type LoadEvents = (options: {
   size?: number;
@@ -25,7 +25,7 @@ const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
 
 export async function handleEventsRequest(
   request: Request,
-  loadEvents: LoadEvents = fetchAucklandYearEvents,
+  loadEvents: LoadEvents = fetchAucklandEventFeed,
 ): Promise<Response> {
   const url = new URL(request.url);
   const sizeValues = url.searchParams.getAll("size");

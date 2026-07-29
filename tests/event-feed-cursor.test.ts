@@ -13,14 +13,25 @@ const now = new Date("2026-07-29T00:00:00.000Z");
 const secret = "test-key";
 const state: EventFeedCursorState = {
   anchor: now.toISOString(),
-  category: null,
+  category: "concerts",
+  keyword: "Taylor Swift",
+  venueId: "venue-1",
+  scope: "unbounded",
+  horizonEnd: null,
   totalElements: 1201,
   size: 50,
   page: 1,
+  ranges: [{ start: now.toISOString(), end: null }],
+};
+
+const finiteState: EventFeedCursorState = {
+  ...state,
+  horizonEnd: "2026-10-01T00:00:00.000Z",
+  page: 0,
   ranges: [
     {
       start: now.toISOString(),
-      end: "2026-10-29T06:00:00.000Z",
+      end: "2026-08-01T00:00:00.000Z",
     },
   ],
 };
@@ -36,6 +47,9 @@ describe("event feed cursor", () => {
     expect(decodeEventFeedCursor(encodeEventFeedCursor(state, secret), secret, now)).toEqual(
       state,
     );
+    expect(
+      decodeEventFeedCursor(encodeEventFeedCursor(finiteState, secret), secret, now),
+    ).toEqual(finiteState);
   });
 
   it("rejects a cursor whose signed payload has been changed", () => {
@@ -65,6 +79,33 @@ describe("event feed cursor", () => {
     { ...state, extra: true },
     { v: 1, anchor: state.anchor },
     { v: 2, ...state },
+    (() => {
+      const withoutScope: Record<string, unknown> = { ...state };
+      delete withoutScope.scope;
+      return withoutScope;
+    })(),
+    { ...state, scope: "year" },
+    { ...state, keyword: 42 },
+    { ...state, keyword: " Taylor Swift " },
+    { ...state, venueId: "unsafe venue!" },
+    { ...state, venueId: " venue-1" },
+    { ...state, horizonEnd: "2026-10-01T00:00:00Z" },
+    { ...finiteState, ranges: [{ start: state.anchor, end: null }] },
+    {
+      ...finiteState,
+      ranges: [{ start: state.anchor, end: "2026-10-02T00:00:00.000Z" }],
+    },
+    {
+      ...finiteState,
+      ranges: [
+        { start: "2026-08-01T00:00:00.000Z", end: "2026-09-01T00:00:00.000Z" },
+        { start: state.anchor, end: "2026-08-01T00:00:00.000Z" },
+      ],
+    },
+    {
+      ...state,
+      ranges: [{ start: state.anchor, end: "2026-08-01T00:00:00.000Z" }],
+    },
     { ...state, size: 0 },
     { ...state, size: 51 },
     { ...state, page: 1.5 },
@@ -73,20 +114,16 @@ describe("event feed cursor", () => {
     { ...state, totalElements: 1.5 },
     { ...state, ranges: [] },
     {
-      ...state,
-      ranges: Array.from({ length: 33 }, () => state.ranges[0]),
+      ...finiteState,
+      ranges: Array.from({ length: 33 }, () => finiteState.ranges[0]),
     },
     {
-      ...state,
-      ranges: [{ start: "not-a-date", end: state.ranges[0].end }],
+      ...finiteState,
+      ranges: [{ start: "not-a-date", end: finiteState.ranges[0].end }],
     },
     {
-      ...state,
-      ranges: [{ start: state.ranges[0].end, end: state.anchor }],
-    },
-    {
-      ...state,
-      ranges: [{ start: state.anchor, end: "2027-07-30T00:00:00.000Z" }],
+      ...finiteState,
+      ranges: [{ start: finiteState.ranges[0].end, end: state.anchor }],
     },
   ])("rejects an invalid cursor payload", (payload) => {
     expect(
@@ -102,9 +139,7 @@ describe("event feed cursor", () => {
           v: 1,
           ...state,
           anchor: oldAnchor,
-          ranges: [
-            { start: oldAnchor, end: "2026-08-01T00:00:00.000Z" },
-          ],
+          ranges: [{ start: oldAnchor, end: null }],
         }),
         secret,
         now,
@@ -120,9 +155,7 @@ describe("event feed cursor", () => {
           v: 1,
           ...state,
           anchor: futureAnchor,
-          ranges: [
-            { start: futureAnchor, end: "2026-08-01T00:00:00.000Z" },
-          ],
+          ranges: [{ start: futureAnchor, end: null }],
         }),
         secret,
         now,
