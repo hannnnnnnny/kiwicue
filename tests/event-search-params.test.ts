@@ -20,6 +20,7 @@ describe("event search parameters", () => {
     "bad\u0000query",
     "Taylor\tSwift",
     "Taylor\nSwift",
+    "Taylor\u0085Swift",
   ])(
     "rejects an absent or unsafe event keyword",
     (value) => expect(parseEventKeyword(value)).toBeNull(),

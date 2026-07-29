@@ -96,6 +96,7 @@ describe("GET /api/events", () => {
     "q=bad%00query",
     "q=Taylor%09Swift",
     "q=Taylor%0ASwift",
+    "q=Taylor%C2%85Swift",
     "venue=one&venue=two",
     "venue=bad%20venue",
     "venue=%09venue-1",

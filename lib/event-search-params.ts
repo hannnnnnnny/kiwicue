@@ -1,4 +1,4 @@
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/u;
+const CONTROL_CHARACTERS = /\p{Cc}/u;
 const VENUE_ID = /^[A-Za-z0-9_-]{1,80}$/u;
 
 type PublicValue = string | string[] | null | undefined;
