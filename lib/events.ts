@@ -1,3 +1,8 @@
+export interface AucklandVenue {
+  id: string;
+  name: string;
+}
+
 export interface KiwiCueEvent {
   id: string;
   name: string;
@@ -12,6 +17,7 @@ export interface KiwiCueEvent {
   status: string;
   category: string;
   venue: {
+    id: string;
     name: string;
     city: string;
     address: string | null;

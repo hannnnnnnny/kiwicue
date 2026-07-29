@@ -45,7 +45,36 @@ describe("Ticketmaster Discovery client", () => {
     expect(url.searchParams.get("size")).toBe("50");
     expect(url.searchParams.get("page")).toBe("3");
     expect(url.searchParams.get("startDateTime")).toBe("2026-07-29T00:00:00Z");
-    expect(url.searchParams.get("endDateTime")).toBe("2027-07-29T00:00:00Z");
+    expect(url.searchParams.has("endDateTime")).toBe(false);
+  });
+
+  it("omits the end date for an unbounded future query", () => {
+    const url = buildAucklandEventsUrl({
+      apiKey: "test-key",
+      now: new Date("2026-07-29T00:00:00.000Z"),
+      size: 50,
+    });
+
+    expect(url.searchParams.get("startDateTime")).toBe("2026-07-29T00:00:00Z");
+    expect(url.searchParams.has("endDateTime")).toBe(false);
+    expect(url.searchParams.get("includeTBA")).toBe("no");
+    expect(url.searchParams.get("includeTBD")).toBe("no");
+  });
+
+  it("combines activity, venue, category, and descending-date filters", () => {
+    const url = buildAucklandEventsUrl({
+      apiKey: "test-key",
+      now: new Date("2026-07-29T00:00:00.000Z"),
+      keyword: "Taylor Swift",
+      venueId: "KovZpZA6t7kA",
+      category: "concerts",
+      sort: "date,desc",
+    });
+
+    expect(url.searchParams.get("keyword")).toBe("Taylor Swift");
+    expect(url.searchParams.get("venueId")).toBe("KovZpZA6t7kA");
+    expect(url.searchParams.get("classificationName")).toBe("Music");
+    expect(url.searchParams.get("sort")).toBe("date,desc");
   });
 
   it("uses explicit range bounds for subdivided year queries", () => {
@@ -125,6 +154,7 @@ describe("Ticketmaster Discovery client", () => {
       _embedded: {
         venues: [
           {
+            id: "venue-civic",
             name: "The Civic",
             city: { name: "Auckland" },
             address: { line1: "269 Queen Street" },
@@ -147,10 +177,28 @@ describe("Ticketmaster Discovery client", () => {
       status: "onsale",
       category: "Music",
       venue: {
+        id: "venue-civic",
         name: "The Civic",
         city: "Auckland",
         address: "269 Queen Street",
       },
+    });
+  });
+
+  it("keeps the Ticketmaster venue ID during normalization", () => {
+    const normalized = normalizeTicketmasterEvent({
+      id: "event-1",
+      name: "Auckland Live",
+      url: "https://ticketmaster.co.nz/event-1",
+      dates: { start: { localDate: "2026-08-01" } },
+      _embedded: { venues: [{ id: "venue-1", name: "The Civic", city: { name: "Auckland" } }] },
+    });
+
+    expect(normalized?.venue).toEqual({
+      id: "venue-1",
+      name: "The Civic",
+      city: "Auckland",
+      address: null,
     });
   });
 
