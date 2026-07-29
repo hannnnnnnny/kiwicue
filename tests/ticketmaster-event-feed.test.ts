@@ -4,12 +4,22 @@ vi.mock("server-only", () => ({}));
 
 import { decodeEventFeedCursor, encodeEventFeedCursor } from "../lib/event-feed-cursor";
 import {
-  fetchAucklandEventFeed,
+  fetchAucklandEventFeed as fetchAucklandEventFeedWithPacing,
   type TicketmasterPageLoader,
 } from "../lib/ticketmaster-event-feed";
 import type { KiwiCueEvent, TicketmasterPageResult } from "../lib/events";
 
 const now = new Date("2026-07-29T00:00:00.000Z");
+const noPacing = async () => {};
+
+type FeedOptions = Exclude<
+  Parameters<typeof fetchAucklandEventFeedWithPacing>[0],
+  undefined
+>;
+
+function fetchAucklandEventFeed(options: FeedOptions = {}) {
+  return fetchAucklandEventFeedWithPacing({ paceRequest: noPacing, ...options });
+}
 
 function event(id: string, localDate = "2026-08-01"): KiwiCueEvent {
   return {
@@ -229,6 +239,46 @@ describe("Ticketmaster unbounded event feed", () => {
       loadPage,
     })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
     expect(loadPage).toHaveBeenCalledTimes(64);
+  });
+
+  it("counts the farthest-event probe within the 64-call upstream budget", async () => {
+    const paceRequest = vi.fn(async () => {});
+    const loadPage = vi.fn<TicketmasterPageLoader>(async (options) => {
+      if (!options.endDateTime) {
+        return options.sort === "date,desc"
+          ? pageResult([event("farthest", "2035-12-20")], 0, 1201, 25)
+          : pageResult([], 0, 1201, 25);
+      }
+      return pageResult([], 0, 0, 0);
+    });
+
+    await expect(fetchAucklandEventFeed({
+      apiKey: "test-key",
+      now,
+      loadPage,
+      paceRequest,
+    })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
+    expect(loadPage).toHaveBeenCalledTimes(64);
+    expect(paceRequest).toHaveBeenCalledTimes(64);
+  });
+
+  it("fails safely when upstream returns more events than the requested batch size", async () => {
+    const paceRequest = vi.fn(async () => {});
+    const oversizedPage = Array.from({ length: 51 }, (_, index) =>
+      event(`event-${index}`),
+    );
+    const loadPage = vi.fn<TicketmasterPageLoader>(async () =>
+      pageResult(oversizedPage, 0, 51, 2),
+    );
+
+    await expect(fetchAucklandEventFeed({
+      apiKey: "test-key",
+      now,
+      loadPage,
+      paceRequest,
+    })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
+    expect(loadPage).toHaveBeenCalledOnce();
+    expect(paceRequest).toHaveBeenCalledOnce();
   });
 
   it("returns a null continuation after the final finite range", async () => {

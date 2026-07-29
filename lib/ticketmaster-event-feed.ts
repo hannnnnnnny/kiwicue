@@ -19,6 +19,8 @@ const MIN_SPLIT_RANGE_MS = 60 * 1000;
 const MAX_PENDING_RANGES = 32;
 const DEEP_PAGE_LIMIT = 1000;
 const FARTHEST_EVENT_PADDING_MS = 48 * 60 * 60 * 1000;
+const MAX_UPSTREAM_CALLS = 64;
+const MIN_REQUEST_START_INTERVAL_MS = 200;
 
 export type TicketmasterPageLoaderOptions = {
   apiKey: string;
@@ -36,7 +38,9 @@ export type TicketmasterPageLoader = (
   options: TicketmasterPageLoaderOptions,
 ) => Promise<TicketmasterPageResult>;
 
-type FetchAucklandEventFeedOptions = {
+export type TicketmasterRequestPacer = () => Promise<void>;
+
+export type FetchAucklandEventFeedOptions = {
   apiKey?: string;
   now?: Date;
   size?: number;
@@ -45,7 +49,23 @@ type FetchAucklandEventFeedOptions = {
   venueId?: string | null;
   cursor?: string;
   loadPage?: TicketmasterPageLoader;
+  paceRequest?: TicketmasterRequestPacer;
 };
+
+let sharedPacingTail = Promise.resolve();
+let lastSharedRequestStart = 0;
+
+function paceSharedTicketmasterRequest(): Promise<void> {
+  const pacingTurn = sharedPacingTail.then(async () => {
+    const remaining = lastSharedRequestStart + MIN_REQUEST_START_INTERVAL_MS - Date.now();
+    if (remaining > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, remaining));
+    }
+    lastSharedRequestStart = Date.now();
+  });
+  sharedPacingTail = pacingTurn.catch(() => undefined);
+  return pacingTurn;
+}
 
 function normalizeSize(size = 50): number {
   if (!Number.isFinite(size)) return 50;
@@ -113,6 +133,7 @@ export async function fetchAucklandEventFeed({
   venueId,
   cursor,
   loadPage = fetchAucklandEvents,
+  paceRequest = paceSharedTicketmasterRequest,
 }: FetchAucklandEventFeedOptions = {}): Promise<AucklandEventsResult> {
   const anchor = new Date(now.getTime());
   const requestedCategory = category ?? null;
@@ -148,8 +169,20 @@ export async function fetchAucklandEventFeed({
   let totalElements = state.totalElements;
   let horizonEnd = state.horizonEnd;
   let probingUnbounded = !decoded;
+  let upstreamCalls = 0;
 
-  for (let attempts = 0; attempts < 64; attempts += 1) {
+  async function loadUpstreamPage(
+    options: TicketmasterPageLoaderOptions,
+  ): Promise<TicketmasterPageResult> {
+    if (upstreamCalls >= MAX_UPSTREAM_CALLS) throw safeFailure();
+    await paceRequest();
+    upstreamCalls += 1;
+    const result = await loadPage(options);
+    if (result.events.length > options.size) throw safeFailure();
+    return result;
+  }
+
+  for (let attempts = 0; attempts < MAX_UPSTREAM_CALLS; attempts += 1) {
     const current = ranges[0];
     if (!current) {
       return {
@@ -166,7 +199,7 @@ export async function fetchAucklandEventFeed({
 
     const startDateTime = new Date(current.start);
     const endDateTime = current.end ? new Date(current.end) : undefined;
-    const pageResult = await loadPage({
+    const pageResult = await loadUpstreamPage({
       apiKey,
       size: state.size,
       page,
@@ -180,7 +213,7 @@ export async function fetchAucklandEventFeed({
       totalElements = pageResult.page.totalElements;
       probingUnbounded = false;
       if (totalElements > DEEP_PAGE_LIMIT) {
-        const farthest = await loadPage({
+        const farthest = await loadUpstreamPage({
           apiKey,
           size: 1,
           page: 0,
