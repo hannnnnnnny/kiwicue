@@ -139,12 +139,11 @@ describe("Auckland event explorer", () => {
     render(<EventExplorer requestEvents={requestEvents} />);
 
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
-    expect(screen.getByText("Sat, 1 Aug")).toBeInTheDocument();
-    expect(screen.getByText("7:30 pm")).toBeInTheDocument();
+    expect(screen.getByText("Sat, 1 Aug · 7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Music")).toBeInTheDocument();
     expect(screen.getByText("The Civic · Auckland")).toBeInTheDocument();
     expect(screen.getByText("1 upcoming Ticketmaster event · 1 shown")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View Harbour Lights on Ticketmaster" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Open Harbour Lights official details" })).toHaveAttribute(
       "href",
       "https://www.ticketmaster.co.nz/event/event-1",
     );
@@ -180,7 +179,7 @@ describe("Auckland event explorer", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Show 31 more events" }));
 
     expect(await screen.findByRole("heading", { name: "Event 81" })).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(81);
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(81);
     expect(screen.getAllByRole("heading", { name: "Event 50" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Show 31 more events" })).not.toBeInTheDocument();
     expect(screen.getByText("All Ticketmaster events are shown")).toBeInTheDocument();
@@ -338,7 +337,7 @@ describe("Auckland event explorer", () => {
     expect(summary).toHaveAttribute("tabindex", "-1");
     expect(sessionStorage.getItem("kiwicue:focus-results")).toBeNull();
 
-    const sourceLink = screen.getByRole("link", { name: "View Harbour Lights on Ticketmaster" });
+    const sourceLink = screen.getByRole("link", { name: "Open Harbour Lights official details" });
     sourceLink.focus();
     view.rerender(<EventExplorer keyword="Taylor" requestEvents={requestEvents} />);
     expect(sourceLink).toHaveFocus();
@@ -411,6 +410,7 @@ describe("Auckland event explorer", () => {
 
     expect(await screen.findByRole("heading", { name: "No upcoming events found" })).toBeInTheDocument();
     expect(screen.getByText("Check back soon—new Auckland events are added throughout the week.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Clear all filters" })).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -425,6 +425,7 @@ describe("Auckland event explorer", () => {
 
     expect(await screen.findByRole("heading", { name: "No matching events found" })).toBeInTheDocument();
     expect(screen.getByText("Try changing or clearing your filters.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Clear all filters" })).toHaveAttribute("href", "/events");
     expect(screen.queryByText(/temporarily|unavailable|technical/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -552,10 +553,9 @@ describe("Auckland event explorer", () => {
     renderChineseExplorer(readyRequest);
 
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
-    expect(screen.getByText("8月1日周六")).toBeInTheDocument();
-    expect(screen.getByText("19:30")).toBeInTheDocument();
+    expect(screen.getByText("8月1日周六 · 19:30")).toBeInTheDocument();
     expect(screen.getByText("Ticketmaster 当前可查 1 个未来活动 · 已显示 1 个")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "在 Ticketmaster 查看 Harbour Lights" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "打开 Harbour Lights 官方详情" })).toHaveAttribute(
       "href",
       "https://www.ticketmaster.co.nz/event/event-1",
     );
