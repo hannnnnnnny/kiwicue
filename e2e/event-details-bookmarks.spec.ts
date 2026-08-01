@@ -57,12 +57,17 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
 }
 
-async function expectMinimumHeight(page: Page, selectors: string[]) {
+async function expectMinimumTouchTarget(page: Page, selectors: string[]) {
   for (const selector of selectors) {
     const elements = page.locator(selector);
-    for (let index = 0; index < await elements.count(); index += 1) {
-      const box = await elements.nth(index).boundingBox();
+    const count = await elements.count();
+    expect(count, `${selector} should match a rendered action`).toBeGreaterThan(0);
+    for (let index = 0; index < count; index += 1) {
+      const element = elements.nth(index);
+      await expect(element, `${selector} should be visible`).toBeVisible();
+      const box = await element.boundingBox();
       expect(box?.height, selector).toBeGreaterThanOrEqual(44);
+      expect(box?.width, selector).toBeGreaterThanOrEqual(44);
     }
   }
 }
@@ -128,7 +133,7 @@ test("detail keeps booking, map, distance, and a persistent bookmark in one safe
   expect(await popup.evaluate(() => window.opener === null)).toBe(true);
   await popup.close();
 
-  await expectMinimumHeight(page, [
+  await expectMinimumTouchTarget(page, [
     ".event-detail-back",
     ".bookmark-button-detail",
     ".distance-panel button",
@@ -229,6 +234,12 @@ test("saved events invalidate stale clear confirmation and support a complete Ch
 
   await page.goto("/saved");
   await expect(page.getByText("2 saved events", { exact: true })).toBeVisible();
+  await expectMinimumTouchTarget(page, [
+    ".saved-link",
+    ".language-toggle",
+    ".saved-toolbar button",
+    ".bookmark-button-card",
+  ]);
   await page.getByRole("button", { name: "Clear all saved events" }).click();
   await expect(page.getByRole("button", { name: "Confirm clearing all saved events" })).toBeVisible();
   await page.getByRole("button", { name: `Remove ${event.name} from saved events` }).click();
@@ -243,6 +254,6 @@ test("saved events invalidate stale clear confirmation and support a complete Ch
   await expect(page.getByRole("heading", { name: "还没有收藏活动" })).toBeVisible();
   await expect(page.getByRole("link", { name: "收藏活动，0 个" })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("kiwicue:bookmarks:v1"))).toBeNull();
-  await expectMinimumHeight(page, [".saved-link", ".language-toggle", ".portal-empty-action"]);
+  await expectMinimumTouchTarget(page, [".portal-empty-action"]);
   await expectNoHorizontalOverflow(page);
 });
