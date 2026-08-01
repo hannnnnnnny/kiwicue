@@ -16,6 +16,9 @@ const state: EventFeedCursorState = {
   category: "concerts",
   keyword: "Taylor Swift",
   venueId: "venue-1",
+  window: "all",
+  windowStart: now.toISOString(),
+  windowEnd: null,
   scope: "unbounded",
   horizonEnd: null,
   totalElements: 1201,
@@ -26,7 +29,9 @@ const state: EventFeedCursorState = {
 
 const finiteState: EventFeedCursorState = {
   ...state,
-  horizonEnd: "2026-10-01T00:00:00.000Z",
+  window: "30d",
+  windowEnd: "2026-08-28T00:00:00.000Z",
+  horizonEnd: "2026-08-28T00:00:00.000Z",
   page: 0,
   ranges: [
     {
@@ -78,7 +83,8 @@ describe("event feed cursor", () => {
   it.each([
     { ...state, extra: true },
     { v: 1, anchor: state.anchor },
-    { v: 2, ...state },
+    { v: 1, ...state },
+    { v: 3, ...state },
     (() => {
       const withoutScope: Record<string, unknown> = { ...state };
       delete withoutScope.scope;
@@ -89,6 +95,15 @@ describe("event feed cursor", () => {
     { ...state, keyword: " Taylor Swift " },
     { ...state, venueId: "unsafe venue!" },
     { ...state, venueId: " venue-1" },
+    { ...state, window: "year" },
+    { ...state, windowStart: "2026-07-29T00:00:00Z" },
+    { ...state, window: "30d", windowEnd: null },
+    { ...state, windowEnd: "2026-08-28T00:00:00.000Z" },
+    {
+      ...finiteState,
+      windowStart: "2026-07-30T00:00:00.000Z",
+      ranges: [{ start: state.anchor, end: "2026-08-01T00:00:00.000Z" }],
+    },
     { ...state, horizonEnd: "2026-10-01T00:00:00Z" },
     { ...finiteState, ranges: [{ start: state.anchor, end: null }] },
     {
@@ -127,7 +142,7 @@ describe("event feed cursor", () => {
     },
   ])("rejects an invalid cursor payload", (payload) => {
     expect(
-      decodeEventFeedCursor(rawCursor({ v: 1, ...payload }), secret, now),
+      decodeEventFeedCursor(rawCursor({ v: 2, ...payload }), secret, now),
     ).toBeNull();
   });
 
@@ -136,7 +151,7 @@ describe("event feed cursor", () => {
     expect(
       decodeEventFeedCursor(
         rawCursor({
-          v: 1,
+          v: 2,
           ...state,
           anchor: oldAnchor,
           ranges: [{ start: oldAnchor, end: null }],
@@ -152,7 +167,7 @@ describe("event feed cursor", () => {
     expect(
       decodeEventFeedCursor(
         rawCursor({
-          v: 1,
+          v: 2,
           ...state,
           anchor: futureAnchor,
           ranges: [{ start: futureAnchor, end: null }],

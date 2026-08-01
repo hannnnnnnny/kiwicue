@@ -3,8 +3,9 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { parseEventCategory, type EventCategory } from "./event-categories";
 import { parseEventKeyword, parseVenueId } from "./event-search-params";
+import { parseEventWindow, type EventWindow } from "./event-window";
 
-const CURSOR_VERSION = 1;
+const CURSOR_VERSION = 2;
 const MAX_CURSOR_LENGTH = 4096;
 const MAX_RANGES = 32;
 const MAX_ANCHOR_AGE_MS = 24 * 60 * 60 * 1000;
@@ -20,6 +21,9 @@ export type EventFeedCursorState = {
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
+  window: EventWindow;
+  windowStart: string;
+  windowEnd: string | null;
   scope: "unbounded";
   horizonEnd: string | null;
   totalElements: number;
@@ -60,6 +64,9 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
     "category",
     "keyword",
     "venueId",
+    "window",
+    "windowStart",
+    "windowEnd",
     "scope",
     "horizonEnd",
     "totalElements",
@@ -83,6 +90,9 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
     typeof value.venueId === "string" ? value.venueId : null,
   );
   if (value.venueId !== null && venueId !== value.venueId) return null;
+  if (typeof value.window !== "string") return null;
+  const window = parseEventWindow(value.window);
+  if (window !== value.window) return null;
   if (value.scope !== "unbounded") return null;
 
   const anchor = canonicalDate(value.anchor);
@@ -90,12 +100,27 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
   const age = now.getTime() - anchor.getTime();
   if (age > MAX_ANCHOR_AGE_MS || age < -MAX_CLOCK_SKEW_MS) return null;
 
+  const windowStart = canonicalDate(value.windowStart);
+  const windowEnd = value.windowEnd === null
+    ? null
+    : canonicalDate(value.windowEnd);
+  if (!windowStart || windowStart.getTime() < anchor.getTime()) return null;
+  if (window === "all" && value.windowEnd !== null) return null;
+  if (
+    window !== "all" &&
+    (!windowEnd || windowEnd.getTime() <= windowStart.getTime())
+  ) return null;
+
   const horizonEnd = value.horizonEnd === null
     ? null
     : canonicalDate(value.horizonEnd);
   if (
     value.horizonEnd !== null &&
-    (!horizonEnd || horizonEnd.getTime() <= anchor.getTime())
+    (!horizonEnd || horizonEnd.getTime() <= windowStart.getTime())
+  ) return null;
+  if (
+    window !== "all" &&
+    horizonEnd?.toISOString() !== windowEnd?.toISOString()
   ) return null;
 
   if (
@@ -128,12 +153,13 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
       return null;
     }
     const start = canonicalDate(candidate.start);
-    if (!start || start.getTime() < anchor.getTime()) return null;
+    if (!start || start.getTime() < windowStart.getTime()) return null;
 
     if (!horizonEnd) {
       if (
         value.ranges.length !== 1 ||
-        start.getTime() !== anchor.getTime() ||
+        window !== "all" ||
+        start.getTime() !== windowStart.getTime() ||
         candidate.end !== null
       ) return null;
       ranges.push({ start: start.toISOString(), end: null });
@@ -156,6 +182,9 @@ function parsePayload(value: unknown, now: Date): EventFeedCursorState | null {
     category,
     keyword,
     venueId,
+    window,
+    windowStart: windowStart.toISOString(),
+    windowEnd: windowEnd?.toISOString() ?? null,
     scope: "unbounded",
     horizonEnd: horizonEnd?.toISOString() ?? null,
     totalElements: value.totalElements,
