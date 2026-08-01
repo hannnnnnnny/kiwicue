@@ -108,7 +108,9 @@ describe("complete portal accessibility contract", () => {
     for (const selector of [
       ".portal-brand", ".language-toggle", ".event-search-input", ".event-search-select",
       ".event-search-submit", ".portal-nav-link", ".portal-event-link", ".event-load-more",
-      ".portal-empty-action",
+      ".portal-empty-action", ".saved-link", ".bookmark-button-card", ".bookmark-button-detail",
+      ".event-detail-back", ".event-map figcaption a", ".distance-panel button",
+      ".event-booking-inline", ".event-booking-action", ".saved-toolbar button",
     ]) {
       expect(css).toMatch(new RegExp(`${selector.replaceAll(".", "\\.")}[^}]*min-height:\\s*(?:56px|44px)`, "s"));
     }

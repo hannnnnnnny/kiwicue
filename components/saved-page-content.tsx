@@ -67,8 +67,9 @@ export function SavedPageContent({
     storageError,
   } = useBookmarks();
   const content = copy[language];
-  const [clearArmed, setClearArmed] = useState(false);
   const requestKey = bookmarks.map((bookmark) => `${bookmark.event.id}:${bookmark.savedAt}`).join("|");
+  const [clearConfirmationKey, setClearConfirmationKey] = useState<string | null>(null);
+  const clearArmed = clearConfirmationKey === requestKey;
   const [refresh, setRefresh] = useState<RefreshState | null>(null);
   const currentRefresh = refresh?.key === requestKey ? refresh : null;
 
@@ -125,7 +126,7 @@ export function SavedPageContent({
               className={clearArmed ? "is-armed" : undefined}
               onClick={() => {
                 if (clearArmed) clearBookmarks();
-                else setClearArmed(true);
+                else setClearConfirmationKey(requestKey);
               }}
             >
               {clearArmed ? content.confirmClear : content.clear}
