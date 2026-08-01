@@ -9,6 +9,7 @@ type LoadVenues = () => Promise<AucklandVenue[]>;
 
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
   CONFIG_REQUIRED: "Venue data is not configured yet.",
+  UPSTREAM_NOT_FOUND: "Venue data is temporarily unavailable.",
   UPSTREAM_AUTH: "Venue data is temporarily unavailable.",
   UPSTREAM_BUSY: "Venue data is busy. Please try again shortly.",
   UPSTREAM_TIMEOUT: "Venue data took too long to respond.",

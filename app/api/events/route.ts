@@ -25,6 +25,7 @@ type LoadEvents = (options: {
 
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
   CONFIG_REQUIRED: "Event data is not configured yet.",
+  UPSTREAM_NOT_FOUND: "Event not found.",
   UPSTREAM_AUTH: "Event data is temporarily unavailable.",
   UPSTREAM_BUSY: "Event data is busy. Please try again shortly.",
   UPSTREAM_TIMEOUT: "Event data took too long to respond.",

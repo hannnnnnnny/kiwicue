@@ -3,6 +3,20 @@ export interface AucklandVenue {
   name: string;
 }
 
+export interface EventCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export interface KiwiCueVenue {
+  id: string;
+  name: string;
+  city: string;
+  address: string | null;
+  postalCode: string | null;
+  coordinates: EventCoordinates | null;
+}
+
 export interface KiwiCueEvent {
   id: string;
   name: string;
@@ -16,12 +30,12 @@ export interface KiwiCueEvent {
   };
   status: string;
   category: string;
-  venue: {
-    id: string;
-    name: string;
-    city: string;
-    address: string | null;
-  } | null;
+  venue: KiwiCueVenue | null;
+}
+
+export interface KiwiCueEventDetail extends KiwiCueEvent {
+  description: string | null;
+  note: string | null;
 }
 
 export interface EventPageMetadata {
