@@ -11,6 +11,9 @@
 
 # Test output
 /coverage/
+/test-results/
+/playwright-report/
+/blob-report/
 
 # Local environment values
 .env.local
