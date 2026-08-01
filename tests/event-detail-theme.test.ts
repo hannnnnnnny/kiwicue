@@ -18,10 +18,10 @@ describe("event detail visual contract", () => {
       ".event-map figcaption a",
       ".distance-panel button",
       ".event-booking-action",
+      ".event-booking-inline",
     ]) {
       expect(css).toMatch(new RegExp(`${selector.replaceAll(".", "\\.")}[^}]*min-height:\\s*(?:44px|56px)`, "s"));
     }
-    expect(css).toMatch(/\.event-booking-action\s*\{[^}]*min-height:\s*56px/s);
     expect(css).toMatch(/:focus-visible[^}]*outline:[^;}]*var\(--portal-focus\)/s);
   });
 

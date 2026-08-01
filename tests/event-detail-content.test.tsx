@@ -64,15 +64,18 @@ describe("event detail experience", () => {
     expect(screen.getByText("Age restrictions may apply.")).toBeVisible();
     expect(screen.getByRole("heading", { name: "How to book" })).toBeVisible();
     expect(screen.getByText("Choose Continue to official booking below.")).toBeVisible();
+    const primaryBooking = screen.getByRole("link", { name: "Continue to official booking" });
+    const description = screen.getByText("Doors open at 6:30 pm.");
+    expect(primaryBooking.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText("269 Queen Street")).toBeVisible();
     expect(screen.getByText("Auckland 1010")).toBeVisible();
     expect(screen.getByTitle("Map of The Civic")).toBeVisible();
     expect(screen.getByRole("button", { name: "Show distance from me" })).toBeEnabled();
     expect(getCurrentPosition).not.toHaveBeenCalled();
-    const booking = screen.getByRole("link", { name: "Continue to official booking" });
-    expect(booking).toHaveAttribute("href", detail.url);
-    expect(booking).toHaveAttribute("target", "_blank");
-    expect(booking).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(primaryBooking).toHaveAttribute("href", detail.url);
+    expect(primaryBooking).toHaveAttribute("target", "_blank");
+    expect(primaryBooking).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(screen.getByRole("link", { name: "Open official event website" })).toHaveAttribute("href", detail.url);
     expect(screen.getByRole("link", { name: "Skip to event details" })).toHaveAttribute("href", "#event-detail");
   });
 

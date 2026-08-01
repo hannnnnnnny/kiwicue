@@ -51,6 +51,7 @@ const copy = {
     addressUnavailable: "Street address is not available yet.",
     coordinatesUnavailable: "Map and distance are unavailable because this venue has no coordinates yet.",
     booking: "Continue to official booking",
+    officialWebsite: "Open official event website",
     source: "Availability, fees, entry rules, and final details remain with the official event website.",
     notFound: "Event not found",
     notFoundBody: "This event may have been removed or its official listing may have changed.",
@@ -77,6 +78,7 @@ const copy = {
     addressUnavailable: "场馆暂未提供街道地址。",
     coordinatesUnavailable: "该场馆暂未提供坐标，因此无法显示地图和距离。",
     booking: "前往官网预约或购票",
+    officialWebsite: "打开官方活动页面",
     source: "余票、费用、入场规则和最终活动详情均以官方网站为准。",
     notFound: "没有找到这个活动",
     notFoundBody: "该活动可能已下架，或官方活动信息已经改变。",
@@ -198,6 +200,14 @@ export function EventDetailContent({
         <section className="event-detail-section" aria-labelledby="booking-title">
           <h2 id="booking-title">{content.bookingTitle}</h2>
           <ol>{content.bookingSteps.map((step) => <li key={step}>{step}</li>)}</ol>
+          <a
+            className="event-booking-inline"
+            href={event.url}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            {content.booking}<span aria-hidden="true"> ↗</span>
+          </a>
         </section>
 
         <section className="event-detail-section" aria-labelledby="information-title">
@@ -233,7 +243,7 @@ export function EventDetailContent({
           target="_blank"
           rel="noreferrer noopener"
         >
-          {content.booking}<span aria-hidden="true"> ↗</span>
+          {content.officialWebsite}<span aria-hidden="true"> ↗</span>
         </a>
         <p className="event-source-note">{content.source}</p>
       </aside>
