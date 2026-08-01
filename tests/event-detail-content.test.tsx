@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventDetailContent, EventDetailRequestError } from "../components/event-detail-content";
+import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
 import type { KiwiCueEventDetail } from "../lib/events";
 
@@ -43,7 +44,9 @@ function renderDetail(
 ) {
   return render(
     <LanguageProvider>
-      <EventDetailContent eventId="event-123" requestEventDetail={requestEventDetail} />
+      <BookmarkProvider>
+        <EventDetailContent eventId="event-123" requestEventDetail={requestEventDetail} />
+      </BookmarkProvider>
     </LanguageProvider>,
   );
 }
@@ -72,6 +75,8 @@ describe("event detail experience", () => {
     expect(screen.getByTitle("Map of The Civic")).toBeVisible();
     expect(screen.getByRole("button", { name: "Show distance from me" })).toBeEnabled();
     expect(getCurrentPosition).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Save Auckland Night Live" }));
+    expect(screen.getByRole("button", { name: "Remove Auckland Night Live from saved events" })).toHaveAttribute("aria-pressed", "true");
     expect(primaryBooking).toHaveAttribute("href", detail.url);
     expect(primaryBooking).toHaveAttribute("target", "_blank");
     expect(primaryBooking).toHaveAttribute("rel", expect.stringContaining("noopener"));

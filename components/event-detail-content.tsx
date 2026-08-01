@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatEventDate, formatEventStatus, formatEventTime } from "../lib/event-display";
 import type { KiwiCueEventDetail } from "../lib/events";
+import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
 import { EventMap } from "./event-map";
 import { useLanguage } from "./language-provider";
@@ -195,6 +196,7 @@ export function EventDetailContent({
             <span>{event.category}</span>
             <span>{formatEventStatus(event.status, language)}</span>
           </div>
+          <BookmarkButton event={event} language={language} placement="detail" />
         </header>
 
         <section className="event-detail-section" aria-labelledby="booking-title">

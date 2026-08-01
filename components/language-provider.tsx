@@ -44,7 +44,11 @@ function subscribeToLanguage(onStoreChange: () => void) {
 }
 
 function getStoredLanguage(): Language {
-  return localStorage.getItem(STORAGE_KEY) === "zh" ? "zh" : "en";
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "zh" ? "zh" : "en";
+  } catch {
+    return "en";
+  }
 }
 
 function getServerLanguage(): Language {
@@ -59,9 +63,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem(STORAGE_KEY);
-    if (savedLanguage !== null && savedLanguage !== "en" && savedLanguage !== "zh") {
-      localStorage.removeItem(STORAGE_KEY);
+    try {
+      const savedLanguage = localStorage.getItem(STORAGE_KEY);
+      if (savedLanguage !== null && savedLanguage !== "en" && savedLanguage !== "zh") {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // Language remains usable in English when browser storage is unavailable.
     }
     setDocumentLanguage(language);
   }, [language]);
@@ -69,7 +77,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LanguageContextValue>(() => ({
     language,
     setLanguage(nextLanguage) {
-      localStorage.setItem(STORAGE_KEY, nextLanguage);
+      try {
+        localStorage.setItem(STORAGE_KEY, nextLanguage);
+      } catch {
+        // Keep the current language without making the rest of the portal fail.
+      }
       window.dispatchEvent(new Event(LANGUAGE_CHANGE_EVENT));
     },
   }), [language]);
