@@ -48,4 +48,7 @@ test("supports accessible language switching and responsive display", () => {
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media \(max-width: 680px\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /--portal-brand:\s*#126b4b/i);
+  assert.doesNotMatch(css, /--signal|--acid|#c8ff3d|#d8ff57/i);
+  assert.match(read("index.html"), /<meta name="theme-color" content="#ffffff" \/>/i);
 });
