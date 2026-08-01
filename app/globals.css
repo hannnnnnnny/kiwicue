@@ -250,6 +250,18 @@ footer { display: flex; justify-content: space-between; gap: 24px; padding: 28px
   .portal-event-body h2 { font-size: 1.22rem; }
 }
 
+@media (max-width: 390px) {
+  .portal-header, .portal-command, .portal-navigation-shell, .event-state, .event-feed, .portal-about, .portal-footer { width: calc(100% - 24px); }
+  .event-grid, .event-grid-skeleton { gap-inline: 10px; }
+  .portal-event-meta { margin-block: 11px 13px; }
+}
+
+@media (max-width: 320px) {
+  .portal-header, .portal-command, .portal-navigation-shell, .event-state, .event-feed, .portal-about, .portal-footer { width: calc(100% - 20px); }
+  .portal-command .event-search-panel { padding: 12px; }
+  .portal-nav-link { min-width: 96px; padding-inline: 14px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
   .portal-event-card:hover .portal-event-media img, button:active, a:active { transform: none !important; }
