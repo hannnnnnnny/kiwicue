@@ -22,7 +22,9 @@ describe("bookmark visual and app-shell contract", () => {
   it("uses a 4/2/1 saved grid without hiding the visible save label", () => {
     expect(css).toMatch(/\.event-grid\s*\{[^}]*grid-template-columns:\s*repeat\(4,/s);
     expect(css).toMatch(/@media \(max-width:\s*1080px\)[\s\S]*\.saved-event-grid\s*\{[^}]*repeat\(2,/s);
+    expect(css).toMatch(/@media \(max-width:\s*700px\)[\s\S]*\.saved-event-grid:has\(> li:only-child\)\s*\{[^}]*grid-template-columns:\s*1fr/s);
     expect(css).toMatch(/@media \(max-width:\s*359px\)[\s\S]*\.saved-event-grid\s*\{[^}]*grid-template-columns:\s*1fr/s);
+    expect(css).toMatch(/@media \(max-width:\s*359px\)[\s\S]*\.portal-brand-copy\s*\{[^}]*display:\s*none/s);
     expect(css).not.toMatch(/bookmark-button[^}]*span[^}]*display:\s*none/s);
   });
 });
