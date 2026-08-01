@@ -133,6 +133,22 @@ describe("Saved events page", () => {
     expect(await screen.findByRole("heading", { name: "No saved events yet" })).toBeVisible();
   });
 
+  it("cancels an armed clear-all action when the saved list changes", async () => {
+    const first = event("event-1", "First saved");
+    const second = event("event-2", "Second saved");
+    persist(first, second);
+    renderSaved(vi.fn((id: string) => Promise.resolve(detail(id === "event-1" ? first : second))));
+    await screen.findByRole("heading", { name: "First saved" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear all saved events" }));
+    expect(screen.getByRole("button", { name: "Confirm clearing all saved events" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove First saved from saved events" }));
+
+    expect(await screen.findByRole("button", { name: "Clear all saved events" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Second saved" })).toBeVisible();
+  });
+
   it("switches the page and bookmark actions to Chinese", async () => {
     const saved = event("event-1", "Harbour Lights");
     persist(saved);
