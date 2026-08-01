@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { EventCategory } from "../lib/event-categories";
 import { parseEventKeyword, parseVenueId } from "../lib/event-search-params";
+import { eventSearchHref } from "../lib/event-search-url";
+import type { EventWindow } from "../lib/event-window";
 import { useLanguage } from "./language-provider";
 
 type VenueOption = {
@@ -15,6 +17,7 @@ type VenueOption = {
 type VenueStatus = "loading" | "ready" | "unavailable";
 
 type EventSearchPanelProps = {
+  window: EventWindow;
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
@@ -44,18 +47,6 @@ const copy = {
     venueUnavailable: "场馆暂时不可用",
   },
 } as const;
-
-function searchHref(
-  category: EventCategory | null,
-  keyword: string | null,
-  venueId: string | null,
-) {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (keyword) params.set("q", keyword);
-  if (venueId) params.set("venue", venueId);
-  return `/events${params.size ? `?${params.toString()}` : ""}`;
-}
 
 function parseVenueResponse(value: unknown): VenueOption[] | null {
   if (
@@ -90,6 +81,7 @@ function parseVenueResponse(value: unknown): VenueOption[] | null {
 }
 
 export function EventSearchPanel({
+  window: eventWindow = "all",
   category,
   keyword,
   venueId,
@@ -126,7 +118,8 @@ export function EventSearchPanel({
 
   return (
     <SearchForm
-      key={JSON.stringify([category, keyword, venueId])}
+      key={JSON.stringify([eventWindow, category, keyword, venueId])}
+      window={eventWindow}
       category={category}
       keyword={keyword}
       venueId={venueId}
@@ -138,6 +131,7 @@ export function EventSearchPanel({
 }
 
 function SearchForm({
+  window: eventWindow,
   category,
   keyword,
   venueId,
@@ -154,7 +148,7 @@ function SearchForm({
   const [draftVenue, setDraftVenue] = useState(venueId ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [submittedHref, setSubmittedHref] = useState<string | null>(null);
-  const appliedHref = searchHref(category, keyword, venueId);
+  const appliedHref = eventSearchHref({ window: eventWindow, category, keyword, venueId });
 
   useEffect(() => {
     if (!submitting || submittedHref !== appliedHref) return;
@@ -170,11 +164,12 @@ function SearchForm({
     if (submitting) return;
     const normalizedKeyword = parseEventKeyword(draftKeyword);
     const normalizedVenue = parseVenueId(draftVenue);
-    const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (normalizedKeyword) params.set("q", normalizedKeyword);
-    if (normalizedVenue) params.set("venue", normalizedVenue);
-    const href = `/events${params.size ? `?${params.toString()}` : ""}`;
+    const href = eventSearchHref({
+      window: eventWindow,
+      category,
+      keyword: normalizedKeyword,
+      venueId: normalizedVenue,
+    });
     setSubmitting(true);
     setSubmittedHref(href);
     sessionStorage.setItem("kiwicue:focus-results", "1");
@@ -234,7 +229,12 @@ function SearchForm({
             {submitting ? content.searching : content.search}
           </button>
           {(keyword || venueId) && (
-            <Link className="event-search-clear" href={searchHref(category, null, null)}>
+            <Link className="event-search-clear" href={eventSearchHref({
+              window: eventWindow,
+              category,
+              keyword: null,
+              venueId: null,
+            })}>
               {content.clear}
             </Link>
           )}

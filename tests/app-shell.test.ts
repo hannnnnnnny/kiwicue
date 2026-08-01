@@ -5,18 +5,14 @@ import { describe, expect, it } from "vitest";
 const projectRoot = resolve(import.meta.dirname, "..");
 
 describe("Next.js application shell", () => {
-  it("provides an Auckland-first home page", () => {
+  it("redirects the root to the Auckland event portal", () => {
     const pagePath = resolve(projectRoot, "app/page.tsx");
-    const contentPath = resolve(projectRoot, "components/home-content.tsx");
 
     expect(existsSync(pagePath)).toBe(true);
-    expect(existsSync(contentPath)).toBe(true);
 
     const pageSource = readFileSync(pagePath, "utf8");
-    const contentSource = readFileSync(contentPath, "utf8");
-    expect(pageSource).toContain("HomeContent");
-    expect(contentSource).toContain("Auckland events, before you miss them");
-    expect(contentSource).toContain('href="/events"');
+    expect(pageSource).toContain('permanentRedirect("/events")');
+    expect(pageSource).not.toContain("HomeContent");
   });
 
   it("keeps the Ticketmaster key out of browser-facing files", () => {

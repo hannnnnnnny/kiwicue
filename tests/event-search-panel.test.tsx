@@ -25,6 +25,7 @@ function venueResponse(venues = [
 
 function renderPanel(
   props: {
+    window?: "7d" | "weekend" | "30d" | "all";
     category: "concerts" | null;
     keyword: string | null;
     venueId: string | null;
@@ -33,7 +34,7 @@ function renderPanel(
   return render(
     <LanguageProvider>
       <LanguageToggle />
-      <EventSearchPanel {...props} />
+      <EventSearchPanel window={props.window ?? "all"} category={props.category} keyword={props.keyword} venueId={props.venueId} />
     </LanguageProvider>,
   );
 }
@@ -186,7 +187,7 @@ describe("EventSearchPanel", () => {
     });
     view.rerender(
       <LanguageProvider>
-        <EventSearchPanel category="concerts" keyword="Benee" venueId={null} />
+        <EventSearchPanel window="all" category="concerts" keyword="Benee" venueId={null} />
       </LanguageProvider>,
     );
 

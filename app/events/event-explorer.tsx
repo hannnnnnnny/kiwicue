@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLanguage, type Language } from "../../components/language-provider";
 import type { EventCategory } from "../../lib/event-categories";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
+import type { EventWindow } from "../../lib/event-window";
 
 type RequestEventsOptions = {
+  window?: EventWindow;
   category?: EventCategory;
   keyword?: string;
   venueId?: string;
@@ -30,12 +32,14 @@ type ExplorerState =
   | { status: "error"; requestKey: string; events: [] };
 
 async function requestEventsFromApi({
+  window,
   category,
   keyword,
   venueId,
   cursor,
 }: RequestEventsOptions): Promise<AucklandEventsResult> {
   const params = new URLSearchParams({ size: "50" });
+  if (window && window !== "all") params.set("window", window);
   if (category) params.set("category", category);
   if (keyword) params.set("q", keyword);
   if (venueId) params.set("venue", venueId);
@@ -153,12 +157,14 @@ function appendUniqueEvents(current: KiwiCueEvent[], incoming: KiwiCueEvent[]): 
 }
 
 function buildRequestOptions(
+  window: EventWindow,
   category: EventCategory | null,
   keyword: string | null,
   venueId: string | null,
   cursor?: string,
 ): RequestEventsOptions {
   const options: RequestEventsOptions = {};
+  if (window !== "all") options.window = window;
   if (category) options.category = category;
   if (keyword) options.keyword = keyword;
   if (venueId) options.venueId = venueId;
@@ -167,11 +173,13 @@ function buildRequestOptions(
 }
 
 export function EventExplorer({
+  window = "all",
   category = null,
   keyword = null,
   venueId = null,
   requestEvents = requestEventsFromApi,
 }: {
+  window?: EventWindow;
   category?: EventCategory | null;
   keyword?: string | null;
   venueId?: string | null;
@@ -186,11 +194,12 @@ export function EventExplorer({
   const resultsSummaryRef = useRef<HTMLParagraphElement>(null);
   const requestKey = JSON.stringify({
     category: category ?? null,
+    window,
     keyword: keyword ?? null,
     venueId: venueId ?? null,
     attempt,
   });
-  const isFiltered = Boolean(keyword || venueId || category);
+  const isFiltered = Boolean(keyword || venueId || category || window !== "all");
   const stateForRequest: ExplorerState = state.status !== "loading" && state.requestKey === requestKey
     ? state
     : { status: "loading", events: [] };
@@ -200,7 +209,7 @@ export function EventExplorer({
     let cancelled = false;
     appendInFlightRef.current = false;
 
-    const options = buildRequestOptions(category, keyword, venueId);
+    const options = buildRequestOptions(window, category, keyword, venueId);
     requestEvents(options)
       .then((result) => {
         if (cancelled || generation !== generationRef.current) return;
@@ -224,7 +233,7 @@ export function EventExplorer({
     return () => {
       cancelled = true;
     };
-  }, [requestKey, requestEvents, category, keyword, venueId]);
+  }, [requestKey, requestEvents, window, category, keyword, venueId]);
 
   useEffect(() => {
     if (stateForRequest.status !== "ready") return;
@@ -253,7 +262,7 @@ export function EventExplorer({
       : current);
 
     try {
-      const options = buildRequestOptions(category, keyword, venueId, cursor);
+      const options = buildRequestOptions(window, category, keyword, venueId, cursor);
       const result = await requestEvents(options);
       if (generation !== generationRef.current) return;
 

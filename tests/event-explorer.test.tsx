@@ -7,6 +7,7 @@ import { LanguageProvider } from "../components/language-provider";
 import { LanguageToggle } from "../components/language-toggle";
 import type { EventCategory } from "../lib/event-categories";
 import type { AucklandEventsResult } from "../lib/events";
+import type { EventWindow } from "../lib/event-window";
 
 const router = vi.hoisted(() => ({ push: vi.fn() }));
 
@@ -38,6 +39,7 @@ const eventResult = {
 };
 
 type RequestEvents = (options: {
+  window?: EventWindow;
   category?: EventCategory;
   keyword?: string;
   venueId?: string;
@@ -116,9 +118,9 @@ describe("Auckland event explorer", () => {
     const page = await EventsPage();
     render(page);
 
-    expect(screen.getByRole("heading", { name: "What’s on, before it’s gone" })).toBeInTheDocument();
-    expect(screen.getByText("Auckland · All upcoming")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to KiwiCue home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("heading", { name: "Find something worth going to" })).toBeInTheDocument();
+    expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/events");
   });
 
   it("shows an immediate loading signal while Auckland events are requested", () => {
@@ -190,6 +192,7 @@ describe("Auckland event explorer", () => {
 
     render(
       <EventExplorer
+        window="weekend"
         category="concerts"
         keyword="Taylor Swift"
         venueId="venue-1"
@@ -199,6 +202,7 @@ describe("Auckland event explorer", () => {
 
     await screen.findByRole("heading", { name: "Harbour Lights" });
     expect(requestEvents).toHaveBeenCalledWith({
+      window: "weekend",
       category: "concerts",
       keyword: "Taylor Swift",
       venueId: "venue-1",
@@ -213,6 +217,7 @@ describe("Auckland event explorer", () => {
 
     render(
       <EventExplorer
+        window="weekend"
         category="concerts"
         keyword="Taylor Swift"
         venueId="venue-1"
@@ -223,6 +228,7 @@ describe("Auckland event explorer", () => {
 
     expect(await screen.findByRole("heading", { name: "Event 2" })).toBeInTheDocument();
     expect(requestEvents).toHaveBeenNthCalledWith(2, {
+      window: "weekend",
       category: "concerts",
       keyword: "Taylor Swift",
       venueId: "venue-1",
@@ -477,6 +483,7 @@ describe("Auckland event explorer", () => {
 
     render(
       <EventExplorer
+        window="weekend"
         category="concerts"
         keyword="Taylor Swift"
         venueId="venue-1"
@@ -486,11 +493,11 @@ describe("Auckland event explorer", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
     expect(await screen.findByRole("heading", { name: "Event 2" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/events?size=50&category=concerts&q=Taylor+Swift&venue=venue-1",
+      "/api/events?size=50&window=weekend&category=concerts&q=Taylor+Swift&venue=venue-1",
       expect.objectContaining({ headers: { accept: "application/json" } }),
     );
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/events?size=50&category=concerts&q=Taylor+Swift&venue=venue-1&cursor=page+two",
+      "/api/events?size=50&window=weekend&category=concerts&q=Taylor+Swift&venue=venue-1&cursor=page+two",
       expect.objectContaining({ headers: { accept: "application/json" } }),
     );
   });

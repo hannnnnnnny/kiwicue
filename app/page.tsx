@@ -1,5 +1,5 @@
-import { HomeContent } from "../components/home-content";
+import { permanentRedirect } from "next/navigation";
 
 export default function HomePage() {
-  return <HomeContent />;
+  permanentRedirect("/events");
 }
