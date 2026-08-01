@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useLanguage, type Language } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 import type { EventCategory } from "../../lib/event-categories";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 import type { EventWindow } from "../../lib/event-window";
+import { EventCard } from "./event-card";
 
 type RequestEventsOptions = {
   window?: EventWindow;
@@ -60,12 +62,8 @@ async function requestEventsFromApi({
 const copy = {
   en: {
     loading: "Scanning Auckland for what is next",
-    timePending: "Time to be confirmed",
     count: (isFiltered: boolean, total: number, shown: number) => `${total} ${isFiltered ? "matching" : "upcoming"} Ticketmaster ${total === 1 ? "event" : "events"} · ${shown} shown`,
     sources: "Official source links included",
-    venuePending: "Auckland venue to be confirmed",
-    linkLabel: (name: string) => `View ${name} on Ticketmaster`,
-    linkText: "Official details",
     disclaimer: "Event details and ticket availability come from Ticketmaster. KiwiCue helps you discover events and does not sell tickets.",
     more: (count: number) => `Show ${count} more ${count === 1 ? "event" : "events"}`,
     loadingMore: "Loading more events",
@@ -77,6 +75,7 @@ const copy = {
     upcomingEmptyBody: "Check back soon—new Auckland events are added throughout the week.",
     matchingEmptyTitle: "No matching events found",
     matchingEmptyBody: "Try changing or clearing your filters.",
+    emptyAction: "Clear all filters",
     errorCode: "SIGNAL LOST",
     errorTitle: "Auckland events are temporarily out of range",
     errorBody: "We could not refresh the event feed. Your Ticketmaster key and technical details remain private.",
@@ -85,14 +84,10 @@ const copy = {
   },
   zh: {
     loading: "正在扫描奥克兰近期活动",
-    timePending: "时间待定",
     count: (isFiltered: boolean, total: number, shown: number) => isFiltered
       ? `Ticketmaster 共找到 ${total} 个匹配活动 · 已显示 ${shown} 个`
       : `Ticketmaster 当前可查 ${total} 个未来活动 · 已显示 ${shown} 个`,
     sources: "包含官方来源链接",
-    venuePending: "奥克兰场馆待确认",
-    linkLabel: (name: string) => `在 Ticketmaster 查看 ${name}`,
-    linkText: "官方详情",
     disclaimer: "活动详情和余票状态来自 Ticketmaster。KiwiCue 帮你发现活动，不销售门票。",
     more: (count: number) => `再显示 ${count} 个活动`,
     loadingMore: "正在加载更多活动",
@@ -104,6 +99,7 @@ const copy = {
     upcomingEmptyBody: "请稍后再来，本周还会陆续加入新的奥克兰活动。",
     matchingEmptyTitle: "没有找到匹配的活动",
     matchingEmptyBody: "请更改或清除筛选条件后再试。",
+    emptyAction: "清除全部筛选",
     errorCode: "信号暂时中断",
     errorTitle: "暂时无法获取奥克兰活动",
     errorBody: "活动信息刷新失败。你的 Ticketmaster 密钥和技术详情仍然保密。",
@@ -111,40 +107,6 @@ const copy = {
     retryText: "重新扫描",
   },
 } as const;
-
-function formatEventDate(localDate: string, language: Language): string {
-  const [year, month, day] = localDate.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  if (language === "zh") {
-    const weekday = new Intl.DateTimeFormat("zh-CN", {
-      weekday: "short",
-      timeZone: "UTC",
-    }).format(date);
-    return `${month}月${day}日${weekday}`;
-  }
-
-  return new Intl.DateTimeFormat("en-NZ", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function formatEventTime(localTime: string | null, language: Language): string {
-  if (!localTime) return copy[language].timePending;
-  const [hour, minute] = localTime.split(":").map(Number);
-  if (language === "zh") {
-    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-  }
-
-  return new Intl.DateTimeFormat("en-NZ", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(1970, 0, 1, hour, minute))).toLowerCase();
-}
 
 function appendUniqueEvents(current: KiwiCueEvent[], incoming: KiwiCueEvent[]): KiwiCueEvent[] {
   const seen = new Set(current.map((event) => event.id));
@@ -293,8 +255,10 @@ export function EventExplorer({
       <section className="event-state event-loading" role="status" aria-busy="true">
         <span className="loading-pulse" aria-hidden="true" />
         <p>{content.loading}</p>
-        <div className="event-skeletons" aria-hidden="true">
-          <i /><i /><i />
+        <div className="event-grid-skeleton" aria-hidden="true">
+          {Array.from({ length: 6 }, (_, index) => (
+            <i key={index}><span /><span /><span /></i>
+          ))}
         </div>
       </section>
     );
@@ -312,45 +276,10 @@ export function EventExplorer({
           </p>
           <span><i aria-hidden="true" /> {content.sources}</span>
         </div>
-        <ol className="event-list">
+        <ol className="event-grid">
           {stateForRequest.events.map((event, index) => (
             <li key={event.id}>
-              <article className="event-card">
-                <div className="event-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div>
-                <div className="event-date-block">
-                  <time dateTime={event.start.localDate}>{formatEventDate(event.start.localDate, language)}</time>
-                  <span>{formatEventTime(event.start.localTime, language)}</span>
-                </div>
-                <div className="event-card-copy">
-                  <div className="event-labels">
-                    <span>{event.category}</span>
-                    {event.status !== "onsale" && <span>{event.status.replaceAll("_", " ")}</span>}
-                  </div>
-                  <h3>{event.name}</h3>
-                  <p className="event-venue">
-                    {event.venue ? `${event.venue.name} · ${event.venue.city}` : content.venuePending}
-                  </p>
-                  {event.venue?.address && <p className="event-address">{event.venue.address}</p>}
-                  <a
-                    className="event-source-link"
-                    href={event.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label={content.linkLabel(event.name)}
-                  >
-                    {content.linkText} <span aria-hidden="true">↗</span>
-                  </a>
-                </div>
-                <div
-                  className={`event-art${event.imageUrl ? " has-image" : ""}`}
-                  style={event.imageUrl
-                    ? { backgroundImage: `linear-gradient(135deg, transparent, rgba(8, 10, 8, .55)), url(${JSON.stringify(event.imageUrl)})` }
-                    : undefined}
-                  aria-hidden="true"
-                >
-                  {!event.imageUrl && <span>AKL</span>}
-                </div>
-              </article>
+              <EventCard event={event} index={index} language={language} />
             </li>
           ))}
         </ol>
@@ -390,6 +319,9 @@ export function EventExplorer({
         <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
         <h2>{isFiltered ? content.matchingEmptyTitle : content.upcomingEmptyTitle}</h2>
         <p>{isFiltered ? content.matchingEmptyBody : content.upcomingEmptyBody}</p>
+        {isFiltered && (
+          <Link className="portal-empty-action" href="/events">{content.emptyAction}</Link>
+        )}
       </section>
     );
   }
