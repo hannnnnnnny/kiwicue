@@ -133,7 +133,7 @@ describe("Auckland event explorer", () => {
     expect(requestEvents).toHaveBeenCalledOnce();
   });
 
-  it("renders useful event details and the official source link", async () => {
+  it("renders useful event details and the internal detail link", async () => {
     const requestEvents = vi.fn().mockResolvedValue(eventResult);
 
     render(<EventExplorer requestEvents={requestEvents} />);
@@ -143,9 +143,9 @@ describe("Auckland event explorer", () => {
     expect(screen.getByText("Music")).toBeInTheDocument();
     expect(screen.getByText("The Civic · Auckland")).toBeInTheDocument();
     expect(screen.getByText("1 upcoming Ticketmaster event · 1 shown")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open Harbour Lights official details" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "View Harbour Lights details" })).toHaveAttribute(
       "href",
-      "https://www.ticketmaster.co.nz/event/event-1",
+      "/events/event-1",
     );
   });
 
@@ -337,10 +337,10 @@ describe("Auckland event explorer", () => {
     expect(summary).toHaveAttribute("tabindex", "-1");
     expect(sessionStorage.getItem("kiwicue:focus-results")).toBeNull();
 
-    const sourceLink = screen.getByRole("link", { name: "Open Harbour Lights official details" });
-    sourceLink.focus();
+    const detailLink = screen.getByRole("link", { name: "View Harbour Lights details" });
+    detailLink.focus();
     view.rerender(<EventExplorer keyword="Taylor" requestEvents={requestEvents} />);
-    expect(sourceLink).toHaveFocus();
+    expect(detailLink).toHaveFocus();
   });
 
   it("does not steal focus on a first visit", async () => {
@@ -555,9 +555,9 @@ describe("Auckland event explorer", () => {
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
     expect(screen.getByText("8月1日周六 · 19:30")).toBeInTheDocument();
     expect(screen.getByText("Ticketmaster 当前可查 1 个未来活动 · 已显示 1 个")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "打开 Harbour Lights 官方详情" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "查看 Harbour Lights 详情" })).toHaveAttribute(
       "href",
-      "https://www.ticketmaster.co.nz/event/event-1",
+      "/events/event-1",
     );
   });
 

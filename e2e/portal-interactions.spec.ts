@@ -51,6 +51,20 @@ const filteredPage = {
   nextCursor: null,
 };
 
+const eventDetail = {
+  ...event("event-1", "Harbour Lights", { image: true }),
+  description: "A live Auckland performance presented by the official organiser.",
+  note: "Check the official listing for final entry requirements.",
+  venue: {
+    id: "civic",
+    name: "The Civic",
+    city: "Auckland",
+    address: "269 Queen Street",
+    postalCode: "1010",
+    coordinates: { latitude: -36.8512, longitude: 174.7635 },
+  },
+};
+
 function json(route: Route, body: unknown, status = 200) {
   return route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
@@ -66,6 +80,11 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     contentType: "image/gif",
     body: transparentGif,
   }));
+  await page.route("https://www.openstreetmap.org/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: "<!doctype html><title>OpenStreetMap fixture</title>",
+  }));
   await page.route("**/api/venues**", async (route) => {
     venueRequests.push(route.request().url());
     if (options.venueFailure) return json(route, { error: { message: "Unavailable" } });
@@ -78,8 +97,11 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
   });
   await page.route("**/api/events**", async (route) => {
     const requestUrl = route.request().url();
-    eventRequests.push(requestUrl);
     const url = new URL(requestUrl);
+    if (url.pathname.endsWith("/api/events/event-1")) {
+      return json(route, { event: eventDetail });
+    }
+    eventRequests.push(requestUrl);
     if (url.searchParams.has("cursor")) {
       if (options.appendDelayMs) {
         await new Promise((resolve) => setTimeout(resolve, options.appendDelayMs));
@@ -228,8 +250,8 @@ test("keyboard reaches every portal control in document order with visible focus
   for (const label of ["Next 7 days", "This weekend", "Next 30 days", "All future"]) {
     await tabTo(page, page.getByRole("link", { name: label, exact: true }));
   }
-  await tabTo(page, page.getByRole("link", { name: "Open Harbour Lights official details" }));
-  await tabTo(page, page.getByRole("link", { name: /Open A very long Auckland/ }));
+  await tabTo(page, page.getByRole("link", { name: "View Harbour Lights details" }));
+  await tabTo(page, page.getByRole("link", { name: /View A very long Auckland/ }));
   await tabTo(page, page.getByRole("button", { name: "Show 1 more event" }));
   expect(errors).toEqual([]);
 });
@@ -301,9 +323,35 @@ test("every category and time link navigates, preserves other filters, and reque
   expect(errors).toEqual([]);
 });
 
-test("load more rejects double activation, de-duplicates, keeps position, and opens a noopener official tab", async ({ page }) => {
+test("load more de-duplicates and the event detail opens a noopener official booking tab", async ({ page }) => {
   const errors = runtimeErrors(page);
   const requests = await installRoutes(page, { appendDelayMs: 180 });
+  await page.addInitScript(() => {
+    const instrumentedWindow = window as Window & { __kiwicueGeolocationCalls?: number };
+    instrumentedWindow.__kiwicueGeolocationCalls = 0;
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition(success: PositionCallback) {
+          instrumentedWindow.__kiwicueGeolocationCalls = (instrumentedWindow.__kiwicueGeolocationCalls ?? 0) + 1;
+          success({
+            coords: {
+              latitude: -36.8485,
+              longitude: 174.7633,
+              accuracy: 10,
+              altitude: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null,
+              toJSON: () => ({}),
+            },
+            timestamp: Date.now(),
+            toJSON: () => ({}),
+          });
+        },
+      },
+    });
+  });
   await page.context().route("https://www.ticketmaster.co.nz/**", (route) => route.fulfill({
     status: 200,
     contentType: "text/html",
@@ -327,7 +375,18 @@ test("load more rejects double activation, de-duplicates, keeps position, and op
   const scrollAfter = await page.evaluate(() => scrollY);
   expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThanOrEqual(24);
 
-  const official = page.getByRole("link", { name: "Open Harbour Lights official details" });
+  await page.getByRole("link", { name: "View Harbour Lights details" }).click();
+  await expect(page).toHaveURL(/\/events\/event-1$/);
+  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.getByText("269 Queen Street")).toBeVisible();
+  await expect(page.getByTitle("Map of The Civic")).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { __kiwicueGeolocationCalls?: number }).__kiwicueGeolocationCalls)).toBe(0);
+  await page.getByRole("button", { name: "Show distance from me" }).click();
+  await expect(page.getByText(/^About .* km away/)).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { __kiwicueGeolocationCalls?: number }).__kiwicueGeolocationCalls)).toBe(1);
+  await expectNoHorizontalOverflow(page);
+
+  const official = page.getByRole("link", { name: "Continue to official booking" });
   await expect(official).toHaveAttribute("rel", /noopener/);
   const [popup] = await Promise.all([page.waitForEvent("popup"), official.click()]);
   await popup.waitForLoadState();

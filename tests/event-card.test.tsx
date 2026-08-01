@@ -19,13 +19,20 @@ const event: KiwiCueEvent = {
   },
   status: "onsale",
   category: "Music",
-  venue: { id: "venue-civic", name: "Civic Theatre", city: "Auckland", address: "269 Queen Street" },
+  venue: {
+    id: "venue-civic",
+    name: "Civic Theatre",
+    city: "Auckland",
+    address: "269 Queen Street",
+    postalCode: "1010",
+    coordinates: { latitude: -36.8505, longitude: 174.7645 },
+  },
 };
 
 afterEach(cleanup);
 
 describe("portal event card", () => {
-  it("makes one truthful, fully labelled official action from the complete card", () => {
+  it("makes one truthful, fully labelled internal details action from the complete card", () => {
     const view = render(<EventCard event={event} index={0} language="en" />);
 
     expect(screen.getByRole("article", { name: "Harbour Lights" })).toBeInTheDocument();
@@ -34,12 +41,11 @@ describe("portal event card", () => {
     expect(screen.getByText("Sat, 1 Aug · 7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Civic Theatre · Auckland")).toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "Open Harbour Lights official details" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "View Harbour Lights details" })).toHaveAttribute(
       "href",
-      "https://www.ticketmaster.co.nz/event/event-1",
+      "/events/event-1",
     );
-    expect(screen.getByRole("link", { name: "Open Harbour Lights official details" })).toHaveAttribute("target", "_blank");
-    expect(screen.getByRole("link", { name: "Open Harbour Lights official details" })).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(screen.getByRole("link", { name: "View Harbour Lights details" })).not.toHaveAttribute("target");
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
   });
 
@@ -49,7 +55,7 @@ describe("portal event card", () => {
     expect(screen.getByText("09")).toBeInTheDocument();
     expect(screen.getByText("8月1日周六 · 19:30")).toBeInTheDocument();
     expect(screen.getByText("售票中")).toBeInTheDocument();
-    expect(screen.getByText("官方详情")).toBeInTheDocument();
+    expect(screen.getByText("查看详情")).toBeInTheDocument();
     expect(screen.getByText("AKL")).toBeInTheDocument();
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
   });
