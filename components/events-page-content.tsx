@@ -1,113 +1,88 @@
 "use client";
 
-import Link from "next/link";
 import { EventExplorer } from "../app/events/event-explorer";
 import type { EventCategory } from "../lib/event-categories";
+import type { EventWindow } from "../lib/event-window";
+import { EventCategoryNav } from "./event-category-nav";
 import { EventSearchPanel } from "./event-search-panel";
-import { LanguageToggle } from "./language-toggle";
+import { EventWindowNav } from "./event-window-nav";
 import { useLanguage } from "./language-provider";
+import { PortalHeader } from "./portal-header";
 
-const categoryLabels = {
-  en: { concerts: "Concerts", theatre: "Theatre", markets: "Markets", festivals: "Festivals" },
-  zh: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动" },
+const windowLabels = {
+  en: { "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days", all: "All future" },
+  zh: { "7d": "未来 7 天", weekend: "本周末", "30d": "未来 30 天", all: "全部未来" },
 } as const;
 
 const copy = {
   en: {
-    homeLabel: "Back to KiwiCue home",
-    home: "Home",
-    eyebrow: "Auckland event signal / Live discovery",
-    titleLead: "What’s on, ",
-    titleAccent: "before it’s gone",
-    intro: "All upcoming Ticketmaster concerts, theatre, festivals and live events in one chronological feed—so the useful date reaches you before the recommendation does.",
-    scopeLabel: "Current event search scope",
-    locationLabel: "Location",
+    eyebrow: "Auckland · Official event listings",
+    title: "Find something worth going to",
+    intro: "Search by event or artist, narrow the date, then open the official listing. No delayed recommendation feed.",
+    statusLabel: "Current event search",
     location: "Auckland",
-    windowLabel: "Window",
-    window: "All upcoming Ticketmaster events",
-    orderLabel: "Order",
+    source: "Ticketmaster source",
     order: "Soonest first",
-    tickerWindow: "Auckland · All upcoming",
-    tickerSource: "Live source check",
-    tickerCount: "Up to 50 per batch",
-    tickerLabel: "Event feed status",
-    footer: "Find it in time. Check details at the source.",
+    aboutTitle: "Useful first, noise last.",
+    aboutBody: "KiwiCue organizes Auckland events by time, type and venue so you can reach the useful detail quickly. Ticket availability and final details remain with the official source.",
+    footer: "Auckland events, easier to find.",
   },
   zh: {
-    homeLabel: "返回 KiwiCue 首页",
-    home: "首页",
-    eyebrow: "奥克兰活动雷达 / 实时发现",
-    titleLead: "奥克兰有什么，",
-    titleAccent: "别等错过才发现",
-    intro: "把 Ticketmaster 当前可查的全部未来活动按日期排好，让有用的信息赶在过期之前到达。",
-    scopeLabel: "当前活动搜索范围",
-    locationLabel: "地点",
+    eyebrow: "奥克兰 · 官方活动信息",
+    title: "更快找到真正想去的活动",
+    intro: "搜索活动或艺人，再按时间、类型和场馆缩小范围；不必等待迟到的推荐推送。",
+    statusLabel: "当前活动检索范围",
     location: "奥克兰",
-    windowLabel: "范围",
-    window: "Ticketmaster 当前可查的全部未来活动",
-    orderLabel: "排序",
+    source: "Ticketmaster 官方来源",
     order: "最早发生优先",
-    tickerWindow: "奥克兰 · 全部未来活动",
-    tickerSource: "实时来源检查",
-    tickerCount: "每批最多 50 个",
-    tickerLabel: "活动信息状态",
-    footer: "及时发现，详情以官方来源为准。",
+    aboutTitle: "有用的信息在前，噪音在后。",
+    aboutBody: "KiwiCue 按时间、类型和场馆整理奥克兰活动，让你更快找到有用信息。余票与最终活动详情以官方来源为准。",
+    footer: "奥克兰活动，更容易找到。",
   },
 } as const;
 
-export function EventsPageContent({ category, keyword, venueId }: {
+export function EventsPageContent({ window, category, keyword, venueId }: {
+  window: EventWindow;
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
 }) {
   const { language } = useLanguage();
   const content = copy[language];
+  const searchState = { window, category, keyword, venueId };
 
   return (
     <main className="events-page">
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label={content.homeLabel}>
-          <span className="brand-mark" aria-hidden="true">K</span>
-          <span>KiwiCue</span>
-        </Link>
-        <div className="header-actions">
-          <LanguageToggle />
-          <Link className="home-return" href="/">{content.home} <span aria-hidden="true">↖</span></Link>
-        </div>
-      </header>
+      <PortalHeader />
 
-      <section className="events-masthead" aria-labelledby="events-title">
-        <div className="events-masthead-copy">
-          <p className="eyebrow">{content.eyebrow}</p>
-          <h1 id="events-title">{content.titleLead}<em>{content.titleAccent}</em></h1>
-          <p>{content.intro}</p>
-        </div>
-        <aside className="events-scope" aria-label={content.scopeLabel}>
-          <div><span>{content.locationLabel}</span><strong>{content.location}</strong></div>
-          <div><span>{content.windowLabel}</span><strong>{content.window}</strong></div>
-          <div><span>{content.orderLabel}</span><strong>{content.order}</strong></div>
-        </aside>
+      <section className="portal-command" aria-labelledby="events-title">
+        <p className="eyebrow">{content.eyebrow}</p>
+        <h1 id="events-title">{content.title}</h1>
+        <p className="portal-intro">{content.intro}</p>
+        <EventSearchPanel {...searchState} />
       </section>
 
-      <div className="events-ticker" aria-label={content.tickerLabel}>
-        <span>{content.tickerWindow}</span>
-        <span><i aria-hidden="true" /> {content.tickerSource}</span>
-        <span>{content.tickerCount}</span>
+      <div className="portal-navigation-shell">
+        <EventCategoryNav {...searchState} />
+        <EventWindowNav {...searchState} />
       </div>
 
-      {category && (
-        <div className="active-filter">
-          <span>
-            {language === "en" ? "Showing" : "正在查看"}: <strong>{categoryLabels[language][category]}</strong>
-          </span>
-          <Link href="/events">{language === "en" ? "View all events" : "查看全部活动"}</Link>
-        </div>
-      )}
+      <div className="portal-status-strip" aria-label={content.statusLabel}>
+        <span>{content.location}</span>
+        <span><i aria-hidden="true" /> {content.source}</span>
+        <span>{windowLabels[language][window]} · {content.order}</span>
+      </div>
 
-      <EventSearchPanel category={category} keyword={keyword} venueId={venueId} />
-      <EventExplorer category={category} keyword={keyword} venueId={venueId} />
+      <div id="event-results" tabIndex={-1}>
+        <EventExplorer {...searchState} />
+      </div>
 
-      <footer>
+      <section className="portal-about">
+        <h2>{content.aboutTitle}</h2>
+        <p>{content.aboutBody}</p>
+      </section>
+
+      <footer className="portal-footer">
         <span>KiwiCue / 纽村小报</span>
         <span>{content.footer}</span>
       </footer>
