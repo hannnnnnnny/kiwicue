@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookmarkButton } from "../../components/bookmark-button";
 import type { Language } from "../../components/language-provider";
 import { formatEventDate, formatEventStatus, formatEventTime } from "../../lib/event-display";
 import type { KiwiCueEvent } from "../../lib/events";
@@ -66,6 +67,7 @@ export function EventCard({ event, index, language }: {
           </span>
         </div>
       </Link>
+      <BookmarkButton event={event} language={language} />
     </article>
   );
 }

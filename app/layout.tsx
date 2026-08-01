@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
 import "@fontsource-variable/manrope";
 import "./globals.css";
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
-      <body><LanguageProvider>{children}</LanguageProvider></body>
+      <body>
+        <LanguageProvider>
+          <BookmarkProvider>{children}</BookmarkProvider>
+        </LanguageProvider>
+      </body>
     </html>
   );
 }

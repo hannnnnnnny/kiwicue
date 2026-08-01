@@ -85,7 +85,7 @@ describe("portal navigation", () => {
   it("gives every portal navigation target a real destination", () => {
     renderPortalControls();
     for (const link of screen.getAllByRole("link")) {
-      expect(link.getAttribute("href")).toMatch(/^(?:\/events(?:\?|$)|#event-results$)/);
+      expect(link.getAttribute("href")).toMatch(/^(?:\/(?:events|saved)(?:\?|$)|#event-results$)/);
       expect(link.getAttribute("href")).not.toBe("#");
     }
   });

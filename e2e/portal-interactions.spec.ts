@@ -12,6 +12,8 @@ const transparentGif = Buffer.from(
   "base64",
 );
 
+const pagesWithAssetRoutes = new WeakSet<Page>();
+
 function event(id: string, name: string, options: { image?: boolean; status?: string } = {}) {
   return {
     id,
@@ -26,7 +28,14 @@ function event(id: string, name: string, options: { image?: boolean; status?: st
     },
     status: options.status ?? "onsale",
     category: "Music",
-    venue: { id: "civic", name: "The Civic", city: "Auckland", address: "269 Queen Street" },
+    venue: {
+      id: "civic",
+      name: "The Civic",
+      city: "Auckland",
+      address: "269 Queen Street",
+      postalCode: "1010",
+      coordinates: null,
+    },
   };
 }
 
@@ -75,16 +84,19 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
   let initialFailures = options.initialFailures ?? 0;
   let appendFailures = options.appendFailures ?? 0;
 
-  await page.route("https://images.example/**", (route) => route.fulfill({
-    status: 200,
-    contentType: "image/gif",
-    body: transparentGif,
-  }));
-  await page.route("https://www.openstreetmap.org/**", (route) => route.fulfill({
-    status: 200,
-    contentType: "text/html",
-    body: "<!doctype html><title>OpenStreetMap fixture</title>",
-  }));
+  if (!pagesWithAssetRoutes.has(page)) {
+    await page.route("https://images.example/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "image/gif",
+      body: transparentGif,
+    }));
+    await page.route("https://www.openstreetmap.org/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<!doctype html><title>OpenStreetMap fixture</title>",
+    }));
+    pagesWithAssetRoutes.add(page);
+  }
   await page.route("**/api/venues**", async (route) => {
     venueRequests.push(route.request().url());
     if (options.venueFailure) return json(route, { error: { message: "Unavailable" } });
@@ -130,6 +142,11 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
   });
 
   return { eventRequests, venueRequests };
+}
+
+async function resetApiRoutes(page: Page) {
+  await page.unroute("**/api/venues**");
+  await page.unroute("**/api/events**");
 }
 
 function runtimeErrors(page: Page) {
@@ -193,8 +210,8 @@ test("redirects into a named, touchable, overflow-safe responsive portal", async
   expect(deadLinks).toEqual([]);
 
   const touchTargets = page.locator([
-    ".portal-brand", ".language-toggle", ".event-search-input", ".event-search-select",
-    ".event-search-submit", ".portal-nav-link", ".portal-event-link", ".event-load-more",
+    ".portal-brand", ".saved-link", ".language-toggle", ".event-search-input", ".event-search-select",
+    ".event-search-submit", ".portal-nav-link", ".portal-event-link", ".bookmark-button", ".event-load-more",
   ].join(","));
   for (let index = 0; index < await touchTargets.count(); index += 1) {
     const box = await touchTargets.nth(index).boundingBox();
@@ -239,6 +256,7 @@ test("keyboard reaches every portal control in document order with visible focus
 
   await tabTo(page, page.getByRole("link", { name: "Skip to event results" }));
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
+  await tabTo(page, page.getByRole("link", { name: "Saved events, 0" }));
   await tabTo(page, page.getByRole("button", { name: "切换到中文" }));
   await tabTo(page, page.getByLabel("Activity name"));
   await tabTo(page, page.getByLabel("Venue"));
@@ -251,8 +269,33 @@ test("keyboard reaches every portal control in document order with visible focus
     await tabTo(page, page.getByRole("link", { name: label, exact: true }));
   }
   await tabTo(page, page.getByRole("link", { name: "View Harbour Lights details" }));
+  await tabTo(page, page.getByRole("button", { name: "Save Harbour Lights" }));
   await tabTo(page, page.getByRole("link", { name: /View A very long Auckland/ }));
+  await tabTo(page, page.getByRole("button", { name: /Save A very long Auckland/ }));
   await tabTo(page, page.getByRole("button", { name: "Show 1 more event" }));
+  expect(errors).toEqual([]);
+});
+
+test("saving an event persists through reload and can be removed from Saved", async ({ page }) => {
+  const errors = runtimeErrors(page);
+  await installRoutes(page);
+  await page.goto("/events");
+  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Save Harbour Lights" }).click();
+  await expect(page.getByRole("button", { name: "Remove Harbour Lights from saved events" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Saved events, 1" }).click();
+  await expect(page).toHaveURL(/\/saved$/);
+  await expect(page.getByRole("heading", { name: "Saved events" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await page.getByRole("button", { name: "Remove Harbour Lights from saved events" }).click();
+  await expect(page.getByRole("heading", { name: "No saved events yet" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Saved events, 0" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);
 });
 
@@ -404,20 +447,20 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   await expect(page.getByLabel("Activity name")).toBeEnabled();
   await expect(page.getByLabel("Venue")).toBeDisabled();
 
-  await page.unrouteAll({ behavior: "wait" });
+  await resetApiRoutes(page);
   await installRoutes(page);
   await page.goto("/events?q=NoSuchActivity");
   await expect(page.getByRole("heading", { name: "No matching events found" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Clear all filters" })).toHaveAttribute("href", "/events");
 
-  await page.unrouteAll({ behavior: "wait" });
+  await resetApiRoutes(page);
   await installRoutes(page, { initialFailures: 1 });
   await page.goto("/events");
   await expect(page.locator(".event-error")).toContainText("temporarily out of range");
   await page.getByRole("button", { name: "Retry event scan" }).click();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
 
-  await page.unrouteAll({ behavior: "wait" });
+  await resetApiRoutes(page);
   await installRoutes(page, { appendFailures: 1 });
   await page.goto("/events");
   await page.getByRole("button", { name: "Show 1 more event" }).click();

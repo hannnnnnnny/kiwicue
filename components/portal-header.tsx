@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useBookmarks } from "./bookmark-provider";
 import { LanguageToggle } from "./language-toggle";
 import { useLanguage } from "./language-provider";
 
@@ -8,27 +9,39 @@ const copy = {
   en: {
     skip: "Skip to event results",
     skipDetail: "Skip to event details",
+    skipSaved: "Skip to saved events",
     homeLabel: "KiwiCue Auckland events home",
     descriptor: "Auckland event finder",
+    saved: "Saved",
+    savedLabel: (count: number) => `Saved events, ${count}`,
   },
   zh: {
     skip: "跳到活动结果",
     skipDetail: "跳到活动详情",
+    skipSaved: "跳到收藏活动",
     homeLabel: "KiwiCue 奥克兰活动首页",
     descriptor: "奥克兰活动检索",
+    saved: "收藏",
+    savedLabel: (count: number) => `收藏活动，${count} 个`,
   },
 } as const;
 
 export function PortalHeader({ skipTarget = "event-results" }: {
-  skipTarget?: "event-results" | "event-detail";
+  skipTarget?: "event-results" | "event-detail" | "saved-events";
 } = {}) {
   const { language } = useLanguage();
+  const { count } = useBookmarks();
   const content = copy[language];
+  const skipLabel = skipTarget === "event-detail"
+    ? content.skipDetail
+    : skipTarget === "saved-events"
+      ? content.skipSaved
+      : content.skip;
 
   return (
     <>
       <a className="skip-link" href={`#${skipTarget}`}>
-        {skipTarget === "event-detail" ? content.skipDetail : content.skip}
+        {skipLabel}
       </a>
       <header className="portal-header">
         <Link className="portal-brand" href="/events" aria-label={content.homeLabel}>
@@ -38,7 +51,12 @@ export function PortalHeader({ skipTarget = "event-results" }: {
             <small>{content.descriptor}</small>
           </span>
         </Link>
-        <LanguageToggle />
+        <div className="portal-header-actions">
+          <Link className="saved-link" href="/saved" aria-label={content.savedLabel(count)}>
+            <span>{content.saved}</span><strong>{count}</strong>
+          </Link>
+          <LanguageToggle />
+        </div>
       </header>
     </>
   );
