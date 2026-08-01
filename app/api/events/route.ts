@@ -5,6 +5,10 @@ import {
 } from "../../../lib/event-categories";
 import { parseEventKeyword, parseVenueId } from "../../../lib/event-search-params";
 import {
+  parseEventWindow,
+  type EventWindow,
+} from "../../../lib/event-window";
+import {
   TicketmasterClientError,
   type TicketmasterErrorCode,
 } from "../../../lib/ticketmaster";
@@ -16,6 +20,7 @@ type LoadEvents = (options: {
   cursor?: string;
   keyword?: string;
   venueId?: string;
+  window?: EventWindow;
 }) => Promise<AucklandEventsResult>;
 
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
@@ -45,6 +50,10 @@ export async function handleEventsRequest(
   const keyword = parseEventKeyword(queryValues.length === 1 ? queryValues[0] : null);
   const venueValues = url.searchParams.getAll("venue");
   const venueId = parseVenueId(venueValues.length === 1 ? venueValues[0] : null);
+  const windowValues = url.searchParams.getAll("window");
+  const window = parseEventWindow(
+    windowValues.length === 1 ? windowValues[0] : null,
+  );
   const cursorValues = url.searchParams.getAll("cursor");
   const cursorCandidate = cursorValues.length === 1
     ? cursorValues[0].trim()
@@ -58,6 +67,7 @@ export async function handleEventsRequest(
       ...(category ? { category } : {}),
       ...(keyword ? { keyword } : {}),
       ...(venueId ? { venueId } : {}),
+      ...(window !== "all" ? { window } : {}),
       ...(cursor ? { cursor } : {}),
     });
 

@@ -52,6 +52,76 @@ function pageResult(
 }
 
 describe("Ticketmaster unbounded event feed", () => {
+  it("queries a complete finite window and binds its continuation", async () => {
+    const windowEnd = new Date("2026-08-05T00:00:00.000Z");
+    const loadPage = vi.fn<TicketmasterPageLoader>(async ({ page, startDateTime, endDateTime }) => {
+      expect(startDateTime).toEqual(now);
+      expect(endDateTime).toEqual(windowEnd);
+      return page === 0
+        ? pageResult([event("first")], 0, 81, 2)
+        : pageResult([event("last")], 1, 81, 2);
+    });
+
+    const first = await fetchAucklandEventFeed({
+      apiKey: "test-key",
+      now,
+      window: "7d",
+      loadPage,
+    });
+    const cursor = decodeEventFeedCursor(first.nextCursor ?? "", "test-key", now);
+    expect(cursor).toMatchObject({
+      window: "7d",
+      windowStart: now.toISOString(),
+      windowEnd: windowEnd.toISOString(),
+      horizonEnd: windowEnd.toISOString(),
+      totalElements: 81,
+    });
+
+    await expect(fetchAucklandEventFeed({
+      apiKey: "test-key",
+      now,
+      window: "all",
+      cursor: first.nextCursor ?? "",
+      loadPage,
+    })).rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
+
+    const second = await fetchAucklandEventFeed({
+      apiKey: "test-key",
+      now,
+      window: "7d",
+      cursor: first.nextCursor ?? "",
+      loadPage,
+    });
+    expect(second.events.map(({ id }) => id)).toEqual(["last"]);
+    expect(second.nextCursor).toBeNull();
+    expect(loadPage).toHaveBeenCalledTimes(2);
+  });
+
+  it("splits an oversized finite window without a farthest-event probe", async () => {
+    const windowEnd = new Date("2026-08-28T00:00:00.000Z");
+    const loadPage = vi.fn<TicketmasterPageLoader>(async (options) => {
+      expect(options.endDateTime).toBeDefined();
+      expect(options.sort).toBe("date,asc");
+      if (options.startDateTime.getTime() === now.getTime()
+        && options.endDateTime?.getTime() === windowEnd.getTime()) {
+        return pageResult([], 0, 1201, 25);
+      }
+      return pageResult([event("split-window")], 0, 1, 1);
+    });
+
+    const result = await fetchAucklandEventFeed({
+      apiKey: "test-key",
+      now,
+      window: "30d",
+      loadPage,
+    });
+
+    expect(result.events.map(({ id }) => id)).toEqual(["split-window"]);
+    expect(result.page.totalElements).toBe(1201);
+    expect(loadPage).toHaveBeenCalledTimes(2);
+    expect(loadPage.mock.calls.some(([options]) => options.sort === "date,desc")).toBe(false);
+  });
+
   it("continues an under-1000 feed without an end date", async () => {
     const loadPage = vi.fn<TicketmasterPageLoader>(async ({ page, endDateTime }) => {
       expect(endDateTime).toBeUndefined();
@@ -220,6 +290,9 @@ describe("Ticketmaster unbounded event feed", () => {
       category: null,
       keyword: null,
       venueId: null,
+      window: "all",
+      windowStart: now.toISOString(),
+      windowEnd: null,
       scope: "unbounded",
       horizonEnd: "2035-12-22T00:00:00.000Z",
       totalElements: 1201,
@@ -287,6 +360,9 @@ describe("Ticketmaster unbounded event feed", () => {
       category: null,
       keyword: null,
       venueId: null,
+      window: "all",
+      windowStart: now.toISOString(),
+      windowEnd: null,
       scope: "unbounded",
       horizonEnd: "2026-08-01T00:00:00.000Z",
       totalElements: 1201,

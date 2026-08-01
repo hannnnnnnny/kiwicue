@@ -75,6 +75,30 @@ describe("GET /api/events", () => {
     expect(loadEvents).toHaveBeenCalledWith({ size: 24, category: "concerts" });
   });
 
+  it("passes one supported non-default event window to the server client", async () => {
+    const loadEvents = vi.fn().mockResolvedValue(emptyResult);
+
+    await handleEventsRequest(
+      new Request("http://localhost/api/events?window=weekend"),
+      loadEvents,
+    );
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: undefined, window: "weekend" });
+  });
+
+  it.each([
+    "window=all",
+    "window=year",
+    "window=7d&window=30d",
+    "window=",
+  ])("omits a default or invalid event window: %s", async (query) => {
+    const loadEvents = vi.fn().mockResolvedValue(emptyResult);
+
+    await handleEventsRequest(new Request(`http://localhost/api/events?${query}`), loadEvents);
+
+    expect(loadEvents).toHaveBeenCalledWith({ size: undefined });
+  });
+
   it("forwards one normalized activity query and venue ID", async () => {
     const loadEvents = vi.fn().mockResolvedValue(emptyResult);
 

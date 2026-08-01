@@ -8,6 +8,7 @@ import {
   type EventTimeRange,
 } from "./event-feed-cursor";
 import { parseEventKeyword, parseVenueId } from "./event-search-params";
+import { resolveEventWindow, type EventWindow } from "./event-window";
 import type { AucklandEventsResult, TicketmasterPageResult } from "./events";
 import {
   fetchAucklandEvents,
@@ -47,6 +48,7 @@ export type FetchAucklandEventFeedOptions = {
   category?: EventCategory | null;
   keyword?: string | null;
   venueId?: string | null;
+  window?: EventWindow;
   cursor?: string;
   loadPage?: TicketmasterPageLoader;
   paceRequest?: TicketmasterRequestPacer;
@@ -131,6 +133,7 @@ export async function fetchAucklandEventFeed({
   category,
   keyword,
   venueId,
+  window: requestedWindow = "all",
   cursor,
   loadPage = fetchAucklandEvents,
   paceRequest = paceSharedTicketmasterRequest,
@@ -147,28 +150,36 @@ export async function fetchAucklandEventFeed({
       decoded.category !== requestedCategory ||
       decoded.keyword !== requestedKeyword ||
       decoded.venueId !== requestedVenueId ||
+      decoded.window !== requestedWindow ||
       decoded.scope !== "unbounded"
     )
   ) throw safeFailure();
 
+  const resolvedWindow = resolveEventWindow(requestedWindow, anchor);
   const state: EventFeedCursorState = decoded ?? {
     anchor: anchor.toISOString(),
     category: requestedCategory,
     keyword: requestedKeyword,
     venueId: requestedVenueId,
+    window: resolvedWindow.id,
+    windowStart: resolvedWindow.start.toISOString(),
+    windowEnd: resolvedWindow.end?.toISOString() ?? null,
     scope: "unbounded",
-    horizonEnd: null,
+    horizonEnd: resolvedWindow.end?.toISOString() ?? null,
     totalElements: 0,
     size: normalizeSize(requestedSize),
     page: 0,
-    ranges: [{ start: anchor.toISOString(), end: null }],
+    ranges: [{
+      start: resolvedWindow.start.toISOString(),
+      end: resolvedWindow.end?.toISOString() ?? null,
+    }],
   };
   const feedAnchor = new Date(state.anchor);
   let ranges = state.ranges.map((item) => ({ ...item }));
   let page = state.page;
   let totalElements = state.totalElements;
   let horizonEnd = state.horizonEnd;
-  let probingUnbounded = !decoded;
+  let initializingFeed = !decoded;
   let upstreamCalls = 0;
 
   async function loadUpstreamPage(
@@ -209,10 +220,10 @@ export async function fetchAucklandEventFeed({
       ...filters(state),
     });
 
-    if (probingUnbounded) {
+    if (initializingFeed) {
       totalElements = pageResult.page.totalElements;
-      probingUnbounded = false;
-      if (totalElements > DEEP_PAGE_LIMIT) {
+      initializingFeed = false;
+      if (state.window === "all" && totalElements > DEEP_PAGE_LIMIT) {
         const farthest = await loadUpstreamPage({
           apiKey,
           size: 1,
@@ -238,7 +249,9 @@ export async function fetchAucklandEventFeed({
         page = 0;
         continue;
       }
-    } else if (
+    }
+
+    if (
       endDateTime &&
       page === 0 &&
       pageResult.page.totalElements > DEEP_PAGE_LIMIT
