@@ -4,8 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import { parseEventCategory } from "../lib/event-categories";
 import {
   buildAucklandEventsUrl,
+  buildTicketmasterEventDetailsUrl,
   fetchAucklandEvents,
+  fetchAucklandEventDetail,
   normalizeTicketmasterEvent,
+  normalizeTicketmasterEventDetail,
 } from "../lib/ticketmaster";
 
 const projectRoot = resolve(import.meta.dirname, "..");
@@ -23,6 +26,9 @@ describe("Ticketmaster Discovery client", () => {
     expect(client.buildAucklandEventsUrl).toBeTypeOf("function");
     expect(client.normalizeTicketmasterEvent).toBeTypeOf("function");
     expect(client.fetchAucklandEvents).toBeTypeOf("function");
+    expect(client.buildTicketmasterEventDetailsUrl).toBeTypeOf("function");
+    expect(client.normalizeTicketmasterEventDetail).toBeTypeOf("function");
+    expect(client.fetchAucklandEventDetail).toBeTypeOf("function");
     expect(client.TicketmasterClientError).toBeTypeOf("function");
   });
 
@@ -169,7 +175,9 @@ describe("Ticketmaster Discovery client", () => {
             id: "venue-civic",
             name: "The Civic",
             city: { name: "Auckland" },
-            address: { line1: "269 Queen Street" },
+            address: { line1: "269 Queen Street", line2: "Auckland Central" },
+            postalCode: "1010",
+            location: { latitude: "-36.8505", longitude: "174.7645" },
           },
         ],
       },
@@ -192,7 +200,9 @@ describe("Ticketmaster Discovery client", () => {
         id: "venue-civic",
         name: "The Civic",
         city: "Auckland",
-        address: "269 Queen Street",
+        address: "269 Queen Street, Auckland Central",
+        postalCode: "1010",
+        coordinates: { latitude: -36.8505, longitude: 174.7645 },
       },
     });
   });
@@ -211,7 +221,129 @@ describe("Ticketmaster Discovery client", () => {
       name: "The Civic",
       city: "Auckland",
       address: null,
+      postalCode: null,
+      coordinates: null,
     });
+  });
+
+  it("rejects an unsafe upstream event ID before it can become a route", () => {
+    const normalized = normalizeTicketmasterEvent({
+      id: "../private",
+      name: "Unsafe event",
+      url: "https://www.ticketmaster.co.nz/event/unsafe",
+      dates: { start: { localDate: "2026-08-01" } },
+    });
+
+    expect(normalized).toBeNull();
+  });
+
+  it("builds a validated event-details URL without changing the event ID", () => {
+    const url = buildTicketmasterEventDetailsUrl({
+      apiKey: "server-key",
+      eventId: "G5diZfkn0B-bh",
+    });
+
+    expect(url.origin).toBe("https://app.ticketmaster.com");
+    expect(url.pathname).toBe("/discovery/v2/events/G5diZfkn0B-bh.json");
+    expect(url.searchParams.get("apikey")).toBe("server-key");
+    expect(url.searchParams.get("locale")).toBe("*");
+  });
+
+  it("normalizes verified details, complete venue data, and an HTTPS official URL", () => {
+    const normalized = normalizeTicketmasterEventDetail({
+      id: "event-123",
+      name: "Auckland Night Live",
+      url: "https://www.ticketmaster.co.nz/event/event-123",
+      info: "  Doors open at 6:30 pm.  ",
+      pleaseNote: " Age restrictions may apply. ",
+      dates: { start: { localDate: "2026-08-08" } },
+      _embedded: {
+        venues: [{
+          id: "venue-civic",
+          name: "The Civic",
+          city: { name: "Auckland" },
+          address: { line1: "269 Queen Street" },
+          postalCode: "1010",
+          location: { latitude: "-36.8505", longitude: "174.7645" },
+        }],
+      },
+    });
+
+    expect(normalized).toMatchObject({
+      id: "event-123",
+      description: "Doors open at 6:30 pm.",
+      note: "Age restrictions may apply.",
+      venue: {
+        postalCode: "1010",
+        coordinates: { latitude: -36.8505, longitude: 174.7645 },
+      },
+    });
+  });
+
+  it.each([
+    ["http://www.ticketmaster.co.nz/event/event-123", "insecure URL"],
+    ["javascript:alert(1)", "script URL"],
+    ["https://www.ticketmaster.co.nz/event/event-123", "invalid coordinates"],
+  ])("rejects unsafe detail data: %s (%s)", (url) => {
+    const payload = {
+      id: "event-123",
+      name: "Auckland Night Live",
+      url,
+      dates: { start: { localDate: "2026-08-08" } },
+      _embedded: {
+        venues: [{
+          id: "venue-civic",
+          name: "The Civic",
+          city: { name: "Auckland" },
+          location: { latitude: "95", longitude: "174.7645" },
+        }],
+      },
+    };
+
+    const normalized = normalizeTicketmasterEventDetail(payload);
+    if (url.startsWith("https:")) {
+      expect(normalized?.venue?.coordinates).toBeNull();
+    } else {
+      expect(normalized).toBeNull();
+    }
+  });
+
+  it("fetches one normalized event detail", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
+      id: "event-456",
+      name: "Harbour Lights",
+      url: "https://www.ticketmaster.co.nz/event/event-456",
+      info: "Official information",
+      dates: { start: { localDate: "2026-08-03" } },
+    }), { status: 200, headers: { "content-type": "application/json" } }));
+
+    const result = await fetchAucklandEventDetail({
+      apiKey: "test-key",
+      eventId: "event-456",
+      fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    const [request, init] = fetchImpl.mock.calls[0];
+    expect(String(request)).not.toContain("undefined");
+    expect(new URL(String(request)).pathname).toContain("/events/event-456.json");
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    expect(result).toMatchObject({ id: "event-456", description: "Official information" });
+  });
+
+  it("maps an upstream missing event to a safe public 404", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response("private missing-event body", { status: 404 }),
+    );
+
+    const request = fetchAucklandEventDetail({
+      apiKey: "test-key",
+      eventId: "event-404",
+      fetchImpl,
+    });
+
+    await expect(request).rejects.toMatchObject({ code: "UPSTREAM_NOT_FOUND", status: 404 });
+    await expect(request).rejects.not.toThrow("private missing-event body");
   });
 
   it("fails safely before making a request when the API key is missing", async () => {
