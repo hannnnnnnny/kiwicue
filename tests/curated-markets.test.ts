@@ -45,6 +45,27 @@ describe("curated Auckland markets", () => {
     );
   });
 
+  it("adds bilingual and attributed first-visit previews", () => {
+    const events = listCuratedMarkets({
+      now: saturdayEvening,
+      window: "all",
+      size: 50,
+    }).events;
+
+    expect(events).toHaveLength(11);
+    for (const event of events) {
+      expect(event.editorialPreview?.summary.length).toBeGreaterThan(20);
+      expect(event.editorialPreview?.highlights).toHaveLength(3);
+      expect(event.localization?.zh?.previewSummary).toBeTruthy();
+      expect(event.localization?.zh?.previewHighlights).toHaveLength(3);
+      expect(event.editorialPreview?.image?.url).toMatch(/^https:\/\//);
+      expect(event.editorialPreview?.image?.sourceUrl).toBe(event.source?.url);
+      expect(event.editorialPreview?.image?.verifiedAt).toBe(
+        CURATED_MARKET_VERIFIED_AT,
+      );
+    }
+  });
+
   it("uses today's session before opening and next week after opening", () => {
     const before = findCuratedMarketDetail(
       "kc-market-grey-lynn",
