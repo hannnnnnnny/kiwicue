@@ -1,4 +1,9 @@
-import type { KiwiCueEvent, KiwiCueVenue } from "./events";
+import type {
+  EventLocalization,
+  EventSource,
+  KiwiCueEvent,
+  KiwiCueVenue,
+} from "./events";
 
 export const BOOKMARK_STORAGE_KEY = "kiwicue:bookmarks:v1";
 export const MAX_BOOKMARKS = 100;
@@ -94,9 +99,39 @@ function parseVenue(value: unknown): KiwiCueVenue | null | undefined {
   };
 }
 
+function parseSource(value: unknown): EventSource | undefined {
+  if (!isRecord(value)) return undefined;
+  if (
+    !boundedString(value.name, 300)
+    || !safeHttpsUrl(value.url)
+    || !validLocalDate(value.verifiedAt)
+  ) return undefined;
+  return { name: value.name, url: value.url, verifiedAt: value.verifiedAt };
+}
+
+function parseLocalization(value: unknown): EventLocalization | undefined {
+  if (!isRecord(value) || !isRecord(value.zh)) return undefined;
+  const { name, description, note } = value.zh;
+  if (
+    (name !== undefined && !boundedString(name, 300))
+    || (description !== undefined && !boundedString(description, 4_000))
+    || (note !== undefined && !boundedString(note, 2_000))
+  ) return undefined;
+  if (name === undefined && description === undefined && note === undefined) return undefined;
+  return {
+    zh: {
+      ...(name !== undefined ? { name } : {}),
+      ...(description !== undefined ? { description } : {}),
+      ...(note !== undefined ? { note } : {}),
+    },
+  };
+}
+
 function parseEvent(value: unknown): KiwiCueEvent | null {
   if (!isRecord(value) || !isRecord(value.start)) return null;
   const venue = parseVenue(value.venue);
+  const source = parseSource(value.source);
+  const localization = parseLocalization(value.localization);
   if (
     !boundedString(value.id, 128)
     || !/^[A-Za-z0-9_-]+$/.test(value.id)
@@ -126,6 +161,8 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
     status: value.status,
     category: value.category,
     venue,
+    ...(source ? { source } : {}),
+    ...(localization ? { localization } : {}),
   };
 }
 
