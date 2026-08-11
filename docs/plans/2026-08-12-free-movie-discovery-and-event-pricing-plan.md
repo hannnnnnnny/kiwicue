@@ -83,13 +83,13 @@
 - `filterCinemas(cinemas, query): AucklandCinema[]`
 - `sortCinemasByDistance(cinemas, origin): Array<AucklandCinema & { distanceKilometres: number }>`
 
-- [ ] Add failing tests for unique ids, HTTPS official links, valid Auckland coordinates, case/diacritic-insensitive matching, blank-query ordering, and nearest-first sorting.
-- [ ] Run `npm test -- tests/cinema-directory.test.ts`; expect module-not-found failure.
-- [ ] Add a small verified directory for major Auckland chains and independent cinemas; store facts only, never sessions or prices.
-- [ ] Implement normalized matching across name, chain, suburb, and address using the same Unicode rules for data and query.
-- [ ] Reuse `distanceKm` from `lib/distance.ts` for sorting without requesting location.
-- [ ] Run the directory tests and expect success.
-- [ ] Commit `feat: add Auckland cinema directory`.
+- [x] Add failing tests for unique ids, HTTPS official links, valid Auckland coordinates, case/diacritic-insensitive matching, blank-query ordering, and nearest-first sorting.
+- [x] Run `npm test -- tests/cinema-directory.test.ts`; expect module-not-found failure.
+- [x] Add a small verified directory for major Auckland chains and independent cinemas; store facts only, never sessions or prices.
+- [x] Implement normalized matching across name, chain, suburb, and address using the same Unicode rules for data and query.
+- [x] Reuse `distanceKm` from `lib/distance.ts` for sorting without requesting location.
+- [x] Run the directory tests and expect success.
+- [x] Commit `feat: add Auckland cinema directory`.
 
 ### Task 4: Open Cinema normalization client
 
