@@ -9,6 +9,13 @@ type LoadMovie = (input: {
 
 const SHARED_CACHE = "public, s-maxage=900, stale-while-revalidate=86400";
 
+function invalidLanguageResponse(): Response {
+  return Response.json(
+    { error: { code: "INVALID_LANGUAGE", message: "Invalid language." } },
+    { status: 400, headers: { "cache-control": "no-store" } },
+  );
+}
+
 function detailError(error: unknown): Response {
   if (error instanceof TmdbClientError) {
     const message = error.code === "UPSTREAM_NOT_FOUND"
@@ -38,10 +45,7 @@ export async function handleMoviePreviewDetailRequest(
     );
   }
   if (languageInput !== null && languageInput !== "en" && languageInput !== "zh") {
-    return Response.json(
-      { error: { code: "INVALID_LANGUAGE", message: "Invalid language." } },
-      { status: 400, headers: { "cache-control": "no-store" } },
-    );
+    return invalidLanguageResponse();
   }
   const language = parseMoviePreviewLanguage(languageInput);
   try {
@@ -57,6 +61,7 @@ export async function GET(
   context: { params: Promise<{ movieId: string }> },
 ): Promise<Response> {
   const { movieId } = await context.params;
-  const language = new URL(request.url).searchParams.get("language");
-  return handleMoviePreviewDetailRequest(movieId, language);
+  const languages = new URL(request.url).searchParams.getAll("language");
+  if (languages.length > 1) return invalidLanguageResponse();
+  return handleMoviePreviewDetailRequest(movieId, languages[0] ?? null);
 }

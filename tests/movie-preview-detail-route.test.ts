@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleMoviePreviewDetailRequest } from "../app/api/movie-previews/[movieId]/route";
+import { GET, handleMoviePreviewDetailRequest } from "../app/api/movie-previews/[movieId]/route";
 import type { MoviePreviewDetail } from "../lib/movie-previews";
 import { TmdbClientError } from "../lib/tmdb";
 
@@ -48,6 +48,17 @@ describe("GET /api/movie-previews/[movieId]", () => {
     const response = await handleMoviePreviewDetailRequest("550", "fr", loadMovie);
     expect(response.status).toBe(400);
     expect(loadMovie).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate language parameters before loading a movie", async () => {
+    const response = await GET(
+      new Request("http://localhost/api/movie-previews/550?language=en&language=zh"),
+      { params: Promise.resolve({ movieId: "550" }) },
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: { code: "INVALID_LANGUAGE", message: "Invalid language." },
+    });
   });
 
   it.each([
