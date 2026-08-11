@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookmarkButton } from "../../components/bookmark-button";
-import { EventImage } from "../../components/event-image";
+import { EventEditorialPreviewMedia } from "../../components/event-editorial-preview";
 import type { Language } from "../../components/language-provider";
 import {
   eventDisplayName,
@@ -48,6 +48,9 @@ export function EventCard({ event, index, language }: {
         aria-label={content.open(displayName)}
       >
         <div className="portal-event-body">
+          <span className="portal-event-rank" aria-label={content.position(index + 1)}>
+            {String(index + 1).padStart(2, "0")}
+          </span>
           <h2 id={titleId}>{displayName}</h2>
           <p className="portal-event-date">
             <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
@@ -58,12 +61,7 @@ export function EventCard({ event, index, language }: {
             <span>{formatEventStatus(event.status, language)}</span>
           </div>
         </div>
-        <div className="portal-event-media">
-          <EventImage src={event.imageUrl} alt="" fallback="AKL" />
-          <span className="portal-event-rank" aria-label={content.position(index + 1)}>
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        </div>
+        <EventEditorialPreviewMedia event={event} language={language} placement="card" />
         <span className="portal-event-cta">
           {content.details}<span aria-hidden="true">↗</span>
         </span>

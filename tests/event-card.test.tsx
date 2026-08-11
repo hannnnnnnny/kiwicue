@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EventCard } from "../app/events/event-card";
 import type { KiwiCueEvent } from "../lib/events";
@@ -35,7 +35,23 @@ const curatedMarket: KiwiCueEvent = {
   status: "schedule_verified",
   category: "Market",
   localization: {
-    zh: { name: "Grey Lynn 农夫市集" },
+    zh: {
+      name: "Grey Lynn 农夫市集",
+      previewSummary: "由社区运营，可以直接向本地种植者购买。",
+      previewHighlights: ["本地农产品", "社区食品商家", "减少废弃物"],
+      previewImageAlt: "Grey Lynn 农夫市集里的本地农产品",
+    },
+  },
+  editorialPreview: {
+    summary: "A community market where local growers sell directly.",
+    highlights: ["Local produce", "Small food makers", "Low-waste focus"],
+    image: {
+      url: "https://images.example/grey-lynn.jpg",
+      alt: "Fresh produce at Grey Lynn Farmers Market",
+      sourceName: "Grey Lynn Farmers Market",
+      sourceUrl: "https://www.greylynnfarmersmarket.co.nz/",
+      verifiedAt: "2026-08-12",
+    },
   },
 };
 
@@ -60,7 +76,7 @@ describe("portal event card", () => {
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
   });
 
-  it("uses clear Chinese date, status, and fallback copy", () => {
+  it("uses clear Chinese date and omits empty generic media", () => {
     const view = render(<EventCard event={{ ...event, imageUrl: null }} index={8} language="zh" />);
 
     expect(screen.getByText("09")).toBeInTheDocument();
@@ -69,8 +85,19 @@ describe("portal event card", () => {
     expect(screen.getByText("音乐")).toBeInTheDocument();
     expect(screen.queryByText("Music")).not.toBeInTheDocument();
     expect(screen.getByText("查看详情")).toBeInTheDocument();
-    expect(screen.getByText("AKL")).toBeInTheDocument();
+    expect(screen.queryByText("AKL")).not.toBeInTheDocument();
+    expect(view.container.querySelector(".portal-event-media")).not.toBeInTheDocument();
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("shows localized useful text when a market preview image fails", () => {
+    const view = render(<EventCard event={curatedMarket} index={0} language="zh" />);
+
+    fireEvent.error(view.container.querySelector("img")!);
+
+    expect(screen.getByText("第一次去可以期待")).toBeInTheDocument();
+    expect(screen.getByText("由社区运营，可以直接向本地种植者购买。")).toBeInTheDocument();
+    expect(screen.queryByText("AKL")).not.toBeInTheDocument();
   });
 
   it("uses the localized market name and verified schedule label in Chinese", () => {
