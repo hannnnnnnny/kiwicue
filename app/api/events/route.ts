@@ -1,5 +1,9 @@
 import type { AucklandEventsResult } from "../../../lib/events";
 import {
+  listCuratedMarkets,
+  type CuratedMarketOptions,
+} from "../../../lib/curated-markets";
+import {
   parseEventCategory,
   type EventCategory,
 } from "../../../lib/event-categories";
@@ -23,6 +27,10 @@ type LoadEvents = (options: {
   window?: EventWindow;
 }) => Promise<AucklandEventsResult>;
 
+type LoadCuratedEvents = (
+  options: CuratedMarketOptions,
+) => AucklandEventsResult | Promise<AucklandEventsResult>;
+
 const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
   CONFIG_REQUIRED: "Event data is not configured yet.",
   UPSTREAM_NOT_FOUND: "Event not found.",
@@ -35,6 +43,7 @@ const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
 export async function handleEventsRequest(
   request: Request,
   loadEvents: LoadEvents = fetchAucklandEventFeed,
+  loadMarkets: LoadCuratedEvents = listCuratedMarkets,
 ): Promise<Response> {
   const url = new URL(request.url);
   const sizeValues = url.searchParams.getAll("size");
@@ -63,14 +72,19 @@ export async function handleEventsRequest(
     ? cursorCandidate
     : undefined;
   try {
-    const payload = await loadEvents({
+    const sharedOptions = {
       size,
-      ...(category ? { category } : {}),
       ...(keyword ? { keyword } : {}),
       ...(venueId ? { venueId } : {}),
       ...(window !== "all" ? { window } : {}),
-      ...(cursor ? { cursor } : {}),
-    });
+    };
+    const payload = category === "markets"
+      ? await loadMarkets(sharedOptions)
+      : await loadEvents({
+          ...sharedOptions,
+          ...(category ? { category } : {}),
+          ...(cursor ? { cursor } : {}),
+        });
 
     return Response.json(payload, {
       headers: {
