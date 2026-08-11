@@ -93,8 +93,8 @@ const nightMarketPreview: EventEditorialPreview = {
     "The vendor mix changes, so each location can feel a little different.",
   ],
   image: {
-    url: "https://static.wixstatic.com/media/7359e1_16a6cccb3e1147e3b4a01b2aa8a094f5%7Emv2.png/v1/fit/w_2500,h_1330,al_c/7359e1_16a6cccb3e1147e3b4a01b2aa8a094f5%7Emv2.png",
-    alt: "Food and visitors at an Auckland Night Market",
+    url: "https://static.wixstatic.com/media/7359e1_54610bf46d2748b18334076af1f3e304~mv2.jpg/v1/fill/w_458,h_458,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/111256382_3232249256866480_2220483253420627809_n-700x700.jpg",
+    alt: "Pan-fried dumplings from an Auckland Night Market food stall",
     sourceName: "Auckland Night Markets",
     sourceUrl: nightMarketSource,
     verifiedAt: CURATED_MARKET_VERIFIED_AT,
@@ -107,7 +107,7 @@ const nightMarketPreviewZh = {
     "适合下班后快速吃饭，也适合慢慢逛一圈。",
     "不同地点和每周摊主可能变化，现场内容不完全相同。",
   ],
-  imageAlt: "奥克兰夜市里的美食摊位和逛市集的人群",
+  imageAlt: "奥克兰夜市美食摊位售卖的煎饺",
 } as const;
 
 function nightMarket(

@@ -150,6 +150,10 @@ describe("curated Auckland markets", () => {
       "kc-market-grey-lynn",
       saturdayEvening,
     );
+    const nightMarket = findCuratedMarketDetail(
+      "kc-market-night-botany",
+      saturdayEvening,
+    );
 
     expect(event?.source).toEqual({
       name: "Grey Lynn Farmers Market",
@@ -160,6 +164,9 @@ describe("curated Auckland markets", () => {
     expect(event?.localization?.zh?.description).toContain("本地农产品");
     expect(event?.editorialPreview?.image?.url).toBe(
       "https://lh3.googleusercontent.com/sitesv/AG8ngQUtOsQqy-O5VscAgNuCL2sUbQSUUgpUK9bfv_Y_nnOUZwQIqx5nmEzIaz3sEA5fGEUd-kfNhdUzlxuEkiub3Kcb2UMtAoi85z-LzaV6BrSHhm2Lgfi09C8L28NelHwjZwDiAh9KIJON3pdaRiyy3WvhV1Nf1azBbw5tHWzB4H88epxCAfzBR4NLbS_xu1k=w1200",
+    );
+    expect(nightMarket?.editorialPreview?.image?.url).toBe(
+      "https://static.wixstatic.com/media/7359e1_54610bf46d2748b18334076af1f3e304~mv2.jpg/v1/fill/w_458,h_458,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/111256382_3232249256866480_2220483253420627809_n-700x700.jpg",
     );
     expect(event?.description).not.toContain("where you can get fresh");
     expect(isCuratedMarketVerificationFresh(new Date())).toBe(true);
