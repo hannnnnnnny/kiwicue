@@ -33,15 +33,15 @@
 - `formatEventPrice(range: KiwiCuePriceRange | null, language: Language): string`
 - `KiwiCueEvent.priceRange: KiwiCuePriceRange | null`
 
-- [ ] Write failing formatter tests for `NZ$49`, `NZ$49–129`, decimal preservation, ISO currency fallback, and localized missing-price copy.
-- [ ] Run `npm test -- tests/event-price.test.ts`; expect failure because `lib/event-price.ts` does not exist.
-- [ ] Implement bounded currency and finite non-negative range formatting in `lib/event-price.ts`.
-- [ ] Run the focused formatter test and expect all cases to pass.
-- [ ] Add failing Ticketmaster normalization tests using `priceRanges` with valid, reversed, negative, and non-finite values.
-- [ ] Run `npm test -- tests/ticketmaster-client.test.ts`; expect the valid payload to lack `priceRange`.
-- [ ] Extend the payload type, event domain type, and normalizer so the first valid standard range becomes `priceRange`, otherwise `null`.
-- [ ] Run both focused tests and expect success.
-- [ ] Commit `feat: normalize Ticketmaster event prices`.
+- [x] Write failing formatter tests for `NZ$49`, `NZ$49–129`, decimal preservation, ISO currency fallback, and localized missing-price copy.
+- [x] Run `npm test -- tests/event-price.test.ts`; expect failure because `lib/event-price.ts` does not exist.
+- [x] Implement bounded currency and finite non-negative range formatting in `lib/event-price.ts`.
+- [x] Run the focused formatter test and expect all cases to pass.
+- [x] Add failing Ticketmaster normalization tests using `priceRanges` with valid, reversed, negative, and non-finite values.
+- [x] Run `npm test -- tests/ticketmaster-client.test.ts`; expect the valid payload to lack `priceRange`.
+- [x] Extend the payload type, event domain type, and normalizer so the first valid standard range becomes `priceRange`, otherwise `null`.
+- [x] Run both focused tests and expect success.
+- [x] Commit `feat: normalize Ticketmaster event prices`.
 
 ### Task 2: Price presentation and saved-event compatibility
 

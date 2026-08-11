@@ -1,6 +1,7 @@
 import "server-only";
 import type { EventCategory } from "./event-categories";
 import { parseEventId } from "./event-id";
+import { normalizePriceRanges } from "./event-price";
 import type {
   EventCoordinates,
   KiwiCueEvent,
@@ -51,6 +52,7 @@ interface TicketmasterEventPayload {
   url?: string;
   info?: string;
   pleaseNote?: string;
+  priceRanges?: unknown;
   images?: Array<{ url?: string; ratio?: string; width?: number }>;
   dates?: {
     start?: { localDate?: string; localTime?: string; dateTime?: string };
@@ -261,6 +263,7 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
     },
     status: event.dates?.status?.code ?? "unknown",
     category: classification?.segment?.name ?? classification?.genre?.name ?? "Other",
+    priceRange: normalizePriceRanges(event.priceRanges),
     venue,
   };
 }

@@ -17,6 +17,12 @@ export interface KiwiCueVenue {
   coordinates: EventCoordinates | null;
 }
 
+export interface KiwiCuePriceRange {
+  currency: string;
+  minimum: number;
+  maximum: number;
+}
+
 export interface KiwiCueEvent {
   id: string;
   name: string;
@@ -30,6 +36,7 @@ export interface KiwiCueEvent {
   };
   status: string;
   category: string;
+  priceRange: KiwiCuePriceRange | null;
   venue: KiwiCueVenue | null;
 }
 
