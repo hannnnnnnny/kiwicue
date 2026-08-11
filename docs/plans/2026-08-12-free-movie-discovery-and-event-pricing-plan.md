@@ -190,12 +190,12 @@
 **Files:**
 - Modify only files required by failures discovered during verification.
 
-- [ ] Create one GitHub issue for free movie discovery and one for event pricing; assign both to `hannnnnnnny`.
-- [ ] Run `npm test` and require zero failures.
-- [ ] Run `npm run lint` and require zero errors.
-- [ ] Run `npx tsc --noEmit` and require exit code 0.
-- [ ] Run `npm run build` and require exit code 0.
-- [ ] Run `npm run test:e2e` and require every configured project to pass.
-- [ ] Run `git diff --check`, inspect `git diff origin/main...HEAD`, and confirm `skills-lock.json` is not staged.
+- [x] Create one GitHub issue for free movie discovery and one for event pricing; assign both to `hannnnnnnny`.
+- [x] Run `npm test` and require zero failures.
+- [x] Run `npm run lint` and require zero errors.
+- [x] Run `npx tsc --noEmit` and require exit code 0.
+- [x] Run `npm run build` and require exit code 0.
+- [x] Run `npm run test:e2e` and require every configured project to pass.
+- [x] Run `git diff --check`, inspect `git diff origin/main...HEAD`, and confirm `skills-lock.json` is not staged.
 - [ ] Push `feat/free-movie-discovery`, open a ready PR with `Closes #<movie>` and `Closes #<pricing>`, and wait for required checks.
 - [ ] Merge the PR, confirm both issues are closed, and confirm production deployment status without triggering paid services.
