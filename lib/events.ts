@@ -17,6 +17,20 @@ export interface KiwiCueVenue {
   coordinates: EventCoordinates | null;
 }
 
+export interface EventSource {
+  name: string;
+  url: string;
+  verifiedAt: string;
+}
+
+export interface EventLocalization {
+  zh?: {
+    name?: string;
+    description?: string;
+    note?: string;
+  };
+}
+
 export interface KiwiCueEvent {
   id: string;
   name: string;
@@ -31,6 +45,8 @@ export interface KiwiCueEvent {
   status: string;
   category: string;
   venue: KiwiCueVenue | null;
+  source?: EventSource;
+  localization?: EventLocalization;
 }
 
 export interface KiwiCueEventDetail extends KiwiCueEvent {
