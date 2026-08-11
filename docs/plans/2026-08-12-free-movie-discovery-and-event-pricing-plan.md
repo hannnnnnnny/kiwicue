@@ -126,13 +126,13 @@
 - `parseMovieDateFilter(value): MovieDateFilter` defaults to `today` and rejects duplicates through route logic.
 - Response: `{ screenings: KiwiCueScreening[]; source: "open-cinema"; sourceState: "ready" | "empty" | "unavailable" }`.
 
-- [ ] Add failing query-parser tests for Unicode normalization, repeated whitespace, empty input, arrays, and overlong values.
-- [ ] Add failing route tests for one canonical query/date, duplicate parameters, empty feed, upstream failure degradation, and `no-store` response caching.
-- [ ] Run both focused files and confirm failures are from missing modules.
-- [ ] Implement parsers without `any`, then implement dependency-injected `handleMoviesRequest` and `GET`.
-- [ ] Treat upstream failure as HTTP 200 with `sourceState: "unavailable"` because the directory is still available; invalid public input returns HTTP 400.
-- [ ] Run both focused tests and expect success.
-- [ ] Commit `feat: expose free movie screening feed`.
+- [x] Add failing query-parser tests for Unicode normalization, repeated whitespace, empty input, arrays, and overlong values.
+- [x] Add failing route tests for one canonical query/date, duplicate parameters, empty feed, upstream failure degradation, and `no-store` response caching.
+- [x] Run both focused files and confirm failures are from missing modules.
+- [x] Implement parsers without `any`, then implement dependency-injected `handleMoviesRequest` and `GET`.
+- [x] Treat upstream failure as HTTP 200 with `sourceState: "unavailable"` because the directory is still available; invalid public input returns HTTP 400.
+- [x] Run both focused tests and expect success.
+- [x] Commit `feat: expose free movie screening feed`.
 
 ### Task 6: Movie page, navigation, and bilingual interaction
 
