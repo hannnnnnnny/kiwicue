@@ -104,14 +104,14 @@
 - `fetchAucklandScreenings({ query, date, now, fetchImpl, apiKey }): Promise<KiwiCueScreening[]>`
 - `OpenCinemaClientError` with stable `UPSTREAM_BUSY | UPSTREAM_TIMEOUT | UPSTREAM_ERROR` codes.
 
-- [ ] Add failing URL tests for Auckland coordinates, 100km radius, `title`, and ISO `date` mapping.
-- [ ] Add failing normalization tests for safe screenings and rejection of missing ids/title/time, malformed dates, unsafe checkout URLs, invalid distance, and oversized strings.
-- [ ] Add failing fetch tests for timeout and non-200 responses.
-- [ ] Run `npm test -- tests/open-cinema.test.ts`; expect module-not-found failure.
-- [ ] Implement a server-only client with an 8-second abort timeout, optional bearer header, defensive JSON typing, 50-result limit, and deduplication by screening id.
-- [ ] Keep all times in their upstream ISO form; presentation converts them with `Pacific/Auckland` locale options.
-- [ ] Run the focused client tests and expect success.
-- [ ] Commit `feat: add open cinema client`.
+- [x] Add failing URL tests for Auckland coordinates, 100km radius, `title`, and ISO `date` mapping.
+- [x] Add failing normalization tests for safe screenings and rejection of missing ids/title/time, malformed dates, unsafe checkout URLs, invalid distance, and oversized strings.
+- [x] Add failing fetch tests for timeout and non-200 responses.
+- [x] Run `npm test -- tests/open-cinema.test.ts`; expect module-not-found failure.
+- [x] Implement a server-only client with an 8-second abort timeout, optional bearer header, defensive JSON typing, 50-result limit, and deduplication by screening id.
+- [x] Keep all times in their upstream ISO form; presentation converts them with `Pacific/Auckland` locale options.
+- [x] Run the focused client tests and expect success.
+- [x] Commit `feat: add open cinema client`.
 
 ### Task 5: Public movie API route
 
