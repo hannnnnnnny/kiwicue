@@ -27,6 +27,18 @@ const event: KiwiCueEvent = {
   },
 };
 
+const curatedMarket: KiwiCueEvent = {
+  ...event,
+  id: "kc-market-grey-lynn",
+  name: "Grey Lynn Farmers Market",
+  imageUrl: null,
+  status: "schedule_verified",
+  category: "Market",
+  localization: {
+    zh: { name: "Grey Lynn 农夫市集" },
+  },
+};
+
 afterEach(cleanup);
 
 describe("portal event card", () => {
@@ -59,6 +71,19 @@ describe("portal event card", () => {
     expect(screen.getByText("查看详情")).toBeInTheDocument();
     expect(screen.getByText("AKL")).toBeInTheDocument();
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("uses the localized market name and verified schedule label in Chinese", () => {
+    render(<EventCard event={curatedMarket} index={0} language="zh" />);
+
+    expect(screen.getByRole("article", { name: "Grey Lynn 农夫市集" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Grey Lynn 农夫市集" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看 Grey Lynn 农夫市集 详情" })).toHaveAttribute(
+      "href",
+      "/events/kc-market-grey-lynn",
+    );
+    expect(screen.getByText("市集")).toBeInTheDocument();
+    expect(screen.getByText("日程已核实")).toBeInTheDocument();
   });
 
   it("defines four, three, two, and one-column responsive grid contracts", () => {
