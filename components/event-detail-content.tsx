@@ -80,6 +80,7 @@ const copy = {
     marketBooking: "Check official schedule",
     marketSource: "Official schedule source",
     verified: (date: string) => `Schedule last checked ${date}`,
+    marketSourceNote: "Market times can change. Confirm the latest schedule and access details on the official market website before travelling.",
   },
   zh: {
     loading: "正在加载活动详情",
@@ -116,6 +117,7 @@ const copy = {
     marketBooking: "查看官方最新安排",
     marketSource: "官方日程来源",
     verified: (date: string) => `日程核实日期：${date}`,
+    marketSourceNote: "市集时间可能临时调整；出发前请在市集官网确认最新日程和入场信息。",
   },
 } as const;
 
@@ -297,7 +299,9 @@ export function EventDetailContent({
             <span>{content.verified(formatVerifiedDate(event.source.verifiedAt, language))}</span>
           </div>
         )}
-        <p className="event-source-note">{content.source}</p>
+        <p className="event-source-note">
+          {isCuratedMarket ? content.marketSourceNote : content.source}
+        </p>
       </aside>
     </article>,
   );

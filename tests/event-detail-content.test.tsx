@@ -189,5 +189,7 @@ describe("event detail experience", () => {
       marketDetail.source!.url,
     );
     expect(screen.getByText(/2026年8月12日/)).toBeVisible();
+    expect(screen.getByText(/市集时间可能临时调整/)).toBeVisible();
+    expect(document.body).not.toHaveTextContent("余票");
   });
 });

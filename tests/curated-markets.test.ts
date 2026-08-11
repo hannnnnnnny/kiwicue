@@ -6,6 +6,7 @@ import {
   CURATED_MARKET_VERIFIED_AT,
   findCuratedMarketDetail,
   isCuratedMarketId,
+  isCuratedMarketVerificationFresh,
   listCuratedMarkets,
   listCuratedMarketVenues,
 } from "../lib/curated-markets";
@@ -69,13 +70,13 @@ describe("curated Auckland markets", () => {
     );
     const summer = findCuratedMarketDetail(
       "kc-market-grey-lynn",
-      new Date("2026-12-12T18:00:00.000Z"),
+      new Date("2026-12-05T18:00:00.000Z"),
     );
 
     expect(winter?.start.localTime).toBe("08:30:00");
     expect(winter?.start.dateTime).toBe("2026-08-15T20:30:00Z");
     expect(summer?.start.localTime).toBe("08:30:00");
-    expect(summer?.start.dateTime).toBe("2026-12-12T19:30:00Z");
+    expect(summer?.start.dateTime).toBe("2026-12-05T19:30:00Z");
   });
 
   it("filters by keyword, venue, date window, and requested size", () => {
@@ -137,12 +138,23 @@ describe("curated Auckland markets", () => {
     expect(event?.localization?.zh?.name).toBe("Grey Lynn 农夫市集");
     expect(event?.localization?.zh?.description).toContain("本地农产品");
     expect(event?.description).not.toContain("where you can get fresh");
-    const verificationAge = (
-      Date.parse("2026-08-12T00:00:00.000Z")
-      - Date.parse(`${CURATED_MARKET_VERIFIED_AT}T00:00:00.000Z`)
-    ) / 86_400_000;
-    expect(verificationAge).toBeGreaterThanOrEqual(0);
-    expect(verificationAge).toBeLessThanOrEqual(120);
+    expect(isCuratedMarketVerificationFresh(new Date())).toBe(true);
+    expect(isCuratedMarketVerificationFresh(new Date("2026-12-10T12:00:00+13:00"))).toBe(true);
+    expect(isCuratedMarketVerificationFresh(new Date("2026-12-11T12:00:00+13:00"))).toBe(false);
+  });
+
+  it("uses verified street addresses and postcodes for map guidance", () => {
+    const greyLynn = findCuratedMarketDetail("kc-market-grey-lynn", saturdayEvening);
+    const highbury = findCuratedMarketDetail("kc-market-night-highbury", saturdayEvening);
+
+    expect(greyLynn?.venue).toMatchObject({
+      address: "510 Richmond Road, Grey Lynn",
+      postalCode: "1021",
+    });
+    expect(highbury?.venue).toMatchObject({
+      address: "Cnr Highbury Bypass & Birkenhead Avenue, Birkenhead",
+      postalCode: "0626",
+    });
   });
 
   it("uses a reserved ID namespace and returns null for unknown records", () => {

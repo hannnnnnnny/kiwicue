@@ -80,6 +80,61 @@ const eventDetail = {
   },
 };
 
+const curatedMarkets = [
+  {
+    ...event("kc-market-kelston", "Auckland Night Markets – Kelston"),
+    url: "https://www.aucklandnightmarkets.co.nz/",
+    status: "schedule_verified",
+    category: "Market",
+    venue: {
+      id: "kc-venue-kelston",
+      name: "Kelston Mall",
+      city: "Auckland",
+      address: "2 West Coast Road, Kelston",
+      postalCode: "0602",
+      coordinates: { latitude: -36.9086, longitude: 174.6636 },
+    },
+    source: {
+      name: "Auckland Night Markets",
+      url: "https://www.aucklandnightmarkets.co.nz/",
+      verifiedAt: "2026-08-12",
+    },
+    localization: { zh: { name: "奥克兰夜市 · Kelston" } },
+  },
+  {
+    ...event("kc-market-grey-lynn", "Grey Lynn Farmers Market"),
+    url: "https://www.greylynnfarmersmarket.co.nz/",
+    status: "schedule_verified",
+    category: "Market",
+    venue: {
+      id: "kc-venue-grey-lynn",
+      name: "Grey Lynn Community Centre",
+      city: "Auckland",
+      address: "510 Richmond Road, Grey Lynn",
+      postalCode: "1021",
+      coordinates: { latitude: -36.8574, longitude: 174.7282 },
+    },
+    source: {
+      name: "Grey Lynn Farmers Market",
+      url: "https://www.greylynnfarmersmarket.co.nz/",
+      verifiedAt: "2026-08-12",
+    },
+    localization: {
+      zh: {
+        name: "Grey Lynn 农夫市集",
+        description: "社区农夫市集，有本地农产品和现场食物。",
+        note: "公共假期前后日程可能调整。",
+      },
+    },
+  },
+];
+
+const curatedMarketDetail = {
+  ...curatedMarkets[1],
+  description: "A neighbourhood farmers market with local produce and prepared food.",
+  note: "Schedules can change around public holidays.",
+};
+
 const movieScreening = {
   id: "screening-1",
   filmId: "film-1",
@@ -161,6 +216,8 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
       venues: [
         { id: "civic", name: "The Civic" },
         { id: "spark", name: "Spark Arena" },
+        { id: "kc-venue-grey-lynn", name: "Grey Lynn Community Centre" },
+        { id: "kc-venue-kelston", name: "Kelston Mall" },
       ],
     });
   });
@@ -182,6 +239,9 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     if (url.pathname.endsWith("/api/events/event-1")) {
       return json(route, { event: eventDetail });
     }
+    if (url.pathname.endsWith("/api/events/kc-market-grey-lynn")) {
+      return json(route, { event: curatedMarketDetail });
+    }
     eventRequests.push(requestUrl);
     if (url.searchParams.has("cursor")) {
       if (options.appendRelease) await options.appendRelease;
@@ -194,6 +254,19 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     if (initialFailures > 0) {
       initialFailures -= 1;
       return json(route, { error: { message: "Unavailable" } });
+    }
+    if (url.searchParams.get("category") === "markets") {
+      const query = url.searchParams.get("q")?.toLocaleLowerCase("en-NZ") ?? "";
+      const venueId = url.searchParams.get("venue");
+      const markets = curatedMarkets.filter((market) =>
+        (!query || market.name.toLocaleLowerCase("en-NZ").includes(query))
+        && (!venueId || market.venue.id === venueId),
+      );
+      return json(route, {
+        events: markets,
+        page: { size: 50, totalElements: markets.length, totalPages: markets.length ? 1 : 0, number: 0 },
+        nextCursor: null,
+      });
     }
     if (url.searchParams.get("q") === "NoSuchActivity") {
       return json(route, {
@@ -498,16 +571,16 @@ test("every category and time link navigates, preserves other filters, and reque
     ["Next 7 days", "7d"], ["This weekend", "weekend"], ["Next 30 days", "30d"],
   ] as const;
   for (const [label, value] of windows) {
-    await page.goto("/events?category=markets&q=Taylor&venue=civic");
-    await expect(page.getByRole("heading", { name: "Taylor Night Auckland" })).toBeVisible();
+    await page.goto("/events?category=markets&q=Grey&venue=kc-venue-grey-lynn");
+    await expect(page.getByRole("heading", { name: "Grey Lynn Farmers Market" })).toBeVisible();
     const before = requests.eventRequests.length;
     await page.getByRole("link", { name: label, exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`window=${value}&category=markets&q=Taylor&venue=civic$`));
+    await expect(page).toHaveURL(new RegExp(`window=${value}&category=markets&q=Grey&venue=kc-venue-grey-lynn$`));
     await expect.poll(() => requests.eventRequests.length).toBeGreaterThan(before);
   }
-  await page.goto("/events?window=weekend&category=markets&q=Taylor&venue=civic");
+  await page.goto("/events?window=weekend&category=markets&q=Grey&venue=kc-venue-grey-lynn");
   await page.getByRole("link", { name: "All future", exact: true }).click();
-  await expect(page).toHaveURL(/\/events\?category=markets&q=Taylor&venue=civic$/);
+  await expect(page).toHaveURL(/\/events\?category=markets&q=Grey&venue=kc-venue-grey-lynn$/);
   expect(errors).toEqual([]);
 });
 
@@ -589,6 +662,63 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   await expect(popup).toHaveURL("https://www.ticketmaster.co.nz/event/event-1");
   expect(await popup.evaluate(() => window.opener === null)).toBe(true);
   await popup.close();
+  expect(errors).toEqual([]);
+});
+
+test("curated markets can be filtered, opened, mapped, saved, and read in Chinese", async ({ page }) => {
+  const errors = runtimeErrors(page);
+  await installRoutes(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition(success: PositionCallback) {
+          success({
+            coords: {
+              latitude: -36.8509, longitude: 174.7645, accuracy: 10,
+              altitude: null, altitudeAccuracy: null, heading: null, speed: null,
+              toJSON: () => ({}),
+            },
+            timestamp: Date.now(),
+            toJSON: () => ({}),
+          });
+        },
+      },
+    });
+  });
+  await page.context().route("https://www.greylynnfarmersmarket.co.nz/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: "<!doctype html><title>Grey Lynn Farmers Market</title>",
+  }));
+
+  await page.goto("/events?category=markets");
+  await expect(page.getByText("2 verified market schedules · 2 shown")).toBeVisible();
+  await expect(page.getByText("Verified official market links")).toHaveCount(1);
+  await expect(page.locator(".source-disclaimer")).not.toContainText("Ticketmaster");
+
+  await page.getByLabel("Activity name").fill("Grey");
+  await page.getByLabel("Venue").selectOption("kc-venue-grey-lynn");
+  await page.getByRole("button", { name: "Search events" }).click();
+  await expect(page).toHaveURL(/category=markets&q=Grey&venue=kc-venue-grey-lynn$/);
+  await expect(page.getByRole("heading", { name: "Grey Lynn Farmers Market" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("link", { name: "View Grey Lynn Farmers Market details" }).click();
+  await expect(page.getByRole("heading", { name: "Plan your visit" })).toBeVisible();
+  await expect(page.getByText(/Schedule last checked.*12 Aug 2026/)).toBeVisible();
+  await expect(page.getByTitle("Map of Grey Lynn Community Centre")).toBeVisible();
+  await page.getByRole("button", { name: "Show distance from me" }).click();
+  await expect(page.getByText(/^About .* km away/)).toBeVisible();
+  await page.getByRole("button", { name: "Save Grey Lynn Farmers Market" }).click();
+  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+
+  await page.getByRole("button", { name: "切换到中文" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "出发前确认" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "查看官方最新安排" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "从收藏中移除 Grey Lynn 农夫市集" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);
 });
 

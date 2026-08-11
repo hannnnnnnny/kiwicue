@@ -16,6 +16,7 @@ const TIME_ZONE = "Pacific/Auckland";
 const CURATED_PREFIX = "kc-market-";
 const DEFAULT_SIZE = 50;
 const MAX_SIZE = 50;
+const MAX_VERIFICATION_AGE_DAYS = 120;
 
 export const CURATED_MARKET_VERIFIED_AT = "2026-08-12";
 
@@ -149,8 +150,8 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
     venue(
       "kc-venue-night-highbury",
       "Highbury Shopping Centre",
-      "Mokoia Road, Birkenhead",
-      "0627",
+      "Cnr Highbury Bypass & Birkenhead Avenue, Birkenhead",
+      "0626",
       coordinates(-36.8110064, 174.7245999),
     ),
     3,
@@ -248,7 +249,7 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
       "kc-venue-grey-lynn",
       "Grey Lynn Community Centre",
       "510 Richmond Road, Grey Lynn",
-      "1022",
+      "1021",
       coordinates(-36.8597672, 174.7330018),
     ),
     schedules: [{ weekday: 7, hour: 8, minute: 30 }],
@@ -284,6 +285,16 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
 function clampSize(size = DEFAULT_SIZE): number {
   if (!Number.isFinite(size)) return DEFAULT_SIZE;
   return Math.min(MAX_SIZE, Math.max(1, Math.trunc(size)));
+}
+
+export function isCuratedMarketVerificationFresh(now = new Date()): boolean {
+  if (!Number.isFinite(now.getTime())) return false;
+  const today = Temporal.Instant.fromEpochMilliseconds(now.getTime())
+    .toZonedDateTimeISO(TIME_ZONE)
+    .toPlainDate();
+  const verified = Temporal.PlainDate.from(CURATED_MARKET_VERIFIED_AT);
+  const ageInDays = verified.until(today, { largestUnit: "day" }).days;
+  return ageInDays >= 0 && ageInDays <= MAX_VERIFICATION_AGE_DAYS;
 }
 
 function nextScheduledTime(
