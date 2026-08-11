@@ -39,6 +39,18 @@ function renderPortalControls() {
 }
 
 describe("portal navigation", () => {
+  it("exposes one global navigation with an explicit current page", () => {
+    render(
+      <LanguageProvider>
+        <PortalHeader currentPage="events" />
+      </LanguageProvider>,
+    );
+
+    expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Saved events, 0" })).not.toHaveAttribute("aria-current");
+  });
+
   it("preserves every other filter while one navigation dimension changes", () => {
     renderPortalControls();
 

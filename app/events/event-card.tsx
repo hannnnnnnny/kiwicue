@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BookmarkButton } from "../../components/bookmark-button";
+import { EventImage } from "../../components/event-image";
 import type { Language } from "../../components/language-provider";
 import { formatEventDate, formatEventStatus, formatEventTime } from "../../lib/event-display";
 import type { KiwiCueEvent } from "../../lib/events";
@@ -39,33 +40,26 @@ export function EventCard({ event, index, language }: {
         href={`/events/${encodeURIComponent(event.id)}`}
         aria-label={content.open(event.name)}
       >
-        <div className="portal-event-media">
-          {event.imageUrl ? (
-            // Ticketmaster image hosts vary by event; normalized upstream URLs remain decorative here.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.imageUrl} alt="" loading="lazy" decoding="async" />
-          ) : (
-            <span className="portal-event-fallback" aria-hidden="true">AKL</span>
-          )}
-          <span
-            className="portal-event-rank"
-            aria-label={content.position(index + 1)}
-          >
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        </div>
         <div className="portal-event-body">
-          <p className="portal-event-date">{dateTime}</p>
           <h2 id={titleId}>{event.name}</h2>
+          <p className="portal-event-date">
+            <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
+          </p>
           <p className="portal-event-venue">{venue}</p>
           <div className="portal-event-meta">
             <span>{event.category}</span>
             <span>{formatEventStatus(event.status, language)}</span>
           </div>
-          <span className="portal-event-cta">
-            {content.details}<span aria-hidden="true">↗</span>
+        </div>
+        <div className="portal-event-media">
+          <EventImage src={event.imageUrl} alt="" fallback="AKL" />
+          <span className="portal-event-rank" aria-label={content.position(index + 1)}>
+            {String(index + 1).padStart(2, "0")}
           </span>
         </div>
+        <span className="portal-event-cta">
+          {content.details}<span aria-hidden="true">↗</span>
+        </span>
       </Link>
       <BookmarkButton event={event} language={language} />
     </article>

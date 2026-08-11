@@ -17,7 +17,7 @@ const windowLabels = {
 const copy = {
   en: {
     eyebrow: "Auckland · Official event listings",
-    title: "Find something worth going to",
+    title: "What’s on in Auckland?",
     intro: "Search by event or artist, narrow the date, then open the official listing. No delayed recommendation feed.",
     statusLabel: "Current event search",
     location: "Auckland",
@@ -29,7 +29,7 @@ const copy = {
   },
   zh: {
     eyebrow: "奥克兰 · 官方活动信息",
-    title: "更快找到真正想去的活动",
+    title: "奥克兰最近有什么活动？",
     intro: "搜索活动或艺人，再按时间、类型和场馆缩小范围；不必等待迟到的推荐推送。",
     statusLabel: "当前活动检索范围",
     location: "奥克兰",

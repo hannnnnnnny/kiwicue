@@ -6,6 +6,7 @@ import { EventCard } from "../app/events/event-card";
 import type { KiwiCueEvent, KiwiCueEventDetail } from "../lib/events";
 import { useBookmarks } from "./bookmark-provider";
 import { requestEventDetailFromApi } from "./event-detail-content";
+import { EventGridSkeleton } from "./event-grid-skeleton";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
 
@@ -97,7 +98,7 @@ export function SavedPageContent({
 
   return (
     <main className="saved-page">
-      <PortalHeader skipTarget="saved-events" />
+      <PortalHeader skipTarget="saved-events" currentPage="saved" />
       <section className="saved-masthead">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1>{content.title}</h1>
@@ -106,8 +107,8 @@ export function SavedPageContent({
 
       {!isHydrated ? (
         <section id="saved-events" className="event-state event-loading" role="status" aria-busy="true">
-          <span className="loading-pulse" aria-hidden="true" />
           <p>{content.loading}</p>
+          <EventGridSkeleton count={4} />
         </section>
       ) : bookmarks.length === 0 ? (
         <section id="saved-events" className="event-state saved-empty" aria-live="polite">

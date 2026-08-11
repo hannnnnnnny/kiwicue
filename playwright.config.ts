@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: process.env.E2E_TEST_DIR ?? "./e2e",
   fullyParallel: false,
   retries: 0,
   reporter: "line",
@@ -11,33 +11,24 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? "http://127.0.0.1:3100",
     trace: "retain-on-failure",
   },
-  webServer: process.env.E2E_BASE_URL
-    ? undefined
-    : {
-        command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
-        url: "http://127.0.0.1:3100/events",
-        reuseExistingServer: false,
-        timeout: 120_000,
-      },
   projects: [
     {
       name: "desktop",
       use: { browserName: "chromium", viewport: { width: 1440, height: 900 } },
     },
     {
-      name: "mobile-390",
+      name: "tablet-768",
       use: {
         browserName: "chromium",
-        viewport: { width: 390, height: 844 },
-        isMobile: true,
+        viewport: { width: 768, height: 1024 },
         hasTouch: true,
       },
     },
     {
-      name: "compact-320",
+      name: "mobile-375",
       use: {
         browserName: "chromium",
-        viewport: { width: 320, height: 800 },
+        viewport: { width: 375, height: 812 },
         isMobile: true,
         hasTouch: true,
       },

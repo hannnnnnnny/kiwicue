@@ -7,6 +7,7 @@ import type { KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
 import { EventMap } from "./event-map";
+import { EventImage } from "./event-image";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
 
@@ -121,7 +122,7 @@ export function EventDetailContent({
   function shell(body: React.ReactNode) {
     return (
       <main className="event-detail-page">
-        <PortalHeader skipTarget="event-detail" />
+        <PortalHeader skipTarget="event-detail" currentPage="events" />
         {body}
         <footer className="portal-footer">
           <span>KiwiCue / 纽村小报</span>
@@ -134,8 +135,13 @@ export function EventDetailContent({
   if (state.status === "loading") {
     return shell(
       <section id="event-detail" className="event-state event-loading" role="status" aria-busy="true">
-        <span className="loading-pulse" aria-hidden="true" />
         <p>{content.loading}</p>
+        <div className="event-detail-loading-skeleton" aria-hidden="true">
+          <span className="event-detail-skeleton-title" />
+          <span className="event-detail-skeleton-line" />
+          <span className="event-detail-skeleton-actions" />
+          <span className="event-detail-skeleton-media" />
+        </div>
       </section>,
     );
   }
@@ -179,37 +185,39 @@ export function EventDetailContent({
     <article id="event-detail" className="event-detail-shell" aria-labelledby="event-detail-title">
       <div className="event-detail-primary">
         <Link className="event-detail-back" href="/events">← {content.back}</Link>
-        <div className="event-detail-media">
-          {event.imageUrl ? (
-            // Ticketmaster image hosts vary by event; the adjacent title provides the accessible name.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.imageUrl} alt="" />
-          ) : (
-            <span className="portal-event-fallback" aria-hidden="true">AKL</span>
-          )}
-        </div>
         <header className="event-detail-heading">
           <p className="eyebrow">{content.eyebrow}</p>
-          <p className="event-detail-date">{dateTime}</p>
           <h1 id="event-detail-title">{event.name}</h1>
+          <p className="event-detail-date">
+            <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
+          </p>
+          <p className="event-detail-venue-summary">
+            {venue?.name ?? content.addressUnavailable}
+            {venue?.city ? ` · ${venue.city}` : ""}
+          </p>
           <div className="event-detail-tags">
             <span>{event.category}</span>
             <span>{formatEventStatus(event.status, language)}</span>
           </div>
-          <BookmarkButton event={event} language={language} placement="detail" />
+          <div className="event-detail-actions">
+            <a
+              className="event-booking-inline"
+              href={event.url}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {content.booking}<span aria-hidden="true"> ↗</span>
+            </a>
+            <BookmarkButton event={event} language={language} placement="detail" />
+          </div>
         </header>
+        <div className="event-detail-media">
+          <EventImage src={event.imageUrl} alt="" fallback="AKL" loading="eager" />
+        </div>
 
         <section className="event-detail-section" aria-labelledby="booking-title">
           <h2 id="booking-title">{content.bookingTitle}</h2>
           <ol>{content.bookingSteps.map((step) => <li key={step}>{step}</li>)}</ol>
-          <a
-            className="event-booking-inline"
-            href={event.url}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            {content.booking}<span aria-hidden="true"> ↗</span>
-          </a>
         </section>
 
         <section className="event-detail-section" aria-labelledby="information-title">

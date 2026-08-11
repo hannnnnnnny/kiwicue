@@ -1,0 +1,34 @@
+:root {
+  color-scheme: light;
+  --portal-bg: #f4f0e8;
+  --portal-surface: #fbfaf6;
+  --portal-raised: #fffefa;
+  --portal-ink: #18231e;
+  --portal-muted: #627069;
+  --portal-line: #d8ddd6;
+  --portal-brand: #1f5b45;
+  --portal-brand-hover: #174836;
+  --portal-brand-soft: #e6eee8;
+  --portal-focus: #08717d;
+  --portal-danger: #a13b32;
+  --portal-danger-soft: #f7ebe7;
+  --portal-white: #fffefa;
+  --portal-shadow-color: rgb(24 35 30 / 10%);
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-pill: 999px;
+  --container: 1280px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --shadow-raised: 0 18px 48px var(--portal-shadow-color);
+  --motion-fast: 180ms ease;
+  background: var(--portal-bg);
+  color: var(--portal-ink);
+  font-family: "Manrope Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+}

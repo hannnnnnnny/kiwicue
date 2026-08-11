@@ -1,0 +1,281 @@
+.event-detail-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, .55fr);
+  gap: clamp(36px, 5vw, 72px);
+  padding: var(--space-8) 0 var(--space-16);
+}
+
+.event-detail-primary { min-width: 0; }
+
+.event-detail-loading-skeleton {
+  width: min(900px, 100%);
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-panel);
+  background: var(--portal-raised);
+}
+
+.event-detail-loading-skeleton span {
+  display: block;
+  border-radius: var(--radius-control);
+  background: var(--portal-line);
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.event-detail-skeleton-title { width: 72%; height: 34px; }
+.event-detail-skeleton-line { width: 48%; height: 12px; }
+.event-detail-skeleton-actions { width: 38%; height: 52px; }
+.event-detail-skeleton-media { width: 100%; aspect-ratio: 16 / 9; }
+
+.event-detail-back {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--portal-muted);
+  font-size: .78rem;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.event-detail-back:hover { color: var(--portal-brand); }
+
+.event-detail-heading { padding: var(--space-6) 0 var(--space-8); }
+
+.event-detail-heading h1 {
+  max-width: 900px;
+  margin: var(--space-3) 0 var(--space-4);
+  font-size: clamp(2.5rem, 5.6vw, 5.6rem);
+  letter-spacing: -.06em;
+  line-height: .98;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.event-detail-date {
+  margin: 0 0 var(--space-2);
+  color: var(--portal-brand);
+  font-size: 1rem;
+  font-weight: 820;
+}
+
+.event-detail-venue-summary {
+  max-width: 760px;
+  margin: 0;
+  color: var(--portal-muted);
+  line-height: 1.6;
+}
+
+.event-detail-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+.event-detail-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.event-booking-inline,
+.event-booking-action {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--portal-brand);
+  color: var(--portal-white);
+  font-size: .8rem;
+  font-weight: 850;
+  text-decoration: none;
+  transition: transform var(--motion-fast), opacity var(--motion-fast);
+}
+
+.event-booking-inline:hover,
+.event-booking-action:hover { background: var(--portal-brand-hover); transform: translateY(-1px); }
+
+.event-detail-media {
+  width: 100%;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-panel);
+  background: var(--portal-brand-soft);
+}
+
+.event-detail-section {
+  display: grid;
+  grid-template-columns: minmax(170px, .42fr) minmax(0, 1.58fr);
+  gap: var(--space-8);
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--portal-line);
+}
+
+.event-detail-section h2 { margin: 0; font-size: clamp(1.3rem, 2.2vw, 1.9rem); letter-spacing: -.035em; }
+
+.event-detail-section > p,
+.event-detail-section > ol { margin: 0; color: var(--portal-muted); line-height: 1.75; }
+
+.event-detail-section ol { padding-left: 1.2rem; }
+.event-detail-section li { padding-left: var(--space-2); }
+.event-detail-section li + li { margin-top: var(--space-3); }
+
+.event-organiser-note {
+  grid-column: 2;
+  padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  border-left: 3px solid var(--portal-brand);
+}
+
+.event-organiser-note h3 { margin: 0 0 var(--space-2); font-size: .84rem; }
+.event-organiser-note p { margin: 0; color: var(--portal-muted); line-height: 1.65; }
+
+.event-detail-venue {
+  position: sticky;
+  top: var(--space-6);
+  align-self: start;
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--portal-line);
+}
+
+.event-detail-venue > h2 { margin: 0 0 var(--space-4); font-size: 1.1rem; letter-spacing: -.03em; }
+
+.event-address { display: grid; gap: var(--space-1); padding-bottom: var(--space-4); }
+.event-address strong { font-size: 1rem; }
+.event-address span { color: var(--portal-muted); font-size: .8rem; line-height: 1.5; }
+
+.event-map {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-control);
+  background: var(--portal-raised);
+}
+
+.event-map iframe {
+  width: 100%;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border: 0;
+  background: var(--portal-line);
+}
+
+.event-map figcaption {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  color: var(--portal-muted);
+  font-size: .64rem;
+}
+
+.event-map figcaption a,
+.event-map-failure a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--portal-brand);
+  font-weight: 780;
+  text-decoration: none;
+}
+
+.event-map figcaption > span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+
+.distance-panel {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--portal-line);
+}
+
+.distance-panel h3 { margin: 0 0 var(--space-2); font-size: .96rem; }
+.distance-privacy { margin: 0; color: var(--portal-muted); font-size: .7rem; line-height: 1.55; }
+
+.distance-result,
+.distance-error {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+
+.distance-result { background: var(--portal-brand-soft); color: var(--portal-brand); font-weight: 800; }
+.distance-error { background: var(--portal-danger-soft); color: var(--portal-danger); }
+
+.distance-panel button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--space-3);
+  border: 1px solid var(--portal-brand);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--portal-brand);
+  cursor: pointer;
+  font-size: .76rem;
+  font-weight: 820;
+}
+
+.distance-panel button:hover:not(:disabled) { background: var(--portal-brand-soft); }
+
+.event-map-unavailable {
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--portal-surface);
+  color: var(--portal-muted);
+  font-size: .76rem;
+  line-height: 1.6;
+}
+
+.event-map-failure p { margin: 0; }
+.event-booking-action { width: 100%; margin-top: var(--space-4); }
+.event-source-note { margin: var(--space-3) 0 0; color: var(--portal-muted); font-size: .66rem; line-height: 1.55; }
+
+.saved-masthead { padding: var(--space-12) 0 var(--space-8); border-bottom: 1px solid var(--portal-line); }
+.saved-masthead h1 { margin: var(--space-3) 0 var(--space-3); font-size: clamp(2.5rem, 6vw, 5.2rem); letter-spacing: -.055em; }
+.saved-masthead > p:last-child { max-width: 680px; margin: 0; color: var(--portal-muted); line-height: 1.7; }
+.saved-feed { padding: var(--space-6) 0 var(--space-16); }
+
+.saved-toolbar {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--portal-line);
+}
+
+.saved-toolbar p { margin: 0; color: var(--portal-muted); font-size: .78rem; font-weight: 800; }
+
+.saved-toolbar button {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--portal-danger);
+  cursor: pointer;
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.saved-toolbar button:hover { border-color: var(--portal-danger); }
+.saved-toolbar button.is-armed { border-color: var(--portal-danger); background: var(--portal-danger); color: var(--portal-white); }
+
+.saved-refresh-status {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--portal-surface);
+  color: var(--portal-muted);
+  font-size: .76rem;
+  line-height: 1.55;
+}
+
+.saved-refresh-warning,
+.saved-storage-error { margin-top: var(--space-4); }
+.saved-privacy { margin: var(--space-8) 0 0; color: var(--portal-muted); font-size: .72rem; line-height: 1.6; text-align: right; }

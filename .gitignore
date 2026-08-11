@@ -14,6 +14,9 @@
 /test-results/
 /playwright-report/
 /blob-report/
+/output/playwright/
+/.e2e-materialized-*/
+/.npm-cache/
 
 # Local environment values
 .env.local
