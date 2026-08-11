@@ -4,7 +4,7 @@ type RouteOptions = {
   initialFailures?: number;
   appendFailures?: number;
   venueFailure?: boolean;
-  appendDelayMs?: number;
+  appendRelease?: Promise<void>;
 };
 
 const transparentGif = Buffer.from(
@@ -184,9 +184,7 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     }
     eventRequests.push(requestUrl);
     if (url.searchParams.has("cursor")) {
-      if (options.appendDelayMs) {
-        await new Promise((resolve) => setTimeout(resolve, options.appendDelayMs));
-      }
+      if (options.appendRelease) await options.appendRelease;
       if (appendFailures > 0) {
         appendFailures -= 1;
         return json(route, { error: { message: "Unavailable" } });
@@ -515,7 +513,9 @@ test("every category and time link navigates, preserves other filters, and reque
 
 test("load more de-duplicates and the event detail opens a noopener official booking tab", async ({ page }) => {
   const errors = runtimeErrors(page);
-  const requests = await installRoutes(page, { appendDelayMs: 180 });
+  let releaseAppend!: () => void;
+  const appendRelease = new Promise<void>((resolve) => { releaseAppend = resolve; });
+  const requests = await installRoutes(page, { appendRelease });
   await page.addInitScript(() => {
     const instrumentedWindow = window as Window & { __kiwicueGeolocationCalls?: number };
     instrumentedWindow.__kiwicueGeolocationCalls = 0;
@@ -559,6 +559,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
     button?.click();
   });
   await expect(page.locator(".event-load-more")).toBeDisabled();
+  releaseAppend();
   await expect(page.getByRole("heading", { name: "Waterfront Night Market" })).toBeVisible();
   expect(requests.eventRequests.filter((request) => request.includes("cursor=page-two"))).toHaveLength(1);
   await expect(page.locator(".portal-event-card")).toHaveCount(3);
