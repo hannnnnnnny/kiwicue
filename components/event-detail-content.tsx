@@ -15,9 +15,10 @@ import {
 import type { KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
+import { EventEditorialPreviewMedia } from "./event-editorial-preview";
 import { EventMap } from "./event-map";
-import { EventImage } from "./event-image";
 import { useLanguage } from "./language-provider";
+import { MarketPastHighlights } from "./market-past-highlights";
 import { PortalHeader } from "./portal-header";
 
 type DetailState =
@@ -248,14 +249,16 @@ export function EventDetailContent({
             <BookmarkButton event={event} language={language} placement="detail" />
           </div>
         </header>
-        <div className="event-detail-media">
-          <EventImage src={event.imageUrl} alt="" fallback="AKL" loading="eager" />
-        </div>
+        <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
 
         <section className="event-detail-section" aria-labelledby="booking-title">
           <h2 id="booking-title">{bookingTitle}</h2>
           <ol>{bookingSteps.map((step) => <li key={step}>{step}</li>)}</ol>
         </section>
+
+        {isCuratedMarket && (
+          <MarketPastHighlights event={event} language={language} />
+        )}
 
         <section className="event-detail-section" aria-labelledby="information-title">
           <h2 id="information-title">{content.information}</h2>

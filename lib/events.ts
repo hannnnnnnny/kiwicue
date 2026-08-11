@@ -23,11 +23,28 @@ export interface EventSource {
   verifiedAt: string;
 }
 
+export interface EventEditorialImage {
+  url: string;
+  alt: string;
+  sourceName: string;
+  sourceUrl: string;
+  verifiedAt: string;
+}
+
+export interface EventEditorialPreview {
+  summary: string;
+  highlights: string[];
+  image?: EventEditorialImage;
+}
+
 export interface EventLocalization {
   zh?: {
     name?: string;
     description?: string;
     note?: string;
+    previewSummary?: string;
+    previewHighlights?: string[];
+    previewImageAlt?: string;
   };
 }
 
@@ -47,6 +64,7 @@ export interface KiwiCueEvent {
   venue: KiwiCueVenue | null;
   source?: EventSource;
   localization?: EventLocalization;
+  editorialPreview?: EventEditorialPreview;
 }
 
 export interface KiwiCueEventDetail extends KiwiCueEvent {

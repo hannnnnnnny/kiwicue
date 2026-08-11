@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 type EventImageProps = {
   src: string | null;
   alt: string;
-  fallback: string;
+  fallback: ReactNode;
   loading?: "eager" | "lazy";
 };
 
@@ -19,7 +19,7 @@ export function EventImage({
   const unavailable = !src || failedSrc === src;
 
   if (unavailable) {
-    return <span className="portal-event-fallback" aria-hidden="true">{fallback}</span>;
+    return fallback;
   }
 
   return (

@@ -106,6 +106,8 @@
   background: var(--portal-brand-soft);
 }
 
+.event-editorial-preview-detail .event-editorial-fallback { min-height: 260px; }
+
 .event-detail-section {
   display: grid;
   grid-template-columns: minmax(170px, .42fr) minmax(0, 1.58fr);
@@ -122,6 +124,51 @@
 .event-detail-section ol { padding-left: 1.2rem; }
 .event-detail-section li { padding-left: var(--space-2); }
 .event-detail-section li + li { margin-top: var(--space-3); }
+
+.event-market-highlights-copy { min-width: 0; }
+
+.event-market-highlights-copy > p:first-child {
+  margin: 0;
+  color: var(--portal-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.65;
+}
+
+.event-market-highlights-copy ul {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-market-highlights-copy li {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--portal-brand);
+  color: var(--portal-muted);
+  line-height: 1.6;
+}
+
+.event-market-highlights-caveat {
+  margin: var(--space-5) 0 0;
+  color: var(--portal-muted);
+  font-size: .72rem;
+  line-height: 1.6;
+}
+
+.event-market-highlights-copy a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--space-3);
+  color: var(--portal-brand);
+  font-size: .76rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.event-market-highlights-copy a:hover { text-decoration: underline; }
 
 .event-organiser-note {
   grid-column: 2;

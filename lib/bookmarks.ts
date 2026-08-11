@@ -1,4 +1,6 @@
 import type {
+  EventEditorialImage,
+  EventEditorialPreview,
   EventLocalization,
   EventSource,
   KiwiCueEvent,
@@ -109,20 +111,80 @@ function parseSource(value: unknown): EventSource | undefined {
   return { name: value.name, url: value.url, verifiedAt: value.verifiedAt };
 }
 
+function parseHighlights(value: unknown): string[] | undefined {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 4) return undefined;
+  if (!value.every((item) => boundedString(item, 300))) return undefined;
+  return [...value];
+}
+
+function parseEditorialImage(value: unknown): EventEditorialImage | undefined {
+  if (!isRecord(value)) return undefined;
+  if (
+    !safeHttpsUrl(value.url)
+    || !boundedString(value.alt, 500)
+    || !boundedString(value.sourceName, 500)
+    || !safeHttpsUrl(value.sourceUrl)
+    || !validLocalDate(value.verifiedAt)
+  ) return undefined;
+  return {
+    url: value.url,
+    alt: value.alt,
+    sourceName: value.sourceName,
+    sourceUrl: value.sourceUrl,
+    verifiedAt: value.verifiedAt,
+  };
+}
+
+function parseEditorialPreview(value: unknown): EventEditorialPreview | undefined {
+  if (!isRecord(value) || !boundedString(value.summary, 800)) return undefined;
+  const highlights = parseHighlights(value.highlights);
+  if (!highlights) return undefined;
+  const image = parseEditorialImage(value.image);
+  return {
+    summary: value.summary,
+    highlights,
+    ...(image ? { image } : {}),
+  };
+}
+
 function parseLocalization(value: unknown): EventLocalization | undefined {
   if (!isRecord(value) || !isRecord(value.zh)) return undefined;
-  const { name, description, note } = value.zh;
+  const {
+    name,
+    description,
+    note,
+    previewSummary,
+    previewHighlights,
+    previewImageAlt,
+  } = value.zh;
   if (
     (name !== undefined && !boundedString(name, 300))
     || (description !== undefined && !boundedString(description, 4_000))
     || (note !== undefined && !boundedString(note, 2_000))
   ) return undefined;
-  if (name === undefined && description === undefined && note === undefined) return undefined;
+  const safePreviewSummary = boundedString(previewSummary, 800)
+    ? previewSummary
+    : undefined;
+  const safePreviewHighlights = parseHighlights(previewHighlights);
+  const safePreviewImageAlt = boundedString(previewImageAlt, 500)
+    ? previewImageAlt
+    : undefined;
+  if (
+    name === undefined
+    && description === undefined
+    && note === undefined
+    && !safePreviewSummary
+    && !safePreviewHighlights
+    && !safePreviewImageAlt
+  ) return undefined;
   return {
     zh: {
       ...(name !== undefined ? { name } : {}),
       ...(description !== undefined ? { description } : {}),
       ...(note !== undefined ? { note } : {}),
+      ...(safePreviewSummary ? { previewSummary: safePreviewSummary } : {}),
+      ...(safePreviewHighlights ? { previewHighlights: safePreviewHighlights } : {}),
+      ...(safePreviewImageAlt ? { previewImageAlt: safePreviewImageAlt } : {}),
     },
   };
 }
@@ -132,6 +194,7 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
   const venue = parseVenue(value.venue);
   const source = parseSource(value.source);
   const localization = parseLocalization(value.localization);
+  const editorialPreview = parseEditorialPreview(value.editorialPreview);
   if (
     !boundedString(value.id, 128)
     || !/^[A-Za-z0-9_-]+$/.test(value.id)
@@ -163,6 +226,7 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
     venue,
     ...(source ? { source } : {}),
     ...(localization ? { localization } : {}),
+    ...(editorialPreview ? { editorialPreview } : {}),
   };
 }
 

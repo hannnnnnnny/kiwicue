@@ -97,6 +97,7 @@
   .event-grid-skeleton,
   .saved-event-grid { grid-template-columns: 1fr; }
   .portal-event-body h2 { font-size: 1.25rem; }
+  .event-editorial-preview-card .event-editorial-fallback { min-height: 116px; }
   .source-disclaimer,
   .saved-privacy { text-align: left; }
   .portal-footer { align-items: flex-start; flex-direction: column; }
@@ -105,6 +106,7 @@
   .event-detail-actions { align-items: stretch; flex-direction: column; }
   .event-booking-inline,
   .bookmark-button-detail { width: 100%; }
+  .event-editorial-preview-detail .event-editorial-fallback { min-height: 180px; }
   .event-map figcaption { grid-template-columns: 1fr; gap: 0; }
   .event-map figcaption > span { white-space: normal; }
   .saved-masthead { padding-top: var(--space-8); }

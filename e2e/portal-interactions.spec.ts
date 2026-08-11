@@ -124,6 +124,24 @@ const curatedMarkets = [
         name: "Grey Lynn 农夫市集",
         description: "社区农夫市集，有本地农产品和现场食物。",
         note: "公共假期前后日程可能调整。",
+        previewSummary: "由社区运营，可以直接向本地种植者购买。",
+        previewHighlights: ["本地当季农产品", "社区食品商家", "减少废弃物"],
+        previewImageAlt: "Grey Lynn 农夫市集里的新鲜农产品",
+      },
+    },
+    editorialPreview: {
+      summary: "A community market where local growers sell directly.",
+      highlights: [
+        "Seasonal local produce",
+        "Small neighbourhood food makers",
+        "A strong low-waste focus",
+      ],
+      image: {
+        url: "https://images.example/grey-lynn.gif",
+        alt: "Fresh produce at Grey Lynn Farmers Market",
+        sourceName: "Grey Lynn Farmers Market",
+        sourceUrl: "https://www.greylynnfarmersmarket.co.nz/",
+        verifiedAt: "2026-08-12",
       },
     },
   },
@@ -665,7 +683,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   expect(errors).toEqual([]);
 });
 
-test("curated markets can be filtered, opened, mapped, saved, and read in Chinese", async ({ page }) => {
+test("curated markets can be filtered, opened, mapped, saved, and read in Chinese", async ({ page }, testInfo) => {
   const errors = runtimeErrors(page);
   await installRoutes(page);
   await page.addInitScript(() => {
@@ -702,10 +720,20 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "Search events" }).click();
   await expect(page).toHaveURL(/category=markets&q=Grey&venue=kc-venue-grey-lynn$/);
   await expect(page.getByRole("heading", { name: "Grey Lynn Farmers Market" })).toBeVisible();
+  await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
+  await expect(page.locator('img[src="https://images.example/grey-lynn.gif"]')).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/market-list-${testInfo.project.name}.png`, fullPage: true });
+  }
 
   await page.getByRole("link", { name: "View Grey Lynn Farmers Market details" }).click();
   await expect(page.getByRole("heading", { name: "Plan your visit" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Past highlights" })).toBeVisible();
+  await expect(page.getByText("Seasonal local produce")).toBeVisible();
+  const pastPreviewLink = page.getByRole("link", { name: "Open official past preview" });
+  await expect(pastPreviewLink).toBeVisible();
+  expect((await pastPreviewLink.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   await expect(page.getByText(/Schedule last checked.*12 Aug 2026/)).toBeVisible();
   await expect(page.getByTitle("Map of Grey Lynn Community Centre")).toBeVisible();
   await page.getByRole("button", { name: "Show distance from me" }).click();
@@ -716,10 +744,27 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "切换到中文" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "出发前确认" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "往期精选" })).toBeVisible();
+  await expect(page.getByText("本地当季农产品")).toBeVisible();
   await expect(page.getByRole("link", { name: "查看官方最新安排" })).toBeVisible();
   await expect(page.getByRole("button", { name: "从收藏中移除 Grey Lynn 农夫市集" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/market-detail-${testInfo.project.name}.png`, fullPage: true });
+  }
   expect(errors).toEqual([]);
+});
+
+test("a failed official market image becomes a useful text preview", async ({ page }) => {
+  await installRoutes(page);
+  await page.route("https://images.example/grey-lynn.gif", (route) => route.abort("failed"));
+
+  await page.goto("/events?category=markets&q=Grey");
+
+  await expect(page.getByText("What to expect")).toBeVisible();
+  await expect(page.getByText("A community market where local growers sell directly.")).toBeVisible();
+  await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
 });
 
 test("venue, empty, initial error, retry, and append error states stay usable", async ({ page }) => {

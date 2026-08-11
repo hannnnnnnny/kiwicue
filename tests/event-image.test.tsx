@@ -5,9 +5,13 @@ import { EventImage } from "../components/event-image";
 afterEach(cleanup);
 
 describe("resilient event image", () => {
-  it("replaces a failed remote image with the local event fallback", () => {
+  it("replaces a failed remote image with useful accessible fallback content", () => {
     const view = render(
-      <EventImage src="https://images.example/event.jpg" alt="" fallback="AKL" />,
+      <EventImage
+        src="https://images.example/event.jpg"
+        alt=""
+        fallback="What to expect at this market"
+      />,
     );
 
     const image = view.container.querySelector("img");
@@ -15,12 +19,15 @@ describe("resilient event image", () => {
     fireEvent.error(image!);
 
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
-    expect(screen.getByText("AKL")).toBeVisible();
+    expect(screen.getByText("What to expect at this market")).toBeVisible();
+    expect(screen.getByText("What to expect at this market")).not.toHaveAttribute(
+      "aria-hidden",
+    );
   });
 
-  it("renders the same fallback when no image URL exists", () => {
-    render(<EventImage src={null} alt="" fallback="AKL" />);
+  it("renders useful fallback content when no image URL exists", () => {
+    render(<EventImage src={null} alt="" fallback="Market preview" />);
 
-    expect(screen.getByText("AKL")).toBeVisible();
+    expect(screen.getByText("Market preview")).toBeVisible();
   });
 });

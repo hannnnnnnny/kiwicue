@@ -59,6 +59,20 @@ describe("local event bookmarks", () => {
           name: "Grey Lynn 农夫市集",
           description: "社区农夫市集。",
           note: "出发前请再次确认日程。",
+          previewSummary: "第一次去也能快速了解现场。",
+          previewHighlights: ["本地农产品", "社区食品商家", "减少废弃物"],
+          previewImageAlt: "Grey Lynn 农夫市集里的农产品",
+        },
+      },
+      editorialPreview: {
+        summary: "A quick first-visit guide to the market.",
+        highlights: ["Local produce", "Food makers", "Low-waste focus"],
+        image: {
+          url: "https://images.example/grey-lynn.jpg",
+          alt: "Fresh produce at Grey Lynn Farmers Market",
+          sourceName: "Grey Lynn Farmers Market",
+          sourceUrl: "https://www.greylynnfarmersmarket.co.nz/",
+          verifiedAt: "2026-08-12",
         },
       },
     } satisfies KiwiCueEvent;
@@ -66,7 +80,34 @@ describe("local event bookmarks", () => {
 
     expect(saved.event.source).toEqual(market.source);
     expect(saved.event.localization).toEqual(market.localization);
+    expect(saved.event.editorialPreview).toEqual(market.editorialPreview);
     expect(parseBookmarks(serializeBookmarks([saved]))).toEqual([saved]);
+  });
+
+  it("drops an unsafe preview image without losing safe preview text", () => {
+    const market = {
+      ...event("kc-market-grey-lynn"),
+      editorialPreview: {
+        summary: "A useful first-visit guide.",
+        highlights: ["Local produce", "Food makers"],
+        image: {
+          url: "javascript:alert(1)",
+          alt: "Market",
+          sourceName: "Official market",
+          sourceUrl: "https://example.com/market",
+          verifiedAt: "2026-08-12",
+        },
+      },
+    };
+    const payload = JSON.stringify({
+      version: 1,
+      items: [{ event: market, savedAt: "2026-08-12T08:00:00.000Z" }],
+    });
+
+    const [saved] = parseBookmarks(payload);
+    expect(saved.event.editorialPreview?.summary).toBe("A useful first-visit guide.");
+    expect(saved.event.editorialPreview?.highlights).toEqual(["Local produce", "Food makers"]);
+    expect(saved.event.editorialPreview?.image).toBeUndefined();
   });
 
   it("drops malformed optional metadata without losing a valid bookmark", () => {

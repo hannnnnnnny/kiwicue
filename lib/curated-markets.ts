@@ -7,6 +7,7 @@ import type {
   AucklandEventsResult,
   AucklandVenue,
   EventCoordinates,
+  EventEditorialPreview,
   KiwiCueEvent,
   KiwiCueEventDetail,
   KiwiCueVenue,
@@ -40,6 +41,10 @@ interface MarketDefinition {
   sourceUrl: string;
   venue: KiwiCueVenue;
   schedules: readonly WeeklySchedule[];
+  editorialPreview: EventEditorialPreview;
+  zhPreviewSummary: string;
+  zhPreviewHighlights: string[];
+  zhPreviewImageAlt: string;
 }
 
 export interface CuratedMarketOptions {
@@ -80,6 +85,30 @@ const nightMarketNote =
 const nightMarketNoteZh =
   "主办方公布的时间为下午 5 点至深夜；节假日或临时停办时，请在出发前查看官网。";
 const nightMarketSource = "https://www.aucklandnightmarkets.co.nz/locations";
+const nightMarketPreview: EventEditorialPreview = {
+  summary: "A lively evening market centred on made-to-order street food and sweet treats.",
+  highlights: [
+    "Street-food stalls serve dishes and snacks cooked to order.",
+    "The casual evening setting works for a quick dinner or a slow browse.",
+    "The vendor mix changes, so each location can feel a little different.",
+  ],
+  image: {
+    url: "https://static.wixstatic.com/media/7359e1_54610bf46d2748b18334076af1f3e304~mv2.jpg/v1/fill/w_458,h_458,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/111256382_3232249256866480_2220483253420627809_n-700x700.jpg",
+    alt: "Pan-fried dumplings from an Auckland Night Market food stall",
+    sourceName: "Auckland Night Markets",
+    sourceUrl: nightMarketSource,
+    verifiedAt: CURATED_MARKET_VERIFIED_AT,
+  },
+};
+const nightMarketPreviewZh = {
+  summary: "以现点现做街头美食和甜点为主的热闹夜间市集。",
+  highlights: [
+    "可以边走边选现做主食、小吃和甜点。",
+    "适合下班后快速吃饭，也适合慢慢逛一圈。",
+    "不同地点和每周摊主可能变化，现场内容不完全相同。",
+  ],
+  imageAlt: "奥克兰夜市美食摊位售卖的煎饺",
+} as const;
 
 function nightMarket(
   slug: string,
@@ -100,8 +129,63 @@ function nightMarket(
     sourceUrl: nightMarketSource,
     venue: marketVenue,
     schedules: [{ weekday, hour: 17, minute: 0 }],
+    editorialPreview: nightMarketPreview,
+    zhPreviewSummary: nightMarketPreviewZh.summary,
+    zhPreviewHighlights: [...nightMarketPreviewZh.highlights],
+    zhPreviewImageAlt: nightMarketPreviewZh.imageAlt,
   };
 }
+
+const avondaleSource = "https://www.avondale.net.nz/avondale-sunday-market";
+const avondalePreview: EventEditorialPreview = {
+  summary: "A large, long-running Sunday market for produce, prepared food, and second-hand finds.",
+  highlights: [
+    "Fresh fruit and vegetables make it useful for a weekly shop.",
+    "Pacific and Asian ingredients sit alongside ready-to-eat food.",
+    "Second-hand and car-boot stalls reward an unhurried browse.",
+  ],
+  image: {
+    url: "https://static.wixstatic.com/media/4b3423_6f7cdf6aa4374f0cb0d2fd6327384a71~mv2.png/v1/fill/w_540,h_282,al_c/4b3423_6f7cdf6aa4374f0cb0d2fd6327384a71~mv2.png",
+    alt: "Shoppers and stalls at Avondale Sunday Market",
+    sourceName: "Avondale Mainstreet",
+    sourceUrl: avondaleSource,
+    verifiedAt: CURATED_MARKET_VERIFIED_AT,
+  },
+};
+
+const greyLynnSource = "https://www.greylynnfarmersmarket.co.nz/";
+const greyLynnPreview: EventEditorialPreview = {
+  summary: "A community-run Sunday market where local growers and small food makers sell directly.",
+  highlights: [
+    "Shop seasonal produce directly from growers and producers.",
+    "Meet small local food makers in a neighbourhood setting.",
+    "The community-owned market has a strong low-waste focus.",
+  ],
+  image: {
+    url: "https://lh3.googleusercontent.com/sitesv/AG8ngQUtOsQqy-O5VscAgNuCL2sUbQSUUgpUK9bfv_Y_nnOUZwQIqx5nmEzIaz3sEA5fGEUd-kfNhdUzlxuEkiub3Kcb2UMtAoi85z-LzaV6BrSHhm2Lgfi09C8L28NelHwjZwDiAh9KIJON3pdaRiyy3WvhV1Nf1azBbw5tHWzB4H88epxCAfzBR4NLbS_xu1k=w1200",
+    alt: "Market stalls outside Grey Lynn Community Centre",
+    sourceName: "Grey Lynn Farmers Market",
+    sourceUrl: greyLynnSource,
+    verifiedAt: CURATED_MARKET_VERIFIED_AT,
+  },
+};
+
+const catalinaBaySource = "https://www.catalinabay.co.nz/farmers-market";
+const catalinaBayPreview: EventEditorialPreview = {
+  summary: "A covered waterfront market bringing together local produce, food makers, and handmade goods.",
+  highlights: [
+    "The covered setting makes a weekend browse less weather-dependent.",
+    "Local produce and prepared food sit alongside artisan products.",
+    "The Catalina Bay waterfront adds space for a walk before or after.",
+  ],
+  image: {
+    url: "https://static1.squarespace.com/static/5d9bd88c8f3edd3787d85085/t/5df7f03456ec9170a9b7d596/1585860891628/GJT_5083+copy.jpg?format=1500w",
+    alt: "Market stalls inside the covered Catalina Bay Farmers Market",
+    sourceName: "Catalina Bay Precinct",
+    sourceUrl: catalinaBaySource,
+    verifiedAt: CURATED_MARKET_VERIFIED_AT,
+  },
+};
 
 const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
   nightMarket(
@@ -221,7 +305,7 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
     zhNote:
       "官网公布的时间为每周日上午 6 点至中午，圣诞节除外；出发前请确认临时调整。",
     sourceName: "Avondale Mainstreet",
-    sourceUrl: "https://www.avondale.net.nz/avondale-sunday-market",
+    sourceUrl: avondaleSource,
     venue: venue(
       "kc-venue-avondale-sunday",
       "Avondale Racecourse",
@@ -230,6 +314,14 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
       coordinates(-36.8947502, 174.6903662),
     ),
     schedules: [{ weekday: 7, hour: 6, minute: 0 }],
+    editorialPreview: avondalePreview,
+    zhPreviewSummary: "规模较大的老牌周日市集，适合买果蔬、尝熟食和淘二手物品。",
+    zhPreviewHighlights: [
+      "新鲜果蔬摊位很多，适合顺便完成一周采购。",
+      "可以找到太平洋和亚洲食材，也有即买即吃的熟食。",
+      "二手和车尾箱摊位值得留出时间慢慢淘。",
+    ],
+    zhPreviewImageAlt: "Avondale 周日市集里的摊位和购物人群",
   },
   {
     id: "kc-market-grey-lynn",
@@ -244,7 +336,7 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
     zhNote:
       "官网公布的时间为每周日上午 8:30 至中午；出发前请查看主办方最新通知。",
     sourceName: "Grey Lynn Farmers Market",
-    sourceUrl: "https://www.greylynnfarmersmarket.co.nz/",
+    sourceUrl: greyLynnSource,
     venue: venue(
       "kc-venue-grey-lynn",
       "Grey Lynn Community Centre",
@@ -253,6 +345,14 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
       coordinates(-36.8597672, 174.7330018),
     ),
     schedules: [{ weekday: 7, hour: 8, minute: 30 }],
+    editorialPreview: greyLynnPreview,
+    zhPreviewSummary: "由社区运营的周日市集，可以直接向本地种植者和小型食品商家购买。",
+    zhPreviewHighlights: [
+      "可以直接向种植者选购当季本地农产品。",
+      "社区氛围轻松，也能认识小型本地食品商家。",
+      "市集由社区共同拥有，并持续推动减少废弃物。",
+    ],
+    zhPreviewImageAlt: "Grey Lynn 农夫市集里的新鲜本地农产品",
   },
   {
     id: "kc-market-catalina-bay",
@@ -267,7 +367,7 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
     zhNote:
       "官网公布的时间为周六和周日上午 8:30 至下午 2 点；出发前请确认临时停办安排。",
     sourceName: "Catalina Bay Precinct",
-    sourceUrl: "https://www.catalinabay.co.nz/farmers-market",
+    sourceUrl: catalinaBaySource,
     venue: venue(
       "kc-venue-catalina-bay",
       "Catalina Bay",
@@ -279,6 +379,14 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
       { weekday: 6, hour: 8, minute: 30 },
       { weekday: 7, hour: 8, minute: 30 },
     ],
+    editorialPreview: catalinaBayPreview,
+    zhPreviewSummary: "位于海滨的有顶棚周末市集，集合本地农产品、食品商家和手工作品。",
+    zhPreviewHighlights: [
+      "有顶棚的场地让周末逛市集不太受天气影响。",
+      "本地农产品、熟食和手作商品可以一次逛到。",
+      "逛完还能顺路在 Catalina Bay 海滨散步。",
+    ],
+    zhPreviewImageAlt: "Catalina Bay 有顶棚农夫市集里的摊位",
   },
 ];
 
@@ -357,7 +465,17 @@ function toEvent(
         name: definition.zhName,
         description: definition.zhDescription,
         note: definition.zhNote,
+        previewSummary: definition.zhPreviewSummary,
+        previewHighlights: [...definition.zhPreviewHighlights],
+        previewImageAlt: definition.zhPreviewImageAlt,
       },
+    },
+    editorialPreview: {
+      ...definition.editorialPreview,
+      highlights: [...definition.editorialPreview.highlights],
+      ...(definition.editorialPreview.image
+        ? { image: { ...definition.editorialPreview.image } }
+        : {}),
     },
     description: definition.description,
     note: definition.note,
