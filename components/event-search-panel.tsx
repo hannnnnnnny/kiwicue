@@ -7,6 +7,7 @@ import type { EventCategory } from "../lib/event-categories";
 import { parseEventKeyword, parseVenueId } from "../lib/event-search-params";
 import { eventSearchHref } from "../lib/event-search-url";
 import type { EventWindow } from "../lib/event-window";
+import { EventNameCombobox } from "./event-name-combobox";
 import { useLanguage } from "./language-provider";
 
 type VenueOption = {
@@ -28,7 +29,10 @@ const copy = {
     formLabel: "Search Auckland events",
     activityLabel: "Activity name",
     activityPlaceholder: "Artist, concert, market…",
-    activityHelper: "Enter a complete event or artist word, for example Taylor",
+    activityHelper: "Type part of an event or artist name, for example lauf",
+    suggestionLoading: "Finding matching events…",
+    suggestionEmpty: "No matching event names yet. You can still search this text.",
+    suggestionUnavailable: "Suggestions are temporarily unavailable. You can still search.",
     venueLabel: "Venue",
     allVenues: "All venues",
     search: "Search events",
@@ -40,7 +44,10 @@ const copy = {
     formLabel: "搜索奥克兰活动",
     activityLabel: "活动名称",
     activityPlaceholder: "艺人、演出或市集…",
-    activityHelper: "输入完整的活动或艺人名称，例如 Taylor",
+    activityHelper: "输入活动或艺人名称的一部分，例如 lauf",
+    suggestionLoading: "正在查找匹配活动…",
+    suggestionEmpty: "暂时没有匹配名称，仍可直接搜索。",
+    suggestionUnavailable: "联想暂时不可用，仍可直接搜索。",
     venueLabel: "场馆",
     allVenues: "所有场馆",
     search: "搜索活动",
@@ -161,10 +168,9 @@ function SearchForm({
     return () => window.clearTimeout(timeout);
   }, [appliedHref, submittedHref, submitting]);
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function startSearch(keywordValue: string): void {
     if (submitting) return;
-    const normalizedKeyword = parseEventKeyword(draftKeyword);
+    const normalizedKeyword = parseEventKeyword(keywordValue);
     const normalizedVenue = parseVenueId(draftVenue);
     const href = eventSearchHref({
       window: eventWindow,
@@ -178,6 +184,11 @@ function SearchForm({
     router.push(href);
   }
 
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startSearch(draftKeyword);
+  }
+
   return (
     <section className="event-search-panel">
       <form
@@ -189,18 +200,21 @@ function SearchForm({
         <div className="event-search-fields">
           <div className="event-search-field event-search-field-name">
             <label htmlFor="event-search-name">{content.activityLabel}</label>
-            <input
-              className="event-search-input"
-              id="event-search-name"
-              name="q"
-              type="search"
+            <EventNameCombobox
               value={draftKeyword}
-              maxLength={100}
+              onChange={setDraftKeyword}
+              onSelect={startSearch}
+              window={eventWindow}
+              category={category}
+              venueId={draftVenue}
               placeholder={content.activityPlaceholder}
-              enterKeyHint="search"
-              autoComplete="off"
-              aria-describedby="event-search-name-helper"
-              onChange={(event) => setDraftKeyword(event.target.value)}
+              helperId="event-search-name-helper"
+              language={content === copy.zh ? "zh" : "en"}
+              copy={{
+                loading: content.suggestionLoading,
+                empty: content.suggestionEmpty,
+                unavailable: content.suggestionUnavailable,
+              }}
             />
             <p id="event-search-name-helper" className="event-search-helper">
               {content.activityHelper}
