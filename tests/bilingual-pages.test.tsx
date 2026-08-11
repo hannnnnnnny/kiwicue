@@ -96,6 +96,21 @@ describe("bilingual route content", () => {
     expect(screen.getByRole("link", { name: "All" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("labels the market source as KiwiCue-verified instead of Ticketmaster", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const marketPage = await EventsPage({
+      searchParams: Promise.resolve({ category: "markets" }),
+    });
+
+    render(<LanguageProvider>{marketPage}</LanguageProvider>);
+
+    expect(screen.getByText("KiwiCue verified schedules")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Ticketmaster source");
+    fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+    expect(screen.getByText("KiwiCue 已核实日程")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Ticketmaster 官方来源");
+  });
+
   it("shows a category-preserving clear link for either applied search filter", async () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
     const keywordPage = await EventsPage({
