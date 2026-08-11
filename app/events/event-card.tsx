@@ -3,6 +3,7 @@ import { BookmarkButton } from "../../components/bookmark-button";
 import { EventImage } from "../../components/event-image";
 import type { Language } from "../../components/language-provider";
 import {
+  eventDisplayName,
   formatEventCategory,
   formatEventDate,
   formatEventStatus,
@@ -31,6 +32,7 @@ export function EventCard({ event, index, language }: {
   language: Language;
 }) {
   const content = copy[language];
+  const displayName = eventDisplayName(event, language);
   const safeEventId = event.id.replace(/[^A-Za-z0-9_-]/g, "-");
   const titleId = `event-title-${index}-${safeEventId}`;
   const dateTime = `${formatEventDate(event.start.localDate, language)} · ${formatEventTime(event.start.localTime, language)}`;
@@ -43,10 +45,10 @@ export function EventCard({ event, index, language }: {
       <Link
         className="portal-event-link"
         href={`/events/${encodeURIComponent(event.id)}`}
-        aria-label={content.open(event.name)}
+        aria-label={content.open(displayName)}
       >
         <div className="portal-event-body">
-          <h2 id={titleId}>{event.name}</h2>
+          <h2 id={titleId}>{displayName}</h2>
           <p className="portal-event-date">
             <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
           </p>
