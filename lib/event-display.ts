@@ -1,4 +1,5 @@
 import type { Language } from "../components/language-provider";
+import type { KiwiCueEvent, KiwiCueEventDetail } from "./events";
 
 const timePending = { en: "Time to be confirmed", zh: "时间待定" } as const;
 const statuses = {
@@ -8,6 +9,7 @@ const statuses = {
     cancelled: "Cancelled",
     postponed: "Postponed",
     rescheduled: "Rescheduled",
+    schedule_verified: "Schedule verified",
   },
   zh: {
     onsale: "售票中",
@@ -15,6 +17,7 @@ const statuses = {
     cancelled: "已取消",
     postponed: "已延期",
     rescheduled: "已改期",
+    schedule_verified: "日程已核实",
   },
 } as const;
 
@@ -24,6 +27,7 @@ const categories = {
     Film: "电影",
     Miscellaneous: "其他",
     Music: "音乐",
+    Market: "市集",
     Sports: "体育",
     Undefined: "其他",
   },
@@ -74,4 +78,32 @@ export function formatEventStatus(status: string, language: Language): string {
 export function formatEventCategory(category: string, language: Language): string {
   if (language === "en") return category;
   return (categories.zh as Record<string, string>)[category] ?? category;
+}
+
+export function eventDisplayName(event: KiwiCueEvent, language: Language): string {
+  return language === "zh" ? event.localization?.zh?.name ?? event.name : event.name;
+}
+
+export function eventDisplayDescription(event: KiwiCueEventDetail, language: Language): string | null {
+  return language === "zh"
+    ? event.localization?.zh?.description ?? event.description ?? null
+    : event.description ?? null;
+}
+
+export function eventDisplayNote(event: KiwiCueEventDetail, language: Language): string | null {
+  return language === "zh"
+    ? event.localization?.zh?.note ?? event.note ?? null
+    : event.note ?? null;
+}
+
+export function formatVerifiedDate(localDate: string, language: Language): string {
+  const [year, month, day] = localDate.split("-").map(Number);
+  if (language === "zh") return `${year}年${month}月${day}日`;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return new Intl.DateTimeFormat("en-NZ", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }

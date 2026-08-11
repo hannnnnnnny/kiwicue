@@ -1,6 +1,7 @@
 "use client";
 
 import type { KiwiCueEvent } from "../lib/events";
+import { eventDisplayName } from "../lib/event-display";
 import { useBookmarks } from "./bookmark-provider";
 import type { Language } from "./language-provider";
 
@@ -33,6 +34,7 @@ export function BookmarkButton({ event, language, placement = "card" }: {
   const { isBookmarked, storageError, toggleBookmark } = useBookmarks();
   const saved = isBookmarked(event.id);
   const content = copy[language];
+  const displayName = eventDisplayName(event, language);
 
   return (
     <button
@@ -40,8 +42,8 @@ export function BookmarkButton({ event, language, placement = "card" }: {
       type="button"
       aria-pressed={saved}
       aria-label={storageError
-        ? saved ? content.retryRemoveLabel(event.name) : content.retrySaveLabel(event.name)
-        : saved ? content.removeLabel(event.name) : content.saveLabel(event.name)}
+        ? saved ? content.retryRemoveLabel(displayName) : content.retrySaveLabel(displayName)
+        : saved ? content.removeLabel(displayName) : content.saveLabel(displayName)}
       onClick={() => toggleBookmark(event)}
     >
       <span aria-hidden="true">{storageError ? "!" : saved ? "♥" : "♡"}</span>

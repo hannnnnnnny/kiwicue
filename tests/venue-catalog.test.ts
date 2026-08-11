@@ -2,8 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { collectAucklandVenues, type VenueFeedLoader } from "../lib/venue-catalog";
+import {
+  collectAucklandVenues,
+  collectCombinedAucklandVenues,
+  type VenueFeedLoader,
+} from "../lib/venue-catalog";
 import type { AucklandEventsResult, KiwiCueEvent } from "../lib/events";
+import { TicketmasterClientError } from "../lib/ticketmaster";
 
 const now = new Date("2026-07-29T00:00:00.000Z");
 
@@ -100,5 +105,49 @@ describe("collectAucklandVenues", () => {
       .rejects.toMatchObject({ code: "UPSTREAM_ERROR", status: 502 });
     expect(loadFeed).toHaveBeenCalledTimes(2);
     expect(wait).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("collectCombinedAucklandVenues", () => {
+  it("merges curated venues with Ticketmaster and deduplicates IDs", async () => {
+    const loadTicketmaster = vi.fn().mockResolvedValue([
+      { id: "spark-arena", name: "Spark Arena" },
+      { id: "shared", name: "Ticketmaster Name" },
+    ]);
+    const curatedVenues = [
+      { id: "kc-venue-grey-lynn", name: "Grey Lynn Community Centre" },
+      { id: "shared", name: "Curated Duplicate" },
+    ];
+
+    await expect(collectCombinedAucklandVenues({
+      loadTicketmaster,
+      curatedVenues,
+    })).resolves.toEqual([
+      { id: "kc-venue-grey-lynn", name: "Grey Lynn Community Centre" },
+      { id: "spark-arena", name: "Spark Arena" },
+      { id: "shared", name: "Ticketmaster Name" },
+    ]);
+  });
+
+  it("keeps curated venues available when Ticketmaster has a known outage", async () => {
+    const loadTicketmaster = vi.fn().mockRejectedValue(
+      new TicketmasterClientError("UPSTREAM_BUSY", 503),
+    );
+    const curatedVenues = [
+      { id: "kc-venue-grey-lynn", name: "Grey Lynn Community Centre" },
+    ];
+
+    await expect(collectCombinedAucklandVenues({
+      loadTicketmaster,
+      curatedVenues,
+    })).resolves.toEqual(curatedVenues);
+  });
+
+  it("does not hide an unexpected catalogue failure", async () => {
+    const failure = new Error("unexpected local failure");
+    await expect(collectCombinedAucklandVenues({
+      loadTicketmaster: vi.fn().mockRejectedValue(failure),
+      curatedVenues: [],
+    })).rejects.toBe(failure);
   });
 });

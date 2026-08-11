@@ -386,6 +386,36 @@ describe("Auckland event explorer", () => {
     expect(await screen.findByText("Ticketmaster 活动已全部显示")).toBeInTheDocument();
   });
 
+  it("describes curated market results without Ticketmaster claims in both languages", async () => {
+    const marketResult: AucklandEventsResult = {
+      ...eventResult,
+      events: [{
+        ...eventResult.events[0],
+        id: "kc-market-grey-lynn",
+        category: "Market",
+        status: "schedule_verified",
+      }],
+    };
+    const requestEvents = vi.fn().mockResolvedValue(marketResult);
+    render(
+      <LanguageProvider>
+        <LanguageToggle />
+        <EventExplorer category="markets" requestEvents={requestEvents} />
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByText("1 verified market schedule · 1 shown")).toBeInTheDocument();
+    expect(screen.getByText("Verified official market links")).toBeInTheDocument();
+    expect(screen.getByText("All verified market schedules are shown")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Ticketmaster");
+
+    fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+    expect(screen.getByText("已核实 1 个市集日程 · 已显示 1 个")).toBeInTheDocument();
+    expect(screen.getByText("包含已核实的市集官方链接")).toBeInTheDocument();
+    expect(screen.getByText("已核实的市集日程已全部显示")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Ticketmaster");
+  });
+
   it("keeps the Chinese append failure safe and retryable", async () => {
     const requestEvents = vi.fn()
       .mockResolvedValueOnce(pagedResult([numberedEvent(1)], 2, "page-two"))

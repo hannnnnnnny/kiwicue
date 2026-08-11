@@ -40,6 +40,45 @@ describe("GET /api/events/[eventId]", () => {
     expect(await response.json()).toEqual({ event: detail });
   });
 
+  it("loads a reserved curated detail locally without calling Ticketmaster", async () => {
+    const loadDetail = vi.fn();
+    const curatedDetail = {
+      ...detail,
+      id: "kc-market-grey-lynn",
+      name: "Grey Lynn Farmers Market",
+      url: "https://www.greylynnfarmersmarket.co.nz/",
+    };
+    const findCuratedDetail = vi.fn().mockReturnValue(curatedDetail);
+
+    const response = await handleEventDetailRequest(
+      "kc-market-grey-lynn",
+      loadDetail,
+      findCuratedDetail,
+    );
+
+    expect(loadDetail).not.toHaveBeenCalled();
+    expect(findCuratedDetail).toHaveBeenCalledWith("kc-market-grey-lynn");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ event: curatedDetail });
+  });
+
+  it("returns a safe 404 for an unknown curated ID without falling through", async () => {
+    const loadDetail = vi.fn();
+    const findCuratedDetail = vi.fn().mockReturnValue(null);
+
+    const response = await handleEventDetailRequest(
+      "kc-market-missing",
+      loadDetail,
+      findCuratedDetail,
+    );
+
+    expect(loadDetail).not.toHaveBeenCalled();
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({
+      error: { code: "UPSTREAM_NOT_FOUND", message: "Event not found." },
+    });
+  });
+
   it.each(["../secret", "event/123", "", "a".repeat(129)])(
     "rejects an unsafe event ID before loading: %s",
     async (eventId) => {

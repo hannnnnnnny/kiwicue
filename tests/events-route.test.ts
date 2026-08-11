@@ -75,6 +75,37 @@ describe("GET /api/events", () => {
     expect(loadEvents).toHaveBeenCalledWith({ size: 24, category: "concerts" });
   });
 
+  it("routes the Markets category to curated data without calling Ticketmaster", async () => {
+    const loadEvents = vi.fn();
+    const loadMarkets = vi.fn().mockReturnValue({
+      events: [{ id: "kc-market-grey-lynn" }],
+      page: { size: 12, totalElements: 1, totalPages: 1, number: 0 },
+      nextCursor: null,
+    });
+
+    const response = await handleEventsRequest(
+      new Request(
+        "http://localhost/api/events?size=12&category=markets&q=%20grey%20&venue=kc-venue-grey-lynn&window=7d&cursor=ignored",
+      ),
+      loadEvents,
+      loadMarkets,
+    );
+
+    expect(loadEvents).not.toHaveBeenCalled();
+    expect(loadMarkets).toHaveBeenCalledWith({
+      size: 12,
+      keyword: "grey",
+      venueId: "kc-venue-grey-lynn",
+      window: "7d",
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      events: [{ id: "kc-market-grey-lynn" }],
+      page: { size: 12, totalElements: 1, totalPages: 1, number: 0 },
+      nextCursor: null,
+    });
+  });
+
   it("passes one supported non-default event window to the server client", async () => {
     const loadEvents = vi.fn().mockResolvedValue(emptyResult);
 

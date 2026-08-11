@@ -1,5 +1,6 @@
 import "server-only";
 
+import { listCuratedMarketVenues } from "./curated-markets";
 import { parseVenueId } from "./event-search-params";
 import type { AucklandEventsResult, AucklandVenue } from "./events";
 import { TicketmasterClientError } from "./ticketmaster";
@@ -11,6 +12,21 @@ export type VenueFeedLoader = (options: {
   size: number;
   cursor?: string;
 }) => Promise<AucklandEventsResult>;
+
+type VenueCatalogLoader = () => Promise<AucklandVenue[]>;
+
+function mergeVenues(
+  ticketmaster: AucklandVenue[],
+  curated: AucklandVenue[],
+): AucklandVenue[] {
+  const venues = new Map<string, AucklandVenue>();
+  for (const item of [...ticketmaster, ...curated]) {
+    if (!venues.has(item.id)) venues.set(item.id, item);
+  }
+  return [...venues.values()].sort((left, right) =>
+    left.name.localeCompare(right.name, "en-NZ", { sensitivity: "base" }),
+  );
+}
 
 export async function collectAucklandVenues({
   apiKey = process.env.TICKETMASTER_API_KEY ?? "",
@@ -57,4 +73,21 @@ export async function collectAucklandVenues({
   }
 
   throw new TicketmasterClientError("UPSTREAM_ERROR", 502);
+}
+
+export async function collectCombinedAucklandVenues({
+  loadTicketmaster = collectAucklandVenues,
+  curatedVenues = listCuratedMarketVenues(),
+}: {
+  loadTicketmaster?: VenueCatalogLoader;
+  curatedVenues?: AucklandVenue[];
+} = {}): Promise<AucklandVenue[]> {
+  try {
+    return mergeVenues(await loadTicketmaster(), curatedVenues);
+  } catch (error) {
+    if (error instanceof TicketmasterClientError) {
+      return mergeVenues([], curatedVenues);
+    }
+    throw error;
+  }
 }
