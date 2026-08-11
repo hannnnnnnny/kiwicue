@@ -61,16 +61,16 @@
 - Consumes `formatEventPrice` and `KiwiCueEvent.priceRange` from Task 1.
 - Existing serialized version 1 bookmarks without `priceRange` parse as `priceRange: null`.
 
-- [ ] Add failing card tests asserting a real range and missing-price label appear between venue and category metadata.
-- [ ] Add failing detail tests asserting price is visible beside primary booking information.
-- [ ] Add failing saved tests asserting price remains visible after persistence.
-- [ ] Add a failing bookmark migration test using an old version 1 payload without `priceRange`.
-- [ ] Run the four focused test files and confirm failures are caused by absent price UI and parser rejection.
-- [ ] Update the bookmark parser to accept a missing field as `null` and validate supplied currency/minimum/maximum values.
-- [ ] Render localized price text in card, detail, and saved paths using one formatter.
-- [ ] Add restrained `.event-price` and `.event-detail-price` styles using existing tokens.
-- [ ] Run the four focused tests and expect success.
-- [ ] Commit `feat: show event price ranges`.
+- [x] Add failing card tests asserting a real range and missing-price label appear between venue and category metadata.
+- [x] Add failing detail tests asserting price is visible beside primary booking information.
+- [x] Add failing saved tests asserting price remains visible after persistence.
+- [x] Add a failing bookmark migration test using an old version 1 payload without `priceRange`.
+- [x] Run the four focused test files and confirm failures are caused by absent price UI and parser rejection.
+- [x] Update the bookmark parser to accept a missing field as `null` and validate supplied currency/minimum/maximum values.
+- [x] Render localized price text in card, detail, and saved paths using one formatter.
+- [x] Add restrained `.event-price` and `.event-detail-price` styles using existing tokens.
+- [x] Run the four focused tests and expect success.
+- [x] Commit `feat: show event price ranges`.
 
 ### Task 3: Auckland cinema directory
 

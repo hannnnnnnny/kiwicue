@@ -18,6 +18,7 @@ const savedEvent: KiwiCueEvent = {
   },
   status: "onsale",
   category: "Music",
+  priceRange: null,
   venue: null,
 };
 

@@ -23,6 +23,7 @@ function event(id = "event-1"): KiwiCueEvent {
     },
     status: "onsale",
     category: "Music",
+    priceRange: { currency: "NZD", minimum: 49, maximum: 129 },
     venue: {
       id: "civic",
       name: "The Civic",
@@ -44,6 +45,17 @@ describe("local event bookmarks", () => {
     const saved = toBookmark(event(), "2026-08-01T08:00:00.000Z");
 
     expect(parseBookmarks(serializeBookmarks([saved]))).toEqual([saved]);
+  });
+
+  it("keeps an older version 1 bookmark and adds a null price range", () => {
+    const legacyEvent = { ...event() } as Record<string, unknown>;
+    delete legacyEvent.priceRange;
+    const serialized = JSON.stringify({
+      version: 1,
+      items: [{ event: legacyEvent, savedAt: "2026-08-01T08:00:00.000Z" }],
+    });
+
+    expect(parseBookmarks(serialized)[0]?.event.priceRange).toBeNull();
   });
 
   it.each([
