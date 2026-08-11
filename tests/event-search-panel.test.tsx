@@ -1,12 +1,10 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventSearchPanel } from "../components/event-search-panel";
 import { LanguageProvider } from "../components/language-provider";
 import { LanguageToggle } from "../components/language-toggle";
+import { readApplicationCss } from "./css-source";
 
-const projectRoot = resolve(import.meta.dirname, "..");
 const router = vi.hoisted(() => ({ push: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
@@ -54,11 +52,9 @@ afterEach(() => {
 
 describe("EventSearchPanel", () => {
   it("provides large controls and a narrow-screen stack", () => {
-    const css = readFileSync(resolve(projectRoot, "app/globals.css"), "utf8");
-    expect(css).toMatch(/\.event-search-input\s*\{[^}]*min-height:\s*56px/s);
-    expect(css).toMatch(/\.event-search-select\s*\{[^}]*min-height:\s*56px/s);
-    expect(css).toMatch(/\.event-search-submit\s*\{[^}]*min-height:\s*56px/s);
-    expect(css).toMatch(/@media \(max-width:\s*620px\)[\s\S]*\.event-search-fields\s*\{[^}]*grid-template-columns:\s*1fr/s);
+    const css = readApplicationCss();
+    expect(css).toMatch(/\.event-search-input,[\s\S]*min-height:\s*52px/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*\.event-search-fields\s*\{[^}]*grid-template-columns:\s*1fr/s);
   });
 
   it("loads alphabetized venues and initializes applied values", async () => {
@@ -66,6 +62,8 @@ describe("EventSearchPanel", () => {
 
     expect(screen.getByLabelText("Activity name")).toHaveValue("Taylor");
     expect(screen.getByLabelText("Activity name")).toHaveClass("event-search-input");
+    expect(screen.getByLabelText("Activity name")).toHaveAttribute("maxlength", "100");
+    expect(screen.getByLabelText("Activity name")).toHaveAttribute("placeholder", "Artist, concert, market…");
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     expect(await screen.findByLabelText("Venue")).toHaveValue("s");
     expect(screen.getByLabelText("Venue")).toHaveClass("event-search-select");

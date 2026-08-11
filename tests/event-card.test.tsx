@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EventCard } from "../app/events/event-card";
 import type { KiwiCueEvent } from "../lib/events";
+import { readApplicationCss } from "./css-source";
 
-const projectRoot = resolve(import.meta.dirname, "..");
 const event: KiwiCueEvent = {
   id: "event-1",
   name: "Harbour Lights",
@@ -61,15 +59,15 @@ describe("portal event card", () => {
   });
 
   it("defines four, three, two, and one-column responsive grid contracts", () => {
-    const css = readFileSync(resolve(projectRoot, "app/globals.css"), "utf8");
-    expect(css).toMatch(/\.event-grid\s*\{[^}]*grid-template-columns:\s*repeat\(4,/s);
-    expect(css).toMatch(/@media \(max-width:\s*1080px\)[\s\S]*\.event-grid\s*\{[^}]*repeat\(3,/s);
-    expect(css).toMatch(/@media \(max-width:\s*700px\)[\s\S]*\.event-grid\s*\{[^}]*repeat\(2,/s);
-    expect(css).toMatch(/@media \(max-width:\s*359px\)[\s\S]*\.event-grid\s*\{[^}]*grid-template-columns:\s*1fr/s);
-    expect(css).toMatch(/\.portal-event-media\s*\{[^}]*aspect-ratio:\s*4\s*\/\s*3/s);
+    const css = readApplicationCss();
+    expect(css).toMatch(/\.event-grid,[\s\S]*?grid-template-columns:\s*repeat\(4,/s);
+    expect(css).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*\.event-grid[^}]*repeat\(3,/s);
+    expect(css).toMatch(/@media \(max-width:\s*900px\)[\s\S]*\.event-grid[^}]*repeat\(2,/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*\.event-grid[^}]*grid-template-columns:\s*1fr/s);
+    expect(css).toMatch(/\.portal-event-media\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*10/s);
     expect(css).toMatch(/\.portal-event-link\s*\{[^}]*min-height:\s*56px/s);
-    expect(css).toMatch(/\.portal-empty-action\s*\{[^}]*min-height:\s*56px/s);
-    expect(css).toMatch(/main\s*\{[^}]*overflow-x:\s*clip/s);
+    expect(css).toMatch(/\.event-state button,[\s\S]*?\.portal-empty-action,[\s\S]*?min-height:\s*52px/s);
+    expect(css).not.toMatch(/main\s*\{[^}]*overflow-x:\s*clip/s);
     expect(css).toMatch(/prefers-reduced-motion:[^)]+\)[\s\S]*\.portal-event-card:hover \.portal-event-media img[^}]*transform:\s*none/s);
   });
 });

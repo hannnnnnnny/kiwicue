@@ -1,15 +1,13 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EventsPageContent } from "../components/events-page-content";
 import { LanguageProvider } from "../components/language-provider";
+import { readApplicationCss } from "./css-source";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-const projectRoot = resolve(import.meta.dirname, "..");
 const eventResult = {
   events: [{
     id: "event-1",
@@ -73,7 +71,7 @@ describe("complete portal accessibility contract", () => {
     }
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getAllByRole("navigation").map((nav) => nav.getAttribute("aria-label")))
-      .toEqual(["Event categories", "Event time range"]);
+      .toEqual(["Primary navigation", "Event categories", "Event time range"]);
   });
 
   it("names every action and never renders a dead link", async () => {
@@ -104,21 +102,20 @@ describe("complete portal accessibility contract", () => {
   });
 
   it("locks in touch, focus, overflow, motion, and exact mobile-width rules", () => {
-    const css = readFileSync(resolve(projectRoot, "app/globals.css"), "utf8");
+    const css = readApplicationCss();
     for (const selector of [
-      ".portal-brand", ".language-toggle", ".event-search-input", ".event-search-select",
+      ".portal-brand", ".portal-header-link", ".language-toggle", ".event-search-input", ".event-search-select",
       ".event-search-submit", ".portal-nav-link", ".portal-event-link", ".event-load-more",
       ".portal-empty-action", ".saved-link", ".bookmark-button-card", ".bookmark-button-detail",
       ".event-detail-back", ".event-map figcaption a", ".distance-panel button",
       ".event-booking-inline", ".event-booking-action", ".saved-toolbar button",
     ]) {
-      expect(css).toMatch(new RegExp(`${selector.replaceAll(".", "\\.")}[^}]*min-height:\\s*(?:56px|44px)`, "s"));
+      expect(css).toMatch(new RegExp(`${selector.replaceAll(".", "\\.")}[^}]*min-height:\\s*(?:52px|56px|44px)`, "s"));
     }
     expect(css).toMatch(/:focus-visible[^}]*outline:[^;}]*var\(--portal-focus\)/s);
     expect(css).toMatch(/\.portal-nav-track\s*\{[^}]*overflow-x:\s*auto/s);
-    expect(css).toMatch(/main\s*\{[^}]*overflow-x:\s*clip/s);
-    expect(css).toMatch(/@media \(max-width:\s*390px\)/);
-    expect(css).toMatch(/@media \(max-width:\s*320px\)/);
+    expect(css).not.toMatch(/main\s*\{[^}]*overflow-x:\s*clip/s);
+    expect(css).toMatch(/@media \(max-width:\s*375px\)/);
     expect(css).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)/);
   });
 });

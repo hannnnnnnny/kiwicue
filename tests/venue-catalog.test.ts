@@ -25,7 +25,7 @@ function event(
     status: "onsale",
     category: "Music",
     venue: venue
-      ? { ...venue, city: "Auckland", address: null }
+      ? { ...venue, city: "Auckland", address: null, postalCode: null, coordinates: null }
       : null,
   };
 }

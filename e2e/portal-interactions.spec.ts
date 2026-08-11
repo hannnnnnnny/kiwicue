@@ -169,6 +169,22 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.bodyScroll).toBeLessThanOrEqual(dimensions.bodyClient);
 }
 
+async function measureLoadMoreLayout(page: Page) {
+  return page.evaluate(() => {
+    const grid = document.querySelector(".event-grid")?.getBoundingClientRect();
+    const button = document.querySelector(".event-load-more")?.getBoundingClientRect();
+    const cards = [...document.querySelectorAll(".portal-event-card")]
+      .map((card) => card.getBoundingClientRect().height);
+    return {
+      scrollY,
+      documentHeight: document.documentElement.scrollHeight,
+      gridHeight: grid?.height ?? null,
+      buttonTop: button?.top ?? null,
+      cards,
+    };
+  });
+}
+
 async function tabTo(page: Page, locator: ReturnType<Page["locator"]>) {
   await page.keyboard.press("Tab");
   await expect(locator).toBeFocused();
@@ -210,7 +226,7 @@ test("redirects into a named, touchable, overflow-safe responsive portal", async
   expect(deadLinks).toEqual([]);
 
   const touchTargets = page.locator([
-    ".portal-brand", ".saved-link", ".language-toggle", ".event-search-input", ".event-search-select",
+    ".portal-brand", ".portal-header-link", ".language-toggle", ".event-search-input", ".event-search-select",
     ".event-search-submit", ".portal-nav-link", ".portal-event-link", ".bookmark-button", ".event-load-more",
   ].join(","));
   for (let index = 0; index < await touchTargets.count(); index += 1) {
@@ -221,14 +237,14 @@ test("redirects into a named, touchable, overflow-safe responsive portal", async
   const columns = await page.locator(".event-grid").evaluate((element) =>
     getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
   );
-  expect(columns).toBe(testInfo.project.name === "desktop" ? 4 : testInfo.project.name === "mobile-390" ? 2 : 1);
+  expect(columns).toBe(testInfo.project.name === "desktop" ? 4 : testInfo.project.name === "tablet-768" ? 2 : 1);
   await expectNoHorizontalOverflow(page);
 
   if (testInfo.project.name === "desktop") {
     const category = page.getByRole("link", { name: "Concerts", exact: true });
     await category.hover();
     await expect.poll(() => category.evaluate((element) => getComputedStyle(element).borderColor))
-      .toBe("rgb(18, 107, 75)");
+      .toBe("rgb(31, 91, 69)");
     const box = await category.boundingBox();
     await page.mouse.move((box?.x ?? 0) + 10, (box?.y ?? 0) + 10);
     await page.mouse.down();
@@ -239,9 +255,9 @@ test("redirects into a named, touchable, overflow-safe responsive portal", async
 
   const counts = { events: requests.eventRequests.length, venues: requests.venueRequests.length };
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "更快找到真正想去的活动" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "奥克兰最近有什么活动？" })).toBeVisible();
   await page.locator(".language-toggle").click();
-  await expect(page.getByRole("heading", { name: "Find something worth going to" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What’s on in Auckland?" })).toBeVisible();
   await page.waitForTimeout(100);
   expect(requests.eventRequests).toHaveLength(counts.events);
   expect(requests.venueRequests).toHaveLength(counts.venues);
@@ -256,6 +272,7 @@ test("keyboard reaches every portal control in document order with visible focus
 
   await tabTo(page, page.getByRole("link", { name: "Skip to event results" }));
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
+  await tabTo(page, page.getByRole("link", { name: "Events", exact: true }));
   await tabTo(page, page.getByRole("link", { name: "Saved events, 0" }));
   await tabTo(page, page.getByRole("button", { name: "切换到中文" }));
   await tabTo(page, page.getByLabel("Activity name"));
@@ -299,7 +316,7 @@ test("saving an event persists through reload and can be removed from Saved", as
   expect(errors).toEqual([]);
 });
 
-test("search, clear, back, forward, and reload keep one canonical shareable state", async ({ page }) => {
+test("search, clear, back, forward, and reload keep one canonical shareable state", async ({ page }, testInfo) => {
   const errors = runtimeErrors(page);
   const requests = await installRoutes(page);
   await page.goto("/events?window=weekend&category=concerts");
@@ -319,6 +336,15 @@ test("search, clear, back, forward, and reload keep one canonical shareable stat
 
   const clear = page.getByRole("link", { name: "Clear filters" });
   await expect(clear).toHaveAttribute("href", "/events?window=weekend&category=concerts");
+  if (testInfo.project.name === "desktop") {
+    await page.setViewportSize({ width: 960, height: 900 });
+    await expectNoHorizontalOverflow(page);
+    const actionBounds = await page.locator(".event-search-actions").evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }));
+    expect(actionBounds.scrollWidth).toBeLessThanOrEqual(actionBounds.clientWidth);
+  }
   await clear.click();
   await expect(page).toHaveURL(/\/events\?window=weekend&category=concerts$/);
   await page.goBack();
@@ -405,6 +431,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   await expect(more).toBeVisible();
   await more.scrollIntoViewIfNeeded();
   const scrollBefore = await page.evaluate(() => scrollY);
+  const layoutBefore = await measureLoadMoreLayout(page);
   await page.evaluate(() => {
     const button = document.querySelector<HTMLButtonElement>(".event-load-more");
     button?.click();
@@ -416,7 +443,11 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   await expect(page.locator(".portal-event-card")).toHaveCount(3);
   await expect(page.getByRole("heading", { name: "A very long Auckland event title that remains readable on a small screen" })).toHaveCount(1);
   const scrollAfter = await page.evaluate(() => scrollY);
-  expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThanOrEqual(24);
+  const layoutAfter = await measureLoadMoreLayout(page);
+  expect(
+    Math.abs(scrollAfter - scrollBefore),
+    JSON.stringify({ layoutBefore, layoutAfter }),
+  ).toBeLessThanOrEqual(24);
 
   await page.getByRole("link", { name: "View Harbour Lights details" }).click();
   await expect(page).toHaveURL(/\/events\/event-1$/);
@@ -471,7 +502,7 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   expect(errors).toEqual([]);
 });
 
-test("mobile nav scrolls independently and reduced motion disables media animation", async ({ page }, testInfo) => {
+test("mobile filters wrap without clipping and reduced motion disables media animation", async ({ page }) => {
   const errors = runtimeErrors(page);
   await installRoutes(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -485,19 +516,30 @@ test("mobile nav scrolls independently and reduced motion disables media animati
   expect(imageMotion.transition).toBe("0s");
   expect(imageMotion.animation).toBe("none");
 
-  if (testInfo.project.name !== "desktop") {
+  if ((page.viewportSize()?.width ?? 0) <= 600) {
     for (const nav of ["Event categories", "Event time range"]) {
       const track = page.getByRole("navigation", { name: nav });
-      const before = await track.evaluate((element) => ({ left: element.scrollLeft, width: element.scrollWidth, client: element.clientWidth }));
-      expect(before.width).toBeGreaterThan(before.client);
-      await track.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
-      expect(await track.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+      const dimensions = await track.evaluate((element) => {
+        const trackRect = element.getBoundingClientRect();
+        const lastRect = element.lastElementChild?.getBoundingClientRect();
+        return {
+          width: element.scrollWidth,
+          client: element.clientWidth,
+          lastLeft: lastRect?.left ?? 0,
+          lastRight: lastRect?.right ?? 0,
+          trackLeft: trackRect.left,
+          trackRight: trackRect.right,
+        };
+      });
+      expect(dimensions.width).toBeLessThanOrEqual(dimensions.client);
+      expect(dimensions.lastLeft).toBeGreaterThanOrEqual(dimensions.trackLeft);
+      expect(dimensions.lastRight).toBeLessThanOrEqual(dimensions.trackRight);
     }
   } else {
-    await page.setViewportSize({ width: 720, height: 450 });
+    await page.setViewportSize({ width: 720, height: 900 });
     expect(await page.locator(".event-grid").evaluate((element) =>
       getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
-    )).toBe(3);
+    )).toBe(2);
   }
   await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);

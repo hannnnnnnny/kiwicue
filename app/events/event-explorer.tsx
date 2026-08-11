@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../../components/language-provider";
+import { EventGridSkeleton } from "../../components/event-grid-skeleton";
 import type { EventCategory } from "../../lib/event-categories";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 import type { EventWindow } from "../../lib/event-window";
@@ -253,13 +254,8 @@ export function EventExplorer({
   if (stateForRequest.status === "loading") {
     return (
       <section className="event-state event-loading" role="status" aria-busy="true">
-        <span className="loading-pulse" aria-hidden="true" />
         <p>{content.loading}</p>
-        <div className="event-grid-skeleton" aria-hidden="true">
-          {Array.from({ length: 6 }, (_, index) => (
-            <i key={index}><span /><span /><span /></i>
-          ))}
-        </div>
+        <EventGridSkeleton />
       </section>
     );
   }

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,7 @@ import { LanguageToggle } from "../components/language-toggle";
 import type { EventCategory } from "../lib/event-categories";
 import type { AucklandEventsResult } from "../lib/events";
 import type { EventWindow } from "../lib/event-window";
+import { readApplicationCss } from "./css-source";
 
 const router = vi.hoisted(() => ({ push: vi.fn() }));
 
@@ -31,7 +32,14 @@ const eventResult = {
       },
       status: "onsale",
       category: "Music",
-      venue: { id: "venue-civic", name: "The Civic", city: "Auckland", address: "269 Queen Street" },
+      venue: {
+        id: "venue-civic",
+        name: "The Civic",
+        city: "Auckland",
+        address: "269 Queen Street",
+        postalCode: "1010",
+        coordinates: null,
+      },
     },
   ],
   page: { size: 1, totalElements: 1, totalPages: 1, number: 0 },
@@ -118,7 +126,7 @@ describe("Auckland event explorer", () => {
     const page = await EventsPage();
     render(page);
 
-    expect(screen.getByRole("heading", { name: "Find something worth going to" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What’s on in Auckland?" })).toBeInTheDocument();
     expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/events");
   });
@@ -130,6 +138,8 @@ describe("Auckland event explorer", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Scanning Auckland for what is next");
     expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(document.querySelectorAll(".event-card-skeleton")).toHaveLength(8);
+    expect(document.querySelector(".loading-pulse")).not.toBeInTheDocument();
     expect(requestEvents).toHaveBeenCalledOnce();
   });
 
@@ -393,10 +403,10 @@ describe("Auckland event explorer", () => {
   });
 
   it("gives the load-more control a large touch target", () => {
-    const css = readFileSync(resolve(projectRoot, "app/globals.css"), "utf8");
+    const css = readApplicationCss();
 
-    expect(css).toMatch(/\.event-load-more\s*\{[^}]*min-height:\s*56px/s);
-    expect(css).toMatch(/\.event-load-more\s*\{[^}]*width:\s*100%/s);
+    expect(css).toMatch(/\.event-state button,[\s\S]*?\.event-load-more\s*\{[^}]*min-height:\s*52px/s);
+    expect(css).toMatch(/\.event-load-more\s*\{[^}]*width:\s*min\(100%,\s*420px\)/s);
   });
 
   it("explains an empty result without presenting it as an error", async () => {

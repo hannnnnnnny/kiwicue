@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Language } from "./language-provider";
 import { isValidCoordinates } from "../lib/distance";
 import type { EventCoordinates } from "../lib/events";
@@ -6,14 +9,20 @@ const copy = {
   en: {
     title: (venue: string) => `Map of ${venue}`,
     larger: "Open larger map",
+    unavailable: "Map preview is temporarily unavailable.",
+    recover: "Open venue in OpenStreetMap",
     attribution: "OpenStreetMap contributors",
   },
   zh: {
     title: (venue: string) => `${venue}地图`,
     larger: "打开大地图",
+    unavailable: "地图预览暂时无法显示。",
+    recover: "在 OpenStreetMap 中打开场馆",
     attribution: "OpenStreetMap 贡献者",
   },
 } as const;
+
+const MAP_LOAD_TIMEOUT_MS = 8_000;
 
 export function buildOpenStreetMapUrls(coordinates: EventCoordinates): {
   embed: string;
@@ -50,13 +59,37 @@ export function EventMap({ coordinates, language, venueName }: {
 }) {
   const content = copy[language];
   const urls = buildOpenStreetMapUrls(coordinates);
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const loaded = loadedUrl === urls.embed;
+  const failed = failedUrl === urls.embed;
+
+  useEffect(() => {
+    if (loaded || failed) return;
+    const timeout = window.setTimeout(() => setFailedUrl(urls.embed), MAP_LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(timeout);
+  }, [failed, loaded, urls.embed]);
+
+  if (failed) {
+    return (
+      <div className="event-map-unavailable event-map-failure" role="status">
+        <p>{content.unavailable}</p>
+        <a href={urls.larger} target="_blank" rel="noreferrer noopener">
+          {content.recover}<span aria-hidden="true"> ↗</span>
+        </a>
+      </div>
+    );
+  }
+
   return (
-    <figure className="event-map">
+    <figure className="event-map" onErrorCapture={() => setFailedUrl(urls.embed)}>
       <iframe
         title={content.title(venueName)}
         src={urls.embed}
-        loading="lazy"
+        loading="eager"
         referrerPolicy="no-referrer"
+        onLoad={() => setLoadedUrl(urls.embed)}
+        onError={() => setFailedUrl(urls.embed)}
       />
       <figcaption>
         <a href={urls.larger} target="_blank" rel="noreferrer noopener">

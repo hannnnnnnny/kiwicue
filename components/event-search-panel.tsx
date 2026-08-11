@@ -27,6 +27,7 @@ const copy = {
   en: {
     formLabel: "Search Auckland events",
     activityLabel: "Activity name",
+    activityPlaceholder: "Artist, concert, market…",
     activityHelper: "Enter a complete event or artist word, for example Taylor",
     venueLabel: "Venue",
     allVenues: "All venues",
@@ -38,6 +39,7 @@ const copy = {
   zh: {
     formLabel: "搜索奥克兰活动",
     activityLabel: "活动名称",
+    activityPlaceholder: "艺人、演出或市集…",
     activityHelper: "输入完整的活动或艺人名称，例如 Taylor",
     venueLabel: "场馆",
     allVenues: "所有场馆",
@@ -193,6 +195,10 @@ function SearchForm({
               name="q"
               type="search"
               value={draftKeyword}
+              maxLength={100}
+              placeholder={content.activityPlaceholder}
+              enterKeyHint="search"
+              autoComplete="off"
               aria-describedby="event-search-name-helper"
               onChange={(event) => setDraftKeyword(event.target.value)}
             />
