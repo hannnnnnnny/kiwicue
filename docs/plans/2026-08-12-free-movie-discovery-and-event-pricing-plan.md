@@ -153,16 +153,16 @@
 - `MovieScreeningFeed` is presentational and never fetches.
 - `CinemaDirectory` receives already filtered/sorted entries and optional distances.
 
-- [ ] Add failing navigation tests for Events, Movies, Saved order, `aria-current`, real hrefs, and Chinese labels.
-- [ ] Add failing movie-page tests for loading, populated, empty, unavailable, reset, and language-switch states.
-- [ ] Add failing screening-card tests for time, formats, sold-out state, distance, and safe official booking links.
-- [ ] Run the three focused files and confirm expected missing-UI failures.
-- [ ] Add `/movies` metadata and client content using a single labelled search form plus today/tomorrow/weekend/all buttons.
-- [ ] Fetch `/api/movies` only when query/date state changes; abort stale requests and keep the directory visible throughout.
-- [ ] Add opt-in geolocation once per click, never persist coordinates, and sort directory results nearest-first after success.
-- [ ] Update the global header and skip-link target union for the movie page.
-- [ ] Run the focused tests and expect success.
-- [ ] Commit `feat: add bilingual Auckland movie hub`.
+- [x] Add failing navigation tests for Events, Movies, Saved order, `aria-current`, real hrefs, and Chinese labels.
+- [x] Add failing movie-page tests for loading, populated, empty, unavailable, reset, and language-switch states.
+- [x] Add failing screening-card tests for time, formats, sold-out state, distance, and safe official booking links.
+- [x] Run the three focused files and confirm expected missing-UI failures.
+- [x] Add `/movies` metadata and client content using a single labelled search form plus today/tomorrow/weekend/all buttons.
+- [x] Fetch `/api/movies` only when query/date state changes; abort stale requests and keep the directory visible throughout.
+- [x] Add opt-in geolocation once per click, never persist coordinates, and sort directory results nearest-first after success.
+- [x] Update the global header and skip-link target union for the movie page.
+- [x] Run the focused tests and expect success.
+- [x] Commit `feat: add bilingual Auckland movie hub`.
 
 ### Task 7: Visual system and responsive browser coverage
 

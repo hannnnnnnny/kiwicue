@@ -48,7 +48,21 @@ describe("portal navigation", () => {
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Movies" })).toHaveAttribute("href", "/movies");
     expect(screen.getByRole("link", { name: "Saved events, 0" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks the movie hub as current and keeps navigation order predictable", () => {
+    render(
+      <LanguageProvider>
+        <PortalHeader currentPage="movies" skipTarget="movie-results" />
+      </LanguageProvider>,
+    );
+
+    const links = screen.getByRole("navigation", { name: "Primary navigation" }).querySelectorAll("a");
+    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Events", "Movies", "Saved"]);
+    expect(screen.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("Skip to movie sessions")).toHaveAttribute("href", "#movie-results");
   });
 
   it("preserves every other filter while one navigation dimension changes", () => {
@@ -97,7 +111,7 @@ describe("portal navigation", () => {
   it("gives every portal navigation target a real destination", () => {
     renderPortalControls();
     for (const link of screen.getAllByRole("link")) {
-      expect(link.getAttribute("href")).toMatch(/^(?:\/(?:events|saved)(?:\?|$)|#event-results$)/);
+      expect(link.getAttribute("href")).toMatch(/^(?:\/(?:events|movies|saved)(?:\?|$)|#event-results$)/);
       expect(link.getAttribute("href")).not.toBe("#");
     }
   });
