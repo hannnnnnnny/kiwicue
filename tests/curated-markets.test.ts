@@ -158,6 +158,9 @@ describe("curated Auckland markets", () => {
     });
     expect(event?.localization?.zh?.name).toBe("Grey Lynn 农夫市集");
     expect(event?.localization?.zh?.description).toContain("本地农产品");
+    expect(event?.editorialPreview?.image?.url).toBe(
+      "https://lh3.googleusercontent.com/sitesv/AG8ngQUtOsQqy-O5VscAgNuCL2sUbQSUUgpUK9bfv_Y_nnOUZwQIqx5nmEzIaz3sEA5fGEUd-kfNhdUzlxuEkiub3Kcb2UMtAoi85z-LzaV6BrSHhm2Lgfi09C8L28NelHwjZwDiAh9KIJON3pdaRiyy3WvhV1Nf1azBbw5tHWzB4H88epxCAfzBR4NLbS_xu1k=w1200",
+    );
     expect(event?.description).not.toContain("where you can get fresh");
     expect(isCuratedMarketVerificationFresh(new Date())).toBe(true);
     expect(isCuratedMarketVerificationFresh(new Date("2026-12-10T12:00:00+13:00"))).toBe(true);

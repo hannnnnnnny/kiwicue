@@ -162,8 +162,8 @@ const greyLynnPreview: EventEditorialPreview = {
     "The community-owned market has a strong low-waste focus.",
   ],
   image: {
-    url: "https://lh3.googleusercontent.com/sitesv/AG8ngQXUSRWHim0XmxI3KTyuEZs-x3AsiAmhY6YUOIlYJD-tM7AG8SLW3r_z-uuRsvcQZa0PxG_Lz0QC9SVPfmtn-hZ0rvDno3CrhxWARC4pE_xejAomXdQUqnCBz9IT1oQTDXw1f7qB6mq1n_xzEdvl2hCfTJqj1ctCPahI6o0lQnquFWpqZhIUFpM9v8RR0qM=w16383",
-    alt: "Fresh local produce at Grey Lynn Farmers Market",
+    url: "https://lh3.googleusercontent.com/sitesv/AG8ngQUtOsQqy-O5VscAgNuCL2sUbQSUUgpUK9bfv_Y_nnOUZwQIqx5nmEzIaz3sEA5fGEUd-kfNhdUzlxuEkiub3Kcb2UMtAoi85z-LzaV6BrSHhm2Lgfi09C8L28NelHwjZwDiAh9KIJON3pdaRiyy3WvhV1Nf1azBbw5tHWzB4H88epxCAfzBR4NLbS_xu1k=w1200",
+    alt: "Market stalls outside Grey Lynn Community Centre",
     sourceName: "Grey Lynn Farmers Market",
     sourceUrl: greyLynnSource,
     verifiedAt: CURATED_MARKET_VERIFIED_AT,
