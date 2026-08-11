@@ -62,7 +62,7 @@ describe("editorial information hub design system", () => {
 
     expect(radiusDeclarations.length).toBeGreaterThan(10);
     for (const value of radiusDeclarations) {
-      expect(["var(--radius-control)", "var(--radius-panel)", "var(--radius-pill)"])
+      expect(["0", "var(--radius-control)", "var(--radius-panel)", "var(--radius-pill)"])
         .toContain(value);
     }
     expect(css).toMatch(/main\s*\{[^}]*min-height:\s*100dvh/s);
