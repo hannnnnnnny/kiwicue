@@ -234,6 +234,20 @@
 .event-booking-action { width: 100%; margin-top: var(--space-4); }
 .event-source-note { margin: var(--space-3) 0 0; color: var(--portal-muted); font-size: .66rem; line-height: 1.55; }
 
+.event-source-verification {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--portal-line);
+  border-bottom: 1px solid var(--portal-line);
+  color: var(--portal-muted);
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+.event-source-verification strong { color: var(--portal-ink); font-size: .86rem; }
+
 .saved-masthead { padding: var(--space-12) 0 var(--space-8); border-bottom: 1px solid var(--portal-line); }
 .saved-masthead h1 { margin: var(--space-3) 0 var(--space-3); font-size: clamp(2.5rem, 6vw, 5.2rem); letter-spacing: -.055em; }
 .saved-masthead > p:last-child { max-width: 680px; margin: 0; color: var(--portal-muted); line-height: 1.7; }

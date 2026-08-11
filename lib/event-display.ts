@@ -1,5 +1,5 @@
 import type { Language } from "../components/language-provider";
-import type { KiwiCueEvent } from "./events";
+import type { KiwiCueEvent, KiwiCueEventDetail } from "./events";
 
 const timePending = { en: "Time to be confirmed", zh: "时间待定" } as const;
 const statuses = {
@@ -82,4 +82,28 @@ export function formatEventCategory(category: string, language: Language): strin
 
 export function eventDisplayName(event: KiwiCueEvent, language: Language): string {
   return language === "zh" ? event.localization?.zh?.name ?? event.name : event.name;
+}
+
+export function eventDisplayDescription(event: KiwiCueEventDetail, language: Language): string | null {
+  return language === "zh"
+    ? event.localization?.zh?.description ?? event.description ?? null
+    : event.description ?? null;
+}
+
+export function eventDisplayNote(event: KiwiCueEventDetail, language: Language): string | null {
+  return language === "zh"
+    ? event.localization?.zh?.note ?? event.note ?? null
+    : event.note ?? null;
+}
+
+export function formatVerifiedDate(localDate: string, language: Language): string {
+  const [year, month, day] = localDate.split("-").map(Number);
+  if (language === "zh") return `${year}年${month}月${day}日`;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return new Intl.DateTimeFormat("en-NZ", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }

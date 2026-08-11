@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  eventDisplayDescription,
+  eventDisplayName,
+  eventDisplayNote,
   formatEventCategory,
   formatEventDate,
   formatEventStatus,
   formatEventTime,
+  formatVerifiedDate,
 } from "../lib/event-display";
 import type { KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
@@ -67,6 +71,15 @@ const copy = {
     errorBody: "The official event feed could not be refreshed. Try again in a moment.",
     retry: "Retry event details",
     footer: "Official information, one useful step at a time.",
+    marketBookingTitle: "Plan your visit",
+    marketBookingSteps: [
+      "Check the next market date, opening time, and venue shown here.",
+      "Open the official market website to confirm any last-minute change.",
+      "Allow extra travel time and check public-holiday notices before leaving.",
+    ],
+    marketBooking: "Check official schedule",
+    marketSource: "Official schedule source",
+    verified: (date: string) => `Schedule last checked ${date}`,
   },
   zh: {
     loading: "正在加载活动详情",
@@ -94,6 +107,15 @@ const copy = {
     errorBody: "官方活动信息刷新失败，请稍后重试。",
     retry: "重新加载活动详情",
     footer: "官方信息，一步找到真正有用的内容。",
+    marketBookingTitle: "出发前确认",
+    marketBookingSteps: [
+      "先确认本页显示的下次市集日期、时间和地点。",
+      "打开市集官网，确认有没有临时变更。",
+      "出发前预留交通时间，并查看公共假期通知。",
+    ],
+    marketBooking: "查看官方最新安排",
+    marketSource: "官方日程来源",
+    verified: (date: string) => `日程核实日期：${date}`,
   },
 } as const;
 
@@ -183,6 +205,14 @@ export function EventDetailContent({
   }
 
   const event = state.event;
+  const isCuratedMarket = Boolean(event.source);
+  const displayName = eventDisplayName(event, language);
+  const description = eventDisplayDescription(event, language);
+  const note = eventDisplayNote(event, language);
+  const officialUrl = event.source?.url ?? event.url;
+  const bookingTitle = isCuratedMarket ? content.marketBookingTitle : content.bookingTitle;
+  const bookingSteps = isCuratedMarket ? content.marketBookingSteps : content.bookingSteps;
+  const bookingLabel = isCuratedMarket ? content.marketBooking : content.booking;
   const dateTime = `${formatEventDate(event.start.localDate, language)} · ${formatEventTime(event.start.localTime, language)}`;
   const venue = event.venue;
 
@@ -192,7 +222,7 @@ export function EventDetailContent({
         <Link className="event-detail-back" href="/events">← {content.back}</Link>
         <header className="event-detail-heading">
           <p className="eyebrow">{content.eyebrow}</p>
-          <h1 id="event-detail-title">{event.name}</h1>
+          <h1 id="event-detail-title">{displayName}</h1>
           <p className="event-detail-date">
             <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
           </p>
@@ -207,11 +237,11 @@ export function EventDetailContent({
           <div className="event-detail-actions">
             <a
               className="event-booking-inline"
-              href={event.url}
+              href={officialUrl}
               target="_blank"
               rel="noreferrer noopener"
             >
-              {content.booking}<span aria-hidden="true"> ↗</span>
+              {bookingLabel}<span aria-hidden="true"> ↗</span>
             </a>
             <BookmarkButton event={event} language={language} placement="detail" />
           </div>
@@ -221,17 +251,17 @@ export function EventDetailContent({
         </div>
 
         <section className="event-detail-section" aria-labelledby="booking-title">
-          <h2 id="booking-title">{content.bookingTitle}</h2>
-          <ol>{content.bookingSteps.map((step) => <li key={step}>{step}</li>)}</ol>
+          <h2 id="booking-title">{bookingTitle}</h2>
+          <ol>{bookingSteps.map((step) => <li key={step}>{step}</li>)}</ol>
         </section>
 
         <section className="event-detail-section" aria-labelledby="information-title">
           <h2 id="information-title">{content.information}</h2>
-          <p>{event.description ?? content.noDescription}</p>
-          {event.note && (
+          <p>{description ?? content.noDescription}</p>
+          {note && (
             <aside className="event-organiser-note">
               <h3>{content.note}</h3>
-              <p>{event.note}</p>
+              <p>{note}</p>
             </aside>
           )}
         </section>
@@ -254,12 +284,19 @@ export function EventDetailContent({
         )}
         <a
           className="event-booking-action"
-          href={event.url}
+          href={officialUrl}
           target="_blank"
           rel="noreferrer noopener"
         >
           {content.officialWebsite}<span aria-hidden="true"> ↗</span>
         </a>
+        {event.source && (
+          <div className="event-source-verification">
+            <span>{content.marketSource}</span>
+            <strong className="event-source-name">{event.source.name}</strong>
+            <span>{content.verified(formatVerifiedDate(event.source.verifiedAt, language))}</span>
+          </div>
+        )}
         <p className="event-source-note">{content.source}</p>
       </aside>
     </article>,
