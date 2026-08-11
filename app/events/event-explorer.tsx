@@ -71,6 +71,10 @@ const copy = {
     appendError: "Loading more events failed. Your shown events are still here.",
     retryMore: "Retry loading more events",
     complete: "All Ticketmaster events are shown",
+    marketCount: (total: number, shown: number) => `${total} verified market ${total === 1 ? "schedule" : "schedules"} · ${shown} shown`,
+    marketSources: "Verified official market links",
+    marketDisclaimer: "KiwiCue checks these recurring schedules against each market's official website. Confirm the latest details before travelling.",
+    marketComplete: "All verified market schedules are shown",
     emptyCode: "AKL / 00",
     upcomingEmptyTitle: "No upcoming events found",
     upcomingEmptyBody: "Check back soon—new Auckland events are added throughout the week.",
@@ -95,6 +99,10 @@ const copy = {
     appendError: "加载更多活动失败，已显示的活动仍会保留。",
     retryMore: "重新加载更多活动",
     complete: "Ticketmaster 活动已全部显示",
+    marketCount: (total: number, shown: number) => `已核实 ${total} 个市集日程 · 已显示 ${shown} 个`,
+    marketSources: "包含已核实的市集官方链接",
+    marketDisclaimer: "KiwiCue 会对照各市集官网核实定期日程；出发前请再次确认最新安排。",
+    marketComplete: "已核实的市集日程已全部显示",
     emptyCode: "奥克兰 / 00",
     upcomingEmptyTitle: "暂时没有未来活动",
     upcomingEmptyBody: "请稍后再来，本周还会陆续加入新的奥克兰活动。",
@@ -163,6 +171,7 @@ export function EventExplorer({
     attempt,
   });
   const isFiltered = Boolean(keyword || venueId || category || window !== "all");
+  const isMarketCategory = category === "markets";
   const stateForRequest: ExplorerState = state.status !== "loading" && state.requestKey === requestKey
     ? state
     : { status: "loading", events: [] };
@@ -268,9 +277,11 @@ export function EventExplorer({
       <section className="event-feed" aria-live="polite">
         <div className="event-feed-toolbar">
           <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1}>
-            {content.count(isFiltered, stateForRequest.totalElements, stateForRequest.events.length)}
+            {isMarketCategory
+              ? content.marketCount(stateForRequest.totalElements, stateForRequest.events.length)
+              : content.count(isFiltered, stateForRequest.totalElements, stateForRequest.events.length)}
           </p>
-          <span><i aria-hidden="true" /> {content.sources}</span>
+          <span><i aria-hidden="true" /> {isMarketCategory ? content.marketSources : content.sources}</span>
         </div>
         <ol className="event-grid">
           {stateForRequest.events.map((event, index) => (
@@ -299,11 +310,13 @@ export function EventExplorer({
             </button>
           </div>
         ) : (
-          <p className="event-feed-complete" role="status">{content.complete}</p>
+          <p className="event-feed-complete" role="status">
+            {isMarketCategory ? content.marketComplete : content.complete}
+          </p>
         )}
 
         <p className="source-disclaimer">
-          {content.disclaimer}
+          {isMarketCategory ? content.marketDisclaimer : content.disclaimer}
         </p>
       </section>
     );
