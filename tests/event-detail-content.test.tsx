@@ -30,6 +30,30 @@ const detail: KiwiCueEventDetail = {
   note: "Age restrictions may apply.",
 };
 
+const marketDetail: KiwiCueEventDetail = {
+  ...detail,
+  id: "kc-market-grey-lynn",
+  name: "Grey Lynn Farmers Market",
+  url: "https://www.greylynnfarmersmarket.co.nz/",
+  imageUrl: null,
+  status: "schedule_verified",
+  category: "Market",
+  description: "A neighbourhood farmers market with local produce and prepared food.",
+  note: "Schedules can change around public holidays.",
+  source: {
+    name: "Grey Lynn Farmers Market",
+    url: "https://www.greylynnfarmersmarket.co.nz/",
+    verifiedAt: "2026-08-12",
+  },
+  localization: {
+    zh: {
+      name: "Grey Lynn 农夫市集",
+      description: "社区农夫市集，有本地农产品和现场食物。",
+      note: "公共假期前后日程可能调整。",
+    },
+  },
+};
+
 beforeEach(() => {
   localStorage.clear();
 });
@@ -140,5 +164,30 @@ describe("event detail experience", () => {
     expect(screen.getByRole("button", { name: "查看离我多远" })).toBeVisible();
     expect(screen.queryByText(/price|fees|价格|费用|NZ\$/i)).not.toBeInTheDocument();
     expect(requestEventDetail).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows curated market verification and localized visit guidance", async () => {
+    const requestEventDetail = vi.fn().mockResolvedValue(marketDetail);
+    renderDetail(requestEventDetail);
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Grey Lynn Farmers Market" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Plan your visit" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Check official schedule" })).toHaveAttribute(
+      "href",
+      marketDetail.source!.url,
+    );
+    expect(screen.getByText("Grey Lynn Farmers Market", { selector: ".event-source-name" })).toBeVisible();
+    expect(screen.getByText(/Schedule last checked.*12 Aug 2026/)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "出发前确认" })).toBeVisible();
+    expect(screen.getByText("社区农夫市集，有本地农产品和现场食物。")).toBeVisible();
+    expect(screen.getByText("公共假期前后日程可能调整。")).toBeVisible();
+    expect(screen.getByRole("link", { name: "查看官方最新安排" })).toHaveAttribute(
+      "href",
+      marketDetail.source!.url,
+    );
+    expect(screen.getByText(/2026年8月12日/)).toBeVisible();
   });
 });
