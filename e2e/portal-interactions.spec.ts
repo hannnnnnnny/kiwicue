@@ -81,6 +81,21 @@ const eventDetail = {
   },
 };
 
+const movieScreening = {
+  id: "screening-1",
+  filmId: "film-1",
+  filmTitle: "Whina",
+  filmRating: "M",
+  runtimeMinutes: 112,
+  cinemaId: "academy",
+  cinemaName: "Academy Cinemas",
+  startTime: "2026-08-15T18:30:00+12:00",
+  formats: ["2D", "English subtitles"],
+  soldOut: false,
+  distanceKilometres: 1.4,
+  bookingUrl: "https://tickets.example/whina",
+};
+
 function json(route: Route, body: unknown, status = 200) {
   return route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
@@ -88,6 +103,7 @@ function json(route: Route, body: unknown, status = 200) {
 async function installRoutes(page: Page, options: RouteOptions = {}) {
   const eventRequests: string[] = [];
   const venueRequests: string[] = [];
+  const movieRequests: string[] = [];
   let initialFailures = options.initialFailures ?? 0;
   let appendFailures = options.appendFailures ?? 0;
 
@@ -162,13 +178,26 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     }
     return json(route, firstPage);
   });
+  await page.route("**/api/movies**", async (route) => {
+    const requestUrl = route.request().url();
+    const url = new URL(requestUrl);
+    movieRequests.push(requestUrl);
+    if (url.searchParams.get("q") === "Offline") {
+      return json(route, { screenings: [], source: "open-cinema", sourceState: "unavailable" });
+    }
+    if (url.searchParams.get("q") === "NoFilm") {
+      return json(route, { screenings: [], source: "open-cinema", sourceState: "empty" });
+    }
+    return json(route, { screenings: [movieScreening], source: "open-cinema", sourceState: "ready" });
+  });
 
-  return { eventRequests, venueRequests };
+  return { eventRequests, venueRequests, movieRequests };
 }
 
 async function resetApiRoutes(page: Page) {
   await page.unroute("**/api/venues**");
   await page.unroute("**/api/events**");
+  await page.unroute("**/api/movies**");
 }
 
 function runtimeErrors(page: Page) {
@@ -295,6 +324,7 @@ test("keyboard reaches every portal control in document order with visible focus
   await tabTo(page, page.getByRole("link", { name: "Skip to event results" }));
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
   await tabTo(page, page.getByRole("link", { name: "Events", exact: true }));
+  await tabTo(page, page.getByRole("link", { name: "Movies", exact: true }));
   await tabTo(page, page.getByRole("link", { name: "Saved events, 0" }));
   await tabTo(page, page.getByRole("button", { name: "切换到中文" }));
   await tabTo(page, page.getByLabel("Activity name"));
@@ -587,6 +617,93 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
       getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
     )).toBe(2);
   }
+  await expectNoHorizontalOverflow(page);
+  expect(errors).toEqual([]);
+});
+
+test("movie search, dates, distance, language, maps, and official links work without overflow", async ({ page }, testInfo) => {
+  const errors = runtimeErrors(page);
+  const requests = await installRoutes(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition(success: PositionCallback) {
+          success({
+            coords: {
+              latitude: -36.8514, longitude: 174.7654, accuracy: 10,
+              altitude: null, altitudeAccuracy: null, heading: null, speed: null,
+              toJSON: () => ({}),
+            },
+            timestamp: Date.now(),
+            toJSON: () => ({}),
+          });
+        },
+      },
+    });
+  });
+  await page.context().route("https://tickets.example/**", (route) => route.fulfill({
+    status: 200, contentType: "text/html", body: "<!doctype html><title>Official movie booking</title>",
+  }));
+  await page.context().route("https://academycinemas.co.nz/**", (route) => route.fulfill({
+    status: 200, contentType: "text/html", body: "<!doctype html><title>Academy sessions</title>",
+  }));
+
+  await page.goto("/movies");
+  await expect(page.getByRole("heading", { name: "Movies playing around Auckland" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Whina" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
+  await expectNoHorizontalOverflow(page);
+
+  const targets = page.locator([
+    ".portal-header-link", ".language-toggle", ".movie-search-field input", ".movie-search-submit",
+    ".movie-search-clear", ".movie-date-filter button", ".cinema-tools button", ".movie-session-action a",
+    ".cinema-directory-actions a",
+  ].join(","));
+  for (let index = 0; index < await targets.count(); index += 1) {
+    const box = await targets.nth(index).boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  }
+
+  const input = page.getByLabel("Movie, cinema, or suburb");
+  await input.fill("  NoFilm  ");
+  await page.getByRole("button", { name: "Search movies" }).click();
+  await expect(page.getByText("No open-feed sessions found")).toBeVisible();
+  expect(requests.movieRequests.at(-1)).toContain("q=NoFilm&date=today");
+
+  for (const [label, value] of [["Tomorrow", "tomorrow"], ["This weekend", "weekend"], ["All upcoming", "all"], ["Today", "today"]] as const) {
+    await page.getByRole("button", { name: label }).click();
+    await expect.poll(() => new URL(requests.movieRequests.at(-1) ?? "http://invalid").searchParams.get("date")).toBe(value);
+  }
+
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await expect(input).toHaveValue("");
+  await expect(page.getByRole("heading", { name: "Whina" })).toBeVisible();
+  await page.getByRole("button", { name: "Sort cinemas by my distance" }).click();
+  await expect(page.getByText("0.0 km away")).toBeVisible();
+
+  const sessionLink = page.getByRole("link", { name: "Book on official site" });
+  await expect(sessionLink).toHaveAttribute("rel", /noopener/);
+  const [bookingPopup] = await Promise.all([page.waitForEvent("popup"), sessionLink.click()]);
+  await expect(bookingPopup).toHaveURL("https://tickets.example/whina");
+  expect(await bookingPopup.evaluate(() => window.opener === null)).toBe(true);
+  await bookingPopup.close();
+
+  const cinemaLink = page.getByRole("link", { name: "Academy Cinemas sessions" });
+  const [cinemaPopup] = await Promise.all([page.waitForEvent("popup"), cinemaLink.click()]);
+  await expect(cinemaPopup).toHaveURL("https://academycinemas.co.nz/");
+  await cinemaPopup.close();
+  await expect(page.getByRole("link", { name: "Map for Academy Cinemas" })).toHaveAttribute("href", /openstreetmap\.org/);
+
+  const callsBeforeLanguage = requests.movieRequests.length;
+  await page.getByRole("button", { name: "切换到中文" }).click();
+  await expect(page.getByRole("heading", { name: "奥克兰现在有什么电影" })).toBeVisible();
+  expect(requests.movieRequests).toHaveLength(callsBeforeLanguage);
+
+  const columns = await page.locator(".cinema-directory-list").evaluate((element) =>
+    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
+  );
+  expect(columns).toBe(testInfo.project.name === "desktop" ? 3 : testInfo.project.name === "tablet-768" ? 2 : 1);
   await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);
 });

@@ -82,7 +82,6 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
 
   useEffect(() => {
     const controller = new AbortController();
-    setFeedState("loading");
     requestScreenings(activeQuery, date, controller.signal).then((payload) => {
       setScreenings(payload.screenings);
       setFeedState(payload.sourceState);
@@ -99,12 +98,23 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setActiveQuery(parseMovieQuery(query));
+    const nextQuery = parseMovieQuery(query);
+    if (nextQuery === activeQuery) return;
+    setFeedState("loading");
+    setActiveQuery(nextQuery);
   }
 
   function clearSearch() {
     setQuery("");
+    if (activeQuery === null) return;
+    setFeedState("loading");
     setActiveQuery(null);
+  }
+
+  function changeDate(nextDate: MovieDateFilter) {
+    if (nextDate === date) return;
+    setFeedState("loading");
+    setDate(nextDate);
   }
 
   function locate() {
@@ -132,7 +142,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
         <p className="movies-intro">{content.intro}</p>
         <MovieSearchPanel
           language={language} query={query} date={date} loading={feedState === "loading"}
-          onQueryChange={setQuery} onSubmit={submitSearch} onClear={clearSearch} onDateChange={setDate}
+          onQueryChange={setQuery} onSubmit={submitSearch} onClear={clearSearch} onDateChange={changeDate}
         />
       </section>
       <div className="movies-layout">

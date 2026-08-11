@@ -97,7 +97,11 @@ describe("Open Cinema client", () => {
   });
 
   it("adds an optional server credential without leaking it into the URL", async () => {
-    const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({ screenings: [] }));
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(input).toBeDefined();
+      expect(init).toBeDefined();
+      return jsonResponse({ screenings: [] });
+    });
     await fetchAucklandScreenings({ date: "today", now: NOW, query: null, fetchImpl, apiKey: "secret-key" });
 
     const [url, init] = fetchImpl.mock.calls[0];

@@ -177,13 +177,13 @@
 - Movie styles use only existing color, radius, shadow, focus, spacing, and typography tokens.
 - Playwright route fixtures intercept `/api/movies` and external official URLs.
 
-- [ ] Add failing CSS-contract tests for the movie stylesheet import, 8px controls, 12px panels, 44px targets, `100dvh`, and no new hard-coded palette.
-- [ ] Add a failing Playwright movie journey covering search, date change, location opt-in, official link, language switch, focus, and no overflow.
-- [ ] Run the focused CSS test and Playwright movie test; confirm failures are from missing selectors/UI.
-- [ ] Implement a compact editorial movie layout: one-column mobile, two-column tablet, three-column desktop, with restrained separators instead of nested cards.
-- [ ] Add skeletons that match screening rows, inline warnings, and clear empty states.
-- [ ] Run the focused CSS and Playwright tests and expect success at 375px, 768px, and 1440px.
-- [ ] Commit `feat: polish responsive movie discovery`.
+- [x] Add failing CSS-contract tests for the movie stylesheet import, 8px controls, 12px panels, 44px targets, `100dvh`, and no new hard-coded palette.
+- [x] Add a failing Playwright movie journey covering search, date change, location opt-in, official link, language switch, focus, and no overflow.
+- [x] Run the focused CSS test and Playwright movie test; confirm failures are from missing selectors/UI.
+- [x] Implement a compact editorial movie layout: one-column mobile, two-column tablet, three-column desktop, with restrained separators instead of nested cards.
+- [x] Add skeletons that match screening rows, inline warnings, and clear empty states.
+- [x] Run the focused CSS and Playwright tests and expect success at 375px, 768px, and 1440px.
+- [x] Commit `feat: polish responsive movie discovery`.
 
 ### Task 8: Repository workflow and release verification
 
