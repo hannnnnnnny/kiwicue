@@ -106,6 +106,7 @@
   .event-detail-actions { align-items: stretch; flex-direction: column; }
   .event-booking-inline,
   .bookmark-button-detail { width: 100%; }
+  .event-editorial-preview-detail .event-editorial-fallback { min-height: 180px; }
   .event-map figcaption { grid-template-columns: 1fr; gap: 0; }
   .event-map figcaption > span { white-space: normal; }
   .saved-masthead { padding-top: var(--space-8); }

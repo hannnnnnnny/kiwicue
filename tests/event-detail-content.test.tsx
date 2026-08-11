@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventDetailContent, EventDetailRequestError } from "../components/event-detail-content";
 import { BookmarkProvider } from "../components/bookmark-provider";
@@ -50,6 +50,24 @@ const marketDetail: KiwiCueEventDetail = {
       name: "Grey Lynn 农夫市集",
       description: "社区农夫市集，有本地农产品和现场食物。",
       note: "公共假期前后日程可能调整。",
+      previewSummary: "由社区运营，可以直接向本地种植者购买。",
+      previewHighlights: ["本地当季农产品", "社区食品商家", "减少废弃物"],
+      previewImageAlt: "Grey Lynn 农夫市集里的新鲜农产品",
+    },
+  },
+  editorialPreview: {
+    summary: "A community market where local growers sell directly.",
+    highlights: [
+      "Seasonal local produce",
+      "Small neighbourhood food makers",
+      "A strong low-waste focus",
+    ],
+    image: {
+      url: "https://images.example/grey-lynn.jpg",
+      alt: "Fresh produce at Grey Lynn Farmers Market",
+      sourceName: "Grey Lynn Farmers Market",
+      sourceUrl: "https://www.greylynnfarmersmarket.co.nz/",
+      verifiedAt: "2026-08-12",
     },
   },
 };
@@ -107,6 +125,7 @@ describe("event detail experience", () => {
     expect(primaryBooking).toHaveAttribute("rel", expect.stringContaining("noopener"));
     expect(screen.getByRole("link", { name: "Open official event website" })).toHaveAttribute("href", detail.url);
     expect(screen.getByRole("link", { name: "Skip to event details" })).toHaveAttribute("href", "#event-detail");
+    expect(screen.queryByRole("heading", { name: "Past highlights" })).not.toBeInTheDocument();
   });
 
   it("uses truthful fallbacks when description and organiser notes are absent", async () => {
@@ -178,6 +197,13 @@ describe("event detail experience", () => {
     );
     expect(screen.getByText("Grey Lynn Farmers Market", { selector: ".event-source-name" })).toBeVisible();
     expect(screen.getByText(/Schedule last checked.*12 Aug 2026/)).toBeVisible();
+    const pastHighlights = screen.getByRole("region", { name: "Past highlights" });
+    expect(within(pastHighlights).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(pastHighlights).getByText("Seasonal local produce")).toBeVisible();
+    expect(within(pastHighlights).getByRole("link", { name: "Open official past preview" })).toHaveAttribute(
+      "href",
+      marketDetail.editorialPreview!.image!.sourceUrl,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
     expect(screen.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
@@ -190,6 +216,12 @@ describe("event detail experience", () => {
     );
     expect(screen.getByText(/2026年8月12日/)).toBeVisible();
     expect(screen.getByText(/市集时间可能临时调整/)).toBeVisible();
+    const localizedHighlights = screen.getByRole("region", { name: "往期精选" });
+    expect(within(localizedHighlights).getByText("本地当季农产品")).toBeVisible();
+    expect(within(localizedHighlights).getByRole("link", { name: "查看官方往期预览" })).toHaveAttribute(
+      "href",
+      marketDetail.editorialPreview!.image!.sourceUrl,
+    );
     expect(document.body).not.toHaveTextContent("余票");
   });
 });
