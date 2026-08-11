@@ -669,6 +669,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await input.fill("  NoFilm  ");
   await page.getByRole("button", { name: "Search movies" }).click();
   await expect(page.getByText("No open-feed sessions found")).toBeVisible();
+  await expect(page).toHaveURL(/\/movies\?q=NoFilm$/);
   expect(requests.movieRequests.at(-1)).toContain("q=NoFilm&date=today");
 
   for (const [label, value] of [["Tomorrow", "tomorrow"], ["This weekend", "weekend"], ["All upcoming", "all"], ["Today", "today"]] as const) {

@@ -91,9 +91,18 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     return () => controller.abort();
   }, [activeQuery, date]);
 
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (activeQuery) params.set("q", activeQuery);
+    if (date !== "today") params.set("date", date);
+    const suffix = params.size > 0 ? `?${params.toString()}` : "";
+    window.history.replaceState(null, "", `/movies${suffix}`);
+  }, [activeQuery, date]);
+
   const cinemas = useMemo(() => {
-    const filtered = filterCinemas(AUCKLAND_CINEMAS, query);
-    return origin ? sortCinemasByDistance(filtered, origin) : filtered;
+    const matches = filterCinemas(AUCKLAND_CINEMAS, query);
+    const visible = matches.length > 0 || query.trim().length === 0 ? matches : [...AUCKLAND_CINEMAS];
+    return origin ? sortCinemasByDistance(visible, origin) : visible;
   }, [origin, query]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {

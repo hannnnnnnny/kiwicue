@@ -46,12 +46,15 @@ describe("movies page", () => {
       "/api/movies?q=Whina&date=today",
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ));
+    expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/movies?q=Whina");
 
     fireEvent.click(screen.getByRole("button", { name: "This weekend" }));
     await waitFor(() => expect(fetch).toHaveBeenLastCalledWith(
       "/api/movies?q=Whina&date=weekend",
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ));
+    expect(window.location.pathname + window.location.search).toBe("/movies?q=Whina&date=weekend");
 
     fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
     expect(screen.getByLabelText("Movie, cinema, or suburb")).toHaveValue("");
