@@ -8,10 +8,11 @@ const copy = {
   zh: { unavailable: "暂无海报", alt: (title: string) => `${title} 海报` },
 } as const;
 
-export function MoviePoster({ src, title, language }: {
+export function MoviePoster({ src, title, language, loading = "lazy" }: {
   src: string | null;
   title: string;
   language: Language;
+  loading?: "eager" | "lazy";
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const content = copy[language];
@@ -26,6 +27,6 @@ export function MoviePoster({ src, title, language }: {
   return (
     // TMDB poster URLs are normalized to its documented image CDN by the server adapter.
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={content.alt(title)} loading="lazy" onError={() => setFailedSrc(src)} />
+    <img src={src} alt={content.alt(title)} loading={loading} onError={() => setFailedSrc(src)} />
   );
 }

@@ -29,7 +29,7 @@ function hasDistance(cinema: AucklandCinema | AucklandCinemaWithDistance): cinem
 }
 
 export function CinemaDirectory({ cinemas, language }: {
-  cinemas: Array<AucklandCinema | AucklandCinemaWithDistance>;
+  cinemas: ReadonlyArray<AucklandCinema | AucklandCinemaWithDistance>;
   language: Language;
 }) {
   const content = copy[language];

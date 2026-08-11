@@ -62,6 +62,10 @@
   .movie-session-action { grid-column: 2; justify-items: start; text-align: left; }
   .cinema-directory > header { display: block; }
   .cinema-directory > header > p:last-child { margin-top: var(--space-3); }
+  .movie-detail-shell,
+  .movie-detail-state { width: min(var(--container), calc(100% - 32px)); }
+  .movie-detail-hero { grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: var(--space-8); }
+  .movie-detail-summary h1 { font-size: clamp(2.4rem, 8vw, 4.4rem); }
 }
 
 @media (max-width: 600px) {
@@ -121,6 +125,11 @@
   .movie-preview-skeletons { grid-template-columns: 1fr; }
   .movie-preview-card > a { display: grid; grid-template-columns: minmax(118px, .4fr) minmax(0, 1fr); }
   .movie-preview-poster { height: 100%; min-height: 236px; }
+  .movie-detail-hero { grid-template-columns: 1fr; }
+  .movie-detail-poster { width: min(100%, 300px); }
+  .movie-detail-summary { padding-top: 0; }
+  .movie-detail-summary h1 { font-size: clamp(2.25rem, 12vw, 3.4rem); }
+  .movie-detail-cinemas > header { margin-bottom: var(--space-6); }
 }
 
 @media (max-width: 375px) {
@@ -148,6 +157,8 @@
   .language-toggle { padding-inline: 6px; }
   .movie-preview-card > a { grid-template-columns: 112px minmax(0, 1fr); }
   .movie-preview-poster { min-height: 224px; }
+  .movie-detail-shell,
+  .movie-detail-state { width: calc(100% - 24px); }
 }
 
 @media (max-width: 340px) {
