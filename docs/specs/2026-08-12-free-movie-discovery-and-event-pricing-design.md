@@ -17,7 +17,7 @@ The movie page must remain useful when no open screening feed covers Auckland. I
 - A curated Auckland cinema directory containing factual location data and official HTTPS links.
 - Opt-in browser geolocation, local distance calculation, and distance sorting.
 - Free Open Cinema Platform screening ingestion through a server-only adapter.
-- Loading, empty, partial-data, unavailable-source, and image-failure states.
+- Loading, empty, partial-data, and unavailable-source states.
 - Official booking/session links opened safely in a new tab.
 - Ticketmaster price range normalization, formatting, display, and saved-event compatibility.
 - Tests and responsive checks at 375px, 768px, and 1440px.
@@ -82,7 +82,7 @@ The directory is filtered locally by cinema, chain, and suburb. Distances are ca
 - No Auckland screenings in the open feed: an honest message followed immediately by the useful cinema directory.
 - Provider unavailable: a non-blocking warning; directory remains available.
 - Search with no result: clear reset action and directory remains reachable.
-- Broken image: deterministic KiwiCue fallback.
+- Screening cards remain typographic in the first release so the page does not require one metadata request per film.
 
 ## Event price architecture
 
