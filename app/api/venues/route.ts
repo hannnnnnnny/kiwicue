@@ -1,4 +1,4 @@
-import { collectAucklandVenues } from "../../../lib/venue-catalog";
+import { collectCombinedAucklandVenues } from "../../../lib/venue-catalog";
 import {
   TicketmasterClientError,
   type TicketmasterErrorCode,
@@ -17,7 +17,7 @@ const ERROR_MESSAGES: Record<TicketmasterErrorCode, string> = {
 };
 
 export async function handleVenuesRequest(
-  loadVenues: LoadVenues = collectAucklandVenues,
+  loadVenues: LoadVenues = collectCombinedAucklandVenues,
 ): Promise<Response> {
   try {
     const venues = await loadVenues();
