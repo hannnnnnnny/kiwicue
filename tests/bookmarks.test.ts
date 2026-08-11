@@ -46,6 +46,52 @@ describe("local event bookmarks", () => {
     expect(parseBookmarks(serializeBookmarks([saved]))).toEqual([saved]);
   });
 
+  it("round-trips trusted source and bilingual market metadata", () => {
+    const market = {
+      ...event("kc-market-grey-lynn"),
+      source: {
+        name: "Grey Lynn Farmers Market",
+        url: "https://www.greylynnfarmersmarket.co.nz/",
+        verifiedAt: "2026-08-12",
+      },
+      localization: {
+        zh: {
+          name: "Grey Lynn 农夫市集",
+          description: "社区农夫市集。",
+          note: "出发前请再次确认日程。",
+        },
+      },
+    } satisfies KiwiCueEvent;
+    const saved = toBookmark(market, "2026-08-12T08:00:00.000Z");
+
+    expect(saved.event.source).toEqual(market.source);
+    expect(saved.event.localization).toEqual(market.localization);
+    expect(parseBookmarks(serializeBookmarks([saved]))).toEqual([saved]);
+  });
+
+  it("drops malformed optional metadata without losing a valid bookmark", () => {
+    const unsafeOptionalMetadata = {
+      ...event("kc-market-grey-lynn"),
+      source: {
+        name: "Official market",
+        url: "javascript:alert(1)",
+        verifiedAt: "yesterday",
+      },
+      localization: {
+        zh: { name: 42, description: "市集" },
+      },
+    };
+    const payload = JSON.stringify({
+      version: 1,
+      items: [{ event: unsafeOptionalMetadata, savedAt: "2026-08-12T08:00:00.000Z" }],
+    });
+
+    const [saved] = parseBookmarks(payload);
+    expect(saved.event.id).toBe("kc-market-grey-lynn");
+    expect(saved.event).not.toHaveProperty("source");
+    expect(saved.event).not.toHaveProperty("localization");
+  });
+
   it("loads a legacy bookmark while dropping its price range", () => {
     const legacyEvent = {
       ...event(),
