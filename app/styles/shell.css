@@ -143,6 +143,57 @@
 .event-search-field { display: grid; align-content: start; gap: var(--space-2); }
 .event-search-field label { color: var(--portal-ink); font-size: .8rem; font-weight: 780; }
 
+.event-name-combobox { position: relative; }
+
+.event-suggestion-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  width: 100%;
+  max-height: min(360px, 52dvh);
+  overflow-y: auto;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-panel);
+  background: var(--portal-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.event-suggestion-list {
+  display: grid;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+}
+
+.event-suggestion-option {
+  display: grid;
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--portal-ink);
+  padding: var(--space-3);
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-suggestion-option strong { font-size: .94rem; line-height: 1.35; }
+.event-suggestion-option span { color: var(--portal-muted); font-size: .78rem; line-height: 1.4; }
+
+.event-suggestion-option:hover,
+.event-suggestion-option[aria-selected="true"] { background: var(--portal-brand-soft); }
+
+.event-suggestion-status {
+  min-height: 52px;
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--portal-muted);
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
 .event-search-helper,
 .event-search-venue-status {
   min-height: 1.2rem;

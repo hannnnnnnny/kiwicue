@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventSearchPanel } from "../components/event-search-panel";
 import { LanguageProvider } from "../components/language-provider";
@@ -16,6 +16,23 @@ function venueResponse(venues = [
   { id: "a", name: "Aotea Centre" },
 ]) {
   return new Response(JSON.stringify({ venues }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function suggestionResponse(
+  name = "Laufey - A Matter Of Time Tour",
+  venueName = "Spark Arena",
+) {
+  return new Response(JSON.stringify({
+    suggestions: [{
+      name,
+      category: "Music",
+      localDate: "2026-08-14",
+      venueName,
+    }],
+  }), {
     status: 200,
     headers: { "content-type": "application/json" },
   });
@@ -96,6 +113,106 @@ describe("EventSearchPanel", () => {
     expect(screen.getByRole("button", { name: "Searching events" })).toBeDisabled();
   });
 
+  it("suggests a partial event name and selects it with the keyboard", async () => {
+    const request = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      return Promise.resolve(url.startsWith("/api/events/suggestions")
+        ? suggestionResponse()
+        : venueResponse());
+    });
+    vi.stubGlobal("fetch", request);
+    renderPanel({ window: "30d", category: "concerts", keyword: null, venueId: null });
+
+    const input = screen.getByLabelText("Activity name");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "lauf" } });
+
+    const option = await screen.findByRole("option", {
+      name: /Laufey - A Matter Of Time Tour.*Spark Arena/i,
+    });
+    expect(input).toHaveAttribute("role", "combobox");
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(option).toHaveAttribute("aria-selected", "true");
+    expect(option.parentElement).toHaveAttribute("role", "listbox");
+    expect(option).toHaveTextContent("14 Aug");
+
+    const suggestionCall = request.mock.calls
+      .map(([value]) => String(value))
+      .find((url) => url.startsWith("/api/events/suggestions"));
+    expect(suggestionCall).toBeDefined();
+    const params = new URL(suggestionCall ?? "", "http://localhost").searchParams;
+    expect(Object.fromEntries(params)).toEqual({
+      q: "lauf",
+      window: "30d",
+      category: "concerts",
+    });
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(router.push).toHaveBeenCalledWith(
+      "/events?window=30d&category=concerts&q=Laufey+-+A+Matter+Of+Time+Tour",
+    );
+  });
+
+  it("does not let a slower old response replace newer suggestions", async () => {
+    let resolveLaufey: ((response: Response) => void) | undefined;
+    const delayedLaufey = new Promise<Response>((resolve) => {
+      resolveLaufey = resolve;
+    });
+    const request = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("q=lauf")) return delayedLaufey;
+      if (url.includes("q=lorde")) {
+        return Promise.resolve(suggestionResponse("Lorde - Ultrasound Tour", "Eden Park"));
+      }
+      return Promise.resolve(venueResponse());
+    });
+    vi.stubGlobal("fetch", request);
+    renderPanel({ window: "all", category: null, keyword: null, venueId: null });
+
+    const input = screen.getByLabelText("Activity name");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "lauf" } });
+    await waitFor(() => expect(request.mock.calls.some(([value]) => String(value).includes("q=lauf"))).toBe(true));
+
+    fireEvent.change(input, { target: { value: "lorde" } });
+    expect(await screen.findByRole("option", { name: /Lorde - Ultrasound Tour/i })).toBeInTheDocument();
+    await act(async () => {
+      resolveLaufey?.(suggestionResponse());
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /Lorde - Ultrasound Tour/i })).toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: /Laufey/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it("announces an empty suggestion result without exposing an expanded empty listbox", async () => {
+    const request = vi.fn((input: RequestInfo | URL) => Promise.resolve(
+      String(input).startsWith("/api/events/suggestions")
+        ? new Response(JSON.stringify({ suggestions: [] }), { status: 200 })
+        : venueResponse(),
+    ));
+    vi.stubGlobal("fetch", request);
+    renderPanel();
+
+    const input = screen.getByLabelText("Activity name");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "zzzz" } });
+
+    expect(await screen.findByText(
+      "No matching event names yet. You can still search this text.",
+    )).toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.queryByText(
+      "No matching event names yet. You can still search this text.",
+    )).not.toBeInTheDocument();
+  });
+
   it.each([
     { keyword: "Taylor", venueId: null },
     { keyword: null, venueId: "s" },
@@ -149,7 +266,7 @@ describe("EventSearchPanel", () => {
 
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
     expect(screen.getByLabelText("活动名称")).toHaveValue("Taylor");
-    expect(screen.getByText("输入完整的活动或艺人名称，例如 Taylor")).toBeInTheDocument();
+    expect(screen.getByText("输入活动或艺人名称的一部分，例如 lauf")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toHaveValue("s");
     expect(screen.getByRole("option", { name: "所有场馆" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "搜索活动" })).toBeEnabled();

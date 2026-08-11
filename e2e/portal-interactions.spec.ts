@@ -60,6 +60,12 @@ const filteredPage = {
   nextCursor: null,
 };
 
+const laufeyPage = {
+  events: [event("event-laufey", "Laufey - A Matter Of Time Tour")],
+  page: { size: 50, totalElements: 1, totalPages: 1, number: 0 },
+  nextCursor: null,
+};
+
 const eventDetail = {
   ...event("event-1", "Harbour Lights", { image: true }),
   description: "A live Auckland performance presented by the official organiser.",
@@ -110,6 +116,18 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
   await page.route("**/api/events**", async (route) => {
     const requestUrl = route.request().url();
     const url = new URL(requestUrl);
+    if (url.pathname.endsWith("/api/events/suggestions")) {
+      return json(route, {
+        suggestions: url.searchParams.get("q")?.toLocaleLowerCase().includes("lauf")
+          ? [{
+            name: "Laufey - A Matter Of Time Tour",
+            category: "Music",
+            localDate: "2026-08-14",
+            venueName: "Spark Arena",
+          }]
+          : [],
+      });
+    }
     if (url.pathname.endsWith("/api/events/event-1")) {
       return json(route, { event: eventDetail });
     }
@@ -134,6 +152,9 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
         page: { size: 50, totalElements: 0, totalPages: 0, number: 0 },
         nextCursor: null,
       });
+    }
+    if (url.searchParams.get("q") === "Laufey - A Matter Of Time Tour") {
+      return json(route, laufeyPage);
     }
     if (url.searchParams.has("q") || url.searchParams.has("venue")) {
       return json(route, filteredPage);
@@ -354,6 +375,30 @@ test("search, clear, back, forward, and reload keep one canonical shareable stat
   await page.reload();
   await expect(page.getByRole("link", { name: "This weekend" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Concerts" })).toHaveAttribute("aria-current", "page");
+  expect(errors).toEqual([]);
+});
+
+test("a partial event name opens a selectable, overflow-safe suggestion", async ({ page }, testInfo) => {
+  const errors = runtimeErrors(page);
+  await installRoutes(page);
+  await page.goto("/events?window=30d&category=concerts");
+
+  const input = page.getByLabel("Activity name");
+  await input.fill("lauf");
+  const option = page.getByRole("option", { name: /Laufey - A Matter Of Time Tour.*Spark Arena/i });
+  await expect(option).toBeVisible();
+  expect((await option.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await expectNoHorizontalOverflow(page);
+
+  if (testInfo.project.name === "mobile-375") {
+    await option.click();
+  } else {
+    await input.press("Enter");
+  }
+  await expect(page).toHaveURL(
+    /\/events\?window=30d&category=concerts&q=Laufey\+-\+A\+Matter\+Of\+Time\+Tour$/,
+  );
+  await expect(page.getByRole("heading", { name: "Laufey - A Matter Of Time Tour" })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
