@@ -54,6 +54,8 @@ describe("portal event card", () => {
     expect(screen.getByText("09")).toBeInTheDocument();
     expect(screen.getByText("8月1日周六 · 19:30")).toBeInTheDocument();
     expect(screen.getByText("售票中")).toBeInTheDocument();
+    expect(screen.getByText("音乐")).toBeInTheDocument();
+    expect(screen.queryByText("Music")).not.toBeInTheDocument();
     expect(screen.getByText("查看详情")).toBeInTheDocument();
     expect(screen.getByText("AKL")).toBeInTheDocument();
     expect(view.container.querySelector("img")).not.toBeInTheDocument();

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MoviePreviewGrid } from "../components/movie-preview-grid";
 import type { MoviePreview } from "../lib/movie-previews";
+import { readApplicationCss } from "./css-source";
 
 const movie: MoviePreview = {
   id: 550,
@@ -40,6 +41,13 @@ describe("movie preview grid", () => {
     const view = render(<MoviePreviewGrid movies={[]} state="loading" language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
     expect(screen.getByRole("status", { name: "Loading movie previews" })).toBeVisible();
     expect(view.container.querySelectorAll(".movie-preview-skeleton")).toHaveLength(4);
+  });
+
+  it("uses a readable two-column poster grid instead of a cramped split card on phones", () => {
+    const css = readApplicationCss();
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-grid,[\s\S]*?grid-template-columns:\s*repeat\(2,/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\s*>\s*a\s*\{[^}]*grid-template-columns:\s*1fr/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-body\s*>\s*p\s*\{[^}]*display:\s*none/s);
   });
 
   it("offers a reset for an empty search", () => {

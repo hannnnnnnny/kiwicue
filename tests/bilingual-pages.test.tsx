@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EventsPage, { parseEventPageSearchParams } from "../app/events/page";
 import { LanguageProvider } from "../components/language-provider";
@@ -12,6 +12,7 @@ vi.mock("next/navigation", () => ({
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.lang = "en";
+  document.title = "";
   router.push.mockReset();
 });
 
@@ -57,6 +58,7 @@ describe("bilingual route content", () => {
     expect(screen.getByRole("navigation", { name: "Event time range" })).toBeInTheDocument();
     expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe("Auckland events — KiwiCue"));
     expect(fetch).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
@@ -68,6 +70,7 @@ describe("bilingual route content", () => {
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
     expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe("奥克兰活动 — KiwiCue"));
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(document.body).not.toHaveTextContent(/365|one year|一年|未来 365 天/i);
   });
