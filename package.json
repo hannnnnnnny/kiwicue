@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run && node --test tests/site.test.mjs",
+    "test": "vitest run --maxWorkers=1 && node --test tests/site.test.mjs",
     "test:e2e": "node scripts/run-e2e.mjs",
     "test:watch": "vitest"
   },
