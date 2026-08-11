@@ -20,9 +20,19 @@ function applicationCss() {
 describe("editorial information hub design system", () => {
   it("splits bounded style concerns behind one global entry point", () => {
     expect(existsSync(stylesDirectory)).toBe(true);
-    for (const file of ["tokens.css", "base.css", "shell.css", "events.css", "detail-saved.css", "responsive.css"]) {
+    for (const file of ["tokens.css", "base.css", "shell.css", "events.css", "detail-saved.css", "movies.css", "responsive.css"]) {
       expect(globals).toContain(`@import "./styles/${file}";`);
     }
+  });
+
+  it("gives the movie hub tokenized panels, controls, and touch targets", () => {
+    const moviesPath = resolve(stylesDirectory, "movies.css");
+    expect(existsSync(moviesPath)).toBe(true);
+    const css = existsSync(moviesPath) ? readFileSync(moviesPath, "utf8") : "";
+    expect(css).toContain("border-radius: var(--radius-control)");
+    expect(css).toContain("border-radius: var(--radius-panel)");
+    expect(css).toMatch(/min-height:\s*(?:44|48|52)px/);
+    expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
   it("defines the warm editorial palette and finite layout tokens", () => {
