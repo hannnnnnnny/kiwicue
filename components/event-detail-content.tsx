@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatEventDate, formatEventStatus, formatEventTime } from "../lib/event-display";
+import {
+  formatEventCategory,
+  formatEventDate,
+  formatEventStatus,
+  formatEventTime,
+} from "../lib/event-display";
 import type { KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
@@ -196,7 +201,7 @@ export function EventDetailContent({
             {venue?.city ? ` · ${venue.city}` : ""}
           </p>
           <div className="event-detail-tags">
-            <span>{event.category}</span>
+            <span>{formatEventCategory(event.category, language)}</span>
             <span>{formatEventStatus(event.status, language)}</span>
           </div>
           <div className="event-detail-actions">

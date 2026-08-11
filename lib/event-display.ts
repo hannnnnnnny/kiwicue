@@ -18,6 +18,17 @@ const statuses = {
   },
 } as const;
 
+const categories = {
+  zh: {
+    "Arts & Theatre": "艺术与剧场",
+    Film: "电影",
+    Miscellaneous: "其他",
+    Music: "音乐",
+    Sports: "体育",
+    Undefined: "其他",
+  },
+} as const;
+
 export function formatEventDate(localDate: string, language: Language): string {
   const [year, month, day] = localDate.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -58,4 +69,9 @@ export function formatEventStatus(status: string, language: Language): string {
   return language === "en"
     ? normalized.replace(/\b\w/g, (letter) => letter.toUpperCase())
     : normalized;
+}
+
+export function formatEventCategory(category: string, language: Language): string {
+  if (language === "en") return category;
+  return (categories.zh as Record<string, string>)[category] ?? category;
 }

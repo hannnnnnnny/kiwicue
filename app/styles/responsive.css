@@ -122,9 +122,16 @@
   .cinema-tools button { width: 100%; }
   .cinema-directory-list { grid-template-columns: 1fr; }
   .movie-preview-grid,
-  .movie-preview-skeletons { grid-template-columns: 1fr; }
-  .movie-preview-card > a { display: grid; grid-template-columns: minmax(118px, .4fr) minmax(0, 1fr); }
-  .movie-preview-poster { height: 100%; min-height: 236px; }
+  .movie-preview-skeletons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .movie-preview-card > a { display: grid; grid-template-columns: 1fr; }
+  .movie-preview-poster { height: auto; min-height: 0; }
+  .movie-preview-body { padding: var(--space-3); }
+  .movie-preview-body h3 { font-size: .94rem; }
+  .movie-preview-body > p { display: none; }
+  .movie-preview-meta { gap: var(--space-1) var(--space-2); font-size: .66rem; }
   .movie-detail-hero { grid-template-columns: 1fr; }
   .movie-detail-poster { width: min(100%, 300px); }
   .movie-detail-summary { padding-top: 0; }
@@ -155,8 +162,6 @@
   .saved-toolbar { align-items: flex-start; flex-direction: column; }
   .portal-header-link,
   .language-toggle { padding-inline: 6px; }
-  .movie-preview-card > a { grid-template-columns: 112px minmax(0, 1fr); }
-  .movie-preview-poster { min-height: 224px; }
   .movie-detail-shell,
   .movie-detail-state { width: calc(100% - 24px); }
 }

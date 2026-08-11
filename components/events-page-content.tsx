@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { EventExplorer } from "../app/events/event-explorer";
 import type { EventCategory } from "../lib/event-categories";
 import type { EventWindow } from "../lib/event-window";
@@ -50,6 +51,12 @@ export function EventsPageContent({ window, category, keyword, venueId }: {
   const { language } = useLanguage();
   const content = copy[language];
   const searchState = { window, category, keyword, venueId };
+
+  useEffect(() => {
+    document.title = language === "zh"
+      ? "奥克兰活动 — KiwiCue"
+      : "Auckland events — KiwiCue";
+  }, [language]);
 
   return (
     <main className="events-page">

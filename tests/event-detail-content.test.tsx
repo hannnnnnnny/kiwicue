@@ -133,6 +133,8 @@ describe("event detail experience", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
+    expect(screen.getByText("音乐")).toBeVisible();
+    expect(screen.queryByText("Music")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "预约或购票方式" })).toBeVisible();
     expect(screen.getByRole("link", { name: "前往官网预约或购票" })).toBeVisible();
     expect(screen.getByRole("button", { name: "查看离我多远" })).toBeVisible();

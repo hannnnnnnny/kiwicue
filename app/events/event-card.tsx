@@ -2,7 +2,12 @@ import Link from "next/link";
 import { BookmarkButton } from "../../components/bookmark-button";
 import { EventImage } from "../../components/event-image";
 import type { Language } from "../../components/language-provider";
-import { formatEventDate, formatEventStatus, formatEventTime } from "../../lib/event-display";
+import {
+  formatEventCategory,
+  formatEventDate,
+  formatEventStatus,
+  formatEventTime,
+} from "../../lib/event-display";
 import type { KiwiCueEvent } from "../../lib/events";
 
 const copy = {
@@ -47,7 +52,7 @@ export function EventCard({ event, index, language }: {
           </p>
           <p className="portal-event-venue">{venue}</p>
           <div className="portal-event-meta">
-            <span>{event.category}</span>
+            <span>{formatEventCategory(event.category, language)}</span>
             <span>{formatEventStatus(event.status, language)}</span>
           </div>
         </div>
