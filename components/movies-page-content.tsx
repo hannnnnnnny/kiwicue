@@ -8,10 +8,12 @@ import {
 } from "../lib/cinema-directory";
 import { parseMovieQuery } from "../lib/movie-search-params";
 import type { KiwiCueScreening, MovieDateFilter } from "../lib/movies";
+import type { MoviePreview, MoviePreviewPage } from "../lib/movie-previews";
 import { CinemaDirectory } from "./cinema-directory";
 import { useLanguage } from "./language-provider";
 import { MovieScreeningFeed, type MovieFeedState } from "./movie-screening-feed";
 import { MovieSearchPanel } from "./movie-search-panel";
+import { MoviePreviewGrid, type MoviePreviewState } from "./movie-preview-grid";
 import { PortalHeader } from "./portal-header";
 
 type FeedResponse = {
@@ -23,7 +25,7 @@ const copy = {
   en: {
     eyebrow: "Auckland · Film finder",
     title: "Movies playing around Auckland",
-    intro: "Search live open-feed sessions first, then jump straight to a cinema's official listings when you need the complete schedule.",
+    intro: "Search New Zealand movie previews, then confirm current sessions on an Auckland cinema's official site.",
     distance: "Sort cinemas by my distance",
     locating: "Finding your location…",
     privacy: "Your location stays on this device and is never saved.",
@@ -33,7 +35,7 @@ const copy = {
   zh: {
     eyebrow: "奥克兰 · 电影检索",
     title: "奥克兰现在有什么电影",
-    intro: "先搜索开放数据中的实时场次；需要完整排片时，可直接进入各影院官网。",
+    intro: "先搜索新西兰电影预览，再到奥克兰影院官网确认当前场次。",
     distance: "按离我的距离排列影院",
     locating: "正在获取位置…",
     privacy: "你的位置只在当前设备使用，不会被保存。",
@@ -59,6 +61,32 @@ async function requestScreenings(query: string | null, date: MovieDateFilter, si
   return payload;
 }
 
+function isMoviePreview(value: unknown): value is MoviePreview {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.id === "number"
+    && Number.isSafeInteger(record.id)
+    && typeof record.title === "string"
+    && (record.posterUrl === null || typeof record.posterUrl === "string");
+}
+
+function isMoviePreviewPage(value: unknown): value is MoviePreviewPage {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return Array.isArray(record.movies) && record.movies.every(isMoviePreview)
+    && typeof record.page === "object" && record.page !== null;
+}
+
+async function requestMoviePreviews(query: string | null, language: "en" | "zh", signal: AbortSignal): Promise<MoviePreviewPage> {
+  const params = new URLSearchParams({ language });
+  if (query) params.set("q", query);
+  params.set("page", "1");
+  const response = await fetch(`/api/movie-previews?${params.toString()}`, { signal });
+  const payload: unknown = await response.json();
+  if (!response.ok || !isMoviePreviewPage(payload)) throw new Error("MOVIE_PREVIEW_ERROR");
+  return payload;
+}
+
 function validPosition(position: GeolocationPosition): boolean {
   return Number.isFinite(position.coords.latitude)
     && position.coords.latitude >= -90 && position.coords.latitude <= 90
@@ -77,6 +105,9 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   const [date, setDate] = useState(initialDate);
   const [screenings, setScreenings] = useState<KiwiCueScreening[]>([]);
   const [feedState, setFeedState] = useState<MovieFeedState>("loading");
+  const [previewMovies, setPreviewMovies] = useState<MoviePreview[]>([]);
+  const [previewState, setPreviewState] = useState<MoviePreviewState>("loading");
+  const [previewAttempt, setPreviewAttempt] = useState(0);
   const [origin, setOrigin] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "ready" | "error">("idle");
 
@@ -90,6 +121,17 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     });
     return () => controller.abort();
   }, [activeQuery, date]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    requestMoviePreviews(activeQuery, language, controller.signal).then((payload) => {
+      setPreviewMovies(payload.movies);
+      setPreviewState(payload.movies.length > 0 ? "ready" : "empty");
+    }).catch((error: unknown) => {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setPreviewState("unavailable");
+    });
+    return () => controller.abort();
+  }, [activeQuery, language, previewAttempt]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -110,6 +152,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     const nextQuery = parseMovieQuery(query);
     if (nextQuery === activeQuery) return;
     setFeedState("loading");
+    setPreviewState("loading");
     setActiveQuery(nextQuery);
   }
 
@@ -117,6 +160,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     setQuery("");
     if (activeQuery === null) return;
     setFeedState("loading");
+    setPreviewState("loading");
     setActiveQuery(null);
   }
 
@@ -144,17 +188,28 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
 
   return (
     <main className="movies-page">
-      <PortalHeader currentPage="movies" skipTarget="movie-results" />
+      <PortalHeader currentPage="movies" skipTarget="movie-previews" />
       <section className="movies-command" aria-labelledby="movies-title">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 id="movies-title">{content.title}</h1>
         <p className="movies-intro">{content.intro}</p>
         <MovieSearchPanel
-          language={language} query={query} date={date} loading={feedState === "loading"}
+          language={language} query={query} date={date} loading={feedState === "loading" || previewState === "loading"}
           onQueryChange={setQuery} onSubmit={submitSearch} onClear={clearSearch} onDateChange={changeDate}
         />
       </section>
       <div className="movies-layout">
+        <MoviePreviewGrid
+          movies={previewMovies}
+          state={previewState}
+          language={language}
+          query={activeQuery}
+          onReset={clearSearch}
+          onRetry={() => {
+            setPreviewState("loading");
+            setPreviewAttempt((value) => value + 1);
+          }}
+        />
         <MovieScreeningFeed screenings={screenings} state={feedState} language={language} />
         <aside className="cinema-tools" aria-label={content.distance}>
           <button type="button" onClick={locate} disabled={locationState === "loading"}>

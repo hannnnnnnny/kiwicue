@@ -15,10 +15,13 @@ describe("Next.js application shell", () => {
     expect(pageSource).not.toContain("HomeContent");
   });
 
-  it("keeps the Ticketmaster key out of browser-facing files", () => {
+  it("documents server-only API credentials without public prefixes", () => {
     const envExample = readFileSync(resolve(projectRoot, ".env.example"), "utf8");
 
-    expect(envExample.trimEnd()).toBe("TICKETMASTER_API_KEY=");
+    expect(envExample.trimEnd().split(/\r?\n/)).toEqual([
+      "TICKETMASTER_API_KEY=",
+      "TMDB_READ_ACCESS_TOKEN=",
+    ]);
     expect(envExample).not.toContain("NEXT_PUBLIC_");
   });
 });

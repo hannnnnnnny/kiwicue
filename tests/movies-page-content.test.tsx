@@ -16,9 +16,28 @@ function renderPage() {
 
 beforeEach(() => {
   localStorage.clear();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
-    screenings: [], source: "open-cinema", sourceState: "empty",
-  }), { status: 200, headers: { "content-type": "application/json" } })));
+  vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+    const url = String(input);
+    const payload = url.startsWith("/api/movie-previews")
+      ? {
+          movies: [{
+            id: 550,
+            title: "Fight Club",
+            originalTitle: null,
+            overview: "An insomniac meets a soap maker.",
+            posterUrl: "https://image.tmdb.org/t/p/w500/fight-club.jpg",
+            releaseDate: "1999-10-15",
+            rating: 8.4,
+            ratingCount: 31000,
+          }],
+          page: { number: 1, totalPages: 1, totalResults: 1 },
+        }
+      : { screenings: [], source: "open-cinema", sourceState: "empty" };
+    return Promise.resolve(new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+  }));
 });
 
 afterEach(() => {
@@ -31,6 +50,8 @@ describe("movies page", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: "Movies playing around Auckland" })).toBeVisible();
     expect(screen.getByRole("search", { name: "Find a movie or cinema" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Now playing in New Zealand" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
     expect(await screen.findByText("No open-feed sessions found")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("href", "https://academycinemas.co.nz/");
@@ -42,10 +63,14 @@ describe("movies page", () => {
     fireEvent.change(screen.getByLabelText("Movie, cinema, or suburb"), { target: { value: "  Whina  " } });
     fireEvent.submit(screen.getByRole("search", { name: "Find a movie or cinema" }));
 
-    await waitFor(() => expect(fetch).toHaveBeenLastCalledWith(
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
       "/api/movies?q=Whina&date=today",
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ));
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/movie-previews?language=en&q=Whina&page=1",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
     expect(window.location.pathname + window.location.search).toBe("/movies?q=Whina");
 
@@ -60,16 +85,17 @@ describe("movies page", () => {
     expect(screen.getByLabelText("Movie, cinema, or suburb")).toHaveValue("");
   });
 
-  it("switches to Chinese without refetching", async () => {
+  it("switches to Chinese and refreshes only localized movie metadata", async () => {
     renderPage();
     await screen.findByText("No open-feed sessions found");
-    const calls = vi.mocked(fetch).mock.calls.length;
-
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "奥克兰现在有什么电影" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "奥克兰影院目录" })).toBeVisible();
-    expect(fetch).toHaveBeenCalledTimes(calls);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/movie-previews?language=zh&page=1",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ));
   });
 
   it("sorts cinemas by opt-in location and explains privacy", async () => {

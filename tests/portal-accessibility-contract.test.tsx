@@ -22,7 +22,6 @@ const eventResult = {
     },
     status: "onsale",
     category: "Music",
-    priceRange: null,
     venue: { id: "civic", name: "The Civic", city: "Auckland", address: "269 Queen Street" },
   }],
   page: { size: 50, totalElements: 1, totalPages: 1, number: 0 },

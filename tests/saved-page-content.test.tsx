@@ -20,7 +20,6 @@ function event(id: string, name = `Saved ${id}`): KiwiCueEvent {
     },
     status: "onsale",
     category: "Music",
-    priceRange: { currency: "NZD", minimum: 35, maximum: 65 },
     venue: null,
   };
 }
@@ -98,7 +97,7 @@ describe("Saved events page", () => {
     renderSaved(vi.fn().mockResolvedValue(detail(saved, "Official current title")));
 
     expect(await screen.findByRole("heading", { name: "Official current title" })).toBeVisible();
-    expect(screen.getByText("NZ$35–65")).toBeVisible();
+    expect(screen.queryByText(/price|pricing|fees|NZ\$|价格|费用|票价/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Old title" })).not.toBeInTheDocument();
     expect(screen.getByText("1 saved event")).toBeVisible();
   });

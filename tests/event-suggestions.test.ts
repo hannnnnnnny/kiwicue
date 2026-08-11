@@ -22,7 +22,6 @@ function event(
     },
     status: "onsale",
     category: "Music",
-    priceRange: null,
     venue: {
       id: venueId,
       name: venueId === "spark-arena" ? "Spark Arena" : "The Civic",

@@ -17,7 +17,6 @@ const event: KiwiCueEvent = {
   },
   status: "onsale",
   category: "Music",
-  priceRange: { currency: "NZD", minimum: 49, maximum: 129 },
   venue: {
     id: "venue-civic",
     name: "Civic Theatre",
@@ -39,7 +38,7 @@ describe("portal event card", () => {
     expect(screen.getByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
     expect(screen.getByText("Sat, 1 Aug · 7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Civic Theatre · Auckland")).toBeInTheDocument();
-    expect(screen.getByText("NZ$49–129")).toBeInTheDocument();
+    expect(screen.queryByText(/price|价格|NZ\$/i)).not.toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(screen.getByRole("link", { name: "View Harbour Lights details" })).toHaveAttribute(
       "href",

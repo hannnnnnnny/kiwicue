@@ -11,6 +11,8 @@ const copy = {
     skipDetail: "Skip to event details",
     skipSaved: "Skip to saved events",
     skipMovies: "Skip to movie sessions",
+    skipMoviePreviews: "Skip to movie previews",
+    skipMovieDetail: "Skip to movie details",
     homeLabel: "KiwiCue Auckland events home",
     descriptor: "Auckland event finder",
     primaryNavigation: "Primary navigation",
@@ -24,6 +26,8 @@ const copy = {
     skipDetail: "跳到活动详情",
     skipSaved: "跳到收藏活动",
     skipMovies: "跳到电影场次",
+    skipMoviePreviews: "跳到电影预览",
+    skipMovieDetail: "跳到电影详情",
     homeLabel: "KiwiCue 奥克兰活动首页",
     descriptor: "奥克兰活动检索",
     primaryNavigation: "主要导航",
@@ -35,22 +39,29 @@ const copy = {
 } as const;
 
 type PortalPage = "events" | "movies" | "saved";
+type SkipTarget = "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail";
+
+function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
+  const labels: Record<SkipTarget, string> = {
+    "event-results": content.skip,
+    "event-detail": content.skipDetail,
+    "saved-events": content.skipSaved,
+    "movie-results": content.skipMovies,
+    "movie-previews": content.skipMoviePreviews,
+    "movie-detail": content.skipMovieDetail,
+  };
+  return labels[skipTarget];
+}
 
 export function PortalHeader({ skipTarget = "event-results", currentPage }: {
-  skipTarget?: "event-results" | "event-detail" | "saved-events" | "movie-results";
+  skipTarget?: SkipTarget;
   currentPage?: PortalPage;
 } = {}) {
   const { language } = useLanguage();
   const { count } = useBookmarks();
   const content = copy[language];
   const activePage = currentPage ?? (skipTarget === "saved-events" ? "saved" : "events");
-  const skipLabel = skipTarget === "event-detail"
-    ? content.skipDetail
-    : skipTarget === "saved-events"
-      ? content.skipSaved
-      : skipTarget === "movie-results"
-        ? content.skipMovies
-        : content.skip;
+  const skipLabel = getSkipLabel(skipTarget, content);
 
   return (
     <>

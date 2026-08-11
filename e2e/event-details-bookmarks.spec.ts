@@ -13,7 +13,6 @@ const event = {
   },
   status: "onsale",
   category: "Music",
-  priceRange: null,
   venue: {
     id: "civic",
     name: "The Civic",

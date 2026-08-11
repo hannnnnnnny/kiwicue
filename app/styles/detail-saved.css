@@ -68,13 +68,6 @@
   line-height: 1.6;
 }
 
-.event-detail-price {
-  margin: var(--space-3) 0 0;
-  color: var(--portal-ink);
-  font-size: 1rem;
-  font-weight: 820;
-}
-
 .event-detail-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
 .event-detail-actions {

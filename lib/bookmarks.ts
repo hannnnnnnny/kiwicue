@@ -1,4 +1,4 @@
-import type { KiwiCueEvent, KiwiCuePriceRange, KiwiCueVenue } from "./events";
+import type { KiwiCueEvent, KiwiCueVenue } from "./events";
 
 export const BOOKMARK_STORAGE_KEY = "kiwicue:bookmarks:v1";
 export const MAX_BOOKMARKS = 100;
@@ -51,29 +51,6 @@ function validOptionalIsoDate(value: unknown): value is string | null {
   return value === null || validIsoDate(value);
 }
 
-function parsePriceRange(value: unknown): KiwiCuePriceRange | null | undefined {
-  if (value === undefined || value === null) return null;
-  if (
-    !isRecord(value)
-    || typeof value.currency !== "string"
-    || !/^[A-Z]{3}$/.test(value.currency)
-    || typeof value.minimum !== "number"
-    || !Number.isFinite(value.minimum)
-    || value.minimum < 0
-    || value.minimum > 1_000_000
-    || typeof value.maximum !== "number"
-    || !Number.isFinite(value.maximum)
-    || value.maximum < value.minimum
-    || value.maximum > 1_000_000
-  ) return undefined;
-
-  return {
-    currency: value.currency,
-    minimum: value.minimum,
-    maximum: value.maximum,
-  };
-}
-
 function parseVenue(value: unknown): KiwiCueVenue | null | undefined {
   if (value === null) return null;
   if (!isRecord(value)) return undefined;
@@ -120,7 +97,6 @@ function parseVenue(value: unknown): KiwiCueVenue | null | undefined {
 function parseEvent(value: unknown): KiwiCueEvent | null {
   if (!isRecord(value) || !isRecord(value.start)) return null;
   const venue = parseVenue(value.venue);
-  const priceRange = parsePriceRange(value.priceRange);
   if (
     !boundedString(value.id, 128)
     || !/^[A-Za-z0-9_-]+$/.test(value.id)
@@ -134,7 +110,6 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
     || !boundedString(value.status, 80)
     || !boundedString(value.category, 120)
     || venue === undefined
-    || priceRange === undefined
   ) return null;
 
   return {
@@ -151,7 +126,6 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
     status: value.status,
     category: value.category,
     venue,
-    priceRange,
   };
 }
 

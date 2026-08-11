@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatEventDate, formatEventStatus, formatEventTime } from "../lib/event-display";
-import { formatEventPrice } from "../lib/event-price";
 import type { KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
@@ -55,7 +54,7 @@ const copy = {
     coordinatesUnavailable: "Map and distance are unavailable because this venue has no coordinates yet.",
     booking: "Continue to official booking",
     officialWebsite: "Open official event website",
-    source: "Availability, fees, entry rules, and final details remain with the official event website.",
+    source: "Availability, entry rules, and final details remain with the official event website.",
     notFound: "Event not found",
     notFoundBody: "This event may have been removed or its official listing may have changed.",
     browse: "Browse Auckland events",
@@ -82,7 +81,7 @@ const copy = {
     coordinatesUnavailable: "该场馆暂未提供坐标，因此无法显示地图和距离。",
     booking: "前往官网预约或购票",
     officialWebsite: "打开官方活动页面",
-    source: "余票、费用、入场规则和最终活动详情均以官方网站为准。",
+    source: "余票、入场规则和最终活动详情均以官方网站为准。",
     notFound: "没有找到这个活动",
     notFoundBody: "该活动可能已下架，或官方活动信息已经改变。",
     browse: "浏览奥克兰活动",
@@ -196,7 +195,6 @@ export function EventDetailContent({
             {venue?.name ?? content.addressUnavailable}
             {venue?.city ? ` · ${venue.city}` : ""}
           </p>
-          <p className="event-detail-price">{formatEventPrice(event.priceRange, language)}</p>
           <div className="event-detail-tags">
             <span>{event.category}</span>
             <span>{formatEventStatus(event.status, language)}</span>

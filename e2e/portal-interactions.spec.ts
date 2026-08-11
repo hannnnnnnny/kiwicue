@@ -4,7 +4,7 @@ type RouteOptions = {
   initialFailures?: number;
   appendFailures?: number;
   venueFailure?: boolean;
-  appendDelayMs?: number;
+  appendRelease?: Promise<void>;
 };
 
 const transparentGif = Buffer.from(
@@ -28,7 +28,6 @@ function event(id: string, name: string, options: { image?: boolean; status?: st
     },
     status: options.status ?? "onsale",
     category: "Music",
-    priceRange: null,
     venue: {
       id: "civic",
       name: "The Civic",
@@ -96,6 +95,26 @@ const movieScreening = {
   bookingUrl: "https://tickets.example/whina",
 };
 
+const moviePreview = {
+  id: 550,
+  title: "Fight Club",
+  originalTitle: null,
+  overview: "An insomniac meets a soap maker and forms an underground club.",
+  posterUrl: "https://image.tmdb.org/t/p/w500/fight-club.jpg",
+  releaseDate: "1999-10-15",
+  rating: 8.4,
+  ratingCount: 31_000,
+};
+
+const moviePreviewDetail = {
+  ...moviePreview,
+  runtimeMinutes: 139,
+  genres: ["Drama", "Thriller"],
+  certification: "R16",
+  trailerKey: "Abc_123-x",
+  tmdbUrl: "https://www.themoviedb.org/movie/550",
+};
+
 function json(route: Route, body: unknown, status = 200) {
   return route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
@@ -117,6 +136,21 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
       status: 200,
       contentType: "text/html",
       body: "<!doctype html><title>OpenStreetMap fixture</title>",
+    }));
+    await page.route("https://image.tmdb.org/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "image/gif",
+      body: transparentGif,
+    }));
+    await page.route("https://www.themoviedb.org/assets/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "image/svg+xml",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="20" height="20" fill="#0d253f"/></svg>',
+    }));
+    await page.route("https://www.youtube-nocookie.com/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<!doctype html><title>Trailer fixture</title>",
     }));
     pagesWithAssetRoutes.add(page);
   }
@@ -150,9 +184,7 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     }
     eventRequests.push(requestUrl);
     if (url.searchParams.has("cursor")) {
-      if (options.appendDelayMs) {
-        await new Promise((resolve) => setTimeout(resolve, options.appendDelayMs));
-      }
+      if (options.appendRelease) await options.appendRelease;
       if (appendFailures > 0) {
         appendFailures -= 1;
         return json(route, { error: { message: "Unavailable" } });
@@ -190,6 +222,16 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     }
     return json(route, { screenings: [movieScreening], source: "open-cinema", sourceState: "ready" });
   });
+  await page.route("**/api/movie-previews**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("/api/movie-previews/550")) {
+      return json(route, { movie: moviePreviewDetail });
+    }
+    if (url.searchParams.get("q") === "NoFilm") {
+      return json(route, { movies: [], page: { number: 1, totalPages: 0, totalResults: 0 } });
+    }
+    return json(route, { movies: [moviePreview], page: { number: 1, totalPages: 1, totalResults: 1 } });
+  });
 
   return { eventRequests, venueRequests, movieRequests };
 }
@@ -198,6 +240,7 @@ async function resetApiRoutes(page: Page) {
   await page.unroute("**/api/venues**");
   await page.unroute("**/api/events**");
   await page.unroute("**/api/movies**");
+  await page.unroute("**/api/movie-previews**");
 }
 
 function runtimeErrors(page: Page) {
@@ -470,7 +513,9 @@ test("every category and time link navigates, preserves other filters, and reque
 
 test("load more de-duplicates and the event detail opens a noopener official booking tab", async ({ page }) => {
   const errors = runtimeErrors(page);
-  const requests = await installRoutes(page, { appendDelayMs: 180 });
+  let releaseAppend!: () => void;
+  const appendRelease = new Promise<void>((resolve) => { releaseAppend = resolve; });
+  const requests = await installRoutes(page, { appendRelease });
   await page.addInitScript(() => {
     const instrumentedWindow = window as Window & { __kiwicueGeolocationCalls?: number };
     instrumentedWindow.__kiwicueGeolocationCalls = 0;
@@ -514,6 +559,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
     button?.click();
   });
   await expect(page.locator(".event-load-more")).toBeDisabled();
+  releaseAppend();
   await expect(page.getByRole("heading", { name: "Waterfront Night Market" })).toBeVisible();
   expect(requests.eventRequests.filter((request) => request.includes("cursor=page-two"))).toHaveLength(1);
   await expect(page.locator(".portal-event-card")).toHaveCount(3);
@@ -706,5 +752,37 @@ test("movie search, dates, distance, language, maps, and official links work wit
   );
   expect(columns).toBe(testInfo.project.name === "desktop" ? 3 : testInfo.project.name === "tablet-768" ? 2 : 1);
   await expectNoHorizontalOverflow(page);
+  expect(errors).toEqual([]);
+});
+
+test("movie cards open a complete in-site preview with a safe trailer", async ({ page }, testInfo) => {
+  const errors = runtimeErrors(page);
+  await installRoutes(page);
+  await page.goto("/movies");
+
+  const previewLink = page.getByRole("link", { name: "Preview Fight Club" });
+  await expect(previewLink).toBeVisible();
+  expect((await previewLink.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/movies-list-${testInfo.project.name}.png`, fullPage: true });
+  }
+  await previewLink.click();
+
+  await expect(page).toHaveURL(/\/movies\/550$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
+  await expect(page.getByText(moviePreview.overview)).toBeVisible();
+  await expect(page.getByText("2 hr 19 min")).toBeVisible();
+  await expect(page.getByText("R16")).toBeVisible();
+  await expect(page.getByTitle("Fight Club official trailer")).toHaveAttribute(
+    "src",
+    "https://www.youtube-nocookie.com/embed/Abc_123-x",
+  );
+  await expect(page.getByRole("link", { name: "Open trailer on YouTube" })).toHaveAttribute("rel", /noopener/);
+  await expect(page.getByRole("heading", { name: "Check Auckland cinema sessions" })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/price|pricing|fees|NZ\$|价格|费用|票价/i);
+  await expectNoHorizontalOverflow(page);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/movie-detail-${testInfo.project.name}.png`, fullPage: true });
+  }
   expect(errors).toEqual([]);
 });
