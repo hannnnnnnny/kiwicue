@@ -18,7 +18,6 @@ const detail: KiwiCueEventDetail = {
   },
   status: "onsale",
   category: "Music",
-  priceRange: { currency: "NZD", minimum: 49, maximum: 129 },
   venue: {
     id: "venue-civic",
     name: "The Civic",
@@ -64,7 +63,7 @@ describe("event detail experience", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Auckland Night Live" })).toBeVisible();
     expect(requestEventDetail).toHaveBeenCalledWith("event-123");
     expect(screen.getByText("Sat, 8 Aug · 7:30 pm")).toBeVisible();
-    expect(screen.getByText("NZ$49–129")).toBeVisible();
+    expect(screen.queryByText(/price|价格|NZ\$/i)).not.toBeInTheDocument();
     expect(screen.getByText("Doors open at 6:30 pm.")).toBeVisible();
     expect(screen.getByText("Age restrictions may apply.")).toBeVisible();
     expect(screen.getByRole("heading", { name: "How to book" })).toBeVisible();
@@ -137,7 +136,7 @@ describe("event detail experience", () => {
     expect(screen.getByRole("heading", { name: "预约或购票方式" })).toBeVisible();
     expect(screen.getByRole("link", { name: "前往官网预约或购票" })).toBeVisible();
     expect(screen.getByRole("button", { name: "查看离我多远" })).toBeVisible();
-    expect(screen.getByText("NZ$49–129")).toBeVisible();
+    expect(screen.queryByText(/price|价格|NZ\$/i)).not.toBeInTheDocument();
     expect(requestEventDetail).toHaveBeenCalledTimes(1);
   });
 });

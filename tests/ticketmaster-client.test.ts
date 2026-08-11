@@ -169,10 +169,6 @@ describe("Ticketmaster Discovery client", () => {
         status: { code: "onsale" },
       },
       classifications: [{ segment: { name: "Music" } }],
-      priceRanges: [
-        { type: "resale", currency: "NZD", min: 200, max: 300 },
-        { type: "standard", currency: "NZD", min: 49.5, max: 129.95 },
-      ],
       _embedded: {
         venues: [
           {
@@ -200,7 +196,6 @@ describe("Ticketmaster Discovery client", () => {
       },
       status: "onsale",
       category: "Music",
-      priceRange: { currency: "NZD", minimum: 49.5, maximum: 129.95 },
       venue: {
         id: "venue-civic",
         name: "The Civic",
@@ -210,22 +205,6 @@ describe("Ticketmaster Discovery client", () => {
         coordinates: { latitude: -36.8505, longitude: 174.7645 },
       },
     });
-  });
-
-  it.each([
-    [{ type: "standard", currency: "NZD", min: -1, max: 20 }],
-    [{ type: "standard", currency: "NZD", min: 30, max: 20 }],
-    [{ type: "standard", currency: "NZ", min: 10, max: 20 }],
-  ])("drops an invalid upstream price range: %o", (priceRanges) => {
-    const normalized = normalizeTicketmasterEvent({
-      id: "event-price",
-      name: "Priced event",
-      url: "https://www.ticketmaster.co.nz/event/event-price",
-      dates: { start: { localDate: "2026-08-01" } },
-      priceRanges,
-    });
-
-    expect(normalized?.priceRange).toBeNull();
   });
 
   it("keeps the Ticketmaster venue ID during normalization", () => {
@@ -439,7 +418,6 @@ describe("Ticketmaster Discovery client", () => {
           },
           status: "onsale",
           category: "Other",
-          priceRange: null,
           venue: null,
         },
       ],

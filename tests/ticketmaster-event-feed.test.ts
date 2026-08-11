@@ -35,7 +35,6 @@ function event(id: string, localDate = "2026-08-01"): KiwiCueEvent {
     },
     status: "onsale",
     category: "Music",
-    priceRange: null,
     venue: null,
   };
 }

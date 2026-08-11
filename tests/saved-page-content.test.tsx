@@ -20,7 +20,6 @@ function event(id: string, name = `Saved ${id}`): KiwiCueEvent {
     },
     status: "onsale",
     category: "Music",
-    priceRange: { currency: "NZD", minimum: 35, maximum: 65 },
     venue: null,
   };
 }

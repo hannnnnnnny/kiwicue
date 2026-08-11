@@ -28,7 +28,6 @@ function event(id: string, name: string, options: { image?: boolean; status?: st
     },
     status: options.status ?? "onsale",
     category: "Music",
-    priceRange: null,
     venue: {
       id: "civic",
       name: "The Civic",

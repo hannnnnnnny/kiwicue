@@ -84,14 +84,6 @@
   line-height: 1.5;
 }
 
-.portal-event-price {
-  margin: var(--space-2) 0 0;
-  color: var(--portal-ink);
-  font-size: .8rem;
-  font-weight: 780;
-  line-height: 1.5;
-}
-
 .portal-event-meta {
   display: flex;
   flex-wrap: wrap;

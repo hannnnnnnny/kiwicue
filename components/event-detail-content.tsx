@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatEventDate, formatEventStatus, formatEventTime } from "../lib/event-display";
-import { formatEventPrice } from "../lib/event-price";
 import type { KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
@@ -196,7 +195,6 @@ export function EventDetailContent({
             {venue?.name ?? content.addressUnavailable}
             {venue?.city ? ` · ${venue.city}` : ""}
           </p>
-          <p className="event-detail-price">{formatEventPrice(event.priceRange, language)}</p>
           <div className="event-detail-tags">
             <span>{event.category}</span>
             <span>{formatEventStatus(event.status, language)}</span>

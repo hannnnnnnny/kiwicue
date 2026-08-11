@@ -3,7 +3,6 @@ import { BookmarkButton } from "../../components/bookmark-button";
 import { EventImage } from "../../components/event-image";
 import type { Language } from "../../components/language-provider";
 import { formatEventDate, formatEventStatus, formatEventTime } from "../../lib/event-display";
-import { formatEventPrice } from "../../lib/event-price";
 import type { KiwiCueEvent } from "../../lib/events";
 
 const copy = {
@@ -47,7 +46,6 @@ export function EventCard({ event, index, language }: {
             <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
           </p>
           <p className="portal-event-venue">{venue}</p>
-          <p className="portal-event-price">{formatEventPrice(event.priceRange, language)}</p>
           <div className="portal-event-meta">
             <span>{event.category}</span>
             <span>{formatEventStatus(event.status, language)}</span>
