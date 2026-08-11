@@ -5,7 +5,7 @@ const copy = {
   en: {
     eyebrow: "Always available",
     title: "Auckland cinema directory",
-    description: "Open a cinema's official site for the latest sessions, ticket types, and final prices.",
+    description: "Open a cinema's official site for the latest sessions and booking details.",
     sessions: (name: string) => `${name} sessions`,
     map: (name: string) => `Map for ${name}`,
     mapText: "Map",
@@ -15,7 +15,7 @@ const copy = {
   zh: {
     eyebrow: "始终可用",
     title: "奥克兰影院目录",
-    description: "打开影院官网，查看最新场次、票种和最终价格。",
+    description: "打开影院官网，查看最新场次和预约信息。",
     sessions: (name: string) => `${name} 场次`,
     map: (name: string) => `查看 ${name} 地图`,
     mapText: "地图",

@@ -11,6 +11,7 @@ const copy = {
     skipDetail: "Skip to event details",
     skipSaved: "Skip to saved events",
     skipMovies: "Skip to movie sessions",
+    skipMoviePreviews: "Skip to movie previews",
     homeLabel: "KiwiCue Auckland events home",
     descriptor: "Auckland event finder",
     primaryNavigation: "Primary navigation",
@@ -24,6 +25,7 @@ const copy = {
     skipDetail: "跳到活动详情",
     skipSaved: "跳到收藏活动",
     skipMovies: "跳到电影场次",
+    skipMoviePreviews: "跳到电影预览",
     homeLabel: "KiwiCue 奥克兰活动首页",
     descriptor: "奥克兰活动检索",
     primaryNavigation: "主要导航",
@@ -37,7 +39,7 @@ const copy = {
 type PortalPage = "events" | "movies" | "saved";
 
 export function PortalHeader({ skipTarget = "event-results", currentPage }: {
-  skipTarget?: "event-results" | "event-detail" | "saved-events" | "movie-results";
+  skipTarget?: "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews";
   currentPage?: PortalPage;
 } = {}) {
   const { language } = useLanguage();
@@ -50,6 +52,8 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
       ? content.skipSaved
       : skipTarget === "movie-results"
         ? content.skipMovies
+        : skipTarget === "movie-previews"
+          ? content.skipMoviePreviews
         : content.skip;
 
   return (
