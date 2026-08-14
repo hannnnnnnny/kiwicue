@@ -30,6 +30,7 @@ type TmdbListInput = {
 const TMDB_API_ROOT = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_ROOT = "https://image.tmdb.org/t/p/w500";
 const TMDB_REVALIDATE_SECONDS = 900;
+const RECENT_RELEASE_WINDOW_DAYS = 28;
 const VIDEO_KEY_PATTERN = /^[A-Za-z0-9_-]{6,32}$/;
 const POSTER_PATH_PATTERN = /^\/[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)$/i;
 
@@ -54,6 +55,32 @@ function validDate(value: unknown): string | null {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
     ? value
     : null;
+}
+
+function aucklandDate(now: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Pacific/Auckland",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function daysBefore(value: string, days: number): string {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day - days)).toISOString().slice(0, 10);
+}
+
+function recentReleasePage(page: MoviePreviewPage, now: Date): MoviePreviewPage {
+  const latest = aucklandDate(now);
+  const earliest = daysBefore(latest, RECENT_RELEASE_WINDOW_DAYS);
+  const movies = page.movies.filter(({ releaseDate }) =>
+    releaseDate !== null && releaseDate >= earliest && releaseDate <= latest,
+  );
+  return { movies, page: { number: 1, totalPages: 1, totalResults: movies.length } };
 }
 
 function validMovieId(value: unknown): value is number {
@@ -232,16 +259,18 @@ function normalizedPage(value: unknown): MoviePreviewPage {
 export async function fetchTmdbMoviePreviews({
   token = process.env.TMDB_READ_ACCESS_TOKEN ?? "",
   fetchImpl = fetch,
+  now = new Date(),
   language,
   query,
   page,
-}: TmdbListInput & { token?: string; fetchImpl?: typeof fetch }): Promise<MoviePreviewPage> {
+}: TmdbListInput & { token?: string; fetchImpl?: typeof fetch; now?: Date }): Promise<MoviePreviewPage> {
   const payload = await requestTmdb({
     url: buildTmdbMovieListUrl({ language, query, page }),
     token,
     fetchImpl,
   });
-  return normalizedPage(payload);
+  const normalized = normalizedPage(payload);
+  return query ? normalized : recentReleasePage(normalized, now);
 }
 
 export async function fetchTmdbMovieDetail({
