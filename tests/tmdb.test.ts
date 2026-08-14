@@ -128,6 +128,7 @@ describe("TMDB movie adapter", () => {
       language: "en",
       query: null,
       page: 1,
+      now: new Date("1999-10-20T00:00:00Z"),
       fetchImpl,
     });
 
@@ -135,6 +136,32 @@ describe("TMDB movie adapter", () => {
     const [, init] = fetchImpl.mock.calls[0];
     expect(new Headers(init?.headers).get("authorization")).toBe("Bearer private-token");
     expect(init).toMatchObject({ next: { revalidate: 900 } });
+  });
+
+  it("excludes stale, future, and undated films from the unsearched New Zealand release feed", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
+      page: 1,
+      total_pages: 2,
+      total_results: 4,
+      results: [
+        { ...listMovie, id: 1, title: "Current Film", release_date: "2026-08-01" },
+        { ...listMovie, id: 2, title: "Stale Film", release_date: "2026-07-01" },
+        { ...listMovie, id: 3, title: "Future Film", release_date: "2026-08-16" },
+        { ...listMovie, id: 4, title: "Undated Film", release_date: "" },
+      ],
+    }), { status: 200 }));
+
+    const result = await fetchTmdbMoviePreviews({
+      token: "private-token",
+      language: "en",
+      query: null,
+      page: 1,
+      now: new Date("2026-08-14T13:30:00Z"),
+      fetchImpl,
+    });
+
+    expect(result.movies.map((movie) => movie.title)).toEqual(["Current Film"]);
+    expect(result.page).toEqual({ number: 1, totalPages: 1, totalResults: 1 });
   });
 
   it("maps missing configuration and upstream failures without leaking bodies", async () => {

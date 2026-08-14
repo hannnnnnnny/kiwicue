@@ -24,8 +24,8 @@ type FeedResponse = {
 const copy = {
   en: {
     eyebrow: "Auckland · Film finder",
-    title: "Movies playing around Auckland",
-    intro: "Search New Zealand movie previews, then confirm current sessions on an Auckland cinema's official site.",
+    title: "Find films and verified Auckland sessions",
+    intro: "Live sessions appear first. Release previews are clearly separated and never presented as proof that a film is still screening.",
     distance: "Sort cinemas by my distance",
     locating: "Finding your location…",
     privacy: "Your location stays on this device and is never saved.",
@@ -34,8 +34,8 @@ const copy = {
   },
   zh: {
     eyebrow: "奥克兰 · 电影检索",
-    title: "奥克兰现在有什么电影",
-    intro: "先搜索新西兰电影预览，再到奥克兰影院官网确认当前场次。",
+    title: "查找电影与已验证的奥克兰场次",
+    intro: "实时场次优先展示；发行预览会明确标注，绝不会被当作仍在上映的证明。",
     distance: "按离我的距离排列影院",
     locating: "正在获取位置…",
     privacy: "你的位置只在当前设备使用，不会被保存。",
@@ -188,7 +188,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
 
   return (
     <main className="movies-page">
-      <PortalHeader currentPage="movies" skipTarget="movie-previews" />
+      <PortalHeader currentPage="movies" skipTarget="movie-results" />
       <section className="movies-command" aria-labelledby="movies-title">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display" id="movies-title">{content.title}</h1>
@@ -199,6 +199,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
         />
       </section>
       <div className="movies-layout">
+        <MovieScreeningFeed screenings={screenings} state={feedState} language={language} />
         <MoviePreviewGrid
           movies={previewMovies}
           state={previewState}
@@ -210,7 +211,6 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
             setPreviewAttempt((value) => value + 1);
           }}
         />
-        <MovieScreeningFeed screenings={screenings} state={feedState} language={language} />
         <aside className="cinema-tools" aria-label={content.distance}>
           <button type="button" onClick={locate} disabled={locationState === "loading"}>
             {locationState === "loading" ? content.locating : content.distance}

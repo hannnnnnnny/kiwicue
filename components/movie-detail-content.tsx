@@ -43,7 +43,8 @@ const copy = {
   en: {
     loading: "Loading movie preview",
     back: "Back to movies",
-    source: "New Zealand movie preview",
+    source: "Movie preview · Session not verified",
+    availability: "This page provides release information, not proof of a current Auckland cinema session.",
     rating: (value: number) => `TMDB rating ${value.toFixed(1)}`,
     datePending: "Release date to be confirmed",
     synopsis: "Synopsis",
@@ -66,7 +67,8 @@ const copy = {
   zh: {
     loading: "正在加载电影预览",
     back: "返回电影页面",
-    source: "新西兰电影预览",
+    source: "电影预览 · 场次尚未验证",
+    availability: "本页提供电影发行资料，不代表奥克兰影院当前仍有场次。",
     rating: (value: number) => `TMDB 评分 ${value.toFixed(1)}`,
     datePending: "上映日期待确认",
     synopsis: "剧情简介",
@@ -147,6 +149,7 @@ function MovieReady({ movie, language }: { movie: MoviePreviewDetail; language: 
         <div className="movie-detail-summary">
           <p className="eyebrow">{content.source}</p>
           <h1 className="editorial-display" id="movie-detail-title">{movie.title}</h1>
+          <p className="movie-availability-note">{content.availability}</p>
           {movie.originalTitle ? <p className="movie-original-title">{movie.originalTitle}</p> : null}
           <MovieFacts movie={movie} language={language} />
           <section className="movie-synopsis" aria-labelledby="movie-synopsis-title">
