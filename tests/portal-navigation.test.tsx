@@ -147,6 +147,25 @@ describe("portal navigation", () => {
     expect(screen.getByRole("link", { name: "Saved events, 0" })).not.toHaveAttribute("aria-current");
   });
 
+  it("uses the responsive KiwiCue artwork without duplicating its accessible name", () => {
+    render(
+      <LanguageProvider>
+        <PortalHeader />
+      </LanguageProvider>,
+    );
+
+    const homeLink = screen.getByRole("link", { name: "KiwiCue Auckland events home" });
+    expect(homeLink.querySelector(".portal-brand-wordmark")).toHaveAttribute(
+      "src",
+      expect.stringContaining("kiwicue-wordmark.png"),
+    );
+    expect(homeLink.querySelector(".portal-brand-symbol")).toHaveAttribute(
+      "src",
+      expect.stringContaining("kiwicue-mark.png"),
+    );
+    expect(homeLink).not.toHaveTextContent(/^K$/);
+  });
+
   it("marks the movie hub as current and keeps navigation order predictable", () => {
     render(
       <LanguageProvider>

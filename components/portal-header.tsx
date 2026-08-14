@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useBookmarks } from "./bookmark-provider";
 import { LanguageToggle } from "./language-toggle";
 import { useLanguage } from "./language-provider";
@@ -15,7 +16,6 @@ const copy = {
     skipMoviePreviews: "Skip to movie previews",
     skipMovieDetail: "Skip to movie details",
     homeLabel: "KiwiCue Auckland events home",
-    descriptor: "Auckland event finder",
     primaryNavigation: "Primary navigation",
     events: "Events",
     movies: "Movies",
@@ -31,7 +31,6 @@ const copy = {
     skipMoviePreviews: "跳到电影预览",
     skipMovieDetail: "跳到电影详情",
     homeLabel: "KiwiCue 奥克兰活动首页",
-    descriptor: "奥克兰活动检索",
     primaryNavigation: "主要导航",
     events: "活动",
     movies: "电影",
@@ -74,11 +73,22 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
       <div className="portal-header-shell">
         <header className="portal-header">
           <Link className="portal-brand" href="/" aria-label={content.homeLabel}>
-            <span className="portal-brand-mark" aria-hidden="true">K</span>
-            <span className="portal-brand-copy">
-              <strong>KiwiCue</strong>
-              <small>{content.descriptor}</small>
-            </span>
+            <Image
+              className="portal-brand-wordmark"
+              src="/brand/kiwicue-wordmark.png"
+              alt=""
+              width={1200}
+              height={281}
+              priority
+            />
+            <Image
+              className="portal-brand-symbol"
+              src="/brand/kiwicue-mark.png"
+              alt=""
+              width={337}
+              height={256}
+              priority
+            />
           </Link>
           <div className="portal-header-actions">
             <nav className="portal-primary-nav" aria-label={content.primaryNavigation}>
