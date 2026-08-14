@@ -223,33 +223,37 @@ export function EventDetailContent({
     <article id="event-detail" className="event-detail-shell" aria-labelledby="event-detail-title">
       <div className="event-detail-primary">
         <Link className="event-detail-back" href="/events">← {content.back}</Link>
-        <header className="event-detail-heading">
-          <p className="eyebrow">{content.eyebrow}</p>
-          <h1 id="event-detail-title">{displayName}</h1>
-          <p className="event-detail-date">
-            <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
-          </p>
-          <p className="event-detail-venue-summary">
-            {venue?.name ?? content.addressUnavailable}
-            {venue?.city ? ` · ${venue.city}` : ""}
-          </p>
-          <div className="event-detail-tags">
-            <span>{formatEventCategory(event.category, language)}</span>
-            <span>{formatEventStatus(event.status, language)}</span>
-          </div>
-          <div className="event-detail-actions">
-            <a
-              className="event-booking-inline"
-              href={officialUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {bookingLabel}<span aria-hidden="true"> ↗</span>
-            </a>
-            <BookmarkButton event={event} language={language} placement="detail" />
-          </div>
-        </header>
-        <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
+        <div className="event-detail-hero">
+          <header className="event-detail-heading">
+            <p className="eyebrow">{content.eyebrow}</p>
+            <h1 className="editorial-display" id="event-detail-title">{displayName}</h1>
+            <div className="event-detail-facts">
+              <p className="event-detail-date">
+                <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
+              </p>
+              <p className="event-detail-venue-summary">
+                {venue?.name ?? content.addressUnavailable}
+                {venue?.city ? ` · ${venue.city}` : ""}
+              </p>
+              <div className="event-detail-tags">
+                <span>{formatEventCategory(event.category, language)}</span>
+                <span>{formatEventStatus(event.status, language)}</span>
+              </div>
+            </div>
+            <div className="event-detail-actions">
+              <a
+                className="event-booking-inline"
+                href={officialUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {bookingLabel}<span aria-hidden="true"> ↗</span>
+              </a>
+              <BookmarkButton event={event} language={language} placement="detail" />
+            </div>
+          </header>
+          <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
+        </div>
 
         <section className="event-detail-section" aria-labelledby="booking-title">
           <h2 id="booking-title">{bookingTitle}</h2>

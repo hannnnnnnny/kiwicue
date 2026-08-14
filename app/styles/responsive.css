@@ -64,6 +64,8 @@
   .event-search-panel { padding: var(--space-4); box-shadow: 0 12px 32px var(--portal-shadow-color); }
   .portal-about { grid-template-columns: 1fr; gap: var(--space-4); }
   .event-detail-section { grid-template-columns: 1fr; gap: var(--space-4); }
+  .event-detail-facts { grid-template-columns: 1fr; }
+  .event-detail-tags { grid-column: 1; }
   .event-organiser-note { grid-column: 1; }
   .event-detail-heading h1 { font-size: clamp(2.4rem, 11vw, 4.4rem); }
   .movie-search-panel form { grid-template-columns: 1fr 1fr; }

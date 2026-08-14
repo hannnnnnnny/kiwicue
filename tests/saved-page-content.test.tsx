@@ -61,9 +61,10 @@ afterEach(() => {
 describe("Saved events page", () => {
   it("shows a useful empty state without making a network request", async () => {
     const requestEventDetail = vi.fn();
-    renderSaved(requestEventDetail);
+    const view = renderSaved(requestEventDetail);
 
     expect(await screen.findByRole("heading", { name: "No saved events yet" })).toBeVisible();
+    expect(view.container.querySelector(".saved-editorial-empty")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Browse Auckland events" })).toHaveAttribute("href", "/events");
     expect(requestEventDetail).not.toHaveBeenCalled();
   });
