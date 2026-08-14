@@ -1,6 +1,8 @@
 @media (max-width: 1100px) {
   .home-hero { grid-template-columns: minmax(0, .9fr) minmax(380px, 1.1fr); gap: var(--space-8); }
   .portal-command-inner { grid-template-columns: 1fr; gap: var(--space-8); }
+  .events-page .portal-navigation-shell { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portal-filter-intro { grid-column: 1 / -1; }
   .movie-preview-card[data-layout="feature"] > a { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); }
   .cinema-directory-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -9,6 +11,8 @@
   .home-hero { grid-template-columns: 1fr; }
   .home-feature { width: min(720px, 100%); }
   .portal-navigation-shell { grid-template-columns: 1fr; gap: var(--space-4); }
+  .events-page .portal-navigation-shell { grid-template-columns: 1fr; }
+  .portal-filter-intro { grid-column: auto; }
   .portal-command-inner {
     grid-template-columns: 1fr;
     gap: var(--space-8);
@@ -62,7 +66,6 @@
   .saved-masthead,
   .saved-feed,
   .event-detail-shell { width: min(var(--container), calc(100% - 32px)); }
-  .portal-announcement p,
   .portal-command-inner { width: min(var(--container), calc(100% - 32px)); }
   .movies-command,
   .movies-layout { width: min(var(--container), calc(100% - 32px)); }
@@ -123,6 +126,7 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-3);
   }
+  .portal-filter-intro { grid-column: auto; }
   .events-page .portal-status-strip { padding-inline: var(--space-3); }
   .portal-intro { font-size: .92rem; }
   .event-search-actions { grid-template-columns: 1fr; }
@@ -229,7 +233,6 @@
   .event-detail-shell { width: calc(100% - 24px); }
   .movies-command,
   .movies-layout { width: calc(100% - 24px); }
-  .portal-announcement p,
   .portal-command-inner { width: calc(100% - 24px); }
 
   .portal-brand-copy strong { font-size: .94rem; }

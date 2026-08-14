@@ -314,6 +314,8 @@
 .saved-masthead > p:last-child { max-width: 680px; margin: 0; color: var(--portal-muted); line-height: 1.7; }
 .saved-feed { padding: var(--space-6) 0 var(--space-16); }
 
+.saved-event-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
 .saved-toolbar {
   min-height: 56px;
   display: flex;

@@ -1,4 +1,25 @@
-.event-feed { padding: var(--space-8) 0 var(--space-16); }
+.event-feed { padding: var(--space-12) 0 var(--space-16); }
+
+.events-page .event-feed-heading {
+  max-width: 720px;
+  margin-bottom: var(--space-8);
+}
+
+.events-page .event-feed-heading h2 {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 4.8rem);
+  font-weight: 720;
+  letter-spacing: -.06em;
+  line-height: .98;
+  text-wrap: balance;
+}
+
+.events-page .event-feed-heading p {
+  max-width: 58ch;
+  margin: var(--space-4) 0 0;
+  color: var(--portal-muted);
+  line-height: 1.65;
+}
 
 .event-feed-toolbar {
   display: flex;
@@ -28,8 +49,8 @@
 .event-grid,
 .event-grid-skeleton {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-8) var(--space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
 }
 
 .event-grid { margin: 0; padding: var(--space-6) 0 0; list-style: none; }
@@ -46,11 +67,15 @@
   border: 1px solid var(--portal-line);
   border-radius: var(--radius-panel);
   background: var(--portal-raised);
-  box-shadow: 0 10px 30px var(--portal-shadow-color);
-  transition: border-color var(--motion-fast), transform var(--motion-fast);
+  box-shadow: 0 8px 24px var(--portal-shadow-color);
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
 }
 
-.portal-event-card:hover { border-color: var(--portal-brand); transform: translateY(-2px); }
+.portal-event-card:hover {
+  border-color: rgb(20 108 91 / 42%);
+  box-shadow: 0 16px 38px var(--portal-shadow-color);
+  transform: translateY(-2px);
+}
 
 .portal-event-link {
   min-height: 56px;
@@ -77,19 +102,19 @@
   padding: var(--space-8) var(--space-6) var(--space-4);
 }
 
-.portal-event-card[data-layout="feature"] { background: var(--portal-ink); }
+.portal-event-card[data-layout="feature"] { background: var(--portal-brand); }
 .portal-event-card[data-layout="feature"] .portal-event-link { color: var(--portal-raised); }
 .portal-event-card[data-layout="feature"] .portal-event-venue { color: var(--portal-line); }
 .portal-event-card[data-layout="feature"] .portal-event-meta span {
-  background: var(--portal-accent);
-  color: var(--portal-ink);
+  background: rgb(255 255 255 / 14%);
+  color: var(--portal-white);
 }
 .portal-event-card[data-layout="feature"] .portal-event-cta { color: var(--portal-raised); }
 
 .portal-event-card[data-layout="feature"] .portal-event-body h2 {
   font-family: var(--portal-display-font);
   font-size: clamp(2rem, 3.6vw, 3.7rem);
-  font-weight: 500;
+  font-weight: 720;
   letter-spacing: -.045em;
   line-height: 1;
 }
@@ -140,7 +165,7 @@
 .portal-event-card[data-layout="standard"] .portal-event-body h2 {
   font-family: var(--portal-display-font);
   font-size: clamp(1.35rem, 2vw, 1.8rem);
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.08;
 }
 
@@ -242,7 +267,7 @@
   font-size: .68rem;
   font-weight: 850;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 4px 12px var(--portal-shadow-color);
+  box-shadow: none;
 }
 
 .portal-event-cta {
