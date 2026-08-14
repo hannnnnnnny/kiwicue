@@ -1,4 +1,5 @@
 @media (max-width: 1100px) {
+  .home-hero { grid-template-columns: minmax(0, .9fr) minmax(380px, 1.1fr); gap: var(--space-8); }
   .event-grid,
   .event-grid-skeleton { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .movie-preview-grid,
@@ -7,6 +8,8 @@
 }
 
 @media (max-width: 900px) {
+  .home-hero { grid-template-columns: 1fr; }
+  .home-feature { width: min(720px, 100%); }
   .portal-navigation-shell { grid-template-columns: 1fr; gap: var(--space-4); }
   .event-search-form { grid-template-columns: 1fr; }
   .event-search-actions { margin-top: 0; }
@@ -35,6 +38,15 @@
 }
 
 @media (max-width: 768px) {
+  .home-hero,
+  .home-index,
+  .home-promise { width: min(var(--container), calc(100% - 32px)); }
+  .home-hero { padding-top: var(--space-12); }
+  .home-hero-copy h1 { font-size: clamp(3.4rem, 12vw, 5.8rem); }
+  .home-promise-grid { grid-template-columns: 1fr; }
+  .home-promise-grid article,
+  .home-promise-grid article + article { padding: var(--space-6) 0; border-right: 0; border-bottom: 1px solid var(--portal-line); }
+  .home-promise-grid article:last-child { border-bottom: 0; }
   .portal-header,
   .portal-command,
   .portal-navigation-shell,
@@ -69,6 +81,21 @@
 }
 
 @media (max-width: 600px) {
+  .home-hero { gap: var(--space-8); padding: var(--space-8) 0 var(--space-12); }
+  .home-hero-copy h1 { margin-bottom: var(--space-4); font-size: clamp(3rem, 15vw, 4.8rem); }
+  .home-hero-actions { align-items: flex-start; flex-direction: column; margin-top: var(--space-6); }
+  .home-primary-action { width: 100%; }
+  .home-feature > a { min-height: 440px; grid-template-rows: minmax(240px, 1fr) auto; }
+  .home-feature-loading,
+  .home-feature-message { min-height: 440px; }
+  .home-feature-copy { grid-template-columns: 1fr; padding: var(--space-4); }
+  .home-feature-copy strong,
+  .home-feature-copy > span { grid-column: 1; grid-row: auto; text-align: left; }
+  .home-index-row { grid-template-columns: 36px minmax(0, 1fr) 44px; gap: var(--space-2); }
+  .home-index-row small { grid-column: 2; }
+  .home-index-row > span:last-child { grid-column: 3; grid-row: 1 / span 2; }
+  .home-promise { padding-block: var(--space-16); }
+  .home-promise > h2 { margin-bottom: var(--space-8); font-size: clamp(2.8rem, 13vw, 4.3rem); }
   .portal-header { min-height: 64px; flex-wrap: wrap; gap: 0 var(--space-2); padding-block: var(--space-2); }
   .portal-brand { gap: var(--space-2); }
   .portal-brand-mark { width: 36px; height: 36px; }
@@ -142,6 +169,9 @@
 }
 
 @media (max-width: 375px) {
+  .home-hero,
+  .home-index,
+  .home-promise { width: calc(100% - 24px); }
   .portal-header,
   .portal-command,
   .portal-navigation-shell,

@@ -31,6 +31,7 @@
 - `app/styles/responsive.css`: explicit desktop/tablet/mobile transformations.
 - `components/home-content.tsx`: homepage editorial structure and bilingual copy.
 - `components/home-event-preview.tsx`: fetch and render one current event from the existing API with loading/error/image-failure states.
+- `app/page.tsx`: serve the editorial homepage instead of redirecting the root route.
 - `components/portal-header.tsx`: simplified navigation and active-page behavior.
 - `components/events-page-content.tsx`: event-page editorial heading and stable result sequence.
 - `app/events/event-card.tsx`: semantic featured/standard variant derived from result index.
@@ -149,11 +150,13 @@ git commit -m "style: establish editorial design foundation"
 **Files:**
 - Create: `components/home-event-preview.tsx`
 - Modify: `components/home-content.tsx`
+- Modify: `app/page.tsx`
 - Modify: `components/portal-header.tsx`
 - Modify: `app/styles/shell.css`
 - Modify: `app/styles/responsive.css`
 - Modify: `tests/portal-navigation.test.tsx`
 - Modify: `tests/bilingual-pages.test.tsx`
+- Modify: `tests/app-shell.test.ts`
 
 **Interfaces:**
 - Consumes: `AucklandEventsResult`, `EventImage`, `eventDisplayName`, existing language and bookmark providers, `/api/events?window=30d&size=1`.

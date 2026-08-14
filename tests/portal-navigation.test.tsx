@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventCategoryNav } from "../components/event-category-nav";
 import { EventSearchPanel } from "../components/event-search-panel";
 import { EventWindowNav } from "../components/event-window-nav";
+import { BookmarkProvider } from "../components/bookmark-provider";
+import { HomeContent } from "../components/home-content";
 import { LanguageProvider } from "../components/language-provider";
 import { PortalHeader } from "../components/portal-header";
 
@@ -15,6 +17,33 @@ const state = {
   category: "concerts" as const,
   keyword: "Taylor",
   venueId: "venue-1",
+};
+
+const homeEventResult = {
+  events: [{
+    id: "home-event",
+    name: "Harbour Lights",
+    url: "https://www.ticketmaster.co.nz/event/home-event",
+    imageUrl: "https://example.com/harbour-lights.jpg",
+    start: {
+      localDate: "2026-08-21",
+      localTime: "19:30:00",
+      dateTime: "2026-08-21T07:30:00Z",
+      timezone: "Pacific/Auckland",
+    },
+    status: "onsale",
+    category: "Music",
+    venue: {
+      id: "civic",
+      name: "The Civic",
+      city: "Auckland",
+      address: "269 Queen Street",
+      postalCode: "1010",
+      coordinates: null,
+    },
+  }],
+  page: { size: 1, totalElements: 1, totalPages: 1, number: 0 },
+  nextCursor: null,
 };
 
 beforeEach(() => {
@@ -39,6 +68,69 @@ function renderPortalControls() {
 }
 
 describe("portal navigation", () => {
+  it("puts event discovery and one live event in the homepage opening", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(homeEventResult), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+
+    render(
+      <LanguageProvider>
+        <BookmarkProvider><HomeContent /></BookmarkProvider>
+      </LanguageProvider>,
+    );
+
+    expect(screen.getByRole("link", { name: "Browse Auckland events" }))
+      .toHaveAttribute("href", "/events");
+    expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+    expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/events?window=30d&size=1",
+      expect.objectContaining({ headers: { accept: "application/json" } }),
+    );
+  });
+
+  it("keeps the homepage useful when the live preview is empty or unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      events: [],
+      page: { size: 1, totalElements: 0, totalPages: 0, number: 0 },
+      nextCursor: null,
+    }), { status: 200, headers: { "content-type": "application/json" } })));
+
+    const emptyView = render(
+      <LanguageProvider>
+        <BookmarkProvider><HomeContent /></BookmarkProvider>
+      </LanguageProvider>,
+    );
+    expect(await screen.findByText("New Auckland listings are being added.")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Browse all events/ })).toHaveAttribute("href", "/events");
+    emptyView.unmount();
+
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 503 })));
+    render(
+      <LanguageProvider>
+        <BookmarkProvider><HomeContent /></BookmarkProvider>
+      </LanguageProvider>,
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("temporarily unavailable");
+    expect(screen.getByRole("button", { name: "Retry event preview" })).toBeVisible();
+  });
+
+  it("replaces a broken homepage event image with the branded fallback", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(homeEventResult), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+    render(
+      <LanguageProvider>
+        <BookmarkProvider><HomeContent /></BookmarkProvider>
+      </LanguageProvider>,
+    );
+    const image = await screen.findByRole("img", { name: "Harbour Lights event preview" });
+    fireEvent.error(image);
+    expect(screen.getByText("KiwiCue", { selector: ".home-feature-image-fallback" })).toBeVisible();
+  });
+
   it("exposes one global navigation with an explicit current page", () => {
     render(
       <LanguageProvider>
@@ -69,7 +161,7 @@ describe("portal navigation", () => {
     renderPortalControls();
 
     expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" }))
-      .toHaveAttribute("href", "/events");
+      .toHaveAttribute("href", "/");
     expect(screen.getByRole("search", { name: "Search Auckland events" }))
       .toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event categories" }))
@@ -111,7 +203,7 @@ describe("portal navigation", () => {
   it("gives every portal navigation target a real destination", () => {
     renderPortalControls();
     for (const link of screen.getAllByRole("link")) {
-      expect(link.getAttribute("href")).toMatch(/^(?:\/(?:events|movies|saved)(?:\?|$)|#event-results$)/);
+      expect(link.getAttribute("href")).toMatch(/^(?:\/$|\/(?:events|movies|saved)(?:\?|$)|#event-results$)/);
       expect(link.getAttribute("href")).not.toBe("#");
     }
   });

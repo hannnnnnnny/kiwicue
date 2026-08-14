@@ -5,14 +5,14 @@ import { describe, expect, it } from "vitest";
 const projectRoot = resolve(import.meta.dirname, "..");
 
 describe("Next.js application shell", () => {
-  it("redirects the root to the Auckland event portal", () => {
+  it("serves the editorial Auckland discovery homepage at the root", () => {
     const pagePath = resolve(projectRoot, "app/page.tsx");
 
     expect(existsSync(pagePath)).toBe(true);
 
     const pageSource = readFileSync(pagePath, "utf8");
-    expect(pageSource).toContain('permanentRedirect("/events")');
-    expect(pageSource).not.toContain("HomeContent");
+    expect(pageSource).toContain("HomeContent");
+    expect(pageSource).not.toContain("permanentRedirect");
   });
 
   it("documents server-only API credentials without public prefixes", () => {

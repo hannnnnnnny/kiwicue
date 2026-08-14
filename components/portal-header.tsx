@@ -69,7 +69,7 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
         {skipLabel}
       </a>
       <header className="portal-header">
-        <Link className="portal-brand" href="/events" aria-label={content.homeLabel}>
+        <Link className="portal-brand" href="/" aria-label={content.homeLabel}>
           <span className="portal-brand-mark" aria-hidden="true">K</span>
           <span className="portal-brand-copy">
             <strong>KiwiCue</strong>
