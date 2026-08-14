@@ -332,9 +332,9 @@
 
 .events-page .portal-navigation-shell {
   width: min(var(--container), calc(100% - 48px));
-  grid-template-columns: minmax(220px, .72fr) minmax(0, 1fr) minmax(0, .9fr);
+  grid-template-columns: minmax(220px, .65fr) minmax(340px, 1fr) minmax(440px, 1.1fr);
   align-items: end;
-  gap: clamp(var(--space-6), 4vw, var(--space-12));
+  gap: clamp(var(--space-6), 3vw, 40px);
   margin-inline: auto;
   padding: var(--space-6);
   border: 1px solid var(--portal-line);
