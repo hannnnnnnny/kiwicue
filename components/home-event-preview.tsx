@@ -71,7 +71,6 @@ export function HomeEventPreview({ language }: { language: Language }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ status: "loading" });
     fetch("/api/events?window=30d&size=1", {
       signal: controller.signal,
       headers: { accept: "application/json" },
@@ -104,7 +103,10 @@ export function HomeEventPreview({ language }: { language: Language }) {
       <aside className="home-feature home-feature-message" role={state.status === "error" ? "alert" : "status"}>
         <p>{state.status === "error" ? content.unavailable : content.empty}</p>
         {state.status === "error" ? (
-          <button type="button" onClick={() => setAttempt((value) => value + 1)}>{content.retry}</button>
+          <button type="button" onClick={() => {
+            setState({ status: "loading" });
+            setAttempt((value) => value + 1);
+          }}>{content.retry}</button>
         ) : (
           <Link href="/events">{content.browse}<span aria-hidden="true"> ↗</span></Link>
         )}
