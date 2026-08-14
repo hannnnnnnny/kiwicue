@@ -20,11 +20,12 @@ describe("bookmark visual and app-shell contract", () => {
     expect(css).toMatch(/\.saved-toolbar button\s*\{[^}]*min-height:\s*44px/s);
   });
 
-  it("uses a 3/2/1 saved grid without hiding the visible save label", () => {
+  it("uses a 3/2/1 saved grid with a compact mobile brand and visible save label", () => {
     expect(css).toMatch(/\.saved-event-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
     expect(css).toMatch(/@media \(max-width:\s*900px\)[\s\S]*?\.saved-event-grid\s*\{[^}]*repeat\(2,/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.saved-event-grid\s*\{[^}]*grid-template-columns:\s*1fr/s);
-    expect(css).toMatch(/@media \(max-width:\s*340px\)[\s\S]*\.portal-brand-copy\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.portal-brand-wordmark\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.portal-brand-symbol\s*\{[^}]*display:\s*block/s);
     expect(css).not.toMatch(/bookmark-button[^}]*span[^}]*display:\s*none/s);
   });
 });
