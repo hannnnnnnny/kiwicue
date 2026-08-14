@@ -7,16 +7,16 @@ const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 const tokens = {
-  "portal-bg": "#c9dedd",
-  "portal-surface": "#f7f1e5",
-  "portal-raised": "#fffaf0",
-  "portal-ink": "#102a2c",
-  "portal-muted": "#536766",
-  "portal-line": "#9eb7b5",
-  "portal-brand": "#c8442b",
-  "portal-brand-hover": "#9f321f",
-  "portal-focus": "#006d77",
-  "portal-danger": "#a3322a",
+  "portal-bg": "#f5f5f7",
+  "portal-surface": "#fbfbfd",
+  "portal-raised": "#ffffff",
+  "portal-ink": "#1d1d1f",
+  "portal-muted": "#6e6e73",
+  "portal-line": "#d2d2d7",
+  "portal-brand": "#146c5b",
+  "portal-brand-hover": "#0d5144",
+  "portal-focus": "#0071e3",
+  "portal-danger": "#b3261e",
 } as const;
 
 describe("KiwiCue portal theme", () => {
