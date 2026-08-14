@@ -1,4 +1,5 @@
 export type MoviePreviewLanguage = "en" | "zh";
+export type MovieSessionStatus = "verified" | "unverified" | "unavailable";
 
 export interface MoviePreview {
   id: number;
@@ -17,6 +18,11 @@ export interface MoviePreviewDetail extends MoviePreview {
   certification: string | null;
   trailerKey: string | null;
   tmdbUrl: string;
+}
+
+export interface MoviePreviewDetailResponse {
+  movie: MoviePreviewDetail;
+  sessionStatus: MovieSessionStatus;
 }
 
 export interface MoviePreviewPage {

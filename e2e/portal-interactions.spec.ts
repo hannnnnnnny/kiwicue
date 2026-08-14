@@ -316,7 +316,7 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
   await page.route("**/api/movie-previews**", async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.endsWith("/api/movie-previews/550")) {
-      return json(route, { movie: moviePreviewDetail });
+      return json(route, { movie: moviePreviewDetail, sessionStatus: "verified" });
     }
     if (url.searchParams.get("q") === "NoFilm") {
       return json(route, { movies: [], page: { number: 1, totalPages: 0, totalResults: 0 } });
@@ -894,7 +894,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   }));
 
   await page.goto("/movies");
-  await expect(page.getByRole("heading", { name: "Find films and verified Auckland sessions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find films and check Auckland sessions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
   await expectNoHorizontalOverflow(page);
@@ -921,6 +921,11 @@ test("movie search, dates, distance, language, maps, and official links work wit
     await expect.poll(() => new URL(requests.movieRequests.at(-1) ?? "http://invalid").searchParams.get("date")).toBe(value);
   }
 
+  await input.fill("Offline");
+  await page.getByRole("button", { name: "Search movies" }).click();
+  await expect(page.getByRole("link", { name: "Preview Whina" })).toBeVisible();
+  await expect(page.getByText("Session check unavailable")).toBeVisible();
+
   await page.getByRole("button", { name: "Clear search" }).click();
   await expect(input).toHaveValue("");
   await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
@@ -942,7 +947,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
 
   const callsBeforeLanguage = requests.movieRequests.length;
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "查找电影与已验证的奥克兰场次" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "查找电影并核对奥克兰场次" })).toBeVisible();
   expect(requests.movieRequests).toHaveLength(callsBeforeLanguage);
 
   const columns = await page.locator(".cinema-directory-list").evaluate((element) =>

@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AUCKLAND_CINEMAS } from "../lib/cinema-directory";
-import type { MoviePreviewDetail } from "../lib/movie-previews";
+import type {
+  MoviePreviewDetail,
+  MoviePreviewDetailResponse,
+  MovieSessionStatus,
+} from "../lib/movie-previews";
 import { CinemaDirectory } from "./cinema-directory";
 import { useLanguage, type Language } from "./language-provider";
 import { MoviePoster } from "./movie-poster";
@@ -12,7 +16,7 @@ import { TmdbAttribution } from "./tmdb-attribution";
 
 type DetailState =
   | { status: "loading" }
-  | { status: "ready"; movie: MoviePreviewDetail }
+  | { status: "ready"; movie: MoviePreviewDetail; sessionStatus: MovieSessionStatus }
   | { status: "not-found" }
   | { status: "error" };
 
@@ -28,23 +32,35 @@ export class MovieDetailRequestError extends Error {
 export async function requestMovieDetailFromApi(
   movieId: string,
   language: Language,
-): Promise<MoviePreviewDetail> {
+): Promise<MoviePreviewDetailResponse> {
   const response = await fetch(`/api/movie-previews/${encodeURIComponent(movieId)}?language=${language}`, {
     headers: { accept: "application/json" },
   });
-  const payload = await response.json() as { movie?: MoviePreviewDetail };
-  if (!response.ok || !payload.movie || String(payload.movie.id) !== movieId) {
+  const payload = await response.json() as Partial<MoviePreviewDetailResponse>;
+  const sessionStatus = payload.sessionStatus;
+  const validStatus = sessionStatus === "verified"
+    || sessionStatus === "unverified"
+    || sessionStatus === "unavailable";
+  if (!response.ok || !payload.movie || String(payload.movie.id) !== movieId || !validStatus) {
     throw new MovieDetailRequestError(response.status);
   }
-  return payload.movie;
+  return { movie: payload.movie, sessionStatus };
 }
 
 const copy = {
   en: {
     loading: "Loading movie preview",
     back: "Back to movies",
-    source: "Verified Auckland session",
-    availability: "A current Auckland session matched this movie when the page loaded. Confirm final availability on the cinema's official site.",
+    source: {
+      verified: "Verified Auckland session",
+      unverified: "Release preview · Auckland session not verified",
+      unavailable: "Release preview · Session check unavailable",
+    },
+    availability: {
+      verified: "A current Auckland session matched this movie when the page loaded. Confirm final availability on the cinema's official site.",
+      unverified: "Use the official cinema links below to confirm whether this film is currently showing.",
+      unavailable: "The live Auckland session source could not be checked. Use the official cinema links below before planning your trip.",
+    },
     rating: (value: number) => `TMDB rating ${value.toFixed(1)}`,
     datePending: "Release date to be confirmed",
     synopsis: "Synopsis",
@@ -56,9 +72,9 @@ const copy = {
     noTrailerHelp: "You can still review the synopsis and check official cinema sessions below.",
     cinemas: "Check Auckland cinema sessions",
     cinemasHelp: "Confirm that this film is showing and choose a session on each cinema's official website.",
-    notFound: "No current Auckland session",
-    notFoundBody: "This film is hidden because no current Auckland cinema session could be verified.",
-    browse: "Browse verified movies",
+    notFound: "Movie preview not found",
+    notFoundBody: "This movie is not available from the preview source.",
+    browse: "Browse movie previews",
     error: "Movie preview is temporarily unavailable",
     errorBody: "The movie source could not be refreshed. The cinema directory is still available on the movies page.",
     retry: "Retry movie preview",
@@ -67,8 +83,16 @@ const copy = {
   zh: {
     loading: "正在加载电影预览",
     back: "返回电影页面",
-    source: "已验证奥克兰场次",
-    availability: "页面加载时已匹配到奥克兰当前场次；最终余票和时间请以影院官网为准。",
+    source: {
+      verified: "已验证奥克兰场次",
+      unverified: "电影预览 · 奥克兰场次尚未核实",
+      unavailable: "电影预览 · 暂时无法核对场次",
+    },
+    availability: {
+      verified: "页面加载时已匹配到奥克兰当前场次；最终余票和时间请以影院官网为准。",
+      unverified: "请使用下方影院官网入口确认这部电影目前是否上映。",
+      unavailable: "奥克兰实时场次源暂时无法核对，出发前请使用下方影院官网确认。",
+    },
     rating: (value: number) => `TMDB 评分 ${value.toFixed(1)}`,
     datePending: "上映日期待确认",
     synopsis: "剧情简介",
@@ -80,9 +104,9 @@ const copy = {
     noTrailerHelp: "你仍可查看剧情简介，并在下方影院官网确认场次。",
     cinemas: "查看奥克兰影院场次",
     cinemasHelp: "请在各影院官网确认该电影是否上映并选择场次。",
-    notFound: "暂无奥克兰当前场次",
-    notFoundBody: "由于无法验证奥克兰影院的当前场次，这部电影不会继续展示。",
-    browse: "浏览已验证电影",
+    notFound: "未找到电影预览",
+    notFoundBody: "电影预览数据源暂未提供这部电影。",
+    browse: "浏览电影预览",
     error: "电影预览暂时不可用",
     errorBody: "电影数据暂时无法刷新，影院目录仍可在电影页面使用。",
     retry: "重新加载电影预览",
@@ -139,7 +163,11 @@ function MovieFacts({ movie, language }: { movie: MoviePreviewDetail; language: 
   return <ul className="movie-detail-facts">{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>;
 }
 
-function MovieReady({ movie, language }: { movie: MoviePreviewDetail; language: Language }) {
+function MovieReady({ movie, language, sessionStatus }: {
+  movie: MoviePreviewDetail;
+  language: Language;
+  sessionStatus: MovieSessionStatus;
+}) {
   const content = copy[language];
   return (
     <article id="movie-detail" className="movie-detail-shell" aria-labelledby="movie-detail-title">
@@ -147,9 +175,9 @@ function MovieReady({ movie, language }: { movie: MoviePreviewDetail; language: 
       <div className="movie-detail-hero">
         <div className="movie-detail-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} loading="eager" /></div>
         <div className="movie-detail-summary">
-          <p className="eyebrow">{content.source}</p>
+          <p className="eyebrow">{content.source[sessionStatus]}</p>
           <h1 className="editorial-display" id="movie-detail-title">{movie.title}</h1>
-          <p className="movie-availability-note">{content.availability}</p>
+          <p className="movie-availability-note">{content.availability[sessionStatus]}</p>
           {movie.originalTitle ? <p className="movie-original-title">{movie.originalTitle}</p> : null}
           <MovieFacts movie={movie} language={language} />
           <section className="movie-synopsis" aria-labelledby="movie-synopsis-title">
@@ -189,15 +217,15 @@ function MovieDetailState({ state, language, onRetry }: {
 
 export function MovieDetailContent({ movieId, requestMovieDetail = requestMovieDetailFromApi }: {
   movieId: string;
-  requestMovieDetail?: (movieId: string, language: Language) => Promise<MoviePreviewDetail>;
+  requestMovieDetail?: (movieId: string, language: Language) => Promise<MoviePreviewDetailResponse>;
 }) {
   const { language } = useLanguage();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<DetailState>({ status: "loading" });
   useEffect(() => {
     let active = true;
-    requestMovieDetail(movieId, language).then((movie) => {
-      if (active) setState({ status: "ready", movie });
+    requestMovieDetail(movieId, language).then(({ movie, sessionStatus }) => {
+      if (active) setState({ status: "ready", movie, sessionStatus });
     }).catch((error: unknown) => {
       if (active) setState(error instanceof MovieDetailRequestError && error.status === 404 ? { status: "not-found" } : { status: "error" });
     });
@@ -208,7 +236,7 @@ export function MovieDetailContent({ movieId, requestMovieDetail = requestMovieD
   return (
     <main className="movie-detail-page">
       <PortalHeader currentPage="movies" skipTarget="movie-detail" />
-      {state.status === "ready" ? <MovieReady movie={state.movie} language={language} /> : (
+      {state.status === "ready" ? <MovieReady movie={state.movie} language={language} sessionStatus={state.sessionStatus} /> : (
         <MovieDetailState state={state} language={language} onRetry={() => {
           setState({ status: "loading" });
           setAttempt((value) => value + 1);

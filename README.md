@@ -157,7 +157,7 @@ kiwicue/
 
 ## Deployment
 
-KiwiCue is deployed from this repository to Vercel. Configure `TICKETMASTER_API_KEY` and `TMDB_READ_ACCESS_TOKEN` as sensitive production environment variables before deploying.
+KiwiCue is deployed from this repository to Vercel. Configure `TICKETMASTER_API_KEY` and `TMDB_READ_ACCESS_TOKEN` as Sensitive production environment variables before deploying.
 
 ```bash
 vercel link --yes --project kiwicue

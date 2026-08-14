@@ -6,7 +6,7 @@ import {
 } from "../components/movie-detail-content";
 import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
-import type { MoviePreviewDetail } from "../lib/movie-previews";
+import type { MoviePreviewDetail, MoviePreviewDetailResponse } from "../lib/movie-previews";
 
 const movie: MoviePreviewDetail = {
   id: 550,
@@ -24,7 +24,7 @@ const movie: MoviePreviewDetail = {
   tmdbUrl: "https://www.themoviedb.org/movie/550",
 };
 
-function renderDetail(requestMovieDetail: (movieId: string, language: "en" | "zh") => Promise<MoviePreviewDetail>) {
+function renderDetail(requestMovieDetail: (movieId: string, language: "en" | "zh") => Promise<MoviePreviewDetailResponse>) {
   return render(
     <LanguageProvider>
       <BookmarkProvider>
@@ -42,7 +42,7 @@ afterEach(() => {
 
 describe("movie detail experience", () => {
   it("shows the full preview, safe trailer, attribution, and official cinema choices", async () => {
-    const requestMovieDetail = vi.fn().mockResolvedValue(movie);
+    const requestMovieDetail = vi.fn().mockResolvedValue({ movie, sessionStatus: "verified" });
     renderDetail(requestMovieDetail);
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading movie preview");
@@ -70,17 +70,27 @@ describe("movie detail experience", () => {
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("target", "_blank");
   });
 
+  it("labels a release preview honestly when its Auckland session is not verified", async () => {
+    renderDetail(vi.fn().mockResolvedValue({ movie, sessionStatus: "unverified" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
+    expect(screen.getByText("Release preview · Auckland session not verified")).toBeVisible();
+    expect(screen.getByText("Use the official cinema links below to confirm whether this film is currently showing.")).toBeVisible();
+  });
+
   it("shows honest fallbacks when optional metadata is absent", async () => {
     renderDetail(vi.fn().mockResolvedValue({
-      ...movie,
-      overview: null,
-      posterUrl: null,
-      releaseDate: null,
-      runtimeMinutes: null,
-      certification: null,
-      rating: null,
-      genres: [],
-      trailerKey: null,
+      movie: {
+        ...movie,
+        overview: null,
+        posterUrl: null,
+        releaseDate: null,
+        runtimeMinutes: null,
+        certification: null,
+        rating: null,
+        genres: [],
+        trailerKey: null,
+      },
+      sessionStatus: "unverified",
     }));
 
     await screen.findByRole("heading", { level: 1, name: "Fight Club" });
@@ -91,7 +101,10 @@ describe("movie detail experience", () => {
   });
 
   it("refuses to interpolate a malformed trailer key", async () => {
-    renderDetail(vi.fn().mockResolvedValue({ ...movie, trailerKey: "bad<script>" }));
+    renderDetail(vi.fn().mockResolvedValue({
+      movie: { ...movie, trailerKey: "bad<script>" },
+      sessionStatus: "unverified",
+    }));
     await screen.findByRole("heading", { level: 1, name: "Fight Club" });
     expect(screen.queryByTitle(/official trailer/i)).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "No official trailer is currently available" })).toBeVisible();
@@ -99,15 +112,15 @@ describe("movie detail experience", () => {
 
   it("shows a dedicated not-found state", async () => {
     renderDetail(vi.fn().mockRejectedValue(new MovieDetailRequestError(404)));
-    expect(await screen.findByRole("heading", { name: "No current Auckland session" })).toBeVisible();
-    expect(screen.getByText("This film is hidden because no current Auckland cinema session could be verified.")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Browse verified movies" })).toHaveAttribute("href", "/movies");
+    expect(await screen.findByRole("heading", { name: "Movie preview not found" })).toBeVisible();
+    expect(screen.getByText("This movie is not available from the preview source.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Browse movie previews" })).toHaveAttribute("href", "/movies");
   });
 
   it("retries a temporary failure", async () => {
     const requestMovieDetail = vi.fn()
       .mockRejectedValueOnce(new MovieDetailRequestError(503))
-      .mockResolvedValueOnce(movie);
+      .mockResolvedValueOnce({ movie, sessionStatus: "verified" });
     renderDetail(requestMovieDetail);
     expect(await screen.findByRole("heading", { name: "Movie preview is temporarily unavailable" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Retry movie preview" }));
@@ -116,7 +129,7 @@ describe("movie detail experience", () => {
   });
 
   it("refetches localized metadata when switching to Chinese", async () => {
-    const requestMovieDetail = vi.fn().mockResolvedValue(movie);
+    const requestMovieDetail = vi.fn().mockResolvedValue({ movie, sessionStatus: "verified" });
     renderDetail(requestMovieDetail);
     await screen.findByRole("heading", { level: 1, name: "Fight Club" });
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));

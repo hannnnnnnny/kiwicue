@@ -48,11 +48,11 @@ afterEach(() => {
 describe("movies page", () => {
   it("puts search first and keeps the cinema directory useful when the feed is empty", async () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: "Find films and verified Auckland sessions" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Find films and check Auckland sessions" })).toBeVisible();
     expect(screen.getByRole("search", { name: "Find a movie or cinema" })).toBeVisible();
-    const previews = await screen.findByRole("heading", { name: "Previews for current Auckland sessions" });
-    expect(screen.queryByRole("link", { name: "Preview Fight Club" })).not.toBeInTheDocument();
-    expect(screen.getByText("No verified movie previews available")).toBeVisible();
+    const previews = await screen.findByRole("heading", { name: "Explore recent New Zealand releases" });
+    expect(screen.getByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
+    expect(screen.getByText("Auckland session not verified")).toBeVisible();
     const liveSessions = await screen.findByRole("heading", { name: "Live movie sessions" });
     expect(liveSessions.compareDocumentPosition(previews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText("No open-feed sessions found")).toBeVisible();
@@ -60,7 +60,7 @@ describe("movies page", () => {
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("href", "https://academycinemas.co.nz/");
   });
 
-  it("shows preview metadata only when its title matches a verified Auckland session", async () => {
+  it("marks preview metadata as verified only when its title matches a live Auckland session", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const payload = String(input).startsWith("/api/movie-previews")
         ? {
@@ -182,7 +182,7 @@ describe("movies page", () => {
     await screen.findByText("No open-feed sessions found");
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
-    expect(screen.getByRole("heading", { name: "查找电影与已验证的奥克兰场次" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "查找电影并核对奥克兰场次" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "奥克兰影院目录" })).toBeVisible();
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(
       "/api/movie-previews?language=zh&page=1",
