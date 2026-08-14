@@ -128,7 +128,7 @@ describe("Auckland event explorer", () => {
 
     expect(screen.getByRole("heading", { name: "What’s on in Auckland?" })).toBeInTheDocument();
     expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/events");
+    expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/");
   });
 
   it("shows an immediate loading signal while Auckland events are requested", () => {

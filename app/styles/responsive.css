@@ -1,7 +1,5 @@
 @media (max-width: 1100px) {
   .home-hero { grid-template-columns: minmax(0, .9fr) minmax(380px, 1.1fr); gap: var(--space-8); }
-  .event-grid,
-  .event-grid-skeleton { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .movie-preview-grid,
   .movie-preview-skeletons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cinema-directory-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -123,6 +121,27 @@
   .event-grid,
   .event-grid-skeleton,
   .saved-event-grid { grid-template-columns: 1fr; }
+  .event-grid > li:first-child,
+  .event-grid-skeleton > :first-child { grid-column: auto; }
+  .portal-event-card[data-layout="feature"] .portal-event-link {
+    display: flex;
+    flex-direction: column;
+  }
+  .portal-event-card[data-layout="feature"] .portal-event-body { padding: var(--space-4) var(--space-4) var(--space-3); }
+  .portal-event-card[data-layout="feature"] .portal-event-body h2 { font-size: 2rem; }
+  .portal-event-card[data-layout="feature"] .portal-event-media {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+    margin-inline: var(--space-3);
+    border-radius: var(--radius-control);
+  }
+  .portal-event-card[data-layout="feature"] .portal-event-cta { padding: 0 var(--space-4); }
+  .portal-event-card[data-layout="feature"] > .bookmark-button-card {
+    position: static;
+    margin: 0 var(--space-4) var(--space-4);
+  }
+  .event-card-skeleton[data-layout="feature"] { min-height: 0; display: flex; }
+  .event-card-skeleton[data-layout="feature"] .event-card-skeleton-media { min-height: 0; height: auto; margin-top: var(--space-2); }
   .portal-event-body h2 { font-size: 1.25rem; }
   .event-editorial-preview-card .event-editorial-fallback { min-height: 116px; }
   .source-disclaimer,

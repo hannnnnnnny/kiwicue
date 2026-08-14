@@ -58,6 +58,15 @@ const curatedMarket: KiwiCueEvent = {
 afterEach(cleanup);
 
 describe("portal event card", () => {
+  it("marks only the first chronological event as the featured editorial story", () => {
+    const first = render(<EventCard event={event} index={0} language="en" />);
+    expect(first.container.querySelector("article")).toHaveAttribute("data-layout", "feature");
+    first.unmount();
+
+    const second = render(<EventCard event={event} index={1} language="en" />);
+    expect(second.container.querySelector("article")).toHaveAttribute("data-layout", "standard");
+  });
+
   it("makes one truthful, fully labelled internal details action from the complete card", () => {
     const view = render(<EventCard event={event} index={0} language="en" />);
 
@@ -113,12 +122,13 @@ describe("portal event card", () => {
     expect(screen.getByText("日程已核实")).toBeInTheDocument();
   });
 
-  it("defines four, three, two, and one-column responsive grid contracts", () => {
+  it("defines featured, three, two, and one-column responsive grid contracts", () => {
     const css = readApplicationCss();
-    expect(css).toMatch(/\.event-grid,[\s\S]*?grid-template-columns:\s*repeat\(4,/s);
-    expect(css).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*\.event-grid[^}]*repeat\(3,/s);
+    expect(css).toMatch(/\.event-grid,[\s\S]*?grid-template-columns:\s*repeat\(3,/s);
+    expect(css).toMatch(/\.event-grid\s*>\s*li:first-child\s*\{[^}]*grid-column:\s*span\s*2/s);
     expect(css).toMatch(/@media \(max-width:\s*900px\)[\s\S]*\.event-grid[^}]*repeat\(2,/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*\.event-grid[^}]*grid-template-columns:\s*1fr/s);
+    expect(css).toMatch(/\.portal-event-card\[data-layout="feature"\] \.portal-event-link[^}]*grid-template-columns:/s);
     expect(css).toMatch(/\.portal-event-media\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*10/s);
     expect(css).toMatch(/\.portal-event-link\s*\{[^}]*min-height:\s*56px/s);
     expect(css).toMatch(/\.event-state button,[\s\S]*?\.portal-empty-action,[\s\S]*?min-height:\s*52px/s);
