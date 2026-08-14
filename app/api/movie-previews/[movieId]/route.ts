@@ -1,13 +1,28 @@
 import type { MoviePreviewDetail, MoviePreviewLanguage } from "../../../../lib/movie-previews";
 import { parseMovieId, parseMoviePreviewLanguage } from "../../../../lib/movie-previews";
+import type { KiwiCueScreening, MovieDateFilter } from "../../../../lib/movies";
+import { fetchAucklandScreenings, OpenCinemaClientError } from "../../../../lib/open-cinema";
 import { fetchTmdbMovieDetail, TmdbClientError } from "../../../../lib/tmdb";
+import { movieHasVerifiedSession } from "../../../../lib/verified-movie-sessions";
 
 type LoadMovie = (input: {
   movieId: number;
   language: MoviePreviewLanguage;
 }) => Promise<MoviePreviewDetail>;
 
-const SHARED_CACHE = "public, s-maxage=900, stale-while-revalidate=86400";
+type LoadScreenings = (input: {
+  query: string | null;
+  date: MovieDateFilter;
+}) => Promise<KiwiCueScreening[]>;
+
+function defaultScreeningLoader(now: Date): LoadScreenings {
+  return ({ query, date }) => fetchAucklandScreenings({
+    query,
+    date,
+    now,
+    apiKey: process.env.OPEN_CINEMA_API_KEY,
+  });
+}
 
 function invalidLanguageResponse(): Response {
   return Response.json(
@@ -26,6 +41,13 @@ function detailError(error: unknown): Response {
       { status: error.status, headers: { "cache-control": "no-store" } },
     );
   }
+  if (error instanceof OpenCinemaClientError) {
+    const status = error.code === "UPSTREAM_TIMEOUT" ? 504 : error.code === "UPSTREAM_BUSY" ? 503 : 502;
+    return Response.json(
+      { error: { code: error.code, message: "Current movie sessions are temporarily unavailable." } },
+      { status, headers: { "cache-control": "no-store" } },
+    );
+  }
   return Response.json(
     { error: { code: "INTERNAL_ERROR", message: "Movie previews are temporarily unavailable." } },
     { status: 500, headers: { "cache-control": "no-store" } },
@@ -36,6 +58,8 @@ export async function handleMoviePreviewDetailRequest(
   movieIdInput: string,
   languageInput: string | null,
   loadMovie: LoadMovie = fetchTmdbMovieDetail,
+  loadScreenings?: LoadScreenings,
+  now = new Date(),
 ): Promise<Response> {
   const movieId = parseMovieId(movieIdInput);
   if (!movieId) {
@@ -50,7 +74,20 @@ export async function handleMoviePreviewDetailRequest(
   const language = parseMoviePreviewLanguage(languageInput);
   try {
     const movie = await loadMovie({ movieId, language });
-    return Response.json({ movie }, { headers: { "cache-control": SHARED_CACHE } });
+    const verificationMovie = language === "en"
+      ? movie
+      : await loadMovie({ movieId, language: "en" });
+    const screenings = await (loadScreenings ?? defaultScreeningLoader(now))({
+      query: verificationMovie.title,
+      date: "all",
+    });
+    if (!movieHasVerifiedSession(verificationMovie, screenings)) {
+      return Response.json(
+        { error: { code: "SESSION_NOT_FOUND", message: "No current Auckland session was found." } },
+        { status: 404, headers: { "cache-control": "no-store" } },
+      );
+    }
+    return Response.json({ movie }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     return detailError(error);
   }

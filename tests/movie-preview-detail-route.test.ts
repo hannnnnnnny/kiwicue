@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { GET, handleMoviePreviewDetailRequest } from "../app/api/movie-previews/[movieId]/route";
 import type { MoviePreviewDetail } from "../lib/movie-previews";
+import { OpenCinemaClientError } from "../lib/open-cinema";
 import { TmdbClientError } from "../lib/tmdb";
 
 const movie: MoviePreviewDetail = {
@@ -20,14 +21,76 @@ const movie: MoviePreviewDetail = {
 };
 
 describe("GET /api/movie-previews/[movieId]", () => {
+  const verifiedScreening = {
+    id: "screening-1",
+    filmId: "film-1",
+    filmTitle: "Fight Club",
+    filmRating: "R16",
+    runtimeMinutes: 139,
+    cinemaId: "cinema-1",
+    cinemaName: "Academy Cinemas",
+    startTime: "2026-08-15T08:00:00.000Z",
+    formats: ["2D"],
+    soldOut: false,
+    distanceKilometres: 1.2,
+    bookingUrl: "https://academycinemas.co.nz/film/fight-club",
+  };
+
   it("returns one localized normalized movie", async () => {
     const loadMovie = vi.fn().mockResolvedValue(movie);
-    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie);
+    const loadScreenings = vi.fn().mockResolvedValue([verifiedScreening]);
+    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings);
 
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
+    expect(loadScreenings).toHaveBeenCalledWith({ query: "Fight Club", date: "all" });
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=900");
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({ movie });
+  });
+
+  it("returns not found when TMDB metadata has no verified Auckland session", async () => {
+    const loadMovie = vi.fn().mockResolvedValue(movie);
+    const loadScreenings = vi.fn().mockResolvedValue([]);
+    const response = await handleMoviePreviewDetailRequest("550", "en", loadMovie, loadScreenings);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({
+      error: { code: "SESSION_NOT_FOUND", message: "No current Auckland session was found." },
+    });
+  });
+
+  it("uses the stable English title to verify a localized Chinese detail", async () => {
+    const localizedMovie = {
+      ...movie,
+      title: "搏击俱乐部",
+      originalTitle: "搏击俱乐部",
+    };
+    const loadMovie = vi.fn().mockImplementation(({ language }: { language: "en" | "zh" }) =>
+      Promise.resolve(language === "zh" ? localizedMovie : movie));
+    const loadScreenings = vi.fn().mockResolvedValue([verifiedScreening]);
+
+    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings);
+
+    expect(response.status).toBe(200);
+    expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
+    expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "en" });
+    expect(loadScreenings).toHaveBeenCalledWith({ query: "Fight Club", date: "all" });
+    expect(await response.json()).toEqual({ movie: localizedMovie });
+  });
+
+  it("does not expose an unverified detail when live session verification is unavailable", async () => {
+    const response = await handleMoviePreviewDetailRequest(
+      "550",
+      "en",
+      vi.fn().mockResolvedValue(movie),
+      vi.fn().mockRejectedValue(new OpenCinemaClientError("UPSTREAM_BUSY")),
+    );
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      error: { code: "UPSTREAM_BUSY", message: "Current movie sessions are temporarily unavailable." },
+    });
   });
 
   it.each(["0", "-1", "1.5", "abc", "9007199254740992"])(
