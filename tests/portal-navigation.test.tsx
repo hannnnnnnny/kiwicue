@@ -141,7 +141,7 @@ describe("portal navigation", () => {
     );
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
-    expect(screen.getByText("Auckland plans, before they pass")).toBeVisible();
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Movies" })).toHaveAttribute("href", "/movies");
     expect(screen.getByRole("link", { name: "Saved events, 0" })).not.toHaveAttribute("aria-current");

@@ -21,7 +21,6 @@ const copy = {
     movies: "Movies",
     saved: "Saved",
     savedLabel: (count: number) => `Saved events, ${count}`,
-    notice: "Auckland plans, before they pass",
   },
   zh: {
     skip: "跳到活动结果",
@@ -38,7 +37,6 @@ const copy = {
     movies: "电影",
     saved: "收藏",
     savedLabel: (count: number) => `收藏活动，${count} 个`,
-    notice: "奥克兰活动，趁还来得及",
   },
 } as const;
 
@@ -73,9 +71,6 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
       <a className="skip-link" href={`#${skipTarget}`}>
         {skipLabel}
       </a>
-      <div className="portal-announcement" role="note">
-        <p><span>KiwiCue Signal</span>{content.notice}</p>
-      </div>
       <div className="portal-header-shell">
         <header className="portal-header">
           <Link className="portal-brand" href="/" aria-label={content.homeLabel}>

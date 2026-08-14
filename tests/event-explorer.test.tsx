@@ -126,7 +126,7 @@ describe("Auckland event explorer", () => {
     const page = await EventsPage();
     render(page);
 
-    expect(screen.getByRole("heading", { name: "What’s on in Auckland?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Find your next Auckland plan." })).toBeInTheDocument();
     expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/");
   });
@@ -189,7 +189,7 @@ describe("Auckland event explorer", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Show 31 more events" }));
 
     expect(await screen.findByRole("heading", { name: "Event 81" })).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(81);
+    expect(document.querySelectorAll(".portal-event-card h2")).toHaveLength(81);
     expect(screen.getAllByRole("heading", { name: "Event 50" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Show 31 more events" })).not.toBeInTheDocument();
     expect(screen.getByText("All Ticketmaster events are shown")).toBeInTheDocument();
