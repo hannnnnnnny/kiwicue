@@ -7,16 +7,16 @@ const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 const tokens = {
-  "portal-bg": "#f4f0e8",
-  "portal-surface": "#fbfaf6",
-  "portal-raised": "#fffefa",
-  "portal-ink": "#18231e",
-  "portal-muted": "#627069",
-  "portal-line": "#d8ddd6",
-  "portal-brand": "#1f5b45",
-  "portal-brand-hover": "#174836",
-  "portal-focus": "#08717d",
-  "portal-danger": "#a13b32",
+  "portal-bg": "#f2ede3",
+  "portal-surface": "#fbf8f1",
+  "portal-raised": "#fffdf8",
+  "portal-ink": "#24231f",
+  "portal-muted": "#686d64",
+  "portal-line": "#d5d0c5",
+  "portal-brand": "#344b3b",
+  "portal-brand-hover": "#24342a",
+  "portal-focus": "#086c78",
+  "portal-danger": "#963c32",
 } as const;
 
 describe("KiwiCue portal theme", () => {
@@ -38,6 +38,9 @@ describe("KiwiCue portal theme", () => {
     expect(read("package.json")).toContain('"@fontsource-variable/manrope"');
     expect(read("app/layout.tsx")).toContain('import "@fontsource-variable/manrope"');
     const css = readApplicationCss();
+    expect(css).toContain("--portal-display-font:");
+    expect(css).toContain("--portal-ui-font:");
+    expect(css).toMatch(/\.editorial-display\s*\{[^}]*font-family:\s*var\(--portal-display-font\)/s);
     expect(css).toMatch(/:focus-visible[^}]*outline:[^;}]*var\(--portal-focus\)/s);
     expect(css).toMatch(
       /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*transition:\s*none/s,

@@ -10,8 +10,21 @@ body {
   margin: 0;
   background: var(--portal-bg);
   color: var(--portal-ink);
+  font-family: var(--portal-ui-font);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+.editorial-display {
+  font-family: var(--portal-display-font);
+  font-weight: 400;
+  letter-spacing: -.045em;
+  line-height: .98;
+}
+
+:lang(zh) .editorial-display {
+  font-family: var(--portal-ui-font);
+  font-weight: 700;
 }
 
 main {

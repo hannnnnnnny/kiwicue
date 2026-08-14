@@ -35,21 +35,23 @@ describe("editorial information hub design system", () => {
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
-  it("defines the warm editorial palette and finite layout tokens", () => {
+  it("defines the Primal-inspired editorial palette and type system", () => {
     const css = applicationCss().toLowerCase();
     for (const token of [
-      "--portal-bg: #f4f0e8",
-      "--portal-surface: #fbfaf6",
-      "--portal-raised: #fffefa",
-      "--portal-ink: #18231e",
-      "--portal-muted: #627069",
-      "--portal-line: #d8ddd6",
-      "--portal-brand: #1f5b45",
-      "--portal-danger: #a13b32",
+      "--portal-bg: #f2ede3",
+      "--portal-surface: #fbf8f1",
+      "--portal-raised: #fffdf8",
+      "--portal-ink: #24231f",
+      "--portal-muted: #686d64",
+      "--portal-line: #d5d0c5",
+      "--portal-brand: #344b3b",
+      "--portal-accent: #a64f3d",
+      "--portal-display-font:",
+      "--portal-ui-font:",
       "--radius-control: 8px",
       "--radius-panel: 12px",
       "--radius-pill: 999px",
-      "--container: 1280px",
+      "--container: 1320px",
     ]) {
       expect(css).toContain(token);
     }
