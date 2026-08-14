@@ -1,5 +1,6 @@
 @media (max-width: 1100px) {
   .home-hero { grid-template-columns: minmax(0, .9fr) minmax(380px, 1.1fr); gap: var(--space-8); }
+  .portal-command-inner { grid-template-columns: 1fr; gap: var(--space-8); }
   .movie-preview-card[data-layout="feature"] > a { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); }
   .cinema-directory-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -8,6 +9,10 @@
   .home-hero { grid-template-columns: 1fr; }
   .home-feature { width: min(720px, 100%); }
   .portal-navigation-shell { grid-template-columns: 1fr; gap: var(--space-4); }
+  .portal-command-inner {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
   .event-search-form { grid-template-columns: 1fr; }
   .event-search-actions { margin-top: 0; }
 
@@ -57,6 +62,8 @@
   .saved-masthead,
   .saved-feed,
   .event-detail-shell { width: min(var(--container), calc(100% - 32px)); }
+  .portal-announcement p,
+  .portal-command-inner { width: min(var(--container), calc(100% - 32px)); }
   .movies-command,
   .movies-layout { width: min(var(--container), calc(100% - 32px)); }
 
@@ -107,6 +114,16 @@
   .language-toggle { padding-inline: var(--space-2); }
   .saved-link strong { min-width: 20px; height: 20px; }
   .portal-command { padding-top: var(--space-6); }
+  .events-page .portal-command { padding-top: 0; }
+  .portal-command-inner { padding-block: var(--space-8); }
+  .events-page .portal-command h1 { font-size: clamp(3rem, 15vw, 4.4rem); }
+  .events-page .event-search-panel { padding: var(--space-4); }
+  .events-page .event-search-fields { grid-template-columns: 1fr; }
+  .events-page .portal-navigation-shell {
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-3);
+  }
+  .events-page .portal-status-strip { padding-inline: var(--space-3); }
   .portal-intro { font-size: .92rem; }
   .event-search-actions { grid-template-columns: 1fr; }
   .event-search-fields { grid-template-columns: 1fr; }
@@ -212,6 +229,8 @@
   .event-detail-shell { width: calc(100% - 24px); }
   .movies-command,
   .movies-layout { width: calc(100% - 24px); }
+  .portal-announcement p,
+  .portal-command-inner { width: calc(100% - 24px); }
 
   .portal-brand-copy strong { font-size: .94rem; }
   .portal-header-link,

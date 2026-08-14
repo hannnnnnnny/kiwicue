@@ -38,14 +38,14 @@ describe("editorial information hub design system", () => {
   it("defines the Primal-inspired editorial palette and type system", () => {
     const css = applicationCss().toLowerCase();
     for (const token of [
-      "--portal-bg: #f2ede3",
-      "--portal-surface: #fbf8f1",
-      "--portal-raised: #fffdf8",
-      "--portal-ink: #24231f",
-      "--portal-muted: #686d64",
-      "--portal-line: #d5d0c5",
-      "--portal-brand: #344b3b",
-      "--portal-accent: #a64f3d",
+      "--portal-bg: #c9dedd",
+      "--portal-surface: #f7f1e5",
+      "--portal-raised: #fffaf0",
+      "--portal-ink: #102a2c",
+      "--portal-muted: #536766",
+      "--portal-line: #9eb7b5",
+      "--portal-brand: #c8442b",
+      "--portal-accent: #f2b441",
       "--portal-display-font:",
       "--portal-ui-font:",
       "--radius-control: 8px",
