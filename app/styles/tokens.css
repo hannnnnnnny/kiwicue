@@ -15,8 +15,8 @@
   --portal-danger-soft: #f9dedc;
   --portal-white: #ffffff;
   --portal-shadow-color: rgb(29 29 31 / 10%);
-  --portal-display-font: "Manrope Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
-  --portal-ui-font: "Manrope Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --portal-display-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --portal-ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   --radius-control: 8px;
   --radius-panel: 12px;
   --radius-pill: 999px;
@@ -35,4 +35,7 @@
   background: var(--portal-bg);
   color: var(--portal-ink);
   font-family: var(--portal-ui-font);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

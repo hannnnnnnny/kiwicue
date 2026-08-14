@@ -34,13 +34,24 @@ describe("KiwiCue portal theme", () => {
     );
   });
 
-  it("bundles Manrope and exposes interaction and accessibility contracts", () => {
-    expect(read("package.json")).toContain('"@fontsource-variable/manrope"');
-    expect(read("app/layout.tsx")).toContain('import "@fontsource-variable/manrope"');
+  it("uses Apple system typography with a bundled Inter fallback", () => {
+    expect(read("package.json")).toContain('"@fontsource-variable/inter"');
+    expect(read("package.json")).not.toContain('"@fontsource-variable/manrope"');
+    expect(read("app/layout.tsx")).toContain('import "@fontsource-variable/inter"');
+    expect(read("app/layout.tsx")).not.toContain('import "@fontsource-variable/manrope"');
     const css = readApplicationCss();
-    expect(css).toContain("--portal-display-font:");
-    expect(css).toContain("--portal-ui-font:");
+    expect(css).toContain(
+      '--portal-display-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable"',
+    );
+    expect(css).toContain(
+      '--portal-ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable"',
+    );
+    expect(css).toContain("-webkit-font-smoothing: antialiased");
     expect(css).toMatch(/\.editorial-display\s*\{[^}]*font-family:\s*var\(--portal-display-font\)/s);
+  });
+
+  it("preserves interaction and accessibility contracts", () => {
+    const css = readApplicationCss();
     expect(css).toMatch(/:focus-visible[^}]*outline:[^;}]*var\(--portal-focus\)/s);
     expect(css).toMatch(
       /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*transition:\s*none/s,
