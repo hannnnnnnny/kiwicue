@@ -5,39 +5,46 @@ import { MoviePoster } from "./movie-poster";
 import { TmdbAttribution } from "./tmdb-attribution";
 
 export type MoviePreviewState = "loading" | "ready" | "empty" | "unavailable";
+export type MovieSessionCheckState = "loading" | "ready" | "empty" | "unavailable";
 
 const copy = {
   en: {
-    source: "Verified session previews",
-    title: "Previews for current Auckland sessions",
-    intro: "Every film below matches a current session from the live Auckland feed.",
-    availability: "Verified Auckland session",
+    source: "Movie previews",
+    title: "Explore recent New Zealand releases",
+    intro: "Posters, synopses, and trailers come from TMDB. Only films matched to the live Auckland feed carry a verified session label.",
+    verified: "Verified Auckland session",
+    unverified: "Auckland session not verified",
+    checking: "Checking Auckland sessions",
+    checkUnavailable: "Session check unavailable",
     preview: (title: string) => `Preview ${title}`,
     noOverview: "No synopsis is available from the source yet.",
     rating: (value: number) => `TMDB ${value.toFixed(1)}`,
     datePending: "Release date to be confirmed",
     loading: "Loading movie previews",
-    empty: (query: string) => `No verified sessions matched “${query}”`,
-    emptyDefault: "No verified movie previews available",
-    emptyHelp: "Unverified release records are hidden. Try another title or use an official cinema link below.",
+    empty: (query: string) => `No movie previews matched “${query}”`,
+    emptyDefault: "No movie previews available",
+    emptyHelp: "Try another title or use an official cinema link below.",
     reset: "Clear movie search",
     unavailable: "Movie preview verification is temporarily unavailable",
     unavailableHelp: "No unverified previews are shown. Official cinema links below still work.",
     retry: "Retry movie previews",
   },
   zh: {
-    source: "已验证场次预览",
-    title: "奥克兰当前场次电影预览",
-    intro: "下方每部电影都与奥克兰实时数据源中的当前场次相匹配。",
-    availability: "已验证奥克兰场次",
+    source: "电影预览",
+    title: "探索新西兰近期电影",
+    intro: "海报、简介和预告片来自 TMDB；只有与奥克兰实时数据匹配的电影才会标注已验证场次。",
+    verified: "已验证奥克兰场次",
+    unverified: "奥克兰场次尚未核实",
+    checking: "正在核对奥克兰场次",
+    checkUnavailable: "暂时无法核对场次",
     preview: (title: string) => `查看 ${title} 预览`,
     noOverview: "数据源暂未提供剧情简介。",
     rating: (value: number) => `TMDB ${value.toFixed(1)}`,
     datePending: "上映日期待确认",
     loading: "正在加载电影预览",
-    empty: (query: string) => `没有找到“${query}”的已验证场次`,
-    emptyDefault: "暂无已验证的电影预览",
-    emptyHelp: "未验证的发行记录已隐藏；可以换一个片名，或使用下方影院官网入口。",
+    empty: (query: string) => `没有找到“${query}”的电影预览`,
+    emptyDefault: "暂无电影预览",
+    emptyHelp: "可以换一个片名，或使用下方影院官网入口。",
     reset: "清除电影搜索",
     unavailable: "电影预览验证暂时不可用",
     unavailableHelp: "未验证的预览不会显示，下方影院官网入口仍可使用。",
@@ -55,10 +62,11 @@ function formatReleaseDate(value: string | null, language: Language): string | n
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function MoviePreviewCard({ movie, language, layout }: {
+function MoviePreviewCard({ movie, language, layout, sessionStatus }: {
   movie: MoviePreview;
   language: Language;
   layout: "feature" | "standard";
+  sessionStatus: "verified" | "unverified" | "checking" | "unavailable";
 }) {
   const content = copy[language];
   const releaseDate = formatReleaseDate(movie.releaseDate, language);
@@ -67,7 +75,9 @@ function MoviePreviewCard({ movie, language, layout }: {
       <Link href={`/movies/${movie.id}`} aria-label={content.preview(movie.title)}>
         <div className="movie-preview-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} /></div>
         <div className="movie-preview-body">
-          <span className="movie-preview-availability">{content.availability}</span>
+          <span className="movie-preview-availability" data-session-status={sessionStatus}>
+            {content[sessionStatus === "unavailable" ? "checkUnavailable" : sessionStatus]}
+          </span>
           <h3>{movie.title}</h3>
           <div className="movie-preview-meta">
             <span>{releaseDate ?? content.datePending}</span>
@@ -115,9 +125,11 @@ function MoviePreviewMessage({ state, language, query, onRetry, onReset }: {
   );
 }
 
-export function MoviePreviewGrid({ movies, state, language, query, onRetry, onReset }: {
+export function MoviePreviewGrid({ movies, state, sessionState, verifiedMovieIds, language, query, onRetry, onReset }: {
   movies: MoviePreview[];
   state: MoviePreviewState;
+  sessionState: MovieSessionCheckState;
+  verifiedMovieIds: ReadonlySet<number>;
   language: Language;
   query: string | null;
   onRetry: () => void;
@@ -140,6 +152,10 @@ export function MoviePreviewGrid({ movies, state, language, query, onRetry, onRe
               movie={movie}
               language={language}
               layout={index === 0 ? "feature" : "standard"}
+              sessionStatus={verifiedMovieIds.has(movie.id)
+                ? "verified"
+                : sessionState === "loading" ? "checking"
+                  : sessionState === "unavailable" ? "unavailable" : "unverified"}
             />
           ))}
         </div>

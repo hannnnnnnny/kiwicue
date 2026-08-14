@@ -1,4 +1,8 @@
-import type { MoviePreviewDetail, MoviePreviewLanguage } from "../../../../lib/movie-previews";
+import type {
+  MoviePreviewDetail,
+  MoviePreviewLanguage,
+  MovieSessionStatus,
+} from "../../../../lib/movie-previews";
 import { parseMovieId, parseMoviePreviewLanguage } from "../../../../lib/movie-previews";
 import type { KiwiCueScreening, MovieDateFilter } from "../../../../lib/movies";
 import { fetchAucklandScreenings, OpenCinemaClientError } from "../../../../lib/open-cinema";
@@ -77,17 +81,19 @@ export async function handleMoviePreviewDetailRequest(
     const verificationMovie = language === "en"
       ? movie
       : await loadMovie({ movieId, language: "en" });
-    const screenings = await (loadScreenings ?? defaultScreeningLoader(now))({
-      query: verificationMovie.title,
-      date: "all",
-    });
-    if (!movieHasVerifiedSession(verificationMovie, screenings)) {
-      return Response.json(
-        { error: { code: "SESSION_NOT_FOUND", message: "No current Auckland session was found." } },
-        { status: 404, headers: { "cache-control": "no-store" } },
-      );
+    let sessionStatus: MovieSessionStatus = "unavailable";
+    try {
+      const screenings = await (loadScreenings ?? defaultScreeningLoader(now))({
+        query: verificationMovie.title,
+        date: "all",
+      });
+      sessionStatus = movieHasVerifiedSession(verificationMovie, screenings)
+        ? "verified"
+        : "unverified";
+    } catch (error) {
+      if (!(error instanceof OpenCinemaClientError)) throw error;
     }
-    return Response.json({ movie }, { headers: { "cache-control": "no-store" } });
+    return Response.json({ movie, sessionStatus }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     return detailError(error);
   }

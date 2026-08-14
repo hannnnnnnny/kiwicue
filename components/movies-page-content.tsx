@@ -30,8 +30,8 @@ type PreviewResponse = {
 const copy = {
   en: {
     eyebrow: "Auckland · Film finder",
-    title: "Find films and verified Auckland sessions",
-    intro: "Search current sessions first. Posters, synopses, and trailers appear only after a live Auckland session is matched.",
+    title: "Find films and check Auckland sessions",
+    intro: "Browse recent New Zealand movie previews, then look for a verified Auckland session before planning your trip.",
     distance: "Sort cinemas by my distance",
     locating: "Finding your location…",
     privacy: "Your location stays on this device and is never saved.",
@@ -40,8 +40,8 @@ const copy = {
   },
   zh: {
     eyebrow: "奥克兰 · 电影检索",
-    title: "查找电影与已验证的奥克兰场次",
-    intro: "优先搜索当前场次；只有匹配到奥克兰实时场次后，才会展示海报、简介和预告片。",
+    title: "查找电影并核对奥克兰场次",
+    intro: "先浏览新西兰近期电影预览，再查看是否有已核实的奥克兰场次，出发前请以影院官网为准。",
     distance: "按离我的距离排列影院",
     locating: "正在获取位置…",
     privacy: "你的位置只在当前设备使用，不会被保存。",
@@ -114,16 +114,6 @@ async function requestMoviePreviews(
   return { localized, verificationMovies: english.movies };
 }
 
-function verifiedPreviewState(
-  feedState: MovieFeedState,
-  previewState: MoviePreviewState,
-  verifiedCount: number,
-): MoviePreviewState {
-  if (feedState === "loading" || previewState === "loading") return "loading";
-  if (feedState === "unavailable" || feedState === "error" || previewState === "unavailable") return "unavailable";
-  return feedState === "ready" && verifiedCount > 0 ? "ready" : "empty";
-}
-
 function validPosition(position: GeolocationPosition): boolean {
   return Number.isFinite(position.coords.latitude)
     && position.coords.latitude >= -90 && position.coords.latitude <= 90
@@ -185,16 +175,13 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     const visible = matches.length > 0 || query.trim().length === 0 ? matches : [...AUCKLAND_CINEMAS];
     return origin ? sortCinemasByDistance(visible, origin) : visible;
   }, [origin, query]);
-  const verifiedPreviewMovies = useMemo(
-    () => {
-      const verifiedIds = new Set(
-        filterVerifiedMoviePreviews(previewVerificationMovies, screenings).map(({ id }) => id),
-      );
-      return previewMovies.filter(({ id }) => verifiedIds.has(id));
-    },
-    [previewMovies, previewVerificationMovies, screenings],
+  const verifiedMovieIds = useMemo(
+    () => new Set(
+      filterVerifiedMoviePreviews(previewVerificationMovies, screenings).map(({ id }) => id),
+    ),
+    [previewVerificationMovies, screenings],
   );
-  const visiblePreviewState = verifiedPreviewState(feedState, previewState, verifiedPreviewMovies.length);
+  const sessionState = feedState === "error" ? "unavailable" : feedState;
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -250,8 +237,10 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
       <div className="movies-layout">
         <MovieScreeningFeed screenings={screenings} state={feedState} language={language} />
         <MoviePreviewGrid
-          movies={verifiedPreviewMovies}
-          state={visiblePreviewState}
+          movies={previewMovies}
+          state={previewState}
+          sessionState={sessionState}
+          verifiedMovieIds={verifiedMovieIds}
           language={language}
           query={activeQuery}
           onReset={clearSearch}

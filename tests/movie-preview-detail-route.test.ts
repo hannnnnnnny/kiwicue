@@ -45,18 +45,16 @@ describe("GET /api/movie-previews/[movieId]", () => {
     expect(loadScreenings).toHaveBeenCalledWith({ query: "Fight Club", date: "all" });
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({ movie });
+    expect(await response.json()).toEqual({ movie, sessionStatus: "verified" });
   });
 
-  it("returns not found when TMDB metadata has no verified Auckland session", async () => {
+  it("returns preview metadata with an honest unverified status when no Auckland session matches", async () => {
     const loadMovie = vi.fn().mockResolvedValue(movie);
     const loadScreenings = vi.fn().mockResolvedValue([]);
     const response = await handleMoviePreviewDetailRequest("550", "en", loadMovie, loadScreenings);
 
-    expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({
-      error: { code: "SESSION_NOT_FOUND", message: "No current Auckland session was found." },
-    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ movie, sessionStatus: "unverified" });
   });
 
   it("uses the stable English title to verify a localized Chinese detail", async () => {
@@ -75,10 +73,10 @@ describe("GET /api/movie-previews/[movieId]", () => {
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "en" });
     expect(loadScreenings).toHaveBeenCalledWith({ query: "Fight Club", date: "all" });
-    expect(await response.json()).toEqual({ movie: localizedMovie });
+    expect(await response.json()).toEqual({ movie: localizedMovie, sessionStatus: "verified" });
   });
 
-  it("does not expose an unverified detail when live session verification is unavailable", async () => {
+  it("keeps the preview available but reports when live session verification is unavailable", async () => {
     const response = await handleMoviePreviewDetailRequest(
       "550",
       "en",
@@ -86,11 +84,9 @@ describe("GET /api/movie-previews/[movieId]", () => {
       vi.fn().mockRejectedValue(new OpenCinemaClientError("UPSTREAM_BUSY")),
     );
 
-    expect(response.status).toBe(503);
+    expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({
-      error: { code: "UPSTREAM_BUSY", message: "Current movie sessions are temporarily unavailable." },
-    });
+    expect(await response.json()).toEqual({ movie, sessionStatus: "unavailable" });
   });
 
   it.each(["0", "-1", "1.5", "abc", "9007199254740992"])(
