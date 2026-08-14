@@ -441,7 +441,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
     const category = page.getByRole("link", { name: "Concerts", exact: true });
     await category.hover();
     await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
-      .toBe("rgb(52, 75, 59)");
+      .toBe("rgb(255, 250, 240)");
     const box = await category.boundingBox();
     await page.mouse.move((box?.x ?? 0) + 10, (box?.y ?? 0) + 10);
     await page.mouse.down();

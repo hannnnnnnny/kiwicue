@@ -21,6 +21,7 @@ const copy = {
     movies: "Movies",
     saved: "Saved",
     savedLabel: (count: number) => `Saved events, ${count}`,
+    notice: "Auckland plans, before they pass",
   },
   zh: {
     skip: "跳到活动结果",
@@ -37,6 +38,7 @@ const copy = {
     movies: "电影",
     saved: "收藏",
     savedLabel: (count: number) => `收藏活动，${count} 个`,
+    notice: "奥克兰活动，趁还来得及",
   },
 } as const;
 
@@ -71,42 +73,47 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
       <a className="skip-link" href={`#${skipTarget}`}>
         {skipLabel}
       </a>
-      <header className="portal-header">
-        <Link className="portal-brand" href="/" aria-label={content.homeLabel}>
-          <span className="portal-brand-mark" aria-hidden="true">K</span>
-          <span className="portal-brand-copy">
-            <strong>KiwiCue</strong>
-            <small>{content.descriptor}</small>
-          </span>
-        </Link>
-        <div className="portal-header-actions">
-          <nav className="portal-primary-nav" aria-label={content.primaryNavigation}>
-            <Link
-              className="portal-header-link"
-              href="/events"
-              aria-current={activePage === "events" ? "page" : undefined}
-            >
-              {content.events}
-            </Link>
-            <Link
-              className="portal-header-link"
-              href="/movies"
-              aria-current={activePage === "movies" ? "page" : undefined}
-            >
-              {content.movies}
-            </Link>
-            <Link
-              className="portal-header-link saved-link"
-              href="/saved"
-              aria-label={content.savedLabel(count)}
-              aria-current={activePage === "saved" ? "page" : undefined}
-            >
-              <span>{content.saved}</span><strong>{count}</strong>
-            </Link>
-          </nav>
-          <LanguageToggle />
-        </div>
-      </header>
+      <div className="portal-announcement" role="note">
+        <p><span>KiwiCue Signal</span>{content.notice}</p>
+      </div>
+      <div className="portal-header-shell">
+        <header className="portal-header">
+          <Link className="portal-brand" href="/" aria-label={content.homeLabel}>
+            <span className="portal-brand-mark" aria-hidden="true">K</span>
+            <span className="portal-brand-copy">
+              <strong>KiwiCue</strong>
+              <small>{content.descriptor}</small>
+            </span>
+          </Link>
+          <div className="portal-header-actions">
+            <nav className="portal-primary-nav" aria-label={content.primaryNavigation}>
+              <Link
+                className="portal-header-link"
+                href="/events"
+                aria-current={activePage === "events" ? "page" : undefined}
+              >
+                {content.events}
+              </Link>
+              <Link
+                className="portal-header-link"
+                href="/movies"
+                aria-current={activePage === "movies" ? "page" : undefined}
+              >
+                {content.movies}
+              </Link>
+              <Link
+                className="portal-header-link saved-link"
+                href="/saved"
+                aria-label={content.savedLabel(count)}
+                aria-current={activePage === "saved" ? "page" : undefined}
+              >
+                <span>{content.saved}</span><strong>{count}</strong>
+              </Link>
+            </nav>
+            <LanguageToggle />
+          </div>
+        </header>
+      </div>
     </>
   );
 }

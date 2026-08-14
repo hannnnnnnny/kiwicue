@@ -13,14 +13,46 @@
   margin-inline: auto;
 }
 
+.portal-announcement {
+  min-height: 34px;
+  display: grid;
+  align-items: center;
+  background: var(--portal-ink);
+  color: var(--portal-surface);
+}
+
+.portal-announcement p {
+  width: min(var(--container), calc(100% - 48px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0 auto;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.portal-announcement span {
+  color: var(--portal-accent);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.portal-header-shell {
+  border-bottom: 1px solid var(--portal-line);
+  background: var(--portal-surface);
+}
+
 .portal-header {
   min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  border-bottom: 1px solid var(--portal-line);
-  background: var(--portal-bg);
+  background: transparent;
 }
 
 .portal-brand {
@@ -103,12 +135,39 @@
 
 .portal-command { padding: var(--space-12) 0 var(--space-4); }
 
+.events-page .portal-command {
+  width: 100%;
+  padding: 0;
+  background: var(--portal-ink);
+  color: var(--portal-raised);
+}
+
+.portal-command-inner {
+  width: min(var(--container), calc(100% - 48px));
+  display: grid;
+  grid-template-columns: minmax(320px, .72fr) minmax(560px, 1.28fr);
+  align-items: end;
+  gap: clamp(var(--space-8), 6vw, 96px);
+  margin-inline: auto;
+  padding: clamp(56px, 7vw, 92px) 0 clamp(64px, 8vw, 104px);
+}
+
+.portal-command-copy { min-width: 0; }
+
 .portal-command h1 {
   max-width: 780px;
   margin: var(--space-3) 0 var(--space-3);
   font-size: clamp(3.2rem, 6vw, 6.2rem);
   text-wrap: balance;
 }
+
+.events-page .portal-command h1 {
+  margin-block: var(--space-4);
+  color: var(--portal-raised);
+  font-size: clamp(3.6rem, 6vw, 6.4rem);
+}
+
+.events-page .portal-command .eyebrow { color: var(--portal-accent); }
 
 .portal-intro {
   max-width: 760px;
@@ -118,7 +177,24 @@
   line-height: 1.65;
 }
 
+.events-page .portal-intro { color: var(--portal-line); }
+
 .portal-command .event-search-panel { width: 100%; margin: var(--space-6) 0 0; }
+
+.events-page .event-search-panel {
+  margin: 0;
+  padding: var(--space-6);
+  border: 0;
+  background: var(--portal-raised);
+  box-shadow: 0 26px 70px var(--portal-shadow-color);
+}
+
+.events-page .event-search-form { grid-template-columns: 1fr; }
+.events-page .event-search-fields { grid-template-columns: minmax(0, 1.3fr) minmax(210px, .7fr); }
+.events-page .event-search-actions { margin-top: 0; }
+.events-page .event-search-input,
+.events-page .event-search-select { background: var(--portal-surface); }
+.events-page .event-search-submit { background: var(--portal-brand); }
 
 .event-search-panel {
   padding: var(--space-4);
@@ -271,6 +347,22 @@
   padding: var(--space-3) 0 var(--space-4);
 }
 
+.events-page .portal-navigation-shell {
+  width: 100%;
+  gap: clamp(var(--space-8), 6vw, 96px);
+  padding: var(--space-5) max(24px, calc((100% - var(--container)) / 2));
+  background: var(--portal-brand);
+}
+
+.events-page .portal-filter-label { color: var(--portal-raised); opacity: .78; }
+.events-page .portal-nav-link { color: var(--portal-raised); opacity: .76; }
+.events-page .portal-nav-link:hover { color: var(--portal-white); opacity: 1; }
+.events-page .portal-nav-link[aria-current="page"] {
+  box-shadow: inset 0 -2px 0 var(--portal-accent);
+  color: var(--portal-white);
+  opacity: 1;
+}
+
 .portal-filter-group { min-width: 0; }
 
 .portal-filter-label {
@@ -330,6 +422,14 @@
   font-weight: 720;
 }
 
+.events-page .portal-status-strip {
+  width: 100%;
+  padding: var(--space-2) max(24px, calc((100% - var(--container)) / 2));
+  border-block: 0;
+  background: var(--portal-bg);
+  color: var(--portal-ink);
+}
+
 .portal-status-strip span { display: inline-flex; align-items: center; }
 
 .portal-status-strip i {
@@ -342,6 +442,14 @@
 }
 
 #event-results { scroll-margin-top: var(--space-4); }
+
+.events-page #event-results {
+  padding-top: var(--space-4);
+  background: var(--portal-surface);
+}
+
+.events-page .event-feed,
+.events-page .event-state { margin-inline: auto; }
 
 .portal-about {
   display: grid;
