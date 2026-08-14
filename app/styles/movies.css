@@ -123,9 +123,12 @@
 .movie-preview-grid,
 .movie-preview-skeletons {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
 }
+
+.movie-preview-card[data-layout="feature"] { grid-column: span 2; }
+.movie-preview-card:first-child:last-child { grid-column: 1 / -1; }
 
 .movie-preview-card {
   min-width: 0;
@@ -147,6 +150,33 @@
   flex-direction: column;
   color: inherit;
   text-decoration: none;
+}
+
+.movie-preview-card[data-layout="feature"] > a {
+  display: grid;
+  grid-template-columns: minmax(240px, .78fr) minmax(0, 1.22fr);
+}
+
+.movie-preview-card[data-layout="feature"] .movie-preview-poster {
+  min-height: 520px;
+  aspect-ratio: auto;
+}
+
+.movie-preview-card[data-layout="feature"] .movie-preview-body {
+  padding: clamp(var(--space-6), 4vw, var(--space-12));
+}
+
+.movie-preview-card[data-layout="feature"] .movie-preview-body h3 {
+  font-size: clamp(2.3rem, 4.2vw, 4.8rem);
+  line-height: .98;
+}
+
+.movie-preview-card[data-layout="feature"] .movie-preview-body > p {
+  display: block;
+  margin-block: var(--space-6);
+  font-size: .96rem;
+  line-height: 1.7;
+  -webkit-line-clamp: unset;
 }
 
 .movie-preview-poster {
@@ -191,10 +221,17 @@
 
 .movie-preview-body h3 {
   margin: 0;
+  font-family: var(--portal-display-font);
+  font-weight: 500;
   font-size: 1.08rem;
   line-height: 1.25;
   letter-spacing: -.025em;
   overflow-wrap: anywhere;
+}
+
+:lang(zh) .movie-preview-body h3 {
+  font-family: var(--portal-ui-font);
+  font-weight: 700;
 }
 
 .movie-preview-meta {
@@ -278,6 +315,17 @@
 .movie-preview-skeleton span:nth-child(2) { width: 68%; margin-top: var(--space-4); }
 .movie-preview-skeleton span:nth-child(3) { width: 46%; }
 .movie-preview-skeleton span:last-child { width: 76%; margin-bottom: var(--space-4); }
+
+.movie-preview-skeleton:first-child {
+  grid-column: span 2;
+  min-height: 520px;
+}
+
+.movie-preview-skeleton:first-child span:first-child {
+  height: 100%;
+  min-height: 360px;
+  aspect-ratio: auto;
+}
 
 .tmdb-attribution {
   display: grid;
@@ -492,7 +540,20 @@
 .movie-synopsis { margin-top: var(--space-8); }
 .movie-synopsis h2,
 .movie-trailer h2,
-.movie-detail-cinemas > header h2 { margin: 0; font-size: clamp(1.5rem, 2.8vw, 2.2rem); letter-spacing: -.04em; }
+.movie-detail-cinemas > header h2 {
+  margin: 0;
+  font-family: var(--portal-display-font);
+  font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+  font-weight: 500;
+  letter-spacing: -.04em;
+}
+
+:lang(zh) .movie-synopsis h2,
+:lang(zh) .movie-trailer h2,
+:lang(zh) .movie-detail-cinemas > header h2 {
+  font-family: var(--portal-ui-font);
+  font-weight: 700;
+}
 .movie-synopsis p { max-width: 760px; margin: var(--space-3) 0 0; color: var(--portal-muted); line-height: 1.75; }
 
 .movie-trailer,

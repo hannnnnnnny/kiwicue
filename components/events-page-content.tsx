@@ -67,7 +67,7 @@ export function EventsPageContent({ window, category, keyword, venueId }: {
 
       <section className="portal-command" aria-labelledby="events-title">
         <p className="eyebrow">{content.eyebrow}</p>
-        <h1 id="events-title">{content.title}</h1>
+        <h1 className="editorial-display" id="events-title">{content.title}</h1>
         <p className="portal-intro">{content.intro}</p>
         <EventSearchPanel {...searchState} />
       </section>

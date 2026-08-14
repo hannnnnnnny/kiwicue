@@ -99,10 +99,12 @@ describe("event detail experience", () => {
     const getCurrentPosition = vi.fn();
     vi.stubGlobal("navigator", { geolocation: { getCurrentPosition } });
 
-    renderDetail(requestEventDetail);
+    const view = renderDetail(requestEventDetail);
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading event details");
     expect(await screen.findByRole("heading", { level: 1, name: "Auckland Night Live" })).toBeVisible();
+    expect(view.container.querySelector(".event-detail-hero")).toBeInTheDocument();
+    expect(view.container.querySelector(".event-detail-facts")).toBeInTheDocument();
     expect(requestEventDetail).toHaveBeenCalledWith("event-123");
     expect(screen.getByText("Sat, 8 Aug · 7:30 pm")).toBeVisible();
     expect(screen.queryByText(/price|fees|价格|费用|NZ\$/i)).not.toBeInTheDocument();

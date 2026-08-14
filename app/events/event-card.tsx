@@ -39,9 +39,10 @@ export function EventCard({ event, index, language }: {
   const venue = event.venue
     ? `${event.venue.name} · ${event.venue.city}`
     : content.venuePending;
+  const layout = index === 0 ? "feature" : "standard";
 
   return (
-    <article className="portal-event-card" aria-labelledby={titleId}>
+    <article className="portal-event-card" data-layout={layout} aria-labelledby={titleId}>
       <Link
         className="portal-event-link"
         href={`/events/${encodeURIComponent(event.id)}`}

@@ -376,18 +376,30 @@ async function tabTo(page: Page, locator: ReturnType<Page["locator"]>) {
   expect(await locator.evaluate((element) => parseFloat(getComputedStyle(element).outlineWidth))).toBeGreaterThan(0);
 }
 
-test("redirects into a named, touchable, overflow-safe responsive portal", async ({ page }, testInfo) => {
+test("opens a named, touchable, overflow-safe home and event discovery journey", async ({ page }, testInfo) => {
   const errors = runtimeErrors(page);
   const requests = await installRoutes(page);
   await page.goto("/");
 
-  await expect(page).toHaveURL(/\/events$/);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "Find something worth leaving home for." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
-  await page.getByRole("link", { name: "Skip to event results" }).focus();
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/home-${testInfo.project.name}.png`, fullPage: true });
+  }
+  await page.getByRole("link", { name: "Skip to Auckland guide" }).focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/events#event-results$/);
-  await page.getByRole("link", { name: "KiwiCue Auckland events home" }).click();
+  await expect(page).toHaveURL(/\/#home-content$/);
+  await page.getByRole("link", { name: /Browse Auckland events/ }).click();
   await expect(page).toHaveURL(/\/events$/);
+  await expect(page.getByRole("heading", { name: "What’s on in Auckland?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/events-list-${testInfo.project.name}.png`, fullPage: true });
+  }
+  await page.getByRole("link", { name: "KiwiCue Auckland events home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByRole("link", { name: /Browse Auckland events/ }).click();
   const search = page.getByRole("search", { name: "Search Auckland events" });
   await expect(search).toBeVisible();
   expect(await search.evaluate((element) => element.getBoundingClientRect().top < innerHeight)).toBe(true);
@@ -422,14 +434,14 @@ test("redirects into a named, touchable, overflow-safe responsive portal", async
   const columns = await page.locator(".event-grid").evaluate((element) =>
     getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
   );
-  expect(columns).toBe(testInfo.project.name === "desktop" ? 4 : testInfo.project.name === "tablet-768" ? 2 : 1);
+  expect(columns).toBe(testInfo.project.name === "desktop" ? 3 : testInfo.project.name === "tablet-768" ? 2 : 1);
   await expectNoHorizontalOverflow(page);
 
   if (testInfo.project.name === "desktop") {
     const category = page.getByRole("link", { name: "Concerts", exact: true });
     await category.hover();
-    await expect.poll(() => category.evaluate((element) => getComputedStyle(element).borderColor))
-      .toBe("rgb(31, 91, 69)");
+    await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
+      .toBe("rgb(52, 75, 59)");
     const box = await category.boundingBox();
     await page.mouse.move((box?.x ?? 0) + 10, (box?.y ?? 0) + 10);
     await page.mouse.down();

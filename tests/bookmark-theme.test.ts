@@ -20,8 +20,8 @@ describe("bookmark visual and app-shell contract", () => {
     expect(css).toMatch(/\.saved-toolbar button\s*\{[^}]*min-height:\s*44px/s);
   });
 
-  it("uses a 4/2/1 saved grid without hiding the visible save label", () => {
-    expect(css).toMatch(/\.event-grid,[\s\S]*?grid-template-columns:\s*repeat\(4,/s);
+  it("uses a 3/2/1 saved grid without hiding the visible save label", () => {
+    expect(css).toMatch(/\.event-grid,[\s\S]*?grid-template-columns:\s*repeat\(3,/s);
     expect(css).toMatch(/@media \(max-width:\s*900px\)[\s\S]*?\.saved-event-grid\s*\{[^}]*repeat\(2,/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.saved-event-grid\s*\{[^}]*grid-template-columns:\s*1fr/s);
     expect(css).toMatch(/@media \(max-width:\s*340px\)[\s\S]*\.portal-brand-copy\s*\{[^}]*display:\s*none/s);

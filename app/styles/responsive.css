@@ -1,12 +1,12 @@
 @media (max-width: 1100px) {
-  .event-grid,
-  .event-grid-skeleton { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .movie-preview-grid,
-  .movie-preview-skeletons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .home-hero { grid-template-columns: minmax(0, .9fr) minmax(380px, 1.1fr); gap: var(--space-8); }
+  .movie-preview-card[data-layout="feature"] > a { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); }
   .cinema-directory-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
+  .home-hero { grid-template-columns: 1fr; }
+  .home-feature { width: min(720px, 100%); }
   .portal-navigation-shell { grid-template-columns: 1fr; gap: var(--space-4); }
   .event-search-form { grid-template-columns: 1fr; }
   .event-search-actions { margin-top: 0; }
@@ -28,6 +28,8 @@
   .saved-event-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .movie-preview-grid,
   .movie-preview-skeletons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .movie-preview-card[data-layout="feature"],
+  .movie-preview-skeleton:first-child { grid-column: span 2; }
 }
 
 @media (max-height: 760px) {
@@ -35,6 +37,15 @@
 }
 
 @media (max-width: 768px) {
+  .home-hero,
+  .home-index,
+  .home-promise { width: min(var(--container), calc(100% - 32px)); }
+  .home-hero { padding-top: var(--space-12); }
+  .home-hero-copy h1 { font-size: clamp(3.4rem, 12vw, 5.8rem); }
+  .home-promise-grid { grid-template-columns: 1fr; }
+  .home-promise-grid article,
+  .home-promise-grid article + article { padding: var(--space-6) 0; border-right: 0; border-bottom: 1px solid var(--portal-line); }
+  .home-promise-grid article:last-child { border-bottom: 0; }
   .portal-header,
   .portal-command,
   .portal-navigation-shell,
@@ -54,6 +65,8 @@
   .event-search-panel { padding: var(--space-4); box-shadow: 0 12px 32px var(--portal-shadow-color); }
   .portal-about { grid-template-columns: 1fr; gap: var(--space-4); }
   .event-detail-section { grid-template-columns: 1fr; gap: var(--space-4); }
+  .event-detail-facts { grid-template-columns: 1fr; }
+  .event-detail-tags { grid-column: 1; }
   .event-organiser-note { grid-column: 1; }
   .event-detail-heading h1 { font-size: clamp(2.4rem, 11vw, 4.4rem); }
   .movie-search-panel form { grid-template-columns: 1fr 1fr; }
@@ -69,6 +82,21 @@
 }
 
 @media (max-width: 600px) {
+  .home-hero { gap: var(--space-8); padding: var(--space-8) 0 var(--space-12); }
+  .home-hero-copy h1 { margin-bottom: var(--space-4); font-size: clamp(3rem, 15vw, 4.8rem); }
+  .home-hero-actions { align-items: flex-start; flex-direction: column; margin-top: var(--space-6); }
+  .home-primary-action { width: 100%; }
+  .home-feature > a { min-height: 440px; grid-template-rows: minmax(240px, 1fr) auto; }
+  .home-feature-loading,
+  .home-feature-message { min-height: 440px; }
+  .home-feature-copy { grid-template-columns: 1fr; padding: var(--space-4); }
+  .home-feature-copy strong,
+  .home-feature-copy > span { grid-column: 1; grid-row: auto; text-align: left; }
+  .home-index-row { grid-template-columns: 36px minmax(0, 1fr) 44px; gap: var(--space-2); }
+  .home-index-row small { grid-column: 2; }
+  .home-index-row > span:last-child { grid-column: 3; grid-row: 1 / span 2; }
+  .home-promise { padding-block: var(--space-16); }
+  .home-promise > h2 { margin-bottom: var(--space-8); font-size: clamp(2.8rem, 13vw, 4.3rem); }
   .portal-header { min-height: 64px; flex-wrap: wrap; gap: 0 var(--space-2); padding-block: var(--space-2); }
   .portal-brand { gap: var(--space-2); }
   .portal-brand-mark { width: 36px; height: 36px; }
@@ -96,6 +124,27 @@
   .event-grid,
   .event-grid-skeleton,
   .saved-event-grid { grid-template-columns: 1fr; }
+  .event-grid > li:first-child,
+  .event-grid-skeleton > :first-child { grid-column: auto; }
+  .portal-event-card[data-layout="feature"] .portal-event-link {
+    display: flex;
+    flex-direction: column;
+  }
+  .portal-event-card[data-layout="feature"] .portal-event-body { padding: var(--space-4) var(--space-4) var(--space-3); }
+  .portal-event-card[data-layout="feature"] .portal-event-body h2 { font-size: 2rem; }
+  .portal-event-card[data-layout="feature"] .portal-event-media {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+    margin-inline: var(--space-3);
+    border-radius: var(--radius-control);
+  }
+  .portal-event-card[data-layout="feature"] .portal-event-cta { padding: 0 var(--space-4); }
+  .portal-event-card[data-layout="feature"] > .bookmark-button-card {
+    position: static;
+    margin: 0 var(--space-4) var(--space-4);
+  }
+  .event-card-skeleton[data-layout="feature"] { min-height: 0; display: flex; }
+  .event-card-skeleton[data-layout="feature"] .event-card-skeleton-media { min-height: 0; height: auto; margin-top: var(--space-2); }
   .portal-event-body h2 { font-size: 1.25rem; }
   .event-editorial-preview-card .event-editorial-fallback { min-height: 116px; }
   .source-disclaimer,
@@ -125,14 +174,19 @@
   .cinema-directory-list { grid-template-columns: 1fr; }
   .movie-preview-grid,
   .movie-preview-skeletons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--space-3);
   }
+  .movie-preview-card[data-layout="feature"],
+  .movie-preview-skeleton:first-child { grid-column: auto; }
   .movie-preview-card > a { display: grid; grid-template-columns: 1fr; }
+  .movie-preview-card[data-layout="feature"] > a { grid-template-columns: 1fr; }
+  .movie-preview-card[data-layout="feature"] .movie-preview-poster { min-height: 0; aspect-ratio: 2 / 3; }
+  .movie-preview-card[data-layout="feature"] .movie-preview-body { padding: var(--space-4); }
+  .movie-preview-card[data-layout="feature"] .movie-preview-body h3 { font-size: 2rem; }
   .movie-preview-poster { height: auto; min-height: 0; }
   .movie-preview-body { padding: var(--space-3); }
-  .movie-preview-body h3 { font-size: .94rem; }
-  .movie-preview-body > p { display: none; }
+  .movie-preview-body h3 { font-size: 1.35rem; }
   .movie-preview-meta { gap: var(--space-1) var(--space-2); font-size: .66rem; }
   .movie-detail-hero { grid-template-columns: 1fr; }
   .movie-detail-poster { width: min(100%, 300px); }
@@ -142,6 +196,9 @@
 }
 
 @media (max-width: 375px) {
+  .home-hero,
+  .home-index,
+  .home-promise { width: calc(100% - 24px); }
   .portal-header,
   .portal-command,
   .portal-navigation-shell,

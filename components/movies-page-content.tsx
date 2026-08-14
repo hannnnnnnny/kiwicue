@@ -191,7 +191,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
       <PortalHeader currentPage="movies" skipTarget="movie-previews" />
       <section className="movies-command" aria-labelledby="movies-title">
         <p className="eyebrow">{content.eyebrow}</p>
-        <h1 id="movies-title">{content.title}</h1>
+        <h1 className="editorial-display" id="movies-title">{content.title}</h1>
         <p className="movies-intro">{content.intro}</p>
         <MovieSearchPanel
           language={language} query={query} date={date} loading={feedState === "loading" || previewState === "loading"}

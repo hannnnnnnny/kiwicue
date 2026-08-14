@@ -30,6 +30,14 @@ describe("movie preview grid", () => {
     expect(screen.getByRole("img", { name: "Fight Club poster" })).toHaveAttribute("loading", "lazy");
   });
 
+  it("promotes the first film as the editorial feature", () => {
+    const secondMovie = { ...movie, id: 551, title: "Second Film" };
+    const view = render(<MoviePreviewGrid movies={[movie, secondMovie]} state="ready" language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
+
+    expect(view.container.querySelectorAll('.movie-preview-card[data-layout="feature"]')).toHaveLength(1);
+    expect(view.container.querySelectorAll('.movie-preview-card[data-layout="standard"]')).toHaveLength(1);
+  });
+
   it("keeps the card usable when a poster fails", () => {
     const view = render(<MoviePreviewGrid movies={[movie]} state="ready" language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
     fireEvent.error(screen.getByRole("img", { name: "Fight Club poster" }));
@@ -43,11 +51,12 @@ describe("movie preview grid", () => {
     expect(view.container.querySelectorAll(".movie-preview-skeleton")).toHaveLength(4);
   });
 
-  it("uses a readable two-column poster grid instead of a cramped split card on phones", () => {
+  it("uses a single-column editorial flow without cramped split cards on phones", () => {
     const css = readApplicationCss();
-    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-grid,[\s\S]*?grid-template-columns:\s*repeat\(2,/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-grid,[\s\S]*?grid-template-columns:\s*1fr/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\[data-layout="feature"\][^}]*grid-column:\s*auto/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\[data-layout="feature"\]\s*>\s*a\s*\{[^}]*grid-template-columns:\s*1fr/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\s*>\s*a\s*\{[^}]*grid-template-columns:\s*1fr/s);
-    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-body\s*>\s*p\s*\{[^}]*display:\s*none/s);
   });
 
   it("offers a reset for an empty search", () => {

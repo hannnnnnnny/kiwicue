@@ -101,7 +101,7 @@ export function SavedPageContent({
       <PortalHeader skipTarget="saved-events" currentPage="saved" />
       <section className="saved-masthead">
         <p className="eyebrow">{content.eyebrow}</p>
-        <h1>{content.title}</h1>
+        <h1 className="editorial-display">{content.title}</h1>
         <p>{content.intro}</p>
       </section>
 
@@ -111,7 +111,7 @@ export function SavedPageContent({
           <EventGridSkeleton count={4} />
         </section>
       ) : bookmarks.length === 0 ? (
-        <section id="saved-events" className="event-state saved-empty" aria-live="polite">
+        <section id="saved-events" className="event-state saved-empty saved-editorial-empty" aria-live="polite">
           <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
           <h2>{content.emptyTitle}</h2>
           <p>{content.emptyBody}</p>

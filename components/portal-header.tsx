@@ -8,6 +8,7 @@ import { useLanguage } from "./language-provider";
 const copy = {
   en: {
     skip: "Skip to event results",
+    skipHome: "Skip to Auckland guide",
     skipDetail: "Skip to event details",
     skipSaved: "Skip to saved events",
     skipMovies: "Skip to movie sessions",
@@ -23,6 +24,7 @@ const copy = {
   },
   zh: {
     skip: "跳到活动结果",
+    skipHome: "跳到奥克兰指南",
     skipDetail: "跳到活动详情",
     skipSaved: "跳到收藏活动",
     skipMovies: "跳到电影场次",
@@ -39,10 +41,11 @@ const copy = {
 } as const;
 
 type PortalPage = "events" | "movies" | "saved";
-type SkipTarget = "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail";
+type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
   const labels: Record<SkipTarget, string> = {
+    "home-content": content.skipHome,
     "event-results": content.skip,
     "event-detail": content.skipDetail,
     "saved-events": content.skipSaved,
@@ -69,7 +72,7 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
         {skipLabel}
       </a>
       <header className="portal-header">
-        <Link className="portal-brand" href="/events" aria-label={content.homeLabel}>
+        <Link className="portal-brand" href="/" aria-label={content.homeLabel}>
           <span className="portal-brand-mark" aria-hidden="true">K</span>
           <span className="portal-brand-copy">
             <strong>KiwiCue</strong>
