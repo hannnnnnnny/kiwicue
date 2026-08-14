@@ -438,6 +438,17 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
   await expectNoHorizontalOverflow(page);
 
   if (testInfo.project.name === "desktop") {
+    const timeRange = page.getByRole("navigation", { name: "Event time range" });
+    const allFuture = page.getByRole("link", { name: "All future", exact: true });
+    const filterIsFullyVisible = await Promise.all([timeRange.boundingBox(), allFuture.boundingBox()])
+      .then(([track, link]) => Boolean(
+        track
+        && link
+        && link.x >= track.x
+        && link.x + link.width <= track.x + track.width,
+      ));
+    expect(filterIsFullyVisible).toBe(true);
+
     const category = page.getByRole("link", { name: "Concerts", exact: true });
     await category.hover();
     await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
