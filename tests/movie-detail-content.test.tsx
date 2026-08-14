@@ -47,6 +47,7 @@ describe("movie detail experience", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading movie preview");
     expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
+    expect(screen.getByText("This page provides release information, not proof of a current Auckland cinema session.")).toBeVisible();
     expect(requestMovieDetail).toHaveBeenCalledWith("550", "en");
     expect(screen.getByText("15 Oct 1999")).toBeVisible();
     expect(screen.getByText("2 hr 19 min")).toBeVisible();

@@ -8,9 +8,10 @@ export type MoviePreviewState = "loading" | "ready" | "empty" | "unavailable";
 
 const copy = {
   en: {
-    source: "Movie previews",
-    title: "Now playing in New Zealand",
-    intro: "Choose a film, read the synopsis, and watch its trailer before checking an Auckland cinema.",
+    source: "Release previews · Not live sessions",
+    title: "Recent New Zealand cinema releases",
+    intro: "These are recent release records, not proof of a current screening. Only the live sessions section confirms availability.",
+    availability: "Cinema session not verified",
     preview: (title: string) => `Preview ${title}`,
     noOverview: "No synopsis is available from the source yet.",
     rating: (value: number) => `TMDB ${value.toFixed(1)}`,
@@ -25,9 +26,10 @@ const copy = {
     retry: "Retry movie previews",
   },
   zh: {
-    source: "电影预览",
-    title: "新西兰近期电影",
-    intro: "先看海报、简介和预告片，再到奥克兰影院官网确认场次。",
+    source: "发行预览 · 非实时场次",
+    title: "新西兰近期院线发行",
+    intro: "这里只展示近期发行资料，不代表影院仍有场次；只有实时电影场次板块能确认当前可看。",
+    availability: "影院场次尚未验证",
     preview: (title: string) => `查看 ${title} 预览`,
     noOverview: "数据源暂未提供剧情简介。",
     rating: (value: number) => `TMDB ${value.toFixed(1)}`,
@@ -65,6 +67,7 @@ function MoviePreviewCard({ movie, language, layout }: {
       <Link href={`/movies/${movie.id}`} aria-label={content.preview(movie.title)}>
         <div className="movie-preview-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} /></div>
         <div className="movie-preview-body">
+          <span className="movie-preview-availability">{content.availability}</span>
           <h3>{movie.title}</h3>
           <div className="movie-preview-meta">
             <span>{releaseDate ?? content.datePending}</span>

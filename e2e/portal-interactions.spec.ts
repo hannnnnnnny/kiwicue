@@ -894,7 +894,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   }));
 
   await page.goto("/movies");
-  await expect(page.getByRole("heading", { name: "Movies playing around Auckland" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find films and verified Auckland sessions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Whina" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
   await expectNoHorizontalOverflow(page);
@@ -942,7 +942,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
 
   const callsBeforeLanguage = requests.movieRequests.length;
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "奥克兰现在有什么电影" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "查找电影与已验证的奥克兰场次" })).toBeVisible();
   expect(requests.movieRequests).toHaveLength(callsBeforeLanguage);
 
   const columns = await page.locator(".cinema-directory-list").evaluate((element) =>
