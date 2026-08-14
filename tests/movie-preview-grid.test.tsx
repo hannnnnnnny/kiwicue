@@ -55,6 +55,7 @@ describe("movie preview grid", () => {
     const css = readApplicationCss();
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-grid,[\s\S]*?grid-template-columns:\s*1fr/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\[data-layout="feature"\][^}]*grid-column:\s*auto/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\[data-layout="feature"\]\s*>\s*a\s*\{[^}]*grid-template-columns:\s*1fr/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.movie-preview-card\s*>\s*a\s*\{[^}]*grid-template-columns:\s*1fr/s);
   });
 

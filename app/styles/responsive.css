@@ -180,6 +180,7 @@
   .movie-preview-card[data-layout="feature"],
   .movie-preview-skeleton:first-child { grid-column: auto; }
   .movie-preview-card > a { display: grid; grid-template-columns: 1fr; }
+  .movie-preview-card[data-layout="feature"] > a { grid-template-columns: 1fr; }
   .movie-preview-card[data-layout="feature"] .movie-preview-poster { min-height: 0; aspect-ratio: 2 / 3; }
   .movie-preview-card[data-layout="feature"] .movie-preview-body { padding: var(--space-4); }
   .movie-preview-card[data-layout="feature"] .movie-preview-body h3 { font-size: 2rem; }

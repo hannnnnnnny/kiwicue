@@ -82,6 +82,8 @@ describe("portal navigation", () => {
 
     expect(screen.getByRole("link", { name: "Browse Auckland events" }))
       .toHaveAttribute("href", "/events");
+    expect(screen.getByRole("link", { name: "Skip to Auckland guide" }))
+      .toHaveAttribute("href", "#home-content");
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
     expect(fetch).toHaveBeenCalledWith(

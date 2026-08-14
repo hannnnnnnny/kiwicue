@@ -58,9 +58,9 @@ export function HomeContent() {
 
   return (
     <main className="home-page">
-      <PortalHeader currentPage="events" />
+      <PortalHeader currentPage="events" skipTarget="home-content" />
 
-      <section className="home-hero" aria-labelledby="hero-title">
+      <section className="home-hero" id="home-content" aria-labelledby="hero-title">
         <div className="home-hero-copy">
           <p className="eyebrow">{content.eyebrow}</p>
           <h1 className="editorial-display" id="hero-title">{content.title}</h1>

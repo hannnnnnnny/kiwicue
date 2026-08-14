@@ -72,7 +72,7 @@ async function expectMinimumTouchTarget(page: Page, selectors: string[]) {
   }
 }
 
-test("detail keeps booking, map, distance, and a persistent bookmark in one safe journey", async ({ page }) => {
+test("detail keeps booking, map, distance, and a persistent bookmark in one safe journey", async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
@@ -142,6 +142,9 @@ test("detail keeps booking, map, distance, and a persistent bookmark in one safe
     ".event-map figcaption a",
   ]);
   await expectNoHorizontalOverflow(page);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/event-detail-${testInfo.project.name}.png`, fullPage: true });
+  }
   expect(errors).toEqual([]);
 });
 
@@ -216,7 +219,7 @@ test("location denial stays private, recoverable, bilingual, and overflow safe",
   await expectNoHorizontalOverflow(page);
 });
 
-test("saved events invalidate stale clear confirmation and support a complete Chinese clear flow", async ({ page }) => {
+test("saved events invalidate stale clear confirmation and support a complete Chinese clear flow", async ({ page }, testInfo) => {
   const bookmarks = {
     version: 1,
     items: [event, secondEvent].map((savedEvent, index) => ({
@@ -256,4 +259,7 @@ test("saved events invalidate stale clear confirmation and support a complete Ch
   expect(await page.evaluate(() => localStorage.getItem("kiwicue:bookmarks:v1"))).toBeNull();
   await expectMinimumTouchTarget(page, [".portal-empty-action"]);
   await expectNoHorizontalOverflow(page);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/saved-empty-${testInfo.project.name}.png`, fullPage: true });
+  }
 });
