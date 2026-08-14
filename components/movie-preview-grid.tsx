@@ -53,11 +53,15 @@ function formatReleaseDate(value: string | null, language: Language): string | n
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function MoviePreviewCard({ movie, language }: { movie: MoviePreview; language: Language }) {
+function MoviePreviewCard({ movie, language, layout }: {
+  movie: MoviePreview;
+  language: Language;
+  layout: "feature" | "standard";
+}) {
   const content = copy[language];
   const releaseDate = formatReleaseDate(movie.releaseDate, language);
   return (
-    <article className="movie-preview-card">
+    <article className="movie-preview-card" data-layout={layout}>
       <Link href={`/movies/${movie.id}`} aria-label={content.preview(movie.title)}>
         <div className="movie-preview-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} /></div>
         <div className="movie-preview-body">
@@ -121,11 +125,22 @@ export function MoviePreviewGrid({ movies, state, language, query, onRetry, onRe
     <section className="movie-preview-section" id="movie-previews" aria-labelledby="movie-preview-title">
       <header>
         <p className="eyebrow">{content.source}</p>
-        <h2 id="movie-preview-title">{content.title}</h2>
+        <h2 className="editorial-display" id="movie-preview-title">{content.title}</h2>
         <p>{content.intro}</p>
       </header>
       {state === "loading" ? <MoviePreviewSkeletons label={content.loading} /> : null}
-      {state === "ready" ? <div className="movie-preview-grid">{movies.map((movie) => <MoviePreviewCard key={movie.id} movie={movie} language={language} />)}</div> : null}
+      {state === "ready" ? (
+        <div className="movie-preview-grid">
+          {movies.map((movie, index) => (
+            <MoviePreviewCard
+              key={movie.id}
+              movie={movie}
+              language={language}
+              layout={index === 0 ? "feature" : "standard"}
+            />
+          ))}
+        </div>
+      ) : null}
       {state === "empty" || state === "unavailable" ? <MoviePreviewMessage state={state} language={language} query={query} onRetry={onRetry} onReset={onReset} /> : null}
       <TmdbAttribution language={language} />
     </section>

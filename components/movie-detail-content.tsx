@@ -146,7 +146,7 @@ function MovieReady({ movie, language }: { movie: MoviePreviewDetail; language: 
         <div className="movie-detail-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} loading="eager" /></div>
         <div className="movie-detail-summary">
           <p className="eyebrow">{content.source}</p>
-          <h1 id="movie-detail-title">{movie.title}</h1>
+          <h1 className="editorial-display" id="movie-detail-title">{movie.title}</h1>
           {movie.originalTitle ? <p className="movie-original-title">{movie.originalTitle}</p> : null}
           <MovieFacts movie={movie} language={language} />
           <section className="movie-synopsis" aria-labelledby="movie-synopsis-title">
@@ -177,7 +177,7 @@ function MovieDetailState({ state, language, onRetry }: {
   const notFound = state.status === "not-found";
   return (
     <section id="movie-detail" className="movie-detail-state" role="alert">
-      <h1>{notFound ? content.notFound : content.error}</h1>
+      <h1 className="editorial-display">{notFound ? content.notFound : content.error}</h1>
       <p>{notFound ? content.notFoundBody : content.errorBody}</p>
       {notFound ? <Link href="/movies">{content.browse}</Link> : <button type="button" onClick={onRetry}>{content.retry}</button>}
     </section>
