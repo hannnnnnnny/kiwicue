@@ -50,13 +50,103 @@ describe("movies page", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: "Find films and verified Auckland sessions" })).toBeVisible();
     expect(screen.getByRole("search", { name: "Find a movie or cinema" })).toBeVisible();
-    const previews = await screen.findByRole("heading", { name: "Recent New Zealand cinema releases" });
-    expect(screen.getByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
+    const previews = await screen.findByRole("heading", { name: "Previews for current Auckland sessions" });
+    expect(screen.queryByRole("link", { name: "Preview Fight Club" })).not.toBeInTheDocument();
+    expect(screen.getByText("No verified movie previews available")).toBeVisible();
     const liveSessions = await screen.findByRole("heading", { name: "Live movie sessions" });
     expect(liveSessions.compareDocumentPosition(previews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText("No open-feed sessions found")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("href", "https://academycinemas.co.nz/");
+  });
+
+  it("shows preview metadata only when its title matches a verified Auckland session", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const payload = String(input).startsWith("/api/movie-previews")
+        ? {
+            movies: [{
+              id: 550,
+              title: "Fight Club",
+              originalTitle: null,
+              overview: "An insomniac meets a soap maker.",
+              posterUrl: "https://image.tmdb.org/t/p/w500/fight-club.jpg",
+              releaseDate: "1999-10-15",
+              rating: 8.4,
+              ratingCount: 31000,
+            }],
+            page: { number: 1, totalPages: 1, totalResults: 1 },
+          }
+        : {
+            screenings: [{
+              id: "screening-1",
+              filmId: "film-1",
+              filmTitle: "Fight Club",
+              filmRating: "R16",
+              runtimeMinutes: 139,
+              cinemaId: "cinema-1",
+              cinemaName: "Academy Cinemas",
+              startTime: "2026-08-15T08:00:00.000Z",
+              formats: ["2D"],
+              soldOut: false,
+              distanceKilometres: 1.2,
+              bookingUrl: "https://academycinemas.co.nz/film/fight-club",
+            }],
+            source: "open-cinema",
+            sourceState: "ready",
+          };
+      return Promise.resolve(Response.json(payload));
+    }));
+
+    renderPage();
+
+    expect(await screen.findByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
+    expect(screen.getByText("Verified Auckland session")).toBeVisible();
+  });
+
+  it("keeps a verified preview when Chinese localization changes every visible title", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/movies")) {
+        return Promise.resolve(Response.json({
+          screenings: [{
+            id: "screening-conan",
+            filmId: "film-conan",
+            filmTitle: "Detective Conan: Fallen Angel of the Highway",
+            filmRating: null,
+            runtimeMinutes: 109,
+            cinemaId: "cinema-1",
+            cinemaName: "Academy Cinemas",
+            startTime: "2026-08-15T08:00:00.000Z",
+            formats: ["2D"],
+            soldOut: false,
+            distanceKilometres: 1.2,
+            bookingUrl: "https://academycinemas.co.nz/film/conan",
+          }],
+          source: "open-cinema",
+          sourceState: "ready",
+        }));
+      }
+      const chinese = url.includes("language=zh");
+      return Promise.resolve(Response.json({
+        movies: [{
+          id: 1545621,
+          title: chinese ? "名侦探柯南：高速公路的堕天使" : "Detective Conan: Fallen Angel of the Highway",
+          originalTitle: "名探偵コナン ハイウェイの堕天使",
+          overview: "A mystery on the highway.",
+          posterUrl: null,
+          releaseDate: "2026-07-23",
+          rating: 7.6,
+          ratingCount: 15,
+        }],
+        page: { number: 1, totalPages: 1, totalResults: 1 },
+      }));
+    }));
+
+    renderPage();
+    expect(await screen.findByRole("link", { name: "Preview Detective Conan: Fallen Angel of the Highway" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
+
+    expect(await screen.findByRole("link", { name: "查看 名侦探柯南：高速公路的堕天使 预览" })).toBeVisible();
   });
 
   it("submits a normalized search, changes date, and can clear the query", async () => {

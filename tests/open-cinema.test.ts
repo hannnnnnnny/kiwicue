@@ -69,6 +69,24 @@ describe("Open Cinema client", () => {
     }]);
   });
 
+  it("removes sessions that have already started", async () => {
+    const base = {
+      film_id: "film-1",
+      film_title: "Whina",
+      theater_id: "theater-1",
+      theater_name: "Academy Cinemas",
+      formats: ["2D"],
+    };
+    const fetchImpl = vi.fn(async () => jsonResponse({ screenings: [
+      { ...base, id: "ended", start_time: "2026-08-12T13:30:00+12:00" },
+      { ...base, id: "upcoming", start_time: "2026-08-12T15:30:00+12:00" },
+    ] }));
+
+    const result = await fetchAucklandScreenings({ date: "today", now: NOW, query: null, fetchImpl });
+
+    expect(result.map(({ id }) => id)).toEqual(["upcoming"]);
+  });
+
   it("rejects malformed or unsafe screening records", async () => {
     const valid = {
       id: "valid",

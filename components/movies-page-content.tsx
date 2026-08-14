@@ -9,6 +9,7 @@ import {
 import { parseMovieQuery } from "../lib/movie-search-params";
 import type { KiwiCueScreening, MovieDateFilter } from "../lib/movies";
 import type { MoviePreview, MoviePreviewPage } from "../lib/movie-previews";
+import { filterVerifiedMoviePreviews } from "../lib/verified-movie-sessions";
 import { CinemaDirectory } from "./cinema-directory";
 import { useLanguage } from "./language-provider";
 import { MovieScreeningFeed, type MovieFeedState } from "./movie-screening-feed";
@@ -21,11 +22,16 @@ type FeedResponse = {
   sourceState: "ready" | "empty" | "unavailable";
 };
 
+type PreviewResponse = {
+  localized: MoviePreviewPage;
+  verificationMovies: MoviePreview[];
+};
+
 const copy = {
   en: {
     eyebrow: "Auckland · Film finder",
     title: "Find films and verified Auckland sessions",
-    intro: "Live sessions appear first. Release previews are clearly separated and never presented as proof that a film is still screening.",
+    intro: "Search current sessions first. Posters, synopses, and trailers appear only after a live Auckland session is matched.",
     distance: "Sort cinemas by my distance",
     locating: "Finding your location…",
     privacy: "Your location stays on this device and is never saved.",
@@ -35,7 +41,7 @@ const copy = {
   zh: {
     eyebrow: "奥克兰 · 电影检索",
     title: "查找电影与已验证的奥克兰场次",
-    intro: "实时场次优先展示；发行预览会明确标注，绝不会被当作仍在上映的证明。",
+    intro: "优先搜索当前场次；只有匹配到奥克兰实时场次后，才会展示海报、简介和预告片。",
     distance: "按离我的距离排列影院",
     locating: "正在获取位置…",
     privacy: "你的位置只在当前设备使用，不会被保存。",
@@ -77,7 +83,11 @@ function isMoviePreviewPage(value: unknown): value is MoviePreviewPage {
     && typeof record.page === "object" && record.page !== null;
 }
 
-async function requestMoviePreviews(query: string | null, language: "en" | "zh", signal: AbortSignal): Promise<MoviePreviewPage> {
+async function requestMoviePreviewPage(
+  query: string | null,
+  language: "en" | "zh",
+  signal: AbortSignal,
+): Promise<MoviePreviewPage> {
   const params = new URLSearchParams({ language });
   if (query) params.set("q", query);
   params.set("page", "1");
@@ -85,6 +95,33 @@ async function requestMoviePreviews(query: string | null, language: "en" | "zh",
   const payload: unknown = await response.json();
   if (!response.ok || !isMoviePreviewPage(payload)) throw new Error("MOVIE_PREVIEW_ERROR");
   return payload;
+}
+
+async function requestMoviePreviews(
+  query: string | null,
+  language: "en" | "zh",
+  signal: AbortSignal,
+): Promise<PreviewResponse> {
+  const localizedRequest = requestMoviePreviewPage(query, language, signal);
+  if (language === "en") {
+    const localized = await localizedRequest;
+    return { localized, verificationMovies: localized.movies };
+  }
+  const [localized, english] = await Promise.all([
+    localizedRequest,
+    requestMoviePreviewPage(query, "en", signal),
+  ]);
+  return { localized, verificationMovies: english.movies };
+}
+
+function verifiedPreviewState(
+  feedState: MovieFeedState,
+  previewState: MoviePreviewState,
+  verifiedCount: number,
+): MoviePreviewState {
+  if (feedState === "loading" || previewState === "loading") return "loading";
+  if (feedState === "unavailable" || feedState === "error" || previewState === "unavailable") return "unavailable";
+  return feedState === "ready" && verifiedCount > 0 ? "ready" : "empty";
 }
 
 function validPosition(position: GeolocationPosition): boolean {
@@ -106,6 +143,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   const [screenings, setScreenings] = useState<KiwiCueScreening[]>([]);
   const [feedState, setFeedState] = useState<MovieFeedState>("loading");
   const [previewMovies, setPreviewMovies] = useState<MoviePreview[]>([]);
+  const [previewVerificationMovies, setPreviewVerificationMovies] = useState<MoviePreview[]>([]);
   const [previewState, setPreviewState] = useState<MoviePreviewState>("loading");
   const [previewAttempt, setPreviewAttempt] = useState(0);
   const [origin, setOrigin] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -125,8 +163,9 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   useEffect(() => {
     const controller = new AbortController();
     requestMoviePreviews(activeQuery, language, controller.signal).then((payload) => {
-      setPreviewMovies(payload.movies);
-      setPreviewState(payload.movies.length > 0 ? "ready" : "empty");
+      setPreviewMovies(payload.localized.movies);
+      setPreviewVerificationMovies(payload.verificationMovies);
+      setPreviewState(payload.localized.movies.length > 0 ? "ready" : "empty");
     }).catch((error: unknown) => {
       if (!(error instanceof DOMException && error.name === "AbortError")) setPreviewState("unavailable");
     });
@@ -146,6 +185,16 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     const visible = matches.length > 0 || query.trim().length === 0 ? matches : [...AUCKLAND_CINEMAS];
     return origin ? sortCinemasByDistance(visible, origin) : visible;
   }, [origin, query]);
+  const verifiedPreviewMovies = useMemo(
+    () => {
+      const verifiedIds = new Set(
+        filterVerifiedMoviePreviews(previewVerificationMovies, screenings).map(({ id }) => id),
+      );
+      return previewMovies.filter(({ id }) => verifiedIds.has(id));
+    },
+    [previewMovies, previewVerificationMovies, screenings],
+  );
+  const visiblePreviewState = verifiedPreviewState(feedState, previewState, verifiedPreviewMovies.length);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -201,8 +250,8 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
       <div className="movies-layout">
         <MovieScreeningFeed screenings={screenings} state={feedState} language={language} />
         <MoviePreviewGrid
-          movies={previewMovies}
-          state={previewState}
+          movies={verifiedPreviewMovies}
+          state={visiblePreviewState}
           language={language}
           query={activeQuery}
           onReset={clearSearch}

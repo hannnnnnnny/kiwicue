@@ -21,9 +21,9 @@ describe("movie preview grid", () => {
   it("renders poster-led movie cards with one in-site preview action", () => {
     render(<MoviePreviewGrid movies={[movie]} state="ready" language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
 
-    expect(screen.getByRole("heading", { name: "Recent New Zealand cinema releases" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Previews for current Auckland sessions" })).toBeVisible();
     expect(screen.queryByText("Now playing in New Zealand")).not.toBeInTheDocument();
-    expect(screen.getByText("Cinema session not verified")).toBeVisible();
+    expect(screen.getByText("Verified Auckland session")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Fight Club" })).toBeVisible();
     expect(screen.getByText("15 Oct 1999")).toBeVisible();
     expect(screen.getByText("TMDB 8.4")).toBeVisible();
@@ -64,7 +64,7 @@ describe("movie preview grid", () => {
   it("offers a reset for an empty search", () => {
     const onReset = vi.fn();
     render(<MoviePreviewGrid movies={[]} state="empty" language="en" query="Unknown film" onRetry={vi.fn()} onReset={onReset} />);
-    expect(screen.getByRole("heading", { name: "No movies matched “Unknown film”" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "No verified sessions matched “Unknown film”" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Clear movie search" }));
     expect(onReset).toHaveBeenCalledOnce();
   });
@@ -72,15 +72,15 @@ describe("movie preview grid", () => {
   it("offers a retry without hiding the rest of the movie page", () => {
     const onRetry = vi.fn();
     render(<MoviePreviewGrid movies={[]} state="unavailable" language="en" query={null} onRetry={onRetry} onReset={vi.fn()} />);
-    expect(screen.getByRole("alert")).toHaveTextContent("Movie previews are temporarily unavailable");
+    expect(screen.getByRole("alert")).toHaveTextContent("Movie preview verification is temporarily unavailable");
     fireEvent.click(screen.getByRole("button", { name: "Retry movie previews" }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it("provides Chinese labels and required TMDB attribution", () => {
     render(<MoviePreviewGrid movies={[movie]} state="ready" language="zh" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
-    expect(screen.getByRole("heading", { name: "新西兰近期院线发行" })).toBeVisible();
-    expect(screen.getByText("影院场次尚未验证")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "奥克兰当前场次电影预览" })).toBeVisible();
+    expect(screen.getByText("已验证奥克兰场次")).toBeVisible();
     expect(screen.getByRole("link", { name: "查看 Fight Club 预览" })).toHaveAttribute("href", "/movies/550");
     expect(screen.getByText("本产品使用 TMDB API，但未经 TMDB 认可或认证。")).toBeVisible();
     expect(screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB.")).toBeVisible();
