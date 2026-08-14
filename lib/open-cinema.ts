@@ -154,7 +154,11 @@ export async function fetchAucklandScreenings(input: {
   const unique = new Map<string, KiwiCueScreening>();
   for (const value of payloads.flat()) {
     const screening = parseScreening(value);
-    if (screening && !unique.has(screening.id)) unique.set(screening.id, screening);
+    if (
+      screening
+      && Date.parse(screening.startTime) >= input.now.getTime()
+      && !unique.has(screening.id)
+    ) unique.set(screening.id, screening);
   }
   return [...unique.values()].sort((left, right) => Date.parse(left.startTime) - Date.parse(right.startTime));
 }

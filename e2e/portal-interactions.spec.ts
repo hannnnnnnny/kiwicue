@@ -170,20 +170,20 @@ const movieScreening = {
 
 const moviePreview = {
   id: 550,
-  title: "Fight Club",
+  title: "Whina",
   originalTitle: null,
-  overview: "An insomniac meets a soap maker and forms an underground club.",
-  posterUrl: "https://image.tmdb.org/t/p/w500/fight-club.jpg",
-  releaseDate: "1999-10-15",
-  rating: 8.4,
-  ratingCount: 31_000,
+  overview: "The story of Dame Whina Cooper and her lifelong fight for Māori land rights.",
+  posterUrl: "https://image.tmdb.org/t/p/w500/whina.jpg",
+  releaseDate: "2022-06-23",
+  rating: 7.2,
+  ratingCount: 120,
 };
 
 const moviePreviewDetail = {
   ...moviePreview,
-  runtimeMinutes: 139,
-  genres: ["Drama", "Thriller"],
-  certification: "R16",
+  runtimeMinutes: 112,
+  genres: ["Drama", "History"],
+  certification: "M",
   trailerKey: "Abc_123-x",
   tmdbUrl: "https://www.themoviedb.org/movie/550",
 };
@@ -895,7 +895,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
 
   await page.goto("/movies");
   await expect(page.getByRole("heading", { name: "Find films and verified Auckland sessions" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Whina" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
   await expectNoHorizontalOverflow(page);
 
@@ -923,7 +923,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
 
   await page.getByRole("button", { name: "Clear search" }).click();
   await expect(input).toHaveValue("");
-  await expect(page.getByRole("heading", { name: "Whina" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
   await page.getByRole("button", { name: "Sort cinemas by my distance" }).click();
   await expect(page.getByText("0.0 km away")).toBeVisible();
 
@@ -958,7 +958,7 @@ test("movie cards open a complete in-site preview with a safe trailer", async ({
   await installRoutes(page);
   await page.goto("/movies");
 
-  const previewLink = page.getByRole("link", { name: "Preview Fight Club" });
+  const previewLink = page.getByRole("link", { name: "Preview Whina" });
   await expect(previewLink).toBeVisible();
   expect((await previewLink.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
@@ -967,11 +967,11 @@ test("movie cards open a complete in-site preview with a safe trailer", async ({
   await previewLink.click();
 
   await expect(page).toHaveURL(/\/movies\/550$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Whina" })).toBeVisible();
   await expect(page.getByText(moviePreview.overview)).toBeVisible();
-  await expect(page.getByText("2 hr 19 min")).toBeVisible();
-  await expect(page.getByText("R16")).toBeVisible();
-  await expect(page.getByTitle("Fight Club official trailer")).toHaveAttribute(
+  await expect(page.getByText("1 hr 52 min")).toBeVisible();
+  await expect(page.getByText("M", { exact: true })).toBeVisible();
+  await expect(page.getByTitle("Whina official trailer")).toHaveAttribute(
     "src",
     "https://www.youtube-nocookie.com/embed/Abc_123-x",
   );

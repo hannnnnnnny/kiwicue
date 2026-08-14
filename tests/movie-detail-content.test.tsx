@@ -47,7 +47,7 @@ describe("movie detail experience", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading movie preview");
     expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
-    expect(screen.getByText("This page provides release information, not proof of a current Auckland cinema session.")).toBeVisible();
+    expect(screen.getByText("A current Auckland session matched this movie when the page loaded. Confirm final availability on the cinema's official site.")).toBeVisible();
     expect(requestMovieDetail).toHaveBeenCalledWith("550", "en");
     expect(screen.getByText("15 Oct 1999")).toBeVisible();
     expect(screen.getByText("2 hr 19 min")).toBeVisible();
@@ -99,8 +99,9 @@ describe("movie detail experience", () => {
 
   it("shows a dedicated not-found state", async () => {
     renderDetail(vi.fn().mockRejectedValue(new MovieDetailRequestError(404)));
-    expect(await screen.findByRole("heading", { name: "Movie not found" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Browse movies" })).toHaveAttribute("href", "/movies");
+    expect(await screen.findByRole("heading", { name: "No current Auckland session" })).toBeVisible();
+    expect(screen.getByText("This film is hidden because no current Auckland cinema session could be verified.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Browse verified movies" })).toHaveAttribute("href", "/movies");
   });
 
   it("retries a temporary failure", async () => {
