@@ -35,17 +35,17 @@ describe("editorial information hub design system", () => {
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
-  it("defines the Primal-inspired editorial palette and type system", () => {
+  it("defines an Apple-clean neutral palette with one KiwiCue fern accent", () => {
     const css = applicationCss().toLowerCase();
     for (const token of [
-      "--portal-bg: #c9dedd",
-      "--portal-surface: #f7f1e5",
-      "--portal-raised: #fffaf0",
-      "--portal-ink: #102a2c",
-      "--portal-muted: #536766",
-      "--portal-line: #9eb7b5",
-      "--portal-brand: #c8442b",
-      "--portal-accent: #f2b441",
+      "--portal-bg: #f5f5f7",
+      "--portal-surface: #fbfbfd",
+      "--portal-raised: #ffffff",
+      "--portal-ink: #1d1d1f",
+      "--portal-muted: #6e6e73",
+      "--portal-line: #d2d2d7",
+      "--portal-brand: #146c5b",
+      "--portal-accent: #146c5b",
       "--portal-display-font:",
       "--portal-ui-font:",
       "--radius-control: 8px",

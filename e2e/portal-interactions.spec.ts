@@ -392,7 +392,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
   await expect(page).toHaveURL(/\/#home-content$/);
   await page.getByRole("link", { name: /Browse Auckland events/ }).click();
   await expect(page).toHaveURL(/\/events$/);
-  await expect(page.getByRole("heading", { name: "What’s on in Auckland?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find your next Auckland plan." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/events-list-${testInfo.project.name}.png`, fullPage: true });
@@ -434,14 +434,14 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
   const columns = await page.locator(".event-grid").evaluate((element) =>
     getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
   );
-  expect(columns).toBe(testInfo.project.name === "desktop" ? 3 : testInfo.project.name === "tablet-768" ? 2 : 1);
+  expect(columns).toBe(testInfo.project.name === "mobile-375" ? 1 : 2);
   await expectNoHorizontalOverflow(page);
 
   if (testInfo.project.name === "desktop") {
     const category = page.getByRole("link", { name: "Concerts", exact: true });
     await category.hover();
     await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
-      .toBe("rgb(255, 250, 240)");
+      .toBe("rgb(20, 108, 91)");
     const box = await category.boundingBox();
     await page.mouse.move((box?.x ?? 0) + 10, (box?.y ?? 0) + 10);
     await page.mouse.down();
@@ -452,9 +452,9 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
 
   const counts = { events: requests.eventRequests.length, venues: requests.venueRequests.length };
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "奥克兰最近有什么活动？" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "找到下一场奥克兰活动。" })).toBeVisible();
   await page.locator(".language-toggle").click();
-  await expect(page.getByRole("heading", { name: "What’s on in Auckland?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find your next Auckland plan." })).toBeVisible();
   await page.waitForTimeout(100);
   expect(requests.eventRequests).toHaveLength(counts.events);
   expect(requests.venueRequests).toHaveLength(counts.venues);

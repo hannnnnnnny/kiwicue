@@ -54,10 +54,12 @@ describe("complete portal accessibility contract", () => {
     );
 
     await screen.findByRole("heading", { name: "Harbour Lights" });
+    expect(screen.getByRole("heading", { name: "Happening soon" })).toBeInTheDocument();
     const ordered = [
       view.container.querySelector(".skip-link"),
       view.container.querySelector(".portal-header"),
       screen.getByRole("search", { name: "Search Auckland events" }),
+      screen.getByRole("heading", { name: "Choose how you want to go out" }),
       screen.getByRole("navigation", { name: "Event categories" }),
       screen.getByRole("navigation", { name: "Event time range" }),
       view.container.querySelector("#event-results-summary"),

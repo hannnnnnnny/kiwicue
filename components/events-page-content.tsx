@@ -17,9 +17,11 @@ const windowLabels = {
 
 const copy = {
   en: {
-    eyebrow: "Auckland · Official event listings",
-    title: "What’s on in Auckland?",
-    intro: "Search by event or artist, narrow the date, then open the official listing. No delayed recommendation feed.",
+    eyebrow: "Auckland event finder",
+    title: "Find your next Auckland plan.",
+    intro: "Search once. See what is soon, nearby, and worth your time.",
+    filterTitle: "Choose how you want to go out",
+    filterBody: "Pick one option or combine a few. Results update without hiding what matters.",
     statusLabel: "Current event search",
     location: "Auckland",
     source: "Ticketmaster source",
@@ -30,9 +32,11 @@ const copy = {
     footer: "Auckland events, easier to find.",
   },
   zh: {
-    eyebrow: "奥克兰 · 官方活动信息",
-    title: "奥克兰最近有什么活动？",
-    intro: "搜索活动或艺人，再按时间、类型和场馆缩小范围；不必等待迟到的推荐推送。",
+    eyebrow: "奥克兰活动检索",
+    title: "找到下一场奥克兰活动。",
+    intro: "一次搜索，快速查看近期、附近和值得去的活动。",
+    filterTitle: "先选你想怎么出门",
+    filterBody: "可以只选一项，也可以组合筛选，重要信息不会被藏起来。",
     statusLabel: "当前活动检索范围",
     location: "奥克兰",
     source: "Ticketmaster 官方来源",
@@ -76,10 +80,14 @@ export function EventsPageContent({ window, category, keyword, venueId }: {
         </div>
       </section>
 
-      <div className="portal-navigation-shell">
+      <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
+        <div className="portal-filter-intro">
+          <h2 id="discovery-filter-title">{content.filterTitle}</h2>
+          <p>{content.filterBody}</p>
+        </div>
         <EventCategoryNav {...searchState} />
         <EventWindowNav {...searchState} />
-      </div>
+      </section>
 
       <div className="portal-status-strip" aria-label={content.statusLabel}>
         <span>{content.location}</span>
