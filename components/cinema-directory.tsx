@@ -34,7 +34,7 @@ export function CinemaDirectory({ cinemas, language }: {
 }) {
   const content = copy[language];
   return (
-    <section className="cinema-directory" aria-labelledby="cinema-directory-title">
+    <section className="cinema-directory" id="cinema-directory" aria-labelledby="cinema-directory-title">
       <header><p className="eyebrow">{content.eyebrow}</p><h2 id="cinema-directory-title">{content.title}</h2><p>{content.description}</p></header>
       {cinemas.length === 0 ? <p className="cinema-directory-empty">{content.empty}</p> : (
         <ol className="cinema-directory-list">

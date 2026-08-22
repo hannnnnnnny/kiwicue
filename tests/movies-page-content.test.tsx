@@ -63,7 +63,7 @@ describe("movies page", () => {
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("href", "https://academycinemas.co.nz/");
   });
 
-  it("explains missing provider coverage without claiming Auckland has no sessions", async () => {
+  it("prioritizes official cinema links when the provider does not cover Auckland", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const payload = String(input).startsWith("/api/movie-previews")
         ? { movies: [], page: { number: 1, totalPages: 1, totalResults: 0 } }
@@ -76,8 +76,12 @@ describe("movies page", () => {
 
     renderPage();
 
-    expect(await screen.findByText("Auckland live-data coverage is not available yet")).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
+    const directory = await screen.findByRole("heading", { name: "Auckland cinema directory" });
+    expect(screen.queryByRole("heading", { name: "Live movie sessions" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Auckland live-data coverage is not available yet")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
+    const previews = screen.getByRole("heading", { name: "Explore recent New Zealand releases" });
+    expect(directory.compareDocumentPosition(previews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("marks preview metadata as verified only when its title matches a live Auckland session", async () => {

@@ -194,6 +194,19 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     [previewVerificationMovies, screenings],
   );
   const sessionState = feedState === "error" ? "unavailable" : feedState;
+  const showLiveFeed = feedState !== "not-covered" && feedState !== "unavailable";
+  const cinemaAccess = (
+    <>
+      <aside className="cinema-tools" aria-label={content.distance}>
+        <button type="button" onClick={locate} disabled={locationState === "loading"}>
+          {locationState === "loading" ? content.locating : content.distance}
+        </button>
+        <p>{content.privacy}</p>
+        {locationState === "error" ? <p role="alert">{content.locationError}</p> : null}
+      </aside>
+      <CinemaDirectory cinemas={cinemas} language={language} />
+    </>
+  );
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -236,7 +249,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
 
   return (
     <main className="movies-page">
-      <PortalHeader currentPage="movies" skipTarget="movie-results" />
+      <PortalHeader currentPage="movies" skipTarget={showLiveFeed ? "movie-results" : "cinema-directory"} />
       <section className="movies-command" aria-labelledby="movies-title">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display" id="movies-title">{content.title}</h1>
@@ -247,7 +260,9 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
         />
       </section>
       <div className="movies-layout">
-        <MovieScreeningFeed screenings={screenings} state={feedState} language={language} checkedAt={checkedAt} />
+        {showLiveFeed ? (
+          <MovieScreeningFeed screenings={screenings} state={feedState} language={language} checkedAt={checkedAt} />
+        ) : cinemaAccess}
         <MoviePreviewGrid
           movies={previewMovies}
           state={previewState}
@@ -261,14 +276,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
             setPreviewAttempt((value) => value + 1);
           }}
         />
-        <aside className="cinema-tools" aria-label={content.distance}>
-          <button type="button" onClick={locate} disabled={locationState === "loading"}>
-            {locationState === "loading" ? content.locating : content.distance}
-          </button>
-          <p>{content.privacy}</p>
-          {locationState === "error" ? <p role="alert">{content.locationError}</p> : null}
-        </aside>
-        <CinemaDirectory cinemas={cinemas} language={language} />
+        {showLiveFeed ? cinemaAccess : null}
       </div>
       <footer className="portal-footer"><span>KiwiCue / 纽村小报</span><span>{content.footer}</span></footer>
     </main>

@@ -14,6 +14,7 @@ const copy = {
     skipSaved: "Skip to saved events",
     skipMovies: "Skip to movie sessions",
     skipMoviePreviews: "Skip to movie previews",
+    skipCinemaDirectory: "Skip to Auckland cinema links",
     skipMovieDetail: "Skip to movie details",
     homeLabel: "KiwiCue Auckland events home",
     primaryNavigation: "Primary navigation",
@@ -29,6 +30,7 @@ const copy = {
     skipSaved: "跳到收藏活动",
     skipMovies: "跳到电影场次",
     skipMoviePreviews: "跳到电影预览",
+    skipCinemaDirectory: "跳到奥克兰影院入口",
     skipMovieDetail: "跳到电影详情",
     homeLabel: "KiwiCue 奥克兰活动首页",
     primaryNavigation: "主要导航",
@@ -40,7 +42,7 @@ const copy = {
 } as const;
 
 type PortalPage = "events" | "movies" | "saved";
-type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail";
+type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
   const labels: Record<SkipTarget, string> = {
@@ -50,6 +52,7 @@ function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof c
     "saved-events": content.skipSaved,
     "movie-results": content.skipMovies,
     "movie-previews": content.skipMoviePreviews,
+    "cinema-directory": content.skipCinemaDirectory,
     "movie-detail": content.skipMovieDetail,
   };
   return labels[skipTarget];
