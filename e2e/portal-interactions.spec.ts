@@ -913,6 +913,27 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await expect(page.getByRole("heading", { name: "Find films and check Auckland sessions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
+  const marks = page.locator(".cinema-brand-mark");
+  const identities = page.locator(".cinema-directory-identity");
+  const expectedMarkSize = testInfo.project.name === "mobile-375" ? 40 : 48;
+  await expect(marks.first()).toBeVisible();
+  expect(await identities.count()).toBe(await marks.count());
+  for (let index = 0; index < await marks.count(); index += 1) {
+    const mark = marks.nth(index);
+    const identity = identities.nth(index);
+    const content = identity.locator(":scope > div");
+    await expect(content).toHaveCount(1);
+    const [markBox, contentBox] = await Promise.all([mark.boundingBox(), content.boundingBox()]);
+    expect(markBox?.width).toBe(expectedMarkSize);
+    expect(markBox?.height).toBe(expectedMarkSize);
+    expect(contentBox?.x ?? 0).toBeGreaterThanOrEqual((markBox?.x ?? 0) + (markBox?.width ?? 0));
+    expect(contentBox?.width ?? 0).toBeGreaterThan(0);
+  }
+  const firstCinemaAction = page.locator(".cinema-directory-actions a").first();
+  await firstCinemaAction.focus();
+  expect(await marks.first().evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe("none");
+  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("background-color", "rgb(29, 29, 31)");
+  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expectNoHorizontalOverflow(page);
 
   const targets = page.locator([
@@ -922,6 +943,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   ].join(","));
   for (let index = 0; index < await targets.count(); index += 1) {
     const box = await targets.nth(index).boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
 

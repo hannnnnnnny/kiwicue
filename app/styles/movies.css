@@ -418,6 +418,7 @@
 
 .movie-session-action a,
 .cinema-directory-actions a {
+  min-width: 44px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -475,10 +476,44 @@
   background: var(--portal-raised);
 }
 
+.cinema-directory-identity {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.cinema-directory-identity > div { min-width: 0; }
+
+.cinema-brand-mark {
+  inline-size: 48px;
+  block-size: 48px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--portal-brand-soft);
+  color: var(--portal-ink);
+  font-weight: 750;
+}
+
+.cinema-brand-mark-dark { background: var(--portal-ink); color: var(--portal-white); }
+
+.cinema-brand-mark img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.cinema-directory-list > li:hover .cinema-brand-mark,
+.cinema-directory-list > li:focus-within .cinema-brand-mark {
+  box-shadow: 0 0 0 2px var(--portal-brand);
+}
+
 .cinema-directory-list h3 { margin: var(--space-2) 0; font-size: 1rem; line-height: 1.35; }
 .cinema-directory-list p { margin: 0; color: var(--portal-muted); font-size: .76rem; line-height: 1.5; }
-.cinema-directory-list li > div > span { color: var(--portal-brand); font-size: .68rem; font-weight: 800; }
-.cinema-directory-list li > div > strong { display: block; margin-top: var(--space-3); color: var(--portal-ink); font-size: .76rem; }
+.cinema-directory-identity > div > span { color: var(--portal-brand); font-size: .68rem; font-weight: 800; }
+.cinema-directory-identity > div > strong { display: block; margin-top: var(--space-3); color: var(--portal-ink); font-size: .76rem; }
 .cinema-directory-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-top: 1px solid var(--portal-line); }
 .cinema-directory-actions a:first-child { justify-content: flex-start; }
 .cinema-directory-empty { margin: var(--space-6) 0 0; color: var(--portal-muted); }
