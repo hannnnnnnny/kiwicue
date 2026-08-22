@@ -31,7 +31,7 @@ function hasDistance(cinema: AucklandCinema | AucklandCinemaWithDistance): cinem
 
 function TicketIcon() {
   return (
-    <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 7.5A2.5 2.5 0 0 0 6.5 5h11A2.5 2.5 0 0 0 20 7.5v1a2 2 0 0 1 0 4v1a2.5 2.5 0 0 0-2.5 2.5h-11A2.5 2.5 0 0 0 4 13.5v-1a2 2 0 0 1 0-4v-1Z" />
       <path d="M12 7.5v9" strokeDasharray="1.5 1.5" />
     </svg>
@@ -40,7 +40,7 @@ function TicketIcon() {
 
 function MapPinIcon() {
   return (
-    <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z" />
       <circle cx="12" cy="10" r="2" />
     </svg>
@@ -62,7 +62,7 @@ export function CinemaDirectory({ cinemas, language }: {
             return (
               <li key={cinema.id}>
                 <div className="cinema-directory-identity">
-                  <CinemaBrandMark asset={cinema.brandAsset} label={cinema.brandLabel} cinemaId={cinema.id} />
+                  <CinemaBrandMark asset={cinema.brandAsset} dark={cinema.brandDark} label={cinema.brandLabel} cinemaId={cinema.id} />
                   <div>
                     <span>{cinema.chain}</span><h3>{cinema.name}</h3><p>{cinema.address}</p>{hasDistance(cinema) ? <strong>{content.away(cinema.distanceKilometres)}</strong> : null}
                   </div>

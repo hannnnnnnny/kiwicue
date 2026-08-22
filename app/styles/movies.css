@@ -497,6 +497,8 @@
   font-weight: 750;
 }
 
+.cinema-brand-mark-dark { background: var(--portal-ink); }
+
 .cinema-brand-mark img {
   inline-size: 100%;
   block-size: 100%;

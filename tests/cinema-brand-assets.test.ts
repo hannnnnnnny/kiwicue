@@ -9,9 +9,9 @@ const assets = [
     source: "https://cdn.vwassets.com/academycinemas.co.nz/1491085808806_academylogo.png",
   },
   {
-    name: "event.png",
+    name: "event.svg",
     officialPage: "https://www.eventcinemas.co.nz/",
-    source: "https://cdn.eventcinemas.co.nz/cdn/content/img/icons/apple-icon-180x180.png",
+    source: "https://cdn.eventcinemas.co.nz/cdn/content/img/ec-logo.svg?v=cTZXIQfpyXJAdDbg56KIoNgM9Ps",
   },
   {
     name: "hoyts.png",
@@ -41,7 +41,7 @@ const assets = [
   {
     name: "rialto.png",
     officialPage: "https://www.rialto.co.nz/",
-    source: "https://cdn.rialto.co.nz/cdn/content/img/icons/apple-icon-180x180.png",
+    source: "https://cdn.rialto.co.nz/cdn/content/img/rialto-logo_white-on-trans-horiz.png?v=8WShZUuhdVSVLQMqdUD98EyDiDI",
   },
 ];
 
@@ -124,5 +124,12 @@ describe("cinema brand assets", () => {
     for (const { name, officialPage, source } of assets) {
       expect(manifest).toContain(`| \`${name}\` | ${officialPage} | ${source} | 2026-08-23 | Identification only |`);
     }
+  });
+
+  it("keeps EVENT and Rialto's locally stored official marks distinct", () => {
+    const event = readFileSync(resolve(process.cwd(), "public/cinemas/event.svg"));
+    const rialto = readFileSync(resolve(process.cwd(), "public/cinemas/rialto.png"));
+
+    expect(event.equals(rialto)).toBe(false);
   });
 });

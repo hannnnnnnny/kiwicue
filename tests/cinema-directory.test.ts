@@ -27,6 +27,16 @@ describe("Auckland cinema directory", () => {
     expect(AUCKLAND_CINEMAS.find(({ id }) => id === "silky-otter-orakei")?.brandAsset).toBeNull();
   });
 
+  it("maps each audited chain to its matching semantic brand asset", () => {
+    const byId = new Map(AUCKLAND_CINEMAS.map((cinema) => [cinema.id, cinema]));
+
+    expect(byId.get("event-queen-street")?.brandAsset).toBe("/cinemas/event.svg");
+    expect(byId.get("event-newmarket")?.brandAsset).toBe("/cinemas/event.svg");
+    expect(byId.get("event-st-lukes")?.brandAsset).toBe("/cinemas/event.svg");
+    expect(byId.get("reading-lynnmall")?.brandAsset).toBe("/cinemas/reading.svg");
+    expect(byId.get("rialto-newmarket")?.brandAsset).toBe("/cinemas/rialto.png");
+  });
+
   it("matches name, chain, suburb, and address without case or diacritic sensitivity", () => {
     expect(filterCinemas(AUCKLAND_CINEMAS, "academy").map((cinema) => cinema.id)).toContain("academy");
     expect(filterCinemas(AUCKLAND_CINEMAS, "HOYTS").every((cinema) => cinema.chain === "HOYTS")).toBe(true);

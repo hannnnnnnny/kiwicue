@@ -14,6 +14,16 @@ describe("cinema directory brand marks", () => {
       expect.stringContaining("academy.png"),
     );
     expect(screen.getByTestId("cinema-brand-silky-otter-orakei")).toHaveTextContent("SO");
+    expect(screen.getByTestId("cinema-brand-event-queen-street").querySelector("img")).toHaveAttribute(
+      "src",
+      expect.stringContaining("event.svg"),
+    );
+  });
+
+  it("puts Reading's official white wordmark on a dark brand backing without modifying the asset", () => {
+    render(<CinemaDirectory cinemas={AUCKLAND_CINEMAS} language="en" />);
+
+    expect(screen.getByTestId("cinema-brand-reading-lynnmall")).toHaveClass("cinema-brand-mark-dark");
   });
 
   it("replaces an unavailable official mark with its initials", () => {
@@ -40,5 +50,11 @@ describe("cinema directory brand marks", () => {
 
     expect(screen.getByRole("link", { name: "Academy Cinemas sessions" }).querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByRole("link", { name: "Map for Academy Cinemas" }).querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    const ticketIcon = screen.getByRole("link", { name: "Academy Cinemas sessions" }).querySelector("svg");
+    const mapIcon = screen.getByRole("link", { name: "Map for Academy Cinemas" }).querySelector("svg");
+    expect(ticketIcon).toHaveAttribute("width", "20");
+    expect(ticketIcon).toHaveAttribute("height", "20");
+    expect(mapIcon).toHaveAttribute("width", "20");
+    expect(mapIcon).toHaveAttribute("height", "20");
   });
 });
