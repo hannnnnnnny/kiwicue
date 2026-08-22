@@ -32,7 +32,10 @@ beforeEach(() => {
           }],
           page: { number: 1, totalPages: 1, totalResults: 1 },
         }
-      : { screenings: [], source: "open-cinema", sourceState: "empty" };
+      : {
+          screenings: [], source: "open-cinema", sourceState: "empty",
+          coverageState: "covered", checkedAt: "2026-08-12T02:00:00.000Z",
+        };
     return Promise.resolve(new Response(JSON.stringify(payload), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -58,6 +61,23 @@ describe("movies page", () => {
     expect(screen.getByText("No open-feed sessions found")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("href", "https://academycinemas.co.nz/");
+  });
+
+  it("explains missing provider coverage without claiming Auckland has no sessions", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const payload = String(input).startsWith("/api/movie-previews")
+        ? { movies: [], page: { number: 1, totalPages: 1, totalResults: 0 } }
+        : {
+            screenings: [], source: "open-cinema", sourceState: "not-covered",
+            coverageState: "not-covered", checkedAt: "2026-08-12T02:00:00.000Z",
+          };
+      return Promise.resolve(Response.json(payload));
+    }));
+
+    renderPage();
+
+    expect(await screen.findByText("Auckland live-data coverage is not available yet")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
   });
 
   it("marks preview metadata as verified only when its title matches a live Auckland session", async () => {
@@ -93,6 +113,8 @@ describe("movies page", () => {
             }],
             source: "open-cinema",
             sourceState: "ready",
+            coverageState: "covered",
+            checkedAt: "2026-08-12T02:00:00.000Z",
           };
       return Promise.resolve(Response.json(payload));
     }));
@@ -124,6 +146,8 @@ describe("movies page", () => {
           }],
           source: "open-cinema",
           sourceState: "ready",
+          coverageState: "covered",
+          checkedAt: "2026-08-12T02:00:00.000Z",
         }));
       }
       const chinese = url.includes("language=zh");
@@ -183,6 +207,7 @@ describe("movies page", () => {
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "查找电影并核对奥克兰场次" })).toBeVisible();
+    expect(document.title).toBe("奥克兰电影 — KiwiCue");
     expect(screen.getByRole("heading", { name: "奥克兰影院目录" })).toBeVisible();
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(
       "/api/movie-previews?language=zh&page=1",

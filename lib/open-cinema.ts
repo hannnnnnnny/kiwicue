@@ -1,10 +1,25 @@
 import "server-only";
-import type { KiwiCueScreening, MovieDateFilter } from "./movies";
+import type { KiwiCueScreening, MovieCoverageState, MovieDateFilter } from "./movies";
 
 const OPEN_CINEMA_URL = "https://opencinemaproject.com/api/v1/public/screenings";
+const OPEN_CINEMA_THEATERS_URL = "https://opencinemaproject.com/api/v1/public/theaters";
 const REQUEST_TIMEOUT_MS = 8_000;
+const SCREENING_REVALIDATE_SECONDS = 300;
+const COVERAGE_REVALIDATE_SECONDS = 3_600;
 const AUCKLAND_LATITUDE = "-36.8485";
 const AUCKLAND_LONGITUDE = "174.7633";
+const TRUSTED_BOOKING_HOSTS = [
+  "academycinemas.co.nz",
+  "bridgeway.co.nz",
+  "eventcinemas.co.nz",
+  "hoyts.co.nz",
+  "lido.co.nz",
+  "readingcinemas.co.nz",
+  "rialto.co.nz",
+  "silkyotter.co.nz",
+  "thecapitol.co.nz",
+  "veezi.com",
+] as const;
 
 type FetchImplementation = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -94,7 +109,10 @@ function parseOptionalNumber(value: unknown, maximum: number): number | null | u
 function parseBookingUrl(value: unknown): string | null | undefined {
   if (value === undefined || value === null) return null;
   if (!isRecord(value) || !safeHttpsUrl(value.url)) return undefined;
-  return value.url;
+  const hostname = new URL(value.url).hostname.toLocaleLowerCase("en-NZ");
+  const trusted = TRUSTED_BOOKING_HOSTS.some((allowed) =>
+    hostname === allowed || hostname.endsWith(`.${allowed}`));
+  return trusted ? value.url : null;
 }
 
 function parseScreening(value: unknown): KiwiCueScreening | null {
@@ -121,17 +139,25 @@ function parseScreening(value: unknown): KiwiCueScreening | null {
   };
 }
 
-async function fetchOne(url: URL, fetchImpl: FetchImplementation, apiKey?: string): Promise<unknown[]> {
+async function fetchPayload(
+  url: URL,
+  fetchImpl: FetchImplementation,
+  apiKey: string | undefined,
+  revalidate: number,
+): Promise<unknown> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const headers = new Headers({ accept: "application/json" });
     if (apiKey) headers.set("authorization", `Bearer ${apiKey}`);
-    const response = await fetchImpl(url, { headers, signal: controller.signal, cache: "no-store" });
+    const response = await fetchImpl(url, {
+      headers,
+      signal: controller.signal,
+      next: { revalidate },
+    } as RequestInit & { next: { revalidate: number } });
     if (response.status === 429) throw new OpenCinemaClientError("UPSTREAM_BUSY");
     if (!response.ok) throw new OpenCinemaClientError("UPSTREAM_ERROR");
-    const payload: unknown = await response.json();
-    return isRecord(payload) && Array.isArray(payload.screenings) ? payload.screenings.slice(0, 50) : [];
+    return await response.json() as unknown;
   } catch (error) {
     if (error instanceof OpenCinemaClientError) throw error;
     if (error instanceof DOMException && error.name === "AbortError") throw new OpenCinemaClientError("UPSTREAM_TIMEOUT");
@@ -139,6 +165,39 @@ async function fetchOne(url: URL, fetchImpl: FetchImplementation, apiKey?: strin
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function fetchScreenings(url: URL, fetchImpl: FetchImplementation, apiKey?: string): Promise<unknown[]> {
+  const payload = await fetchPayload(url, fetchImpl, apiKey, SCREENING_REVALIDATE_SECONDS);
+  return isRecord(payload) && Array.isArray(payload.screenings) ? payload.screenings.slice(0, 50) : [];
+}
+
+function buildCoverageUrl(): URL {
+  const url = new URL(OPEN_CINEMA_THEATERS_URL);
+  url.searchParams.set("lat", AUCKLAND_LATITUDE);
+  url.searchParams.set("lon", AUCKLAND_LONGITUDE);
+  url.searchParams.set("radius_km", "100");
+  url.searchParams.set("limit", "1");
+  return url;
+}
+
+export async function fetchAucklandCinemaCoverage({
+  fetchImpl = fetch,
+  apiKey,
+}: {
+  fetchImpl?: FetchImplementation;
+  apiKey?: string;
+} = {}): Promise<MovieCoverageState> {
+  const payload = await fetchPayload(buildCoverageUrl(), fetchImpl, apiKey, COVERAGE_REVALIDATE_SECONDS);
+  if (!isRecord(payload) || !Array.isArray(payload.theaters)
+    || typeof payload.count !== "number" || !Number.isSafeInteger(payload.count) || payload.count < 0) {
+    throw new OpenCinemaClientError("UPSTREAM_ERROR");
+  }
+  if ((payload.count === 0 && payload.theaters.length !== 0)
+    || (payload.count > 0 && payload.theaters.length === 0)) {
+    throw new OpenCinemaClientError("UPSTREAM_ERROR");
+  }
+  return payload.count > 0 ? "covered" : "not-covered";
 }
 
 export async function fetchAucklandScreenings(input: {
@@ -150,7 +209,7 @@ export async function fetchAucklandScreenings(input: {
 }): Promise<KiwiCueScreening[]> {
   const fetchImpl = input.fetchImpl ?? fetch;
   const urls = buildOpenCinemaUrls(input);
-  const payloads = await Promise.all(urls.map((url) => fetchOne(url, fetchImpl, input.apiKey)));
+  const payloads = await Promise.all(urls.map((url) => fetchScreenings(url, fetchImpl, input.apiKey)));
   const unique = new Map<string, KiwiCueScreening>();
   for (const value of payloads.flat()) {
     const screening = parseScreening(value);

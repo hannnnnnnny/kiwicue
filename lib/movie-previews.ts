@@ -1,5 +1,5 @@
 export type MoviePreviewLanguage = "en" | "zh";
-export type MovieSessionStatus = "verified" | "unverified" | "unavailable";
+export type MovieSessionStatus = "verified" | "unverified" | "not-covered" | "unavailable";
 
 export interface MoviePreview {
   id: number;

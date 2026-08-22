@@ -19,7 +19,9 @@ import { PortalHeader } from "./portal-header";
 
 type FeedResponse = {
   screenings: KiwiCueScreening[];
-  sourceState: "ready" | "empty" | "unavailable";
+  sourceState: "ready" | "empty" | "not-covered" | "unavailable";
+  coverageState: "covered" | "not-covered" | "unavailable";
+  checkedAt: string;
 };
 
 type PreviewResponse = {
@@ -54,7 +56,11 @@ function isFeedResponse(value: unknown): value is FeedResponse {
   if (typeof value !== "object" || value === null) return false;
   const record = value as Record<string, unknown>;
   return Array.isArray(record.screenings)
-    && (record.sourceState === "ready" || record.sourceState === "empty" || record.sourceState === "unavailable");
+    && (record.sourceState === "ready" || record.sourceState === "empty"
+      || record.sourceState === "not-covered" || record.sourceState === "unavailable")
+    && (record.coverageState === "covered" || record.coverageState === "not-covered"
+      || record.coverageState === "unavailable")
+    && typeof record.checkedAt === "string" && Number.isFinite(Date.parse(record.checkedAt));
 }
 
 async function requestScreenings(query: string | null, date: MovieDateFilter, signal: AbortSignal): Promise<FeedResponse> {
@@ -132,6 +138,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   const [date, setDate] = useState(initialDate);
   const [screenings, setScreenings] = useState<KiwiCueScreening[]>([]);
   const [feedState, setFeedState] = useState<MovieFeedState>("loading");
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const [previewMovies, setPreviewMovies] = useState<MoviePreview[]>([]);
   const [previewVerificationMovies, setPreviewVerificationMovies] = useState<MoviePreview[]>([]);
   const [previewState, setPreviewState] = useState<MoviePreviewState>("loading");
@@ -140,10 +147,15 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   const [locationState, setLocationState] = useState<"idle" | "loading" | "ready" | "error">("idle");
 
   useEffect(() => {
+    document.title = language === "zh" ? "奥克兰电影 — KiwiCue" : "Auckland movies — KiwiCue";
+  }, [language]);
+
+  useEffect(() => {
     const controller = new AbortController();
     requestScreenings(activeQuery, date, controller.signal).then((payload) => {
       setScreenings(payload.screenings);
       setFeedState(payload.sourceState);
+      setCheckedAt(payload.checkedAt);
     }).catch((error: unknown) => {
       if (!(error instanceof DOMException && error.name === "AbortError")) setFeedState("error");
     });
@@ -235,7 +247,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
         />
       </section>
       <div className="movies-layout">
-        <MovieScreeningFeed screenings={screenings} state={feedState} language={language} />
+        <MovieScreeningFeed screenings={screenings} state={feedState} language={language} checkedAt={checkedAt} />
         <MoviePreviewGrid
           movies={previewMovies}
           state={previewState}

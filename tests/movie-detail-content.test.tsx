@@ -77,6 +77,13 @@ describe("movie detail experience", () => {
     expect(screen.getByText("Use the official cinema links below to confirm whether this film is currently showing.")).toBeVisible();
   });
 
+  it("states that coverage is missing instead of claiming the movie is not showing", async () => {
+    renderDetail(vi.fn().mockResolvedValue({ movie, sessionStatus: "not-covered" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
+    expect(screen.getByText("Release preview · Auckland live-data coverage unavailable")).toBeVisible();
+    expect(screen.getByText(/does not mean the film is not showing/i)).toBeVisible();
+  });
+
   it("shows honest fallbacks when optional metadata is absent", async () => {
     renderDetail(vi.fn().mockResolvedValue({
       movie: {

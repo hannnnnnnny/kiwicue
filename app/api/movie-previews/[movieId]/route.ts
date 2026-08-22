@@ -4,8 +4,12 @@ import type {
   MovieSessionStatus,
 } from "../../../../lib/movie-previews";
 import { parseMovieId, parseMoviePreviewLanguage } from "../../../../lib/movie-previews";
-import type { KiwiCueScreening, MovieDateFilter } from "../../../../lib/movies";
-import { fetchAucklandScreenings, OpenCinemaClientError } from "../../../../lib/open-cinema";
+import type { KiwiCueScreening, MovieCoverageState, MovieDateFilter } from "../../../../lib/movies";
+import {
+  fetchAucklandCinemaCoverage,
+  fetchAucklandScreenings,
+  OpenCinemaClientError,
+} from "../../../../lib/open-cinema";
 import { fetchTmdbMovieDetail, TmdbClientError } from "../../../../lib/tmdb";
 import { movieHasVerifiedSession } from "../../../../lib/verified-movie-sessions";
 
@@ -18,6 +22,7 @@ type LoadScreenings = (input: {
   query: string | null;
   date: MovieDateFilter;
 }) => Promise<KiwiCueScreening[]>;
+type LoadCoverage = () => Promise<MovieCoverageState>;
 
 function defaultScreeningLoader(now: Date): LoadScreenings {
   return ({ query, date }) => fetchAucklandScreenings({
@@ -26,6 +31,10 @@ function defaultScreeningLoader(now: Date): LoadScreenings {
     now,
     apiKey: process.env.OPEN_CINEMA_API_KEY,
   });
+}
+
+function defaultCoverageLoader(): Promise<MovieCoverageState> {
+  return fetchAucklandCinemaCoverage({ apiKey: process.env.OPEN_CINEMA_API_KEY });
 }
 
 function invalidLanguageResponse(): Response {
@@ -64,6 +73,7 @@ export async function handleMoviePreviewDetailRequest(
   loadMovie: LoadMovie = fetchTmdbMovieDetail,
   loadScreenings?: LoadScreenings,
   now = new Date(),
+  loadCoverage?: LoadCoverage,
 ): Promise<Response> {
   const movieId = parseMovieId(movieIdInput);
   if (!movieId) {
@@ -83,13 +93,20 @@ export async function handleMoviePreviewDetailRequest(
       : await loadMovie({ movieId, language: "en" });
     let sessionStatus: MovieSessionStatus = "unavailable";
     try {
-      const screenings = await (loadScreenings ?? defaultScreeningLoader(now))({
-        query: verificationMovie.title,
-        date: "all",
-      });
-      sessionStatus = movieHasVerifiedSession(verificationMovie, screenings)
-        ? "verified"
-        : "unverified";
+      const coverage = await (loadCoverage ?? (loadScreenings
+        ? async () => "covered" as const
+        : defaultCoverageLoader))();
+      if (coverage === "not-covered") {
+        sessionStatus = "not-covered";
+      } else {
+        const screenings = await (loadScreenings ?? defaultScreeningLoader(now))({
+          query: null,
+          date: "all",
+        });
+        sessionStatus = movieHasVerifiedSession(verificationMovie, screenings)
+          ? "verified"
+          : "unverified";
+      }
     } catch (error) {
       if (!(error instanceof OpenCinemaClientError)) throw error;
     }

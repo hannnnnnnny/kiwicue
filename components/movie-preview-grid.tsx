@@ -5,7 +5,7 @@ import { MoviePoster } from "./movie-poster";
 import { TmdbAttribution } from "./tmdb-attribution";
 
 export type MoviePreviewState = "loading" | "ready" | "empty" | "unavailable";
-export type MovieSessionCheckState = "loading" | "ready" | "empty" | "unavailable";
+export type MovieSessionCheckState = "loading" | "ready" | "empty" | "not-covered" | "unavailable";
 
 const copy = {
   en: {
@@ -15,6 +15,7 @@ const copy = {
     verified: "Verified Auckland session",
     unverified: "Auckland session not verified",
     checking: "Checking Auckland sessions",
+    notCovered: "Preview only · no Auckland live-data coverage",
     checkUnavailable: "Session check unavailable",
     preview: (title: string) => `Preview ${title}`,
     noOverview: "No synopsis is available from the source yet.",
@@ -36,6 +37,7 @@ const copy = {
     verified: "已验证奥克兰场次",
     unverified: "奥克兰场次尚未核实",
     checking: "正在核对奥克兰场次",
+    notCovered: "仅电影资料 · 暂无奥克兰实时数据覆盖",
     checkUnavailable: "暂时无法核对场次",
     preview: (title: string) => `查看 ${title} 预览`,
     noOverview: "数据源暂未提供剧情简介。",
@@ -66,7 +68,7 @@ function MoviePreviewCard({ movie, language, layout, sessionStatus }: {
   movie: MoviePreview;
   language: Language;
   layout: "feature" | "standard";
-  sessionStatus: "verified" | "unverified" | "checking" | "unavailable";
+  sessionStatus: "verified" | "unverified" | "checking" | "not-covered" | "unavailable";
 }) {
   const content = copy[language];
   const releaseDate = formatReleaseDate(movie.releaseDate, language);
@@ -76,7 +78,9 @@ function MoviePreviewCard({ movie, language, layout, sessionStatus }: {
         <div className="movie-preview-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} /></div>
         <div className="movie-preview-body">
           <span className="movie-preview-availability" data-session-status={sessionStatus}>
-            {content[sessionStatus === "unavailable" ? "checkUnavailable" : sessionStatus]}
+            {sessionStatus === "unavailable"
+              ? content.checkUnavailable
+              : sessionStatus === "not-covered" ? content.notCovered : content[sessionStatus]}
           </span>
           <h3>{movie.title}</h3>
           <div className="movie-preview-meta">
@@ -155,6 +159,7 @@ export function MoviePreviewGrid({ movies, state, sessionState, verifiedMovieIds
               sessionStatus={verifiedMovieIds.has(movie.id)
                 ? "verified"
                 : sessionState === "loading" ? "checking"
+                  : sessionState === "not-covered" ? "not-covered"
                   : sessionState === "unavailable" ? "unavailable" : "unverified"}
             />
           ))}

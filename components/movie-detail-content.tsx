@@ -40,6 +40,7 @@ export async function requestMovieDetailFromApi(
   const sessionStatus = payload.sessionStatus;
   const validStatus = sessionStatus === "verified"
     || sessionStatus === "unverified"
+    || sessionStatus === "not-covered"
     || sessionStatus === "unavailable";
   if (!response.ok || !payload.movie || String(payload.movie.id) !== movieId || !validStatus) {
     throw new MovieDetailRequestError(response.status);
@@ -54,11 +55,13 @@ const copy = {
     source: {
       verified: "Verified Auckland session",
       unverified: "Release preview · Auckland session not verified",
+      "not-covered": "Release preview · Auckland live-data coverage unavailable",
       unavailable: "Release preview · Session check unavailable",
     },
     availability: {
       verified: "A current Auckland session matched this movie when the page loaded. Confirm final availability on the cinema's official site.",
       unverified: "Use the official cinema links below to confirm whether this film is currently showing.",
+      "not-covered": "The authorized data provider does not currently cover Auckland. This does not mean the film is not showing; check an official cinema site below.",
       unavailable: "The live Auckland session source could not be checked. Use the official cinema links below before planning your trip.",
     },
     rating: (value: number) => `TMDB rating ${value.toFixed(1)}`,
@@ -86,11 +89,13 @@ const copy = {
     source: {
       verified: "已验证奥克兰场次",
       unverified: "电影预览 · 奥克兰场次尚未核实",
+      "not-covered": "电影预览 · 暂无奥克兰实时数据覆盖",
       unavailable: "电影预览 · 暂时无法核对场次",
     },
     availability: {
       verified: "页面加载时已匹配到奥克兰当前场次；最终余票和时间请以影院官网为准。",
       unverified: "请使用下方影院官网入口确认这部电影目前是否上映。",
+      "not-covered": "授权数据源目前尚未覆盖奥克兰；这不代表电影没有上映，请使用下方影院官网核实。",
       unavailable: "奥克兰实时场次源暂时无法核对，出发前请使用下方影院官网确认。",
     },
     rating: (value: number) => `TMDB 评分 ${value.toFixed(1)}`,
