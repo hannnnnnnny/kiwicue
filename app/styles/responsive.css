@@ -218,6 +218,11 @@
   .movie-detail-cinemas > header { margin-bottom: var(--space-6); }
 }
 
+@media (max-width: 639px) {
+  .cinema-directory-identity { grid-template-columns: 40px minmax(0, 1fr); }
+  .cinema-brand-mark { inline-size: 40px; block-size: 40px; }
+}
+
 @media (max-width: 375px) {
   .home-hero,
   .home-index,

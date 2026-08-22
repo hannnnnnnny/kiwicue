@@ -475,6 +475,31 @@
   background: var(--portal-raised);
 }
 
+.cinema-directory-identity {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.cinema-brand-mark {
+  inline-size: 48px;
+  block-size: 48px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--portal-brand-soft);
+  color: var(--portal-ink);
+  font-weight: 750;
+}
+
+.cinema-brand-mark img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
 .cinema-directory-list h3 { margin: var(--space-2) 0; font-size: 1rem; line-height: 1.35; }
 .cinema-directory-list p { margin: 0; color: var(--portal-muted); font-size: .76rem; line-height: 1.5; }
 .cinema-directory-list li > div > span { color: var(--portal-brand); font-size: .68rem; font-weight: 800; }

@@ -913,6 +913,10 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await expect(page.getByRole("heading", { name: "Find films and check Auckland sessions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".cinema-brand-mark").first()).toBeVisible();
+  const mark = await page.locator(".cinema-brand-mark").first().boundingBox();
+  expect(mark?.width).toBe(testInfo.project.name === "mobile-375" ? 40 : 48);
+  expect(mark?.height).toBe(testInfo.project.name === "mobile-375" ? 40 : 48);
   await expectNoHorizontalOverflow(page);
 
   const targets = page.locator([
