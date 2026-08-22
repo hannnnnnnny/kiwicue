@@ -934,7 +934,9 @@ test("movie search, dates, distance, language, maps, and official links work wit
 
   await input.fill("NoCoverage");
   await page.getByRole("button", { name: "Search movies" }).click();
-  await expect(page.getByText("Auckland live-data coverage is not available yet")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Live movie sessions" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
   await expect(page.getByText("Preview only · no Auckland live-data coverage")).toBeVisible();
 
   for (const [label, value] of [["Tomorrow", "tomorrow"], ["This weekend", "weekend"], ["All upcoming", "all"], ["Today", "today"]] as const) {
