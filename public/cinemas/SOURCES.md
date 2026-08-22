@@ -14,3 +14,5 @@ These locally stored marks are used for cinema identification only. They were re
 | `rialto.png` | https://www.rialto.co.nz/ | https://cdn.rialto.co.nz/cdn/content/img/rialto-logo_white-on-trans-horiz.png?v=8WShZUuhdVSVLQMqdUD98EyDiDI | 2026-08-23 | Identification only |
 
 Silky Otter uses an initials fallback because its official site blocks asset retrieval and no reusable official mark was verified.
+
+The SHA-256 values pinned in `tests/cinema-brand-assets.test.ts` detect unreviewed local-asset changes. Update a pinned hash only after re-auditing the official source asset.

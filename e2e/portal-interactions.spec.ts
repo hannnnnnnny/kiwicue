@@ -932,6 +932,8 @@ test("movie search, dates, distance, language, maps, and official links work wit
   const firstCinemaAction = page.locator(".cinema-directory-actions a").first();
   await firstCinemaAction.focus();
   expect(await marks.first().evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe("none");
+  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("background-color", "rgb(29, 29, 31)");
+  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expectNoHorizontalOverflow(page);
 
   const targets = page.locator([

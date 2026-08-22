@@ -21,6 +21,8 @@
 - Asset test verifies the exact source manifest, safe local formats, and that EVENT and Rialto are byte-distinct.
 - Directory test verifies the semantic EVENT, Reading, and Rialto mappings.
 - Component test verifies Reading's dark backing and both action icons' 20 by 20 dimensions.
+- Component failure-path coverage verifies EVENT, Reading, and Rialto retain their dark backing and accessible initials if their official image fails.
+- SHA-256 coverage pins every audited local asset; hashes may change only after an official-source re-audit.
 - Browser test exercised the movie directory on desktop, tablet, and 375px mobile without overflow.
 
 ## Verification

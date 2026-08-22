@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -47,6 +48,16 @@ const assets = [
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const maxAssetBytes = 1024 * 1024;
+const auditedSha256: Readonly<Record<string, string>> = {
+  "academy.png": "BEA4C82964CD440E982FD0DBF280DB2916425221266825A2C8FA6E3D3DCE701D",
+  "event.svg": "7B9017AC95987FE7AAF3878455EC6A5C0CECE7AC6FB9D8EBE03FC853F4B861A2",
+  "hoyts.png": "971A2435F1F08386F701B64F2AA586138E4B55675307CB92791BA335FB314E06",
+  "reading.svg": "84950796F57EC95936BE6D96D7CA468C8ED86E221F23AFEFA59236AABF4B8087",
+  "bridgeway.png": "6FDFE37398ED0D651913C52F7676121E1FA03C217B10D3020FC2CC3274B04CA9",
+  "capitol.png": "974DC13B76FA373156854ED5B8ED635D2262AA32990AB229C63F480854FFF7F5",
+  "lido.png": "D5068CF866861B0D523ACE9F21BF928EF42C9E2069F91534B2126E2D0FB31CB0",
+  "rialto.png": "CAA6F4C9CC5EC52446BD077D0D8DD06EF63E8B61913EB762F4CA4D0DFC10CDA7",
+};
 
 function crc32(bytes: Buffer): number {
   let crc = 0xffffffff;
@@ -131,5 +142,17 @@ describe("cinema brand assets", () => {
     const rialto = readFileSync(resolve(process.cwd(), "public/cinemas/rialto.png"));
 
     expect(event.equals(rialto)).toBe(false);
+  });
+
+  it.each(assets)("matches the source-audited SHA-256 for $name", ({ name }) => {
+    const bytes = readFileSync(resolve(process.cwd(), "public", "cinemas", name));
+
+    expect(createHash("sha256").update(bytes).digest("hex").toUpperCase()).toBe(auditedSha256[name]);
+  });
+
+  it("explains that asset hashes change only after a source re-audit", () => {
+    const manifest = readFileSync(resolve(process.cwd(), "public/cinemas/SOURCES.md"), "utf8");
+
+    expect(manifest).toContain("Update a pinned hash only after re-auditing the official source asset.");
   });
 });

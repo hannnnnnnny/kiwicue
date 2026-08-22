@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CinemaDirectory } from "../components/cinema-directory";
@@ -24,6 +26,21 @@ describe("cinema directory brand marks", () => {
     render(<CinemaDirectory cinemas={AUCKLAND_CINEMAS} language="en" />);
 
     expect(screen.getByTestId("cinema-brand-reading-lynnmall")).toHaveClass("cinema-brand-mark-dark");
+  });
+
+  it("keeps dark-brand initials legible when official marks fail to load", () => {
+    render(<CinemaDirectory cinemas={AUCKLAND_CINEMAS} language="en" />);
+
+    for (const [id, label] of [["event-queen-street", "EC"], ["reading-lynnmall", "RC"], ["rialto-newmarket", "R"]]) {
+      const mark = screen.getByTestId(`cinema-brand-${id}`);
+      fireEvent.error(mark.querySelector("img")!);
+      expect(mark).toHaveClass("cinema-brand-mark-dark");
+      expect(mark).toHaveTextContent(label);
+      expect(mark.querySelector("img")).not.toBeInTheDocument();
+    }
+
+    const css = readFileSync(resolve(process.cwd(), "app/styles/movies.css"), "utf8");
+    expect(css).toMatch(/\.cinema-brand-mark-dark\s*\{[^}]*background:\s*var\(--portal-ink\);[^}]*color:\s*var\(--portal-white\);/s);
   });
 
   it("replaces an unavailable official mark with its initials", () => {
