@@ -1,4 +1,5 @@
 export type MovieDateFilter = "today" | "tomorrow" | "weekend" | "all";
+export type MovieCoverageState = "covered" | "not-covered";
 
 export type KiwiCueScreening = {
   id: string;

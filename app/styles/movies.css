@@ -370,6 +370,8 @@
 .movie-feed h2,
 .cinema-directory h2 { margin: var(--space-2) 0 0; font-size: clamp(1.5rem, 2.8vw, 2.2rem); letter-spacing: -.04em; }
 
+.movie-feed-checked { margin: var(--space-2) 0 0; color: var(--portal-muted); font-size: .75rem; }
+
 .movie-feed > header > span {
   min-width: 36px;
   height: 36px;

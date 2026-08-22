@@ -44,6 +44,12 @@ describe("movie preview grid", () => {
     expect(screen.queryByText("Verified Auckland session")).not.toBeInTheDocument();
   });
 
+  it("labels previews as metadata-only when Auckland is outside provider coverage", () => {
+    render(<MoviePreviewGrid movies={[movie]} state="ready" sessionState="not-covered" verifiedMovieIds={new Set()} language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
+    expect(screen.getByText("Preview only · no Auckland live-data coverage")).toBeVisible();
+    expect(screen.queryByText("Verified Auckland session")).not.toBeInTheDocument();
+  });
+
   it("promotes the first film as the editorial feature", () => {
     const secondMovie = { ...movie, id: 551, title: "Second Film" };
     const view = render(<MoviePreviewGrid movies={[movie, secondMovie]} state="ready" sessionState="empty" verifiedMovieIds={new Set()} language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   OpenCinemaClientError,
   buildOpenCinemaUrls,
+  fetchAucklandCinemaCoverage,
   fetchAucklandScreenings,
 } from "../lib/open-cinema";
 
@@ -47,7 +48,7 @@ describe("Open Cinema client", () => {
       formats: ["2D", "English subtitles"],
       is_sold_out: false,
       distance_km: 1.4,
-      checkout: { type: "deeplink", url: "https://tickets.example/screening-1" },
+      checkout: { type: "deeplink", url: "https://academycinemas.co.nz/screening-1" },
     }] }));
 
     const result = await fetchAucklandScreenings({ date: "weekend", now: NOW, query: "Whina", fetchImpl });
@@ -65,7 +66,7 @@ describe("Open Cinema client", () => {
       formats: ["2D", "English subtitles"],
       soldOut: false,
       distanceKilometres: 1.4,
-      bookingUrl: "https://tickets.example/screening-1",
+      bookingUrl: "https://academycinemas.co.nz/screening-1",
     }]);
   });
 
@@ -97,7 +98,7 @@ describe("Open Cinema client", () => {
       start_time: "2026-08-12T18:30:00+12:00",
       formats: ["2D"],
       is_sold_out: true,
-      checkout: { type: "deeplink", url: "https://tickets.example/valid" },
+      checkout: { type: "deeplink", url: "https://academycinemas.co.nz/valid" },
     };
     const invalid = [
       { ...valid, id: "" },
@@ -114,6 +115,23 @@ describe("Open Cinema client", () => {
     expect(result.map((screening) => screening.id)).toEqual(["valid"]);
   });
 
+  it("keeps a verified schedule but suppresses an unrecognized checkout host", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ screenings: [{
+      id: "screening-safe-data",
+      film_id: "film-1",
+      film_title: "Whina",
+      theater_id: "theater-1",
+      theater_name: "Academy Cinemas",
+      start_time: "2026-08-12T18:30:00+12:00",
+      formats: ["2D"],
+      checkout: { type: "deeplink", url: "https://lookalike-tickets.example/checkout" },
+    }] }));
+
+    const result = await fetchAucklandScreenings({ date: "today", now: NOW, query: null, fetchImpl });
+    expect(result).toHaveLength(1);
+    expect(result[0].bookingUrl).toBeNull();
+  });
+
   it("adds an optional server credential without leaking it into the URL", async () => {
     const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(input).toBeDefined();
@@ -125,6 +143,40 @@ describe("Open Cinema client", () => {
     const [url, init] = fetchImpl.mock.calls[0];
     expect(String(url)).not.toContain("secret-key");
     expect(new Headers(init?.headers).get("authorization")).toBe("Bearer secret-key");
+    expect((init as RequestInit & { next?: { revalidate: number } }).next?.revalidate).toBe(300);
+  });
+
+  it("reports when the authorized provider has no Auckland theater coverage", async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(input).toBeDefined();
+      expect(init).toBeDefined();
+      return jsonResponse({
+        theaters: [],
+        count: 0,
+        search_center: { lat: -36.8485, lon: 174.7633 },
+        radius_km: 100,
+      });
+    });
+
+    await expect(fetchAucklandCinemaCoverage({ fetchImpl, apiKey: "secret-key" }))
+      .resolves.toBe("not-covered");
+
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(String(url)).toContain("/api/v1/public/theaters");
+    expect(String(url)).not.toContain("secret-key");
+    expect(new Headers(init?.headers).get("authorization")).toBe("Bearer secret-key");
+    expect((init as RequestInit & { next?: { revalidate: number } }).next?.revalidate).toBe(3_600);
+  });
+
+  it("treats a positive validated theater count as Auckland coverage", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ theaters: [{ id: "academy" }], count: 1 }));
+    await expect(fetchAucklandCinemaCoverage({ fetchImpl })).resolves.toBe("covered");
+  });
+
+  it("fails closed when the theater coverage response is malformed", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ theaters: [], count: "many" }));
+    await expect(fetchAucklandCinemaCoverage({ fetchImpl }))
+      .rejects.toMatchObject({ code: "UPSTREAM_ERROR" });
   });
 
   it("maps busy and general upstream responses to stable errors", async () => {

@@ -42,7 +42,7 @@ describe("GET /api/movie-previews/[movieId]", () => {
     const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings);
 
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
-    expect(loadScreenings).toHaveBeenCalledWith({ query: "Fight Club", date: "all" });
+    expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "all" });
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({ movie, sessionStatus: "verified" });
@@ -72,8 +72,23 @@ describe("GET /api/movie-previews/[movieId]", () => {
     expect(response.status).toBe(200);
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "en" });
-    expect(loadScreenings).toHaveBeenCalledWith({ query: "Fight Club", date: "all" });
+    expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "all" });
     expect(await response.json()).toEqual({ movie: localizedMovie, sessionStatus: "verified" });
+  });
+
+  it("reports missing Auckland provider coverage without requesting a session catalog", async () => {
+    const loadScreenings = vi.fn();
+    const response = await handleMoviePreviewDetailRequest(
+      "550",
+      "en",
+      vi.fn().mockResolvedValue(movie),
+      loadScreenings,
+      new Date("2026-08-12T02:00:00.000Z"),
+      vi.fn().mockResolvedValue("not-covered"),
+    );
+
+    expect(loadScreenings).not.toHaveBeenCalled();
+    expect(await response.json()).toEqual({ movie, sessionStatus: "not-covered" });
   });
 
   it("keeps the preview available but reports when live session verification is unavailable", async () => {

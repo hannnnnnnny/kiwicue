@@ -305,13 +305,29 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     const requestUrl = route.request().url();
     const url = new URL(requestUrl);
     movieRequests.push(requestUrl);
+    const checkedAt = "2026-08-12T02:00:00.000Z";
     if (url.searchParams.get("q") === "Offline") {
-      return json(route, { screenings: [], source: "open-cinema", sourceState: "unavailable" });
+      return json(route, {
+        screenings: [], source: "open-cinema", sourceState: "unavailable",
+        coverageState: "unavailable", checkedAt,
+      });
+    }
+    if (url.searchParams.get("q") === "NoCoverage") {
+      return json(route, {
+        screenings: [], source: "open-cinema", sourceState: "not-covered",
+        coverageState: "not-covered", checkedAt,
+      });
     }
     if (url.searchParams.get("q") === "NoFilm") {
-      return json(route, { screenings: [], source: "open-cinema", sourceState: "empty" });
+      return json(route, {
+        screenings: [], source: "open-cinema", sourceState: "empty",
+        coverageState: "covered", checkedAt,
+      });
     }
-    return json(route, { screenings: [movieScreening], source: "open-cinema", sourceState: "ready" });
+    return json(route, {
+      screenings: [movieScreening], source: "open-cinema", sourceState: "ready",
+      coverageState: "covered", checkedAt,
+    });
   });
   await page.route("**/api/movie-previews**", async (route) => {
     const url = new URL(route.request().url());
@@ -915,6 +931,11 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await expect(page.getByText("No open-feed sessions found")).toBeVisible();
   await expect(page).toHaveURL(/\/movies\?q=NoFilm$/);
   expect(requests.movieRequests.at(-1)).toContain("q=NoFilm&date=today");
+
+  await input.fill("NoCoverage");
+  await page.getByRole("button", { name: "Search movies" }).click();
+  await expect(page.getByText("Auckland live-data coverage is not available yet")).toBeVisible();
+  await expect(page.getByText("Preview only · no Auckland live-data coverage")).toBeVisible();
 
   for (const [label, value] of [["Tomorrow", "tomorrow"], ["This weekend", "weekend"], ["All upcoming", "all"], ["Today", "today"]] as const) {
     await page.getByRole("button", { name: label }).click();
