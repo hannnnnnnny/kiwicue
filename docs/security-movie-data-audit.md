@@ -1,6 +1,6 @@
 # KiwiCue movie data and privacy audit
 
-Date: 2026-08-23  
+Date: 2026-08-23
 Scope: movie discovery, Auckland session verification, API credentials, location, bookmarks, and browser security headers.
 
 ## Trust boundary
