@@ -61,9 +61,11 @@ export function CinemaDirectory({ cinemas, language }: {
             const mapUrl = `https://www.openstreetmap.org/?mlat=${cinema.coordinates.latitude}&mlon=${cinema.coordinates.longitude}#map=16/${cinema.coordinates.latitude}/${cinema.coordinates.longitude}`;
             return (
               <li key={cinema.id}>
-                <div>
+                <div className="cinema-directory-identity">
                   <CinemaBrandMark asset={cinema.brandAsset} label={cinema.brandLabel} cinemaId={cinema.id} />
-                  <span>{cinema.chain}</span><h3>{cinema.name}</h3><p>{cinema.address}</p>{hasDistance(cinema) ? <strong>{content.away(cinema.distanceKilometres)}</strong> : null}
+                  <div>
+                    <span>{cinema.chain}</span><h3>{cinema.name}</h3><p>{cinema.address}</p>{hasDistance(cinema) ? <strong>{content.away(cinema.distanceKilometres)}</strong> : null}
+                  </div>
                 </div>
                 <div className="cinema-directory-actions">
                   <a href={cinema.sessionsUrl} target="_blank" rel="noreferrer noopener" aria-label={content.sessions(cinema.name)}><TicketIcon />{content.sessions(cinema.name)}</a>

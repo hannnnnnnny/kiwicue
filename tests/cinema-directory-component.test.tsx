@@ -25,6 +25,16 @@ describe("cinema directory brand marks", () => {
     expect(screen.getByTestId("cinema-brand-academy").querySelector("img")).not.toBeInTheDocument();
   });
 
+  it("groups each cinema mark with its text identity", () => {
+    render(<CinemaDirectory cinemas={AUCKLAND_CINEMAS} language="en" />);
+
+    const academyIdentity = screen.getByTestId("cinema-brand-academy").parentElement;
+
+    expect(document.querySelectorAll(".cinema-directory-identity")).toHaveLength(AUCKLAND_CINEMAS.length);
+    expect(academyIdentity).toHaveClass("cinema-directory-identity");
+    expect(academyIdentity).toHaveTextContent("Academy Cinemas");
+  });
+
   it("keeps accessible actions while marking decorative icons as hidden", () => {
     render(<CinemaDirectory cinemas={AUCKLAND_CINEMAS} language="en" />);
 
