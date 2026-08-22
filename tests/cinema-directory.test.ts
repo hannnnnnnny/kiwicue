@@ -19,6 +19,14 @@ describe("Auckland cinema directory", () => {
     }
   });
 
+  it("uses bounded local brand assets with deterministic fallbacks", () => {
+    for (const cinema of AUCKLAND_CINEMAS) {
+      expect(cinema.brandLabel).toMatch(/^[A-Z0-9]{1,3}$/);
+      expect(cinema.brandAsset === null || /^\/cinemas\/[a-z-]+\.(?:png|svg)$/.test(cinema.brandAsset)).toBe(true);
+    }
+    expect(AUCKLAND_CINEMAS.find(({ id }) => id === "silky-otter-orakei")?.brandAsset).toBeNull();
+  });
+
   it("matches name, chain, suburb, and address without case or diacritic sensitivity", () => {
     expect(filterCinemas(AUCKLAND_CINEMAS, "academy").map((cinema) => cinema.id)).toContain("academy");
     expect(filterCinemas(AUCKLAND_CINEMAS, "HOYTS").every((cinema) => cinema.chain === "HOYTS")).toBe(true);
