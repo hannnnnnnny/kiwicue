@@ -19,7 +19,7 @@ On 2026-08-23 the authenticated Open Cinema theater endpoint returned `count: 0`
 
 - Evidence: `lib/open-cinema.ts` validates the authorized `/theaters` response; `app/api/movies/route.ts` fails closed before requesting or displaying screenings when coverage is absent.
 - Previous impact: an empty upstream response could be read as “no Auckland films are showing” even when the provider simply had no Auckland coverage.
-- Resolution: the API now distinguishes `covered`, `not-covered`, and `unavailable`, includes a server-generated `checkedAt` timestamp, and the bilingual UI explains the difference.
+- Resolution: the API now distinguishes `covered`, `not-covered`, and `unavailable`, and includes a server-generated `checkedAt` timestamp. When coverage is absent or unavailable, the UI omits the zero-count live module and session-only date controls, moves official cinema links ahead of metadata previews, and changes the heading so it does not imply an integrated timetable.
 - Verification: `tests/open-cinema.test.ts`, `tests/movies-route.test.ts`, `tests/movie-screening-feed.test.tsx`, and `tests/movies-page-content.test.tsx`.
 
 ### SEC-02 — Upstream quota amplification and query disclosure (resolved, high)
@@ -60,6 +60,18 @@ On 2026-08-23 the authenticated Open Cinema theater endpoint returned `count: 0`
 ## Public API authentication decision
 
 `GET /api/movies` and movie-preview routes are intentionally public and read-only because the website must work without accounts. They expose only already-public event/movie data and do not accept mutations. This is the documented exception to the default-authentication rule. Abuse controls are bounded input, duplicate-parameter rejection, fixed upstream query shapes, upstream caching, provider rate limits, defensive parsing, and safe error responses.
+
+## Authorized provider decision
+
+| Source | What it can prove | Access boundary | KiwiCue decision |
+| --- | --- | --- | --- |
+| Open Cinema Project | Upcoming sessions from cinemas in its current coverage | Free public API with attribution and fair-use limits | Integrated; fail closed when Auckland coverage is absent |
+| Veezi `WebSession` | Future, open, public, web-sale sessions for one Veezi site | Access token is associated with a cinema site | Adapter can be added only after a cinema grants a token or written syndication permission |
+| movieXchange / Vista | Chain sites, films, showtimes, ticket links and availability | Client credentials and exhibitor trust; calls must stay behind a secure server and be cached | Preferred multi-chain option if licensed credentials become available |
+| TMDB | NZ release metadata, artwork, synopsis and trailers | Server-side read token; attribution and licensing conditions apply | Discovery only; never treated as proof of an Auckland session |
+| Cinema websites | Current official schedules and booking | Human-facing public pages; no general republication licence established | Link only; do not scrape or re-publish schedules without permission |
+
+There is currently no anonymous, licensed, no-cost API that supplies a complete Auckland-wide timetable. KiwiCue must not infer or manufacture live status from a release date.
 
 ## Residual risks and operating rules
 
