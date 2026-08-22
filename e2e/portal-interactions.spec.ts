@@ -932,17 +932,19 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await expect(page).toHaveURL(/\/movies\?q=NoFilm$/);
   expect(requests.movieRequests.at(-1)).toContain("q=NoFilm&date=today");
 
+  for (const [label, value] of [["Tomorrow", "tomorrow"], ["This weekend", "weekend"], ["All upcoming", "all"], ["Today", "today"]] as const) {
+    await page.getByRole("button", { name: label }).click();
+    await expect.poll(() => new URL(requests.movieRequests.at(-1) ?? "http://invalid").searchParams.get("date")).toBe(value);
+  }
+
   await input.fill("NoCoverage");
   await page.getByRole("button", { name: "Search movies" }).click();
   await expect(page.getByRole("heading", { name: "Live movie sessions" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
   await expect(page.getByText("Preview only · no Auckland live-data coverage")).toBeVisible();
-
-  for (const [label, value] of [["Tomorrow", "tomorrow"], ["This weekend", "weekend"], ["All upcoming", "all"], ["Today", "today"]] as const) {
-    await page.getByRole("button", { name: label }).click();
-    await expect.poll(() => new URL(requests.movieRequests.at(-1) ?? "http://invalid").searchParams.get("date")).toBe(value);
-  }
+  await expect(page.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Choose a date" })).toHaveCount(0);
 
   await input.fill("Offline");
   await page.getByRole("button", { name: "Search movies" }).click();

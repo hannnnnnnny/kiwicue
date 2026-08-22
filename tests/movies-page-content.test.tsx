@@ -77,6 +77,8 @@ describe("movies page", () => {
     renderPage();
 
     const directory = await screen.findByRole("heading", { name: "Auckland cinema directory" });
+    expect(screen.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
+    expect(screen.queryByRole("group", { name: "Choose a date" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Live movie sessions" })).not.toBeInTheDocument();
     expect(screen.queryByText("Auckland live-data coverage is not available yet")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();

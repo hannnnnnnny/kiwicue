@@ -32,6 +32,7 @@ export function MovieSearchPanel(props: {
   query: string;
   date: MovieDateFilter;
   loading: boolean;
+  showDateFilters?: boolean;
   onQueryChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onClear: () => void;
@@ -61,7 +62,7 @@ export function MovieSearchPanel(props: {
           {content.clear}
         </button>
       </form>
-      <fieldset className="movie-date-filter">
+      {props.showDateFilters !== false ? <fieldset className="movie-date-filter">
         <legend>{content.dates}</legend>
         <div>
           {DATE_FILTERS.map((value) => (
@@ -75,7 +76,7 @@ export function MovieSearchPanel(props: {
             </button>
           ))}
         </div>
-      </fieldset>
+      </fieldset> : null}
     </section>
   );
 }

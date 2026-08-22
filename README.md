@@ -93,6 +93,7 @@ flowchart LR
 - npm
 - Ticketmaster Consumer Key
 - TMDB API Read Access Token
+- Open Cinema API key (free; optional for local fallback, required for the production quota)
 
 ### Setup
 
@@ -108,6 +109,7 @@ Add the server-side credentials to `.env.local`:
 ```env
 TICKETMASTER_API_KEY=your_ticketmaster_consumer_key
 TMDB_READ_ACCESS_TOKEN=your_tmdb_read_access_token
+OPEN_CINEMA_API_KEY=your_open_cinema_api_key
 ```
 
 Start the development server:
@@ -157,7 +159,7 @@ kiwicue/
 
 ## Deployment
 
-KiwiCue is deployed from this repository to Vercel. Configure `TICKETMASTER_API_KEY` and `TMDB_READ_ACCESS_TOKEN` as Sensitive production environment variables before deploying.
+KiwiCue is deployed from this repository to Vercel. Configure `TICKETMASTER_API_KEY`, `TMDB_READ_ACCESS_TOKEN`, and `OPEN_CINEMA_API_KEY` as Sensitive production environment variables before deploying.
 
 ```bash
 vercel link --yes --project kiwicue
