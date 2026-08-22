@@ -34,6 +34,8 @@ const copy = {
     eyebrow: "Auckland · Film finder",
     title: "Find films and check Auckland sessions",
     intro: "Browse recent New Zealand movie previews, then look for a verified Auckland session before planning your trip.",
+    fallbackTitle: "Find a film, then check a nearby cinema",
+    fallbackIntro: "Search movie previews or a nearby Auckland cinema, then open its official site for today's confirmed sessions.",
     distance: "Sort cinemas by my distance",
     locating: "Finding your location…",
     privacy: "Your location stays on this device and is never saved.",
@@ -44,6 +46,8 @@ const copy = {
     eyebrow: "奥克兰 · 电影检索",
     title: "查找电影并核对奥克兰场次",
     intro: "先浏览新西兰近期电影预览，再查看是否有已核实的奥克兰场次，出发前请以影院官网为准。",
+    fallbackTitle: "先找电影，再查看附近影院",
+    fallbackIntro: "搜索电影预览或附近的奥克兰影院，然后前往影院官网确认今天的真实场次。",
     distance: "按离我的距离排列影院",
     locating: "正在获取位置…",
     privacy: "你的位置只在当前设备使用，不会被保存。",
@@ -194,7 +198,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     [previewVerificationMovies, screenings],
   );
   const sessionState = feedState === "error" ? "unavailable" : feedState;
-  const showLiveFeed = feedState !== "not-covered" && feedState !== "unavailable";
+  const showLiveFeed = feedState === "loading" || feedState === "ready" || feedState === "empty";
   const cinemaAccess = (
     <>
       <aside className="cinema-tools" aria-label={content.distance}>
@@ -252,10 +256,11 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
       <PortalHeader currentPage="movies" skipTarget={showLiveFeed ? "movie-results" : "cinema-directory"} />
       <section className="movies-command" aria-labelledby="movies-title">
         <p className="eyebrow">{content.eyebrow}</p>
-        <h1 className="editorial-display" id="movies-title">{content.title}</h1>
-        <p className="movies-intro">{content.intro}</p>
+        <h1 className="editorial-display" id="movies-title">{showLiveFeed ? content.title : content.fallbackTitle}</h1>
+        <p className="movies-intro">{showLiveFeed ? content.intro : content.fallbackIntro}</p>
         <MovieSearchPanel
           language={language} query={query} date={date} loading={feedState === "loading" || previewState === "loading"}
+          showDateFilters={showLiveFeed}
           onQueryChange={setQuery} onSubmit={submitSearch} onClear={clearSearch} onDateChange={changeDate}
         />
       </section>
