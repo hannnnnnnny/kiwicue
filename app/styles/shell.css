@@ -321,8 +321,8 @@
 
 .events-page .portal-navigation-shell {
   width: min(var(--container), calc(100% - 48px));
-  grid-template-columns: minmax(220px, .65fr) minmax(340px, 1fr) minmax(440px, 1.1fr);
-  align-items: end;
+  grid-template-columns: minmax(220px, .65fr) minmax(0, 1.35fr);
+  align-items: start;
   gap: clamp(var(--space-6), 3vw, 40px);
   margin-inline: auto;
   padding: var(--space-6);
@@ -357,6 +357,59 @@
 }
 
 .portal-filter-group { min-width: 0; }
+
+.event-category-group {
+  grid-column: 1 / -1;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--portal-line);
+}
+
+.event-category-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.event-category-card {
+  min-width: 0;
+  min-height: 88px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+  gap: 3px;
+  padding: var(--space-3);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-control);
+  background: var(--portal-bg);
+  color: var(--portal-ink);
+  text-decoration: none;
+  transition: border-color var(--motion-fast), background var(--motion-fast), transform var(--motion-fast);
+}
+
+.event-category-card:hover {
+  border-color: rgb(20 108 91 / 48%);
+  background: var(--portal-brand-soft);
+  transform: translateY(-1px);
+}
+
+.event-category-card[aria-current="page"] {
+  border-color: var(--portal-brand);
+  background: var(--portal-brand);
+  color: var(--portal-white);
+}
+
+.event-category-code {
+  color: var(--portal-accent);
+  font-size: .62rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .08em;
+}
+
+.event-category-card[aria-current="page"] .event-category-code { color: var(--portal-raised); }
+.event-category-card strong { font-size: .82rem; line-height: 1.2; }
+.event-category-card small { color: var(--portal-muted); font-size: .66rem; line-height: 1.35; }
+.event-category-card[aria-current="page"] small { color: rgb(255 255 255 / 78%); }
 
 .portal-filter-label {
   margin: 0 0 var(--space-2);

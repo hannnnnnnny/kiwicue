@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EventsPage, { parseEventPageSearchParams } from "../app/events/page";
 import { LanguageProvider } from "../components/language-provider";
@@ -85,8 +85,9 @@ describe("bilingual route content", () => {
 
     render(<LanguageProvider>{filteredPage}</LanguageProvider>);
 
-    expect(screen.getByRole("link", { name: "Concerts" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "All" })).toHaveAttribute("href", "/events");
+    const categoryNav = screen.getByRole("navigation", { name: "Event categories" });
+    expect(within(categoryNav).getByRole("link", { name: /Concerts/ })).toHaveAttribute("aria-current", "page");
+    expect(within(categoryNav).getByRole("link", { name: /^All/ })).toHaveAttribute("href", "/events");
     expect(screen.queryByRole("link", { name: "Clear filters" })).not.toBeInTheDocument();
 
     cleanup();
@@ -95,7 +96,8 @@ describe("bilingual route content", () => {
     });
     render(<LanguageProvider>{invalidPage}</LanguageProvider>);
 
-    expect(screen.getByRole("link", { name: "All" })).toHaveAttribute("aria-current", "page");
+    const invalidCategoryNav = screen.getByRole("navigation", { name: "Event categories" });
+    expect(within(invalidCategoryNav).getByRole("link", { name: /^All/ })).toHaveAttribute("aria-current", "page");
   });
 
   it("labels the market source as KiwiCue-verified instead of Ticketmaster", async () => {

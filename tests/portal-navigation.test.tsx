@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventCategoryNav } from "../components/event-category-nav";
 import { EventSearchPanel } from "../components/event-search-panel";
@@ -188,12 +188,17 @@ describe("portal navigation", () => {
       .toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event categories" }))
       .toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Concerts" }))
+    expect(screen.getByRole("link", { name: /Concerts/ }))
       .toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Markets" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Markets/ })).toHaveAttribute(
       "href",
       "/events?window=weekend&category=markets&q=Taylor&venue=venue-1",
     );
+    expect(screen.getByRole("link", { name: /Sports/ })).toHaveAttribute(
+      "href",
+      "/events?window=weekend&category=sports&q=Taylor&venue=venue-1",
+    );
+    expect(screen.getByText("Live sport across Auckland")).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Event time range" }))
       .toBeInTheDocument();
     expect(screen.getByRole("link", { name: "This weekend" }))
@@ -213,10 +218,11 @@ describe("portal navigation", () => {
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "活动类型" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "时间范围" })).toBeInTheDocument();
-    for (const label of [
-      "全部", "演唱会", "话剧演出", "市集", "节日活动",
-      "未来 7 天", "本周末", "未来 30 天", "全部未来",
-    ]) {
+    const categoryNav = screen.getByRole("navigation", { name: "活动类型" });
+    for (const label of ["全部", "演唱会", "话剧演出", "市集", "节日活动", "体育赛事"]) {
+      expect(within(categoryNav).getByRole("link", { name: new RegExp(`^${label}`) })).toBeInTheDocument();
+    }
+    for (const label of ["未来 7 天", "本周末", "未来 30 天", "全部未来"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
     expect(fetch).toHaveBeenCalledTimes(1);

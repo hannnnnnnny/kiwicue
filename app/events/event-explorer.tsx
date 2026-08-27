@@ -63,7 +63,7 @@ async function requestEventsFromApi({
 const copy = {
   en: {
     feedTitle: "Happening soon",
-    feedIntro: "The first event is our quickest pick. Everything else stays in date order.",
+    feedIntro: "Events stay in date order so the next useful option is easy to scan.",
     loading: "Scanning Auckland for what is next",
     count: (isFiltered: boolean, total: number, shown: number) => `${total} ${isFiltered ? "matching" : "upcoming"} Ticketmaster ${total === 1 ? "event" : "events"} · ${shown} shown`,
     sources: "Official source links included",
@@ -91,7 +91,7 @@ const copy = {
   },
   zh: {
     feedTitle: "即将发生",
-    feedIntro: "第一个是快速推荐，其余活动继续按时间排列。",
+    feedIntro: "活动继续按时间排列，方便快速找到下一项可选安排。",
     loading: "正在扫描奥克兰近期活动",
     count: (isFiltered: boolean, total: number, shown: number) => isFiltered
       ? `Ticketmaster 共找到 ${total} 个匹配活动 · 已显示 ${shown} 个`
