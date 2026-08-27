@@ -149,6 +149,24 @@ describe("buildEventRecommendations", () => {
     expect(result.somethingDifferent.map((item) => item.event.id)).toEqual(["market", "festival"]);
   });
 
+  it("omits something different when only the saved majority category remains", () => {
+    const savedEvents = [
+      event("saved-a", "2026-09-10T07:00:00.000Z"),
+      event("saved-b", "2026-09-11T07:00:00.000Z"),
+    ];
+    const events = [
+      event("music-a", "2026-09-01T07:00:00.000Z"),
+      event("music-b", "2026-09-02T07:00:00.000Z"),
+      event("music-c", "2026-09-03T07:00:00.000Z"),
+      event("music-d", "2026-09-04T07:00:00.000Z"),
+    ];
+
+    const result = buildEventRecommendations({ events, savedEvents, now: NOW });
+
+    expect(result.startHere).toHaveLength(3);
+    expect(result.somethingDifferent).toEqual([]);
+  });
+
   it("uses truthful reasons for sparse events and recognises verified market availability", () => {
     const sparse = event("sparse", "2026-09-20T07:00:00.000Z", {
       imageUrl: null,

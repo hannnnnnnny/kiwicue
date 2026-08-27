@@ -196,10 +196,10 @@ export function buildEventRecommendations(input: {
   );
   weekend.forEach((item) => used.add(item.event.id));
   const remaining = available.filter((item) => !used.has(item.event.id));
-  const alternatives = context.dominantCategory
+  const differentPool = context.dominantCategory
     ? remaining.filter((item) => item.category !== context.dominantCategory)
     : remaining;
-  const different = chooseDiverse(alternatives.length ? alternatives : remaining, 4);
+  const different = chooseDiverse(differentPool, 4);
   return {
     startHere: recommendations(startHere, context),
     weekend: recommendations(weekend, context),
