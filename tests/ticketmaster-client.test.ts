@@ -122,11 +122,12 @@ describe("Ticketmaster Discovery client", () => {
     },
   );
 
-  it("accepts only the four public category keys", () => {
+  it("accepts only the five public category keys", () => {
     expect(parseEventCategory("concerts")).toBe("concerts");
     expect(parseEventCategory("theatre")).toBe("theatre");
     expect(parseEventCategory("markets")).toBe("markets");
     expect(parseEventCategory("festivals")).toBe("festivals");
+    expect(parseEventCategory("sports")).toBe("sports");
     expect(parseEventCategory("Music")).toBeNull();
     expect(parseEventCategory(["concerts", "theatre"])).toBeNull();
     expect(parseEventCategory(undefined)).toBeNull();
@@ -137,6 +138,7 @@ describe("Ticketmaster Discovery client", () => {
     ["theatre", "classificationName", "Arts & Theatre"],
     ["markets", "keyword", "market"],
     ["festivals", "keyword", "festival"],
+    ["sports", "classificationName", "Sports"],
   ] as const)("maps %s to the Ticketmaster %s filter", (category, parameter, expected) => {
     const url = buildAucklandEventsUrl({
       apiKey: "server-key",

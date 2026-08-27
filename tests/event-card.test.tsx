@@ -128,6 +128,9 @@ describe("portal event card", () => {
     expect(css).toMatch(/\.event-grid\s*>\s*li:first-child\s*\{[^}]*grid-column:\s*span\s*2/s);
     expect(css).toMatch(/\.events-page \.event-feed-heading[^}]*font-size:\s*clamp\(/s);
     expect(css).toMatch(/\.events-page \.portal-navigation-shell[^}]*background:\s*var\(--portal-raised\)/s);
+    expect(css).toMatch(/\.event-category-grid\s*\{[^}]*grid-template-columns:\s*repeat\(6,/s);
+    expect(css).toMatch(/\.event-category-card\s*\{[^}]*min-height:\s*88px/s);
+    expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*\.event-category-grid[^}]*grid-template-columns:\s*repeat\(2,/s);
     expect(css).toMatch(/@media \(max-width:\s*600px\)[\s\S]*\.event-grid[^}]*grid-template-columns:\s*1fr/s);
     expect(css).toMatch(/\.portal-event-card\[data-layout="feature"\] \.portal-event-link[^}]*grid-template-columns:/s);
     expect(css).toMatch(/\.portal-event-media\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*10/s);

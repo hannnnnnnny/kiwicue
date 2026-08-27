@@ -94,5 +94,6 @@ a:active { transform: translateY(1px); }
 
   button:active,
   a:active,
+  .event-category-card:hover,
   .portal-event-card:hover .portal-event-media img { transform: none !important; }
 }

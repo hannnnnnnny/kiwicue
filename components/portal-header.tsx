@@ -16,10 +16,12 @@ const copy = {
     skipMoviePreviews: "Skip to movie previews",
     skipCinemaDirectory: "Skip to Auckland cinema links",
     skipMovieDetail: "Skip to movie details",
+    skipRecommendations: "Skip to recommendations",
     homeLabel: "KiwiCue Auckland events home",
     primaryNavigation: "Primary navigation",
     events: "Events",
     movies: "Movies",
+    recommendations: "Picks",
     saved: "Saved",
     savedLabel: (count: number) => `Saved events, ${count}`,
   },
@@ -32,17 +34,19 @@ const copy = {
     skipMoviePreviews: "跳到电影预览",
     skipCinemaDirectory: "跳到奥克兰影院入口",
     skipMovieDetail: "跳到电影详情",
+    skipRecommendations: "跳到推荐内容",
     homeLabel: "KiwiCue 奥克兰活动首页",
     primaryNavigation: "主要导航",
     events: "活动",
     movies: "电影",
+    recommendations: "推荐",
     saved: "收藏",
     savedLabel: (count: number) => `收藏活动，${count} 个`,
   },
 } as const;
 
-type PortalPage = "events" | "movies" | "saved";
-type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory";
+type PortalPage = "events" | "movies" | "recommendations" | "saved";
+type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
   const labels: Record<SkipTarget, string> = {
@@ -54,6 +58,7 @@ function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof c
     "movie-previews": content.skipMoviePreviews,
     "cinema-directory": content.skipCinemaDirectory,
     "movie-detail": content.skipMovieDetail,
+    "recommendation-results": content.skipRecommendations,
   };
   return labels[skipTarget];
 }
@@ -101,6 +106,13 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
                 aria-current={activePage === "events" ? "page" : undefined}
               >
                 {content.events}
+              </Link>
+              <Link
+                className="portal-header-link"
+                href="/recommendations"
+                aria-current={activePage === "recommendations" ? "page" : undefined}
+              >
+                {content.recommendations}
               </Link>
               <Link
                 className="portal-header-link"

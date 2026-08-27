@@ -83,6 +83,7 @@ const CATEGORY_FILTERS: Record<EventCategory, readonly [string, string]> = {
   theatre: ["classificationName", "Arts & Theatre"],
   markets: ["keyword", "market"],
   festivals: ["keyword", "festival"],
+  sports: ["classificationName", "Sports"],
 };
 
 function toDiscoveryDateTime(date: Date): string {

@@ -36,7 +36,7 @@ export function EventWindowNav({
   const content = copy[language];
 
   return (
-    <section className="portal-filter-group">
+    <section className="portal-filter-group event-window-group">
       <p className="portal-filter-label">{content.title}</p>
       <nav className="portal-nav-track" aria-label={content.label}>
         {EVENT_WINDOWS.map((value: EventWindow) => (

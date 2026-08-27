@@ -3,6 +3,7 @@ export const EVENT_CATEGORIES = [
   "theatre",
   "markets",
   "festivals",
+  "sports",
 ] as const;
 
 export type EventCategory = (typeof EVENT_CATEGORIES)[number];

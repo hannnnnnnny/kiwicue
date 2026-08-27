@@ -26,10 +26,11 @@ const copy = {
   },
 } as const;
 
-export function EventCard({ event, index, language }: {
+export function EventCard({ event, index, language, rankLabel }: {
   event: KiwiCueEvent;
   index: number;
   language: Language;
+  rankLabel?: (position: number) => string;
 }) {
   const content = copy[language];
   const displayName = eventDisplayName(event, language);
@@ -49,7 +50,7 @@ export function EventCard({ event, index, language }: {
         aria-label={content.open(displayName)}
       >
         <div className="portal-event-body">
-          <span className="portal-event-rank" aria-label={content.position(index + 1)}>
+          <span className="portal-event-rank" aria-label={(rankLabel ?? content.position)(index + 1)}>
             {String(index + 1).padStart(2, "0")}
           </span>
           <h2 id={titleId}>{displayName}</h2>
