@@ -31,6 +31,7 @@ const copy = {
     partial: "Some recommendations could not be refreshed.",
     partialBody: "Showing the useful picks we could verify. Try again to restore the full mix.",
     retry: "Try again",
+    curated: "CURATED",
     startTitle: "Start here",
     startBody: "The strongest mix of timing, detail and your saved preferences.",
     weekendTitle: "This weekend",
@@ -53,6 +54,7 @@ const copy = {
     partial: "部分推荐暂时无法刷新。",
     partialBody: "先显示目前能够核实的推荐；可以重试以恢复完整内容。",
     retry: "重试",
+    curated: "精选",
     startTitle: "从这里开始",
     startBody: "综合时间、信息完整度和收藏偏好的优先选择。",
     weekendTitle: "本周末",
@@ -81,9 +83,10 @@ async function requestRecommendationFeed(feed: RecommendationFeed, signal?: Abor
   return body.events;
 }
 
-function RecommendationSection({ title, body, items, language, offset }: {
+function RecommendationSection({ title, body, marker, items, language, offset }: {
   title: string;
   body: string;
+  marker: string;
   items: EventRecommendation[];
   language: "en" | "zh";
   offset: number;
@@ -92,7 +95,7 @@ function RecommendationSection({ title, body, items, language, offset }: {
   return (
     <section className="recommendation-section" aria-labelledby={`recommendation-${offset}`}>
       <header>
-        <p>{String(offset + 1).padStart(2, "0")} / CURATED</p>
+        <p>{String(offset + 1).padStart(2, "0")} / {marker}</p>
         <h2 id={`recommendation-${offset}`}>{title}</h2>
         <span>{body}</span>
       </header>
@@ -188,9 +191,9 @@ export function RecommendationsPageContent({
         )}
         {sections && hasPicks && (
           <div className="recommendation-sections">
-            <RecommendationSection title={content.startTitle} body={content.startBody} items={sections.startHere} language={language} offset={0} />
-            <RecommendationSection title={content.weekendTitle} body={content.weekendBody} items={sections.weekend} language={language} offset={3} />
-            <RecommendationSection title={content.differentTitle} body={content.differentBody} items={sections.somethingDifferent} language={language} offset={7} />
+            <RecommendationSection title={content.startTitle} body={content.startBody} marker={content.curated} items={sections.startHere} language={language} offset={0} />
+            <RecommendationSection title={content.weekendTitle} body={content.weekendBody} marker={content.curated} items={sections.weekend} language={language} offset={3} />
+            <RecommendationSection title={content.differentTitle} body={content.differentBody} marker={content.curated} items={sections.somethingDifferent} language={language} offset={7} />
           </div>
         )}
       </div>

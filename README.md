@@ -15,9 +15,10 @@ KiwiCue is a bilingual Auckland event and movie discovery platform. It brings co
 
 ## Features
 
-- Browse Auckland concerts, theatre, markets, festivals and community events
+- Browse Auckland concerts, theatre, markets, festivals, sports and community events through descriptive category cards
 - Search by event name or venue
 - Filter by category and time window: next 7 days, this weekend, next 30 days or all upcoming
+- Open a transparent recommendations page with start-here, weekend and try-something-different picks
 - View event details, venue maps and official source links
 - Find verified Auckland cinema sessions and recent movie releases
 - Keep live screening data separate from movie-release previews
@@ -62,6 +63,8 @@ flowchart LR
     E --> F[Events and movie UI]
     F --> G[Official booking source]
     F --> H[Browser bookmarks]
+    H --> I[Local recommendation preferences]
+    E --> I
 ```
 
 ### Main Routes
@@ -71,6 +74,7 @@ flowchart LR
 | `/` | Bilingual landing page and featured Auckland events |
 | `/events` | Event search, category filters and time-window browsing |
 | `/events/[eventId]` | Event details, venue information and official links |
+| `/recommendations` | Explainable event picks using timing, detail quality and browser-local saved preferences |
 | `/movies` | Live sessions, movie previews and Auckland cinema directory |
 | `/movies/[movieId]` | Movie details, ratings, metadata and trailers |
 | `/saved` | Events stored in the current browser |
