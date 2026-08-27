@@ -358,6 +358,11 @@
 
 .portal-filter-group { min-width: 0; }
 
+.event-window-group {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .event-category-group {
   grid-column: 1 / -1;
   padding-top: var(--space-4);
@@ -389,6 +394,7 @@
 .event-category-card:hover {
   border-color: rgb(20 108 91 / 48%);
   background: var(--portal-brand-soft);
+  color: var(--portal-brand);
   transform: translateY(-1px);
 }
 

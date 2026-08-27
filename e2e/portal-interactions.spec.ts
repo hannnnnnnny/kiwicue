@@ -465,7 +465,8 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
       ));
     expect(filterIsFullyVisible).toBe(true);
 
-    const category = page.getByRole("link", { name: "Concerts", exact: true });
+    const category = page.getByRole("navigation", { name: "Event categories" })
+      .getByRole("link", { name: /^Concerts/ });
     await category.hover();
     await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
       .toBe("rgb(20, 108, 91)");
@@ -498,14 +499,16 @@ test("keyboard reaches every portal control in document order with visible focus
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
   await tabTo(page, page.getByRole("link", { name: "Events", exact: true }));
   await tabTo(page, page.getByRole("link", { name: "Movies", exact: true }));
+  await tabTo(page, page.getByRole("link", { name: "Picks", exact: true }));
   await tabTo(page, page.getByRole("link", { name: "Saved events, 0" }));
   await tabTo(page, page.getByRole("button", { name: "切换到中文" }));
   await tabTo(page, page.getByLabel("Activity name"));
   await tabTo(page, page.getByLabel("Venue"));
   await tabTo(page, page.getByRole("button", { name: "Search events" }));
 
-  for (const label of ["All", "Concerts", "Theatre", "Markets", "Festivals"]) {
-    await tabTo(page, page.getByRole("link", { name: label, exact: true }));
+  const categoryNav = page.getByRole("navigation", { name: "Event categories" });
+  for (const label of ["All", "Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
+    await tabTo(page, categoryNav.getByRole("link", { name: new RegExp(`^${label}`) }));
   }
   for (const label of ["Next 7 days", "This weekend", "Next 30 days", "All future"]) {
     await tabTo(page, page.getByRole("link", { name: label, exact: true }));
@@ -610,18 +613,20 @@ test("every category and time link navigates, preserves other filters, and reque
   const errors = runtimeErrors(page);
   const requests = await installRoutes(page);
   const categories = [
-    ["Concerts", "concerts"], ["Theatre", "theatre"], ["Markets", "markets"], ["Festivals", "festivals"],
+    ["Concerts", "concerts"], ["Theatre", "theatre"], ["Markets", "markets"], ["Festivals", "festivals"], ["Sports", "sports"],
   ] as const;
   for (const [label, value] of categories) {
     await page.goto("/events?window=weekend&q=Taylor&venue=civic");
     await expect(page.getByRole("heading", { name: "Taylor Night Auckland" })).toBeVisible();
     const before = requests.eventRequests.length;
-    await page.getByRole("link", { name: label, exact: true }).click();
+    await page.getByRole("navigation", { name: "Event categories" })
+      .getByRole("link", { name: new RegExp(`^${label}`) }).click();
     await expect(page).toHaveURL(new RegExp(`window=weekend&category=${value}&q=Taylor&venue=civic$`));
     await expect.poll(() => requests.eventRequests.length).toBeGreaterThan(before);
   }
   await page.goto("/events?window=weekend&category=concerts&q=Taylor&venue=civic");
-  await page.getByRole("link", { name: "All", exact: true }).click();
+  await page.getByRole("navigation", { name: "Event categories" })
+    .getByRole("link", { name: /^All/ }).click();
   await expect(page).toHaveURL(/window=weekend&q=Taylor&venue=civic$/);
 
   const windows = [

@@ -16,6 +16,7 @@
   .events-page .portal-navigation-shell { grid-template-columns: 1fr; }
   .portal-filter-intro { grid-column: auto; }
   .event-category-group { grid-column: auto; }
+  .event-window-group { grid-column: auto; grid-row: auto; }
   .portal-command-inner {
     grid-template-columns: 1fr;
     gap: var(--space-8);
@@ -117,7 +118,7 @@
   .portal-header-actions { width: 100%; justify-content: space-between; gap: 0; border-top: 1px solid var(--portal-line); }
   .portal-primary-nav { flex: 1; justify-content: space-between; }
   .portal-header-link,
-  .language-toggle { padding-inline: var(--space-2); }
+  .language-toggle { min-width: 44px; padding-inline: var(--space-2); }
   .saved-link strong { min-width: 20px; height: 20px; }
   .portal-command { padding-top: var(--space-6); }
   .events-page .portal-command { padding-top: 0; }
