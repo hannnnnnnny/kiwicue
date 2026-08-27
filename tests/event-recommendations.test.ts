@@ -86,12 +86,15 @@ describe("buildEventRecommendations", () => {
         event("sat", "2026-08-29T02:00:00.000Z"),
         event("sun", "2026-08-30T02:00:00.000Z", { category: "Sports" }),
         event("monday", "2026-08-31T02:00:00.000Z", { category: "Arts & Theatre" }),
+        event("sat-later", "2026-08-29T05:00:00.000Z", { category: "Market" }),
+        event("sun-later", "2026-08-30T05:00:00.000Z", { category: "Festival" }),
       ],
       savedEvents: [],
       now: NOW,
     });
 
-    expect(result.weekend.map((item) => item.event.id)).toEqual(["sat", "sun"]);
+    expect(result.startHere.map((item) => item.event.id)).toEqual(["sat", "sat-later", "sun"]);
+    expect(result.weekend.map((item) => item.event.id)).toEqual(["sun-later"]);
     expect(new Set(recommendedIds(result)).size).toBe(recommendedIds(result).length);
   });
 
@@ -118,6 +121,8 @@ describe("buildEventRecommendations", () => {
       event("a", "2026-09-08T07:00:00.000Z", { name: "Alpha" }),
       event("sport", "2026-09-09T07:00:00.000Z", { category: "Sports" }),
       event("market", "2026-09-12T07:00:00.000Z", { category: "Market" }),
+      event("theatre", "2026-09-13T07:00:00.000Z", { category: "Arts & Theatre" }),
+      event("sport-later", "2026-09-14T07:00:00.000Z", { category: "Sports" }),
     ];
 
     const first = buildEventRecommendations({ events, savedEvents, now: NOW });
@@ -125,5 +130,41 @@ describe("buildEventRecommendations", () => {
 
     expect(first.startHere.map((item) => item.event.id)).toEqual(second.startHere.map((item) => item.event.id));
     expect(first.somethingDifferent.map((item) => item.event.category)).not.toContain("Music");
+  });
+
+  it("builds a broad, diverse something-different section without saved history", () => {
+    const result = buildEventRecommendations({
+      events: [
+        event("music", "2026-09-07T07:00:00.000Z"),
+        event("sport", "2026-09-08T07:00:00.000Z", { category: "Sports" }),
+        event("theatre", "2026-09-09T07:00:00.000Z", { category: "Arts & Theatre" }),
+        event("market", "2026-09-10T07:00:00.000Z", { category: "Market" }),
+        event("festival", "2026-09-11T07:00:00.000Z", { category: "Festival" }),
+      ],
+      savedEvents: [],
+      now: NOW,
+    });
+
+    expect(result.startHere).toHaveLength(3);
+    expect(result.somethingDifferent.map((item) => item.event.id)).toEqual(["market", "festival"]);
+  });
+
+  it("uses truthful reasons for sparse events and recognises verified market availability", () => {
+    const sparse = event("sparse", "2026-09-20T07:00:00.000Z", {
+      imageUrl: null,
+      source: undefined,
+      venue: null,
+      status: "unknown",
+    });
+    const market = event("market", "2026-09-21T07:00:00.000Z", {
+      category: "Market",
+      imageUrl: null,
+      status: "schedule_verified",
+    });
+
+    const result = buildEventRecommendations({ events: [sparse, market], savedEvents: [], now: NOW });
+
+    expect(result.startHere[0]).toMatchObject({ event: { id: "market" }, reason: "verified" });
+    expect(result.startHere[1]).toMatchObject({ event: { id: "sparse" }, reason: "upcoming" });
   });
 });

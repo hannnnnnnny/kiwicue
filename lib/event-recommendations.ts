@@ -6,7 +6,8 @@ export type RecommendationReason =
   | "weekend"
   | "soon"
   | "verified"
-  | "well-detailed";
+  | "well-detailed"
+  | "upcoming";
 
 export interface EventRecommendation {
   event: KiwiCueEvent;
@@ -103,11 +104,19 @@ function scoreEvent(event: KiwiCueEvent, instant: Temporal.Instant, context: Rec
   score += venueAffinity ? 24 : 0;
   score += daysAway <= 7 ? 20 : 0;
   score += isWeekend(instant, context) ? 16 : 0;
-  score += event.status.toLowerCase() === "onsale" ? 12 : 0;
+  score += hasConfirmedAvailability(event) ? 12 : 0;
   score += event.source ? 6 : 0;
   score += event.venue ? 4 : 0;
   score += event.imageUrl ? 4 : 0;
   return { score, affinity: categoryAffinity || venueAffinity };
+}
+
+function hasConfirmedAvailability(event: KiwiCueEvent) {
+  return ["onsale", "schedule_verified"].includes(event.status.trim().toLowerCase());
+}
+
+function isWellDetailed(event: KiwiCueEvent) {
+  return Boolean(event.venue && (event.imageUrl || event.editorialPreview));
 }
 
 function daysBetween(start: Temporal.Instant, end: Temporal.Instant) {
@@ -164,7 +173,8 @@ function reasonFor(candidate: Candidate, context: RecommendationContext): Recomm
   const daysAway = daysBetween(context.now, candidate.instant);
   if (daysAway <= 7) return "soon";
   if (candidate.event.source) return "verified";
-  return "well-detailed";
+  if (isWellDetailed(candidate.event)) return "well-detailed";
+  return "upcoming";
 }
 
 function recommendations(items: Candidate[], context: RecommendationContext) {
@@ -178,13 +188,18 @@ export function buildEventRecommendations(input: {
 }): EventRecommendationSections {
   const context = createContext(input.savedEvents, input.now);
   const available = candidates(input.events, context);
-  const weekend = chooseDiverse(available.filter((item) => isWeekend(item.instant, context)), 4);
-  const used = new Set(weekend.map((item) => item.event.id));
-  const different = context.dominantCategory
-    ? chooseDiverse(available.filter((item) => !used.has(item.event.id) && item.category !== context.dominantCategory), 4)
-    : [];
-  different.forEach((item) => used.add(item.event.id));
-  const startHere = chooseDiverse(available.filter((item) => !used.has(item.event.id)), 3);
+  const startHere = chooseDiverse(available, 3);
+  const used = new Set(startHere.map((item) => item.event.id));
+  const weekend = chooseDiverse(
+    available.filter((item) => !used.has(item.event.id) && isWeekend(item.instant, context)),
+    4,
+  );
+  weekend.forEach((item) => used.add(item.event.id));
+  const remaining = available.filter((item) => !used.has(item.event.id));
+  const alternatives = context.dominantCategory
+    ? remaining.filter((item) => item.category !== context.dominantCategory)
+    : remaining;
+  const different = chooseDiverse(alternatives.length ? alternatives : remaining, 4);
   return {
     startHere: recommendations(startHere, context),
     weekend: recommendations(weekend, context),

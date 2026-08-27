@@ -174,7 +174,7 @@ describe("portal navigation", () => {
     );
 
     const links = screen.getByRole("navigation", { name: "Primary navigation" }).querySelectorAll("a");
-    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Events", "Movies", "Picks", "Saved"]);
+    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Events", "Picks", "Movies", "Saved"]);
     expect(screen.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("Skip to movie sessions")).toHaveAttribute("href", "#movie-results");
   });

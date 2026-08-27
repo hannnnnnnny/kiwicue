@@ -498,8 +498,8 @@ test("keyboard reaches every portal control in document order with visible focus
   await tabTo(page, page.getByRole("link", { name: "Skip to event results" }));
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
   await tabTo(page, page.getByRole("link", { name: "Events", exact: true }));
-  await tabTo(page, page.getByRole("link", { name: "Movies", exact: true }));
   await tabTo(page, page.getByRole("link", { name: "Picks", exact: true }));
+  await tabTo(page, page.getByRole("link", { name: "Movies", exact: true }));
   await tabTo(page, page.getByRole("link", { name: "Saved events, 0" }));
   await tabTo(page, page.getByRole("button", { name: "切换到中文" }));
   await tabTo(page, page.getByLabel("Activity name"));

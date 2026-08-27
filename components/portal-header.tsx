@@ -109,17 +109,17 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
               </Link>
               <Link
                 className="portal-header-link"
-                href="/movies"
-                aria-current={activePage === "movies" ? "page" : undefined}
-              >
-                {content.movies}
-              </Link>
-              <Link
-                className="portal-header-link"
                 href="/recommendations"
                 aria-current={activePage === "recommendations" ? "page" : undefined}
               >
                 {content.recommendations}
+              </Link>
+              <Link
+                className="portal-header-link"
+                href="/movies"
+                aria-current={activePage === "movies" ? "page" : undefined}
+              >
+                {content.movies}
               </Link>
               <Link
                 className="portal-header-link saved-link"

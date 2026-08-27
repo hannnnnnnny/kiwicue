@@ -39,7 +39,8 @@ export function EventCategoryNav({
   category,
   keyword,
   venueId,
-}: EventCategoryNavProps) {
+  showCurrent = true,
+}: EventCategoryNavProps & { showCurrent?: boolean }) {
   const { language } = useLanguage();
   const content = copy[language];
   const categories: Array<EventCategory | null> = [null, ...EVENT_CATEGORIES];
@@ -55,7 +56,7 @@ export function EventCategoryNav({
               className="event-category-card"
               data-category={value ?? "all"}
               href={eventSearchHref({ window, category: value, keyword, venueId })}
-              aria-current={category === value ? "page" : undefined}
+              aria-current={showCurrent && category === value ? "page" : undefined}
               key={value ?? "all"}
             >
               <span className="event-category-code" aria-hidden="true">{item.code}</span>

@@ -59,16 +59,37 @@ async function installRecommendationRoutes(page: Page) {
   });
 }
 
-test("recommendations provide a responsive, bilingual path from the main navigation", async ({ page }) => {
+test("recommendations provide a responsive, bilingual path from the main navigation", async ({ page }, testInfo) => {
   await installRecommendationRoutes(page);
   await page.goto("/recommendations");
 
   await expect(page.getByRole("heading", { name: "Picks for you" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Picks" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Start here" })).toBeVisible();
-  await expect(page.getByText("Your saved events stay in this browser.")).toBeVisible();
-  await expect(page.locator(".recommendation-card-shell")).toHaveCount(3);
+  await expect(page.getByText(/A broad mix beyond the first shortlist/)).toBeVisible();
+  await expect(page.getByText(/Preferences stay in this browser/)).toBeVisible();
+  await expect(page.locator(".recommendation-card-shell")).toHaveCount(4);
+  await expect(page.getByText("Reviewed 4 upcoming listings from 2 available feeds.")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Event categories" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/recommendations-${testInfo.project.name}.png`, fullPage: true });
+  }
+
+  const firstDetails = page.getByRole("link", { name: "View Music pick music details" });
+  await firstDetails.focus();
+  expect(await firstDetails.evaluate((element) => parseFloat(getComputedStyle(element).outlineWidth))).toBeGreaterThan(0);
+  const targets = page.locator(".portal-header-link, .language-toggle, .portal-event-link, .bookmark-button, .event-category-card");
+  for (let index = 0; index < await targets.count(); index += 1) {
+    const box = await targets.nth(index).boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  }
+
+  await page.getByRole("button", { name: "Save Music pick music" }).click();
+  await expect(page.getByRole("heading", { name: "Music pick music" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await expect(page.getByText(/Uses 1 event saved in this browser/)).toBeVisible();
 
   await page.getByRole("button", { name: "切换到中文" }).click();
   await expect(page.getByRole("heading", { name: "为你推荐" })).toBeVisible();
