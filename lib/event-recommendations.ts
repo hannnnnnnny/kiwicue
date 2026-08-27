@@ -120,11 +120,13 @@ function isWeekend(instant: Temporal.Instant, context: RecommendationContext) {
 }
 
 function candidates(events: KiwiCueEvent[], context: RecommendationContext): Candidate[] {
+  const seen = new Set<string>();
   return events.flatMap((event) => {
     const instant = eventInstant(event);
     const unavailable = BLOCKED_STATUSES.has(event.status.trim().toLowerCase());
-    if (!instant || unavailable || context.savedIds.has(event.id)) return [];
+    if (seen.has(event.id) || !instant || unavailable || context.savedIds.has(event.id)) return [];
     if (Temporal.Instant.compare(instant, context.now) < 0) return [];
+    seen.add(event.id);
     const scored = scoreEvent(event, instant, context);
     return [{ event, instant, category: categoryKey(event), ...scored }];
   }).sort(compareCandidates);
