@@ -28,7 +28,7 @@
 .recommendation-card-shell .portal-event-card { height: calc(100% - 2.75rem); border: 0; }
 .recommendation-card-shell .portal-event-card[data-layout="feature"] { grid-column: auto; }
 .recommendation-reason { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; margin: 0; padding: .65rem 1rem; border-bottom: 1px solid var(--portal-line); font-size: .76rem; font-weight: 750; text-transform: uppercase; letter-spacing: .055em; }
-.recommendation-reason i { width: .48rem; height: .48rem; border-radius: 50%; background: var(--portal-accent); }
+.recommendation-reason i { width: .48rem; height: .48rem; border-radius: var(--radius-pill); background: var(--portal-accent); }
 
 .recommendation-state { width: min(var(--container), calc(100% - 48px)); margin-inline: auto; padding: clamp(4rem, 9vw, 8rem) 0; text-align: center; border-bottom: 1px solid var(--portal-line); }
 .recommendation-state > p:first-child { font-size: 1rem; font-weight: 750; }

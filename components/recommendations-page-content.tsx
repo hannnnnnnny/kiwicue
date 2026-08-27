@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { buildEventRecommendations, type EventRecommendation } from "../lib/event-recommendations";
 import type { AucklandEventsResult, KiwiCueEvent } from "../lib/events";
 import { useBookmarks } from "./bookmark-provider";
@@ -18,8 +18,8 @@ export type RecommendationFeedRequest = (
 
 type FeedState =
   | { status: "loading" }
-  | { status: "ready"; events: KiwiCueEvent[]; partial: boolean }
-  | { status: "error" };
+  | { status: "ready"; attempt: number; events: KiwiCueEvent[]; partial: boolean }
+  | { status: "error"; attempt: number };
 
 const copy = {
   en: {
@@ -130,16 +130,16 @@ export function RecommendationsPageContent({
   useEffect(() => {
     if (!isHydrated) return;
     const controller = new AbortController();
-    setState({ status: "loading" });
     Promise.allSettled([
       requestFeed("events", controller.signal),
       requestFeed("markets", controller.signal),
     ]).then((results) => {
       if (controller.signal.aborted) return;
       const successful = results.filter((result): result is PromiseFulfilledResult<KiwiCueEvent[]> => result.status === "fulfilled");
-      if (!successful.length) return setState({ status: "error" });
+      if (!successful.length) return setState({ status: "error", attempt });
       setState({
         status: "ready",
+        attempt,
         events: successful.flatMap((result) => result.value),
         partial: successful.length !== results.length,
       });
@@ -147,13 +147,16 @@ export function RecommendationsPageContent({
     return () => controller.abort();
   }, [attempt, isHydrated, requestFeed]);
 
-  const sections = useMemo(() => state.status === "ready"
+  const currentState: FeedState = state.status !== "loading" && state.attempt === attempt
+    ? state
+    : { status: "loading" };
+  const sections = currentState.status === "ready"
     ? buildEventRecommendations({
-        events: state.events,
+        events: currentState.events,
         savedEvents: bookmarks.map((bookmark) => bookmark.event),
         now: now(),
       })
-    : null, [bookmarks, now, state]);
+    : null;
   const hasPicks = sections && Object.values(sections).some((items) => items.length);
 
   return (
@@ -166,24 +169,24 @@ export function RecommendationsPageContent({
         <aside>{content.privacy}</aside>
       </section>
       <div id="recommendation-results" tabIndex={-1}>
-        {state.status === "loading" && (
+        {currentState.status === "loading" && (
           <section className="recommendation-state" role="status" aria-busy="true">
             <p>{content.loading}</p><EventGridSkeleton count={4} />
           </section>
         )}
-        {state.status === "error" && (
+        {currentState.status === "error" && (
           <section className="recommendation-state recommendation-error">
             <h2>{content.errorTitle}</h2><p>{content.errorBody}</p>
             <button type="button" onClick={() => setAttempt((value) => value + 1)}>{content.retry}</button>
           </section>
         )}
-        {state.status === "ready" && state.partial && (
+        {currentState.status === "ready" && currentState.partial && (
           <aside className="recommendation-notice" role="status">
             <div><strong>{content.partial}</strong><span>{content.partialBody}</span></div>
             <button type="button" onClick={() => setAttempt((value) => value + 1)}>{content.retry}</button>
           </aside>
         )}
-        {state.status === "ready" && !hasPicks && (
+        {currentState.status === "ready" && !hasPicks && (
           <section className="recommendation-state">
             <h2>{content.emptyTitle}</h2><p>{content.emptyBody}</p>
             <Link href="/events">{content.browse}</Link>
