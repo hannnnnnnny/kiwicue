@@ -3,6 +3,7 @@ import type { EventCategory } from "./event-categories";
 import { parseEventId } from "./event-id";
 import type {
   EventCoordinates,
+  EventAdmission,
   KiwiCueEvent,
   KiwiCueEventDetail,
   KiwiCueVenue,
@@ -64,6 +65,8 @@ interface TicketmasterEventPayload {
   _embedded?: {
     venues?: TicketmasterVenuePayload[];
   };
+  priceRanges?: Array<{ currency?: string; min?: number; max?: number }>;
+  promoter?: { name?: string };
 }
 
 interface TicketmasterResponsePayload {
@@ -127,6 +130,18 @@ function normalizeText(value?: string, maximumLength = 12_000): string | null {
   if (!value) return null;
   const normalized = value.normalize("NFC").trim().replace(/\s+/gu, " ");
   return normalized ? normalized.slice(0, maximumLength) : null;
+}
+
+function normalizeAdmission(
+  range?: { currency?: string; min?: number; max?: number },
+): EventAdmission | undefined {
+  if (!range || range.currency !== "NZD") return undefined;
+  const { min, max } = range;
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return undefined;
+  if (min === undefined || max === undefined || min < 0 || max < min) return undefined;
+  return min === 0 && max === 0
+    ? { kind: "free", currency: "NZD" }
+    : { kind: "range", currency: "NZD", min, max };
 }
 
 function normalizeCoordinates(
@@ -248,6 +263,8 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
     images.find((candidate) => candidate.url);
   const classification = event.classifications?.[0];
   const venue = normalizeVenue(event._embedded?.venues?.[0]);
+  const admission = normalizeAdmission(event.priceRanges?.[0]);
+  const organiserName = normalizeText(event.promoter?.name, 120) ?? undefined;
 
   return {
     id: eventId,
@@ -263,6 +280,8 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
     status: event.dates?.status?.code ?? "unknown",
     category: classification?.segment?.name ?? classification?.genre?.name ?? "Other",
     venue,
+    ...(admission ? { admission } : {}),
+    ...(organiserName ? { organiserName } : {}),
   };
 }
 
