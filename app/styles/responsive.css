@@ -144,10 +144,17 @@
     padding-right: 0;
   }
   .event-category-grid {
-    grid-auto-columns: max(9.75rem, 41vw);
-    gap: var(--space-1);
+    grid-auto-columns: max-content;
+    gap: var(--space-2);
   }
-  .event-category-card { min-height: 10.5rem; }
+  .event-category-card {
+    width: max(10.5rem, 45vw);
+    min-height: 10.5rem;
+  }
+  .event-category-card[aria-current="page"] {
+    width: min(76vw, 28rem);
+    grid-column: auto;
+  }
   .event-category-card[aria-current="page"] .event-category-name { max-width: 74%; }
   .portal-status-strip { gap: var(--space-2) var(--space-4); }
   .event-feed { padding-top: var(--space-6); }
