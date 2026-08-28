@@ -25,9 +25,9 @@ const eventResult = {
       url: "https://www.ticketmaster.co.nz/event/event-1",
       imageUrl: "https://img.example/harbour.jpg",
       start: {
-        localDate: "2026-08-01",
+        localDate: "2099-09-01",
         localTime: "19:30:00",
-        dateTime: "2026-08-01T07:30:00Z",
+        dateTime: "2099-09-01T07:30:00Z",
         timezone: "Pacific/Auckland",
       },
       status: "onsale",
@@ -126,8 +126,8 @@ describe("Auckland event explorer", () => {
     const page = await EventsPage();
     render(page);
 
-    expect(screen.getByRole("heading", { name: "Find your next Auckland plan." })).toBeInTheDocument();
-    expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Find something worth doing." })).toBeInTheDocument();
+    expect(screen.getByText("Discover Auckland")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/");
   });
 
@@ -149,17 +149,59 @@ describe("Auckland event explorer", () => {
     render(<EventExplorer requestEvents={requestEvents} />);
 
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
-    expect(screen.getByText("Sat, 1 Aug · 7:30 pm")).toBeInTheDocument();
+    expect(screen.getByText("Tue, 1 Sept · 7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Music")).toBeInTheDocument();
     expect(screen.getByText("The Civic · Auckland")).toBeInTheDocument();
-    expect(screen.getByText("1 upcoming Ticketmaster event · 1 shown")).toBeInTheDocument();
+    expect(screen.getByText("1 eligible Ticketmaster event shown · 1 source record checked")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View Harbour Lights details" })).toHaveAttribute(
       "href",
       "/events/event-1",
     );
   });
 
-  it("shows the full upcoming Ticketmaster total and an explicit remaining count", async () => {
+  it("renders editorial discovery by default and focused results for filters", async () => {
+    const requestEvents = vi.fn().mockResolvedValue(eventResult);
+    const view = render(<EventExplorer requestEvents={requestEvents} />);
+    expect(await screen.findByRole("heading", { name: "Start here" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Explore by mood" })).toBeVisible();
+    expect(screen.queryByText(/popular|trending/i)).not.toBeInTheDocument();
+
+    view.rerender(<EventExplorer keyword="Harbour" requestEvents={requestEvents} />);
+    expect(await screen.findByRole("heading", { name: "Results for “Harbour”" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Start here" })).not.toBeInTheDocument();
+  });
+
+  it("reports an empty state when every loaded event is ineligible", async () => {
+    const cancelled = { ...eventResult.events[0], status: "cancelled" };
+    const invalid = { ...eventResult.events[0], id: "invalid", start: { ...eventResult.events[0].start, dateTime: null, localDate: "bad" } };
+    const requestEvents = vi.fn().mockResolvedValue({
+      events: [cancelled, invalid],
+      page: { size: 2, totalElements: 2, totalPages: 1, number: 0 },
+      nextCursor: null,
+    });
+
+    render(<EventExplorer requestEvents={requestEvents} />);
+
+    expect(await screen.findByRole("heading", { name: "No upcoming events found" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Harbour Lights" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/shown/)).not.toBeInTheDocument();
+  });
+
+  it("can continue past an ineligible source page", async () => {
+    const cancelled = { ...eventResult.events[0], status: "cancelled" };
+    const requestEvents = vi.fn()
+      .mockResolvedValueOnce(pagedResult([cancelled], 2, "next-page"))
+      .mockResolvedValueOnce(pagedResult([numberedEvent(2)], 2, null));
+
+    render(<EventExplorer requestEvents={requestEvents} />);
+
+    expect(await screen.findByRole("heading", { name: "No eligible events in this batch" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Check for more events" }));
+    expect(await screen.findByRole("heading", { name: "Event 2" })).toBeVisible();
+    expect(requestEvents).toHaveBeenNthCalledWith(2, { cursor: "next-page" });
+  });
+
+  it("reports only checked source records before loading another page", async () => {
     const requestEvents = vi.fn().mockResolvedValue(
       pagedResult(Array.from({ length: 50 }, (_, index) => numberedEvent(index + 1)), 81, "page-two"),
     );
@@ -167,9 +209,23 @@ describe("Auckland event explorer", () => {
     render(<EventExplorer requestEvents={requestEvents} />);
 
     expect(await screen.findByRole("heading", { name: "Event 1" })).toBeInTheDocument();
-    expect(screen.getByText("81 upcoming Ticketmaster events · 50 shown")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show 31 more events" })).toBeInTheDocument();
+    expect(screen.getByText("50 eligible Ticketmaster events shown · 50 source records checked")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Check for more events" })).toBeInTheDocument();
     expect(requestEvents).toHaveBeenCalledWith({});
+  });
+
+  it("does not infer eligibility for unloaded or later blocked records", async () => {
+    const blocked = { ...numberedEvent(2), status: "cancelled" };
+    const requestEvents = vi.fn()
+      .mockResolvedValueOnce(pagedResult([numberedEvent(1)], 2, "page-two"))
+      .mockResolvedValueOnce(pagedResult([blocked], 2, null));
+
+    render(<EventExplorer requestEvents={requestEvents} />);
+
+    expect(await screen.findByText("1 eligible Ticketmaster event shown · 1 source record checked")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Check for more events" }));
+    expect(await screen.findByText("1 eligible Ticketmaster event shown · 2 source records checked")).toBeVisible();
+    expect(screen.queryByText("2 eligible Ticketmaster events shown · 2 source records checked")).not.toBeInTheDocument();
   });
 
   it("appends, deduplicates, and announces when every event is shown", async () => {
@@ -186,13 +242,13 @@ describe("Auckland event explorer", () => {
     const requestEvents = vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce(second);
 
     render(<EventExplorer requestEvents={requestEvents} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Show 31 more events" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Check for more events" }));
 
     expect(await screen.findByRole("heading", { name: "Event 81" })).toBeInTheDocument();
     expect(document.querySelectorAll(".portal-event-card h2")).toHaveLength(81);
     expect(screen.getAllByRole("heading", { name: "Event 50" })).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: "Show 31 more events" })).not.toBeInTheDocument();
-    expect(screen.getByText("All Ticketmaster events are shown")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Check for more events" })).not.toBeInTheDocument();
+    expect(screen.getByText("All eligible Ticketmaster events are shown")).toBeInTheDocument();
     expect(requestEvents).toHaveBeenNthCalledWith(2, { cursor: "page-two" });
   });
 
@@ -216,7 +272,7 @@ describe("Auckland event explorer", () => {
       keyword: "Taylor Swift",
       venueId: "venue-1",
     });
-    expect(screen.getByText("1 matching Ticketmaster event · 1 shown")).toBeInTheDocument();
+    expect(screen.getByText("1 eligible matching Ticketmaster event shown · 1 source record checked")).toBeInTheDocument();
   });
 
   it("retains every applied filter when appending", async () => {
@@ -233,7 +289,7 @@ describe("Auckland event explorer", () => {
         requestEvents={requestEvents}
       />,
     );
-    fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Check for more events" }));
 
     expect(await screen.findByRole("heading", { name: "Event 2" })).toBeInTheDocument();
     expect(requestEvents).toHaveBeenNthCalledWith(2, {
@@ -252,14 +308,14 @@ describe("Auckland event explorer", () => {
       .mockImplementationOnce(() => append.promise);
 
     render(<EventExplorer requestEvents={requestEvents} />);
-    const button = await screen.findByRole("button", { name: "Show 1 more event" });
+    const button = await screen.findByRole("button", { name: "Check for more events" });
     fireEvent.click(button);
     fireEvent.click(button);
 
     expect(requestEvents).toHaveBeenCalledTimes(2);
     expect(button).toBeDisabled();
     append.resolve(pagedResult([numberedEvent(2)], 2, null));
-    expect(await screen.findByText("All Ticketmaster events are shown")).toBeInTheDocument();
+    expect(await screen.findByText("All eligible Ticketmaster events are shown")).toBeInTheDocument();
   });
 
   it("keeps visible cards when append fails and retries the same cursor", async () => {
@@ -269,7 +325,7 @@ describe("Auckland event explorer", () => {
       .mockResolvedValueOnce(pagedResult([numberedEvent(2)], 2, null));
 
     render(<EventExplorer requestEvents={requestEvents} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Check for more events" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Loading more events failed. Your shown events are still here.",
@@ -301,7 +357,7 @@ describe("Auckland event explorer", () => {
       </LanguageProvider>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Check for more events" }));
     view.rerender(
       <LanguageProvider>
         <EventExplorer category="markets" requestEvents={requestEvents} />
@@ -341,7 +397,7 @@ describe("Auckland event explorer", () => {
     const requestEvents = vi.fn().mockResolvedValue(eventResult);
     const view = render(<EventExplorer keyword="Taylor" requestEvents={requestEvents} />);
 
-    const summary = await screen.findByText("1 matching Ticketmaster event · 1 shown");
+    const summary = await screen.findByText("1 eligible matching Ticketmaster event shown · 1 source record checked");
     await waitFor(() => expect(summary).toHaveFocus());
     expect(summary).toHaveAttribute("id", "event-results-summary");
     expect(summary).toHaveAttribute("tabindex", "-1");
@@ -364,11 +420,11 @@ describe("Auckland event explorer", () => {
     const existingFocus = screen.getByRole("button", { name: "Existing focus" });
     existingFocus.focus();
 
-    await screen.findByText("1 upcoming Ticketmaster event · 1 shown");
+    await screen.findByText("1 eligible Ticketmaster event shown · 1 source record checked");
     expect(existingFocus).toHaveFocus();
   });
 
-  it("uses bilingual upcoming totals, remaining count, and completion copy", async () => {
+  it("uses bilingual checked-record counts and completion copy", async () => {
     const requestEvents = vi.fn()
       .mockResolvedValueOnce(pagedResult([numberedEvent(1)], 2, "page-two"))
       .mockResolvedValueOnce(pagedResult([numberedEvent(2)], 2, null));
@@ -381,9 +437,9 @@ describe("Auckland event explorer", () => {
 
     await screen.findByRole("heading", { name: "Event 1" });
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
-    expect(screen.getByText("Ticketmaster 当前可查 2 个未来活动 · 已显示 1 个")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "再显示 1 个活动" }));
-    expect(await screen.findByText("Ticketmaster 活动已全部显示")).toBeInTheDocument();
+    expect(screen.getByText("已显示 1 个符合条件的 Ticketmaster 活动 · 已检查 1 条来源记录")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "继续检查活动" }));
+    expect(await screen.findByText("符合条件的 Ticketmaster 活动已全部显示")).toBeInTheDocument();
   });
 
   it("describes curated market results without Ticketmaster claims in both languages", async () => {
@@ -404,13 +460,13 @@ describe("Auckland event explorer", () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByText("1 verified market schedule · 1 shown")).toBeInTheDocument();
+    expect(await screen.findByText("1 verified market schedule shown · 1 source record checked")).toBeInTheDocument();
     expect(screen.getByText("Verified official market links")).toBeInTheDocument();
     expect(screen.getByText("All verified market schedules are shown")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("Ticketmaster");
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
-    expect(screen.getByText("已核实 1 个市集日程 · 已显示 1 个")).toBeInTheDocument();
+    expect(screen.getByText("已显示 1 个核实市集日程 · 已检查 1 条来源记录")).toBeInTheDocument();
     expect(screen.getByText("包含已核实的市集官方链接")).toBeInTheDocument();
     expect(screen.getByText("已核实的市集日程已全部显示")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("Ticketmaster");
@@ -422,7 +478,7 @@ describe("Auckland event explorer", () => {
       .mockRejectedValueOnce(new Error("private append failure"));
 
     renderChineseExplorer(requestEvents);
-    fireEvent.click(await screen.findByRole("button", { name: "再显示 1 个活动" }));
+    fireEvent.click(await screen.findByRole("button", { name: "继续检查活动" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "加载更多活动失败，已显示的活动仍会保留。",
@@ -531,7 +587,7 @@ describe("Auckland event explorer", () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Show 1 more event" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Check for more events" }));
     expect(await screen.findByRole("heading", { name: "Event 2" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/events?size=50&window=weekend&category=concerts&q=Taylor+Swift&venue=venue-1",
@@ -593,8 +649,8 @@ describe("Auckland event explorer", () => {
     renderChineseExplorer(readyRequest);
 
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
-    expect(screen.getByText("8月1日周六 · 19:30")).toBeInTheDocument();
-    expect(screen.getByText("Ticketmaster 当前可查 1 个未来活动 · 已显示 1 个")).toBeInTheDocument();
+    expect(screen.getByText("9月1日周二 · 19:30")).toBeInTheDocument();
+    expect(screen.getByText("已显示 1 个符合条件的 Ticketmaster 活动 · 已检查 1 条来源记录")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看 Harbour Lights 详情" })).toHaveAttribute(
       "href",
       "/events/event-1",

@@ -72,6 +72,8 @@ describe("portal event card", () => {
 
     expect(screen.getByRole("article", { name: "Harbour Lights" })).toBeInTheDocument();
     expect(screen.getByText("01")).toBeInTheDocument();
+    expect(view.container.querySelector(".portal-event-rank")).toHaveAttribute("aria-hidden", "true");
+    expect(view.container.querySelector(".portal-event-rank")).not.toHaveAttribute("aria-label");
     expect(screen.getByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
     expect(screen.getByText("Sat, 1 Aug · 7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Civic Theatre · Auckland")).toBeInTheDocument();

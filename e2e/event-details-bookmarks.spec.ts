@@ -1,14 +1,18 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-29T00:00:00+12:00"));
+});
+
 const event = {
   id: "audit-event",
   name: "Audit Harbour Live",
   url: "https://www.ticketmaster.co.nz/event/audit-event",
   imageUrl: null,
   start: {
-    localDate: "2026-08-08",
+    localDate: "2026-09-08",
     localTime: "19:30:00",
-    dateTime: "2026-08-08T07:30:00Z",
+    dateTime: "2026-09-08T07:30:00Z",
     timezone: "Pacific/Auckland",
   },
   status: "onsale",
@@ -177,7 +181,7 @@ test("detail provides not-found, retry, missing-description, and missing-map rec
   await expect(page.getByRole("heading", { name: "Event details are temporarily unavailable" })).toBeVisible();
   await page.getByRole("button", { name: "Retry event details" }).click();
   await expect(page.getByRole("heading", { name: event.name })).toBeVisible();
-  await expect(page.getByText("No additional organiser description is available yet.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Event information" })).toHaveCount(0);
   await expect(page.getByText("Map and distance are unavailable because this venue has no coordinates yet.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Continue to official booking" })).toBeVisible();
   await expect(page.getByTitle("Map of The Civic")).toHaveCount(0);

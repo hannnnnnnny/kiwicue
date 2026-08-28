@@ -94,6 +94,42 @@ function renderDetail(
 }
 
 describe("event detail experience", () => {
+  it("shows verified admission and organiser facts without a client refetch", async () => {
+    const requestEventDetail = vi.fn();
+    render(
+      <LanguageProvider>
+        <BookmarkProvider>
+          <EventDetailContent
+            initialEvent={{ ...detail, admission: { kind: "range", currency: "NZD", min: 35, max: 65 }, organiserName: "Auckland Live" }}
+            requestEventDetail={requestEventDetail}
+          />
+        </BookmarkProvider>
+      </LanguageProvider>,
+    );
+    expect(screen.getByText("NZ$35–NZ$65")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Organiser" })).toBeVisible();
+    expect(screen.getByText("Auckland Live")).toBeVisible();
+    expect(requestEventDetail).not.toHaveBeenCalled();
+  });
+
+  it("offers a small set of real related events", () => {
+    const related = [{
+      ...detail,
+      id: "event-related",
+      name: "Civic After Dark",
+      url: "https://www.ticketmaster.co.nz/event/event-related",
+    }];
+    render(
+      <LanguageProvider>
+        <BookmarkProvider>
+          <EventDetailContent initialEvent={detail} relatedEvents={related} />
+        </BookmarkProvider>
+      </LanguageProvider>,
+    );
+    expect(screen.getByRole("heading", { name: "You may also like" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "View Civic After Dark details" })).toHaveAttribute("href", "/events/event-related");
+  });
+
   it("shows verified information, booking guidance, address, map, distance action, and official link", async () => {
     const requestEventDetail = vi.fn().mockResolvedValue(detail);
     const getCurrentPosition = vi.fn();
@@ -130,11 +166,12 @@ describe("event detail experience", () => {
     expect(screen.queryByRole("heading", { name: "Past highlights" })).not.toBeInTheDocument();
   });
 
-  it("uses truthful fallbacks when description and organiser notes are absent", async () => {
+  it("omits unsupported optional sections when description and organiser notes are absent", async () => {
     renderDetail(vi.fn().mockResolvedValue({ ...detail, description: null, note: null }));
 
     await screen.findByRole("heading", { name: "Auckland Night Live" });
-    expect(screen.getByText("No additional organiser description is available yet.")).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Event information" })).not.toBeInTheDocument();
+    expect(screen.queryByText("No additional organiser description is available yet.")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Organiser note" })).not.toBeInTheDocument();
   });
 

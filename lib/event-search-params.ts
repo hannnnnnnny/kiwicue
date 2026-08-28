@@ -3,10 +3,19 @@ const VENUE_ID = /^[A-Za-z0-9_-]{1,80}$/u;
 
 type PublicValue = string | string[] | null | undefined;
 
+export const EVENT_SORTS = ["recommended", "date"] as const;
+export type EventSort = (typeof EVENT_SORTS)[number];
+
 export type EventSearchFilters = {
   keyword: string | null;
   venueId: string | null;
 };
+
+export function parseEventSort(value: PublicValue): EventSort {
+  return typeof value === "string" && EVENT_SORTS.includes(value as EventSort)
+    ? value as EventSort
+    : "recommended";
+}
 
 export function parseEventKeyword(value: PublicValue): string | null {
   if (typeof value !== "string") return null;

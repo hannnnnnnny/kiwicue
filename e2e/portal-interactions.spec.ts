@@ -14,6 +14,10 @@ const transparentGif = Buffer.from(
 
 const pagesWithAssetRoutes = new WeakSet<Page>();
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-29T00:00:00+12:00"));
+});
+
 function event(id: string, name: string, options: { image?: boolean; status?: string } = {}) {
   return {
     id,
@@ -21,9 +25,9 @@ function event(id: string, name: string, options: { image?: boolean; status?: st
     url: `https://www.ticketmaster.co.nz/event/${id}`,
     imageUrl: options.image ? "https://images.example/harbour.gif" : null,
     start: {
-      localDate: "2026-08-01",
+      localDate: "2026-09-01",
       localTime: "19:30:00",
-      dateTime: "2026-08-01T07:30:00Z",
+      dateTime: "2026-09-01T07:30:00Z",
       timezone: "Pacific/Auckland",
     },
     status: options.status ?? "onsale",
@@ -372,13 +376,14 @@ async function expectNoHorizontalOverflow(page: Page) {
 
 async function measureLoadMoreLayout(page: Page) {
   return page.evaluate(() => {
-    const grid = document.querySelector(".event-grid")?.getBoundingClientRect();
+    const grid = document.querySelector(".event-discovery-view")?.getBoundingClientRect();
     const button = document.querySelector(".event-load-more")?.getBoundingClientRect();
     const cards = [...document.querySelectorAll(".portal-event-card")]
       .map((card) => card.getBoundingClientRect().height);
     return {
       scrollY,
       documentHeight: document.documentElement.scrollHeight,
+      viewportBottomGap: document.documentElement.scrollHeight - (scrollY + innerHeight),
       gridHeight: grid?.height ?? null,
       buttonTop: button?.top ?? null,
       cards,
@@ -408,7 +413,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
   await expect(page).toHaveURL(/\/#home-content$/);
   await page.getByRole("link", { name: /Browse Auckland events/ }).click();
   await expect(page).toHaveURL(/\/events$/);
-  await expect(page.getByRole("heading", { name: "Find your next Auckland plan." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find something worth doing." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/events-list-${testInfo.project.name}.png`, fullPage: true });
@@ -447,7 +452,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
 
-  const columns = await page.locator(".event-grid").evaluate((element) =>
+  const columns = await page.locator(".event-lead-story").evaluate((element) =>
     getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
   );
   expect(columns).toBe(testInfo.project.name === "mobile-375" ? 1 : 2);
@@ -480,9 +485,9 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
 
   const counts = { events: requests.eventRequests.length, venues: requests.venueRequests.length };
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "找到下一场奥克兰活动。" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "找到真正值得去的活动。" })).toBeVisible();
   await page.locator(".language-toggle").click();
-  await expect(page.getByRole("heading", { name: "Find your next Auckland plan." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find something worth doing." })).toBeVisible();
   await page.waitForTimeout(100);
   expect(requests.eventRequests).toHaveLength(counts.events);
   expect(requests.venueRequests).toHaveLength(counts.venues);
@@ -505,6 +510,8 @@ test("keyboard reaches every portal control in document order with visible focus
   await tabTo(page, page.getByLabel("Activity name"));
   await tabTo(page, page.getByLabel("Venue"));
   await tabTo(page, page.getByRole("button", { name: "Search events" }));
+  await tabTo(page, page.getByRole("link", { name: "Sort by recommended" }));
+  await tabTo(page, page.getByRole("link", { name: "Sort by date" }));
 
   const categoryNav = page.getByRole("navigation", { name: "Event categories" });
   for (const label of ["All", "Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
@@ -515,9 +522,15 @@ test("keyboard reaches every portal control in document order with visible focus
   }
   await tabTo(page, page.getByRole("link", { name: "View Harbour Lights details" }));
   await tabTo(page, page.getByRole("button", { name: "Save Harbour Lights" }));
-  await tabTo(page, page.getByRole("link", { name: /View A very long Auckland/ }));
-  await tabTo(page, page.getByRole("button", { name: /Save A very long Auckland/ }));
-  await tabTo(page, page.getByRole("button", { name: "Show 1 more event" }));
+  const moodNav = page.getByRole("navigation", { name: "Explore by mood" });
+  for (const label of ["Live music", "A stage night", "Market morning", "Festival day", "Match day"]) {
+    await tabTo(page, moodNav.getByRole("link", { name: label, exact: true }));
+  }
+  const discoveryCategoryNav = page.getByRole("navigation", { name: "Explore by category" });
+  for (const label of ["Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
+    await tabTo(page, discoveryCategoryNav.getByRole("link", { name: label, exact: true }));
+  }
+  await tabTo(page, page.getByRole("button", { name: "Check for more events" }));
   expect(errors).toEqual([]);
 });
 
@@ -580,8 +593,9 @@ test("search, clear, back, forward, and reload keep one canonical shareable stat
   await page.goForward();
   await expect(page).toHaveURL(/\/events\?window=weekend&category=concerts$/);
   await page.reload();
-  await expect(page.getByRole("link", { name: "This weekend" })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByRole("link", { name: "Concerts" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "This weekend", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("navigation", { name: "Event categories" }).getByRole("link", { name: /Concerts/ }))
+    .toHaveAttribute("aria-current", "page");
   expect(errors).toEqual([]);
 });
 
@@ -605,7 +619,7 @@ test("a partial event name opens a selectable, overflow-safe suggestion", async 
   await expect(page).toHaveURL(
     /\/events\?window=30d&category=concerts&q=Laufey\+-\+A\+Matter\+Of\+Time\+Tour$/,
   );
-  await expect(page.getByRole("heading", { name: "Laufey - A Matter Of Time Tour" })).toBeVisible();
+  await expect(page.locator(".portal-event-card").getByRole("heading", { name: "Laufey - A Matter Of Time Tour", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -683,10 +697,9 @@ test("load more de-duplicates and the event detail opens a noopener official boo
     body: "<!doctype html><title>Official fixture</title>",
   }));
   await page.goto("/events");
-  const more = page.getByRole("button", { name: "Show 1 more event" });
+  const more = page.getByRole("button", { name: "Check for more events" });
   await expect(more).toBeVisible();
   await more.scrollIntoViewIfNeeded();
-  const scrollBefore = await page.evaluate(() => scrollY);
   const layoutBefore = await measureLoadMoreLayout(page);
   await page.evaluate(() => {
     const button = document.querySelector<HTMLButtonElement>(".event-load-more");
@@ -697,12 +710,11 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   releaseAppend();
   await expect(page.getByRole("heading", { name: "Waterfront Night Market" })).toBeVisible();
   expect(requests.eventRequests.filter((request) => request.includes("cursor=page-two"))).toHaveLength(1);
-  await expect(page.locator(".portal-event-card")).toHaveCount(3);
-  await expect(page.getByRole("heading", { name: "A very long Auckland event title that remains readable on a small screen" })).toHaveCount(1);
-  const scrollAfter = await page.evaluate(() => scrollY);
+  await expect(page.locator(".portal-event-card")).toHaveCount(2);
+  await expect(page.getByRole("heading", { name: "A very long Auckland event title that remains readable on a small screen" })).toHaveCount(0);
   const layoutAfter = await measureLoadMoreLayout(page);
   expect(
-    Math.abs(scrollAfter - scrollBefore),
+    Math.abs(layoutAfter.viewportBottomGap - layoutBefore.viewportBottomGap),
     JSON.stringify({ layoutBefore, layoutAfter }),
   ).toBeLessThanOrEqual(24);
 
@@ -755,7 +767,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   }));
 
   await page.goto("/events?category=markets");
-  await expect(page.getByText("2 verified market schedules · 2 shown")).toBeVisible();
+  await expect(page.getByText("2 verified market schedules shown · 2 source records checked")).toBeVisible();
   await expect(page.getByText("Verified official market links")).toHaveCount(1);
   await expect(page.locator(".source-disclaimer")).not.toContainText("Ticketmaster");
 
@@ -774,7 +786,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("link", { name: "View Grey Lynn Farmers Market details" }).click();
   await expect(page.getByRole("heading", { name: "Plan your visit" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Past highlights" })).toBeVisible();
-  await expect(page.getByText("Seasonal local produce")).toBeVisible();
+  await expect(page.getByText("Shop seasonal produce directly from growers and producers.")).toBeVisible();
   const pastPreviewLink = page.getByRole("link", { name: "Open official past preview" });
   await expect(pastPreviewLink).toBeVisible();
   expect((await pastPreviewLink.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
@@ -789,7 +801,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await expect(page.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "出发前确认" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "往期精选" })).toBeVisible();
-  await expect(page.getByText("本地当季农产品")).toBeVisible();
+  await expect(page.getByText("可以直接向种植者选购当季本地农产品。")).toBeVisible();
   await expect(page.getByRole("link", { name: "查看官方最新安排" })).toBeVisible();
   await expect(page.getByRole("button", { name: "从收藏中移除 Grey Lynn 农夫市集" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
@@ -823,7 +835,7 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   await installRoutes(page);
   await page.goto("/events?q=NoSuchActivity");
   await expect(page.getByRole("heading", { name: "No matching events found" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Clear all filters" })).toHaveAttribute("href", "/events");
+  await expect(page.locator("#event-results").getByRole("link", { name: "Clear all filters" })).toHaveAttribute("href", "/events");
 
   await resetApiRoutes(page);
   await installRoutes(page, { initialFailures: 1 });
@@ -835,7 +847,7 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   await resetApiRoutes(page);
   await installRoutes(page, { appendFailures: 1 });
   await page.goto("/events");
-  await page.getByRole("button", { name: "Show 1 more event" }).click();
+  await page.getByRole("button", { name: "Check for more events" }).click();
   await expect(page.locator(".event-load-more-error")).toContainText("shown events are still here");
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   await page.getByRole("button", { name: "Retry loading more events" }).click();
@@ -859,7 +871,7 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
 
   if ((page.viewportSize()?.width ?? 0) <= 600) {
     const categoryTrack = page.getByRole("navigation", { name: "Event categories" });
-    expect(await categoryTrack.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+    expect(await categoryTrack.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
 
     const timeTrack = page.getByRole("navigation", { name: "Event time range" });
     const timeDimensions = await timeTrack.evaluate((element) => {
@@ -879,7 +891,7 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
     expect(timeDimensions.lastRight).toBeLessThanOrEqual(timeDimensions.trackRight);
   } else {
     await page.setViewportSize({ width: 720, height: 900 });
-    expect(await page.locator(".event-grid").evaluate((element) =>
+    expect(await page.locator(".event-lead-story").evaluate((element) =>
       getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
     )).toBe(2);
   }

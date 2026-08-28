@@ -449,3 +449,180 @@
 @keyframes skeleton-pulse {
   to { opacity: .42; }
 }
+
+/* Editorial discovery composition */
+.event-discovery-view,
+.event-results-view { display: grid; gap: clamp(3rem, 7vw, 6.5rem); padding-top: var(--space-8); }
+
+.event-discovery-section > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, .7fr);
+  align-items: end;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.event-discovery-section h2,
+.event-results-heading h2 {
+  margin: var(--space-2) 0 0;
+  font-family: var(--portal-display-font);
+  font-size: clamp(2.4rem, 5vw, 5.2rem);
+  font-weight: 650;
+  letter-spacing: -.065em;
+  line-height: .95;
+}
+
+.event-discovery-section header > p:last-child { margin: 0; color: var(--portal-muted); line-height: 1.6; }
+
+.event-lead-story {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-lead-story > li:first-child { grid-row: span 2; }
+.portal-event-card { border: 0; border-top: 1px solid var(--portal-line); border-radius: 0; box-shadow: none; }
+.portal-event-card:hover { border-color: var(--portal-brand); box-shadow: none; }
+
+.portal-event-card[data-layout="lead"] { background: var(--portal-brand); color: var(--portal-white); }
+.portal-event-card[data-layout="lead"] .portal-event-link { color: var(--portal-white); }
+.portal-event-card[data-layout="lead"] .portal-event-venue { color: rgb(255 255 255 / 72%); }
+.portal-event-card[data-layout="lead"] .portal-event-media { min-height: 23rem; margin: 0; border-radius: 0; }
+.portal-event-card[data-layout="lead"] .portal-event-body h2 { font-size: clamp(2.5rem, 4.5vw, 5rem); line-height: .92; }
+
+.event-mood-links,
+.event-category-links { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); }
+
+.event-mood-links a,
+.event-category-links a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  color: var(--portal-ink);
+  font-size: .8rem;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.event-mood-links a:hover,
+.event-category-links a:hover { border-color: var(--portal-brand); color: var(--portal-brand); }
+
+.event-results-heading { max-width: 70rem; border-bottom: 1px solid var(--portal-line); padding-bottom: var(--space-6); }
+.event-date-group { display: grid; grid-template-columns: minmax(5rem, 8rem) minmax(0, 1fr); gap: clamp(1rem, 3vw, 3rem); border-top: 1px solid var(--portal-line); padding-top: var(--space-5); }
+.event-date-marker { position: sticky; top: var(--space-4); align-self: start; display: grid; color: var(--portal-brand); font-size: .68rem; font-weight: 800; }
+.event-date-marker strong { color: var(--portal-ink); font-family: var(--portal-display-font); font-size: clamp(3rem, 6vw, 5.5rem); line-height: .88; }
+.event-date-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.portal-event-card[data-layout="row"] { border-top: 1px solid var(--portal-line); background: transparent; }
+
+.event-discovery-controls { min-width: 0; }
+.event-control-meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.event-active-filters,
+.event-sort-links { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.event-active-filters a,
+.event-sort-links a,
+.event-clear-all { min-height: 44px; display: inline-flex; align-items: center; padding: 0 var(--space-3); border: 1px solid var(--portal-line); border-radius: var(--radius-pill); font-size: .72rem; font-weight: 760; text-decoration: none; }
+.event-sort-links { margin-left: auto; }
+.event-sort-links a[aria-current="page"] { border-color: var(--portal-brand); background: var(--portal-brand); color: var(--portal-white); }
+.event-clear-all { border-color: transparent; color: var(--portal-brand); }
+
+/* The category chooser behaves like an editorial index, not a wall of cards. */
+.events-page .event-category-grid {
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 var(--space-6);
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  scroll-snap-type: none;
+}
+
+.events-page .event-category-card {
+  min-height: 7.5rem;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  grid-template-rows: auto auto 1fr;
+  gap: 2px var(--space-3);
+  align-content: center;
+  padding: var(--space-5) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.events-page .event-category-card::after { display: none; }
+.events-page .event-category-card:hover:not([aria-current="page"]) {
+  background: transparent;
+  color: var(--portal-brand);
+  box-shadow: none;
+  transform: translateX(3px);
+}
+
+.events-page .event-category-card[aria-current="page"] {
+  grid-column: auto;
+  background: var(--portal-brand-soft);
+  color: var(--portal-ink);
+  box-shadow: none;
+}
+
+.events-page .event-category-glyph,
+.events-page .event-category-card[aria-current="page"] .event-category-glyph {
+  position: static;
+  width: 2.25rem;
+  height: 2.25rem;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  align-self: center;
+  margin: 0;
+  color: var(--portal-brand);
+  opacity: 1;
+  transform: none;
+}
+
+.events-page .event-category-kicker,
+.events-page .event-category-card[aria-current="page"] .event-category-kicker {
+  grid-column: 2;
+  margin: 0;
+  color: var(--portal-accent);
+}
+
+.events-page .event-category-name,
+.events-page .event-category-card[aria-current="page"] .event-category-name {
+  grid-column: 2;
+  max-width: none;
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+}
+
+.events-page .event-category-card small,
+.events-page .event-category-card[aria-current="page"] small {
+  grid-column: 2;
+  margin: var(--space-1) 0 0;
+  color: var(--portal-muted);
+}
+
+.events-page .event-category-footer {
+  grid-column: 3;
+  grid-row: 1 / span 3;
+  align-self: center;
+  margin: 0;
+  padding: 0;
+}
+
+.events-page .event-category-current { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.event-collection-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}

@@ -228,6 +228,37 @@ describe("Ticketmaster Discovery client", () => {
     });
   });
 
+  it("normalizes verified NZD admission and a bounded organiser", () => {
+    const normalized = normalizeTicketmasterEvent({
+      id: "event-free",
+      name: "Free Auckland event",
+      url: "https://ticketmaster.co.nz/event-free",
+      dates: { start: { localDate: "2026-08-01" } },
+      priceRanges: [{ currency: "NZD", min: 0, max: 0 }],
+      promoter: { name: "  Auckland   Arts  " },
+    });
+    expect(normalized).toMatchObject({
+      admission: { kind: "free", currency: "NZD" },
+      organiserName: "Auckland Arts",
+    });
+  });
+
+  it.each([
+    [[{ currency: "USD", min: 0, max: 0 }]],
+    [[{ currency: "NZD", min: -1, max: 20 }]],
+    [[{ currency: "NZD", min: 30, max: 20 }]],
+    [[{ currency: "NZD", min: Number.NaN, max: 20 }]],
+  ])("omits invalid admission evidence", (priceRanges) => {
+    const normalized = normalizeTicketmasterEvent({
+      id: "event-price",
+      name: "Auckland event",
+      url: "https://ticketmaster.co.nz/event-price",
+      dates: { start: { localDate: "2026-08-01" } },
+      priceRanges,
+    });
+    expect(normalized?.admission).toBeUndefined();
+  });
+
   it("rejects an unsafe upstream event ID before it can become a route", () => {
     const normalized = normalizeTicketmasterEvent({
       id: "../private",
