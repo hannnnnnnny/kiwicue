@@ -71,6 +71,10 @@ test("recommendations provide a responsive, bilingual path from the main navigat
   await expect(page.locator(".recommendation-card-shell")).toHaveCount(4);
   await expect(page.getByText("Reviewed 4 upcoming listings from 2 available feeds.")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Event categories" })).toBeVisible();
+  expect(await page.locator(".recommendation-grid").first().evaluate((node) => getComputedStyle(node).backgroundColor))
+    .toBe("rgba(0, 0, 0, 0)");
+  expect(await page.locator(".recommendation-card-shell .portal-event-card").first().evaluate((node) => getComputedStyle(node).borderTopWidth))
+    .toBe("0px");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/recommendations-${testInfo.project.name}.png`, fullPage: true });
@@ -96,7 +100,7 @@ test("recommendations provide a responsive, bilingual path from the main navigat
   await expect(page.getByRole("link", { name: "推荐", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
-test("event categories are descriptive, reachable and include sport", async ({ page }) => {
+test("event categories form an accessible, borderless discovery runway", async ({ page }, testInfo) => {
   await installRecommendationRoutes(page);
   await page.route("**/api/venues**", (route) => route.fulfill({
     status: 200,
@@ -106,9 +110,46 @@ test("event categories are descriptive, reachable and include sport", async ({ p
   await page.goto("/events");
 
   const categoryNav = page.getByRole("navigation", { name: "Event categories" });
+  await expect(categoryNav).toHaveAttribute("data-active", "all");
+  await expect(categoryNav.locator(".event-category-card")).toHaveCount(6);
+  expect(await categoryNav.locator(".event-category-card").evaluateAll((links) => links.map((link) => link.getAttribute("data-category"))))
+    .toEqual(["all", "concerts", "theatre", "markets", "festivals", "sports"]);
+  await expect(categoryNav.getByRole("link", { name: /^All\./ })).toHaveAttribute("aria-current", "page");
   await expect(categoryNav.getByRole("link", { name: /Sports/ })).toBeVisible();
   await expect(categoryNav.getByText("Live sport across Auckland")).toBeVisible();
+  expect(await categoryNav.locator(".event-category-card").first().evaluate((node) => getComputedStyle(node).borderTopWidth))
+    .toBe("0px");
+  const firstCategory = categoryNav.locator(".event-category-card").first();
+  await firstCategory.focus();
+  expect(await firstCategory.evaluate((node) => parseFloat(getComputedStyle(node).outlineWidth))).toBeGreaterThan(0);
+  for (let index = 0; index < await categoryNav.locator(".event-category-card").count(); index += 1) {
+    const box = await categoryNav.locator(".event-category-card").nth(index).boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  }
+  if (testInfo.project.name === "mobile-375") {
+    expect(await categoryNav.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+  }
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/category-runway-${testInfo.project.name}.png`, fullPage: true });
+  }
   await categoryNav.getByRole("link", { name: /Sports/ }).click();
   await expect(page).toHaveURL(/category=sports/);
+  await expect(page.getByRole("navigation", { name: "Event categories" })).toHaveAttribute("data-active", "sports");
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: `output/playwright/category-runway-sports-${testInfo.project.name}.png`, fullPage: true });
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.goto("/events?category=sports");
+  const deepLinkNav = page.getByRole("navigation", { name: "Event categories" });
+  await expect(deepLinkNav).toHaveAttribute("data-active", "sports");
+  await expect.poll(() => deepLinkNav.evaluate((navigation) => {
+    const activeCategory = navigation.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!activeCategory) return Number.POSITIVE_INFINITY;
+    const navigationBounds = navigation.getBoundingClientRect();
+    const activeBounds = activeCategory.getBoundingClientRect();
+    return Math.max(navigationBounds.left - activeBounds.left, activeBounds.right - navigationBounds.right, 0);
+  })).toBeLessThanOrEqual(1);
 });

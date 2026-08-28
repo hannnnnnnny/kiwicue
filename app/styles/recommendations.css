@@ -22,14 +22,15 @@
 .recommendation-section > header p { margin: 0; color: var(--portal-accent); font-size: .72rem; font-weight: 800; letter-spacing: .1em; }
 .recommendation-section > header h2 { margin: 0; font-size: clamp(1.8rem, 4vw, 3.7rem); line-height: .95; letter-spacing: -.05em; }
 .recommendation-section > header span { line-height: 1.55; color: var(--portal-muted); }
-.recommendation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 1px; list-style: none; background: var(--portal-ink); }
+.recommendation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 1.5rem); margin: 0; padding: 0; list-style: none; background: transparent; }
 .recommendation-grid[data-count="1"] { width: calc(33.3333% - 1px); grid-template-columns: minmax(0, 1fr); }
 .recommendation-grid[data-count="2"] { width: calc(66.6667% - 1px); grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.recommendation-grid > li { min-width: 0; background: var(--portal-bg); }
-.recommendation-card-shell { height: 100%; }
-.recommendation-card-shell .portal-event-card { height: calc(100% - 2.75rem); border: 0; }
+.recommendation-grid > li { min-width: 0; background: transparent; }
+.recommendation-card-shell { height: 100%; overflow: hidden; border-radius: var(--radius-panel); background: var(--portal-raised); box-shadow: 0 16px 38px rgb(20 108 91 / 10%); }
+.recommendation-card-shell .portal-event-card { height: calc(100% - 2.75rem); border: 0; border-radius: 0; box-shadow: none; }
+.recommendation-card-shell .portal-event-card:hover { transform: none; }
 .recommendation-card-shell .portal-event-card[data-layout="feature"] { grid-column: auto; }
-.recommendation-reason { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; margin: 0; padding: .65rem 1rem; border-bottom: 1px solid var(--portal-line); font-size: .76rem; font-weight: 750; text-transform: uppercase; letter-spacing: .055em; }
+.recommendation-reason { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; margin: 0; padding: .65rem 1rem; border: 0; background: var(--portal-brand-soft); color: var(--portal-brand); font-size: .76rem; font-weight: 750; text-transform: uppercase; letter-spacing: .055em; }
 .recommendation-reason i { width: .48rem; height: .48rem; border-radius: var(--radius-pill); background: var(--portal-accent); }
 
 .recommendation-state { width: min(var(--container), calc(100% - 48px)); margin-inline: auto; padding: clamp(4rem, 9vw, 8rem) 0; text-align: center; border-bottom: 1px solid var(--portal-line); }
