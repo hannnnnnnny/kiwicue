@@ -95,5 +95,8 @@ a:active { transform: translateY(1px); }
   button:active,
   a:active,
   .event-category-card:hover,
+  .event-category-card:hover .event-category-glyph,
+  .event-category-card:hover .event-category-cue,
+  .event-category-card:hover::after,
   .portal-event-card:hover .portal-event-media img { transform: none !important; }
 }
