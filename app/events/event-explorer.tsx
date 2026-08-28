@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../../components/language-provider";
 import { EventGridSkeleton } from "../../components/event-grid-skeleton";
+import { EventDiscoveryView, EventResultsView } from "../../components/event-discovery-sections";
 import type { EventCategory } from "../../lib/event-categories";
 import type { EventSort } from "../../lib/event-search-params";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 import type { EventWindow } from "../../lib/event-window";
-import { EventCard } from "./event-card";
 
 type RequestEventsOptions = {
   window?: EventWindow;
@@ -178,7 +178,7 @@ export function EventExplorer({
     sort,
     attempt,
   });
-  const isFiltered = Boolean(keyword || venueId || category || window !== "all");
+  const isFiltered = Boolean(keyword || venueId || category || window !== "all" || sort !== "recommended");
   const isMarketCategory = category === "markets";
   const stateForRequest: ExplorerState = state.status !== "loading" && state.requestKey === requestKey
     ? state
@@ -295,13 +295,9 @@ export function EventExplorer({
           </p>
           <span><i aria-hidden="true" /> {isMarketCategory ? content.marketSources : content.sources}</span>
         </div>
-        <ol className="event-grid">
-          {stateForRequest.events.map((event, index) => (
-            <li key={event.id}>
-              <EventCard event={event} index={index} language={language} />
-            </li>
-          ))}
-        </ol>
+        {isFiltered
+          ? <EventResultsView events={stateForRequest.events} language={language} state={{ window, category, keyword, venueId, sort }} />
+          : <EventDiscoveryView events={stateForRequest.events} language={language} />}
 
         {stateForRequest.nextCursor ? (
           <div className="event-load-more-wrap" aria-busy={stateForRequest.appendStatus === "loading"}>

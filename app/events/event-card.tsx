@@ -26,11 +26,12 @@ const copy = {
   },
 } as const;
 
-export function EventCard({ event, index, language, rankLabel }: {
+export function EventCard({ event, index, language, rankLabel, variant }: {
   event: KiwiCueEvent;
   index: number;
   language: Language;
   rankLabel?: (position: number) => string;
+  variant?: "lead" | "supporting" | "row" | "standard";
 }) {
   const content = copy[language];
   const displayName = eventDisplayName(event, language);
@@ -40,7 +41,7 @@ export function EventCard({ event, index, language, rankLabel }: {
   const venue = event.venue
     ? `${event.venue.name} · ${event.venue.city}`
     : content.venuePending;
-  const layout = index === 0 ? "feature" : "standard";
+  const layout = variant ?? (index === 0 ? "feature" : "standard");
 
   return (
     <article className="portal-event-card" data-layout={layout} aria-labelledby={titleId}>

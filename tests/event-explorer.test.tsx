@@ -126,8 +126,8 @@ describe("Auckland event explorer", () => {
     const page = await EventsPage();
     render(page);
 
-    expect(screen.getByRole("heading", { name: "Find your next Auckland plan." })).toBeInTheDocument();
-    expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Find something worth doing." })).toBeInTheDocument();
+    expect(screen.getByText("Discover Auckland")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/");
   });
 
@@ -157,6 +157,18 @@ describe("Auckland event explorer", () => {
       "href",
       "/events/event-1",
     );
+  });
+
+  it("renders editorial discovery by default and focused results for filters", async () => {
+    const requestEvents = vi.fn().mockResolvedValue(eventResult);
+    const view = render(<EventExplorer requestEvents={requestEvents} />);
+    expect(await screen.findByRole("heading", { name: "Start here" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Explore by mood" })).toBeVisible();
+    expect(screen.queryByText(/popular|trending/i)).not.toBeInTheDocument();
+
+    view.rerender(<EventExplorer keyword="Harbour" requestEvents={requestEvents} />);
+    expect(await screen.findByRole("heading", { name: "Results for “Harbour”" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Start here" })).not.toBeInTheDocument();
   });
 
   it("shows the full upcoming Ticketmaster total and an explicit remaining count", async () => {

@@ -18,9 +18,9 @@ const windowLabels = {
 
 const copy = {
   en: {
-    eyebrow: "Auckland event finder",
-    title: "Find your next Auckland plan.",
-    intro: "Search once. See what is soon, nearby, and worth your time.",
+    eyebrow: "Discover Auckland",
+    title: "Find something worth doing.",
+    intro: "Search by name, date or venue, or start with a useful Auckland edit.",
     filterTitle: "Choose how you want to go out",
     filterBody: "Pick one option or combine a few. Results update without hiding what matters.",
     statusLabel: "Current event search",
@@ -33,9 +33,9 @@ const copy = {
     footer: "Auckland events, easier to find.",
   },
   zh: {
-    eyebrow: "奥克兰活动检索",
-    title: "找到下一场奥克兰活动。",
-    intro: "一次搜索，快速查看近期、附近和值得去的活动。",
+    eyebrow: "探索奥克兰",
+    title: "找到真正值得去的活动。",
+    intro: "按名称、日期或场馆搜索，也可以从奥克兰精选开始。",
     filterTitle: "先选你想怎么出门",
     filterBody: "可以只选一项，也可以组合筛选，重要信息不会被藏起来。",
     statusLabel: "当前活动检索范围",
