@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { EventExplorer } from "../app/events/event-explorer";
 import type { EventCategory } from "../lib/event-categories";
+import type { EventSort } from "../lib/event-search-params";
 import type { EventWindow } from "../lib/event-window";
 import { EventCategoryNav } from "./event-category-nav";
 import { EventSearchPanel } from "./event-search-panel";
@@ -48,15 +49,16 @@ const copy = {
   },
 } as const;
 
-export function EventsPageContent({ window, category, keyword, venueId }: {
+export function EventsPageContent({ window, category, keyword, venueId, sort = "recommended" }: {
   window: EventWindow;
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
+  sort?: EventSort;
 }) {
   const { language } = useLanguage();
   const content = copy[language];
-  const searchState = { window, category, keyword, venueId };
+  const searchState = { window, category, keyword, venueId, sort };
   const sourceLabel = category === "markets" ? content.marketSource : content.source;
 
   useEffect(() => {

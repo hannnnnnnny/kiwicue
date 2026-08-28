@@ -31,6 +31,7 @@ export function EventWindowNav({
   category,
   keyword,
   venueId,
+  sort = "recommended",
 }: EventWindowNavProps) {
   const { language } = useLanguage();
   const content = copy[language];
@@ -42,7 +43,7 @@ export function EventWindowNav({
         {EVENT_WINDOWS.map((value: EventWindow) => (
           <Link
             className="portal-nav-link"
-            href={eventSearchHref({ window: value, category, keyword, venueId })}
+            href={eventSearchHref({ window: value, category, keyword, venueId, sort })}
             aria-current={window === value ? "page" : undefined}
             key={value}
           >

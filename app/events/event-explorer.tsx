@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../../components/language-provider";
 import { EventGridSkeleton } from "../../components/event-grid-skeleton";
 import type { EventCategory } from "../../lib/event-categories";
+import type { EventSort } from "../../lib/event-search-params";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 import type { EventWindow } from "../../lib/event-window";
 import { EventCard } from "./event-card";
@@ -152,12 +153,14 @@ export function EventExplorer({
   category = null,
   keyword = null,
   venueId = null,
+  sort = "recommended",
   requestEvents = requestEventsFromApi,
 }: {
   window?: EventWindow;
   category?: EventCategory | null;
   keyword?: string | null;
   venueId?: string | null;
+  sort?: EventSort;
   requestEvents?: RequestEvents;
 }) {
   const { language } = useLanguage();
@@ -172,6 +175,7 @@ export function EventExplorer({
     window,
     keyword: keyword ?? null,
     venueId: venueId ?? null,
+    sort,
     attempt,
   });
   const isFiltered = Boolean(keyword || venueId || category || window !== "all");

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { EventCategory } from "../lib/event-categories";
-import { parseEventKeyword, parseVenueId } from "../lib/event-search-params";
+import { parseEventKeyword, parseVenueId, type EventSort } from "../lib/event-search-params";
 import { eventSearchHref } from "../lib/event-search-url";
 import type { EventWindow } from "../lib/event-window";
 import { EventNameCombobox } from "./event-name-combobox";
@@ -22,6 +22,7 @@ type EventSearchPanelProps = {
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
+  sort?: EventSort;
 };
 
 const copy = {
@@ -94,6 +95,7 @@ export function EventSearchPanel({
   category,
   keyword,
   venueId,
+  sort = "recommended",
 }: EventSearchPanelProps) {
   const { language } = useLanguage();
   const content = copy[language];
@@ -127,11 +129,12 @@ export function EventSearchPanel({
 
   return (
     <SearchForm
-      key={JSON.stringify([eventWindow, category, keyword, venueId])}
+      key={JSON.stringify([eventWindow, category, keyword, venueId, sort])}
       window={eventWindow}
       category={category}
       keyword={keyword}
       venueId={venueId}
+      sort={sort}
       venues={venues}
       venueStatus={venueStatus}
       content={content}
@@ -144,6 +147,7 @@ function SearchForm({
   category,
   keyword,
   venueId,
+  sort = "recommended",
   venues,
   venueStatus,
   content,
@@ -157,7 +161,7 @@ function SearchForm({
   const [draftVenue, setDraftVenue] = useState(venueId ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [submittedHref, setSubmittedHref] = useState<string | null>(null);
-  const appliedHref = eventSearchHref({ window: eventWindow, category, keyword, venueId });
+  const appliedHref = eventSearchHref({ window: eventWindow, category, keyword, venueId, sort });
 
   useEffect(() => {
     if (!submitting || submittedHref !== appliedHref) return;
@@ -177,6 +181,7 @@ function SearchForm({
       category,
       keyword: normalizedKeyword,
       venueId: normalizedVenue,
+      sort,
     });
     setSubmitting(true);
     setSubmittedHref(href);
@@ -254,6 +259,7 @@ function SearchForm({
               category,
               keyword: null,
               venueId: null,
+              sort,
             })}>
               {content.clear}
             </Link>

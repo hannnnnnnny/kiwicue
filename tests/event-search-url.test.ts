@@ -8,7 +8,8 @@ describe("event portal URLs", () => {
       category: "concerts",
       keyword: "Taylor Swift",
       venueId: "venue-1",
-    })).toBe("/events?window=weekend&category=concerts&q=Taylor+Swift&venue=venue-1");
+      sort: "date",
+    })).toBe("/events?window=weekend&category=concerts&q=Taylor+Swift&venue=venue-1&sort=date");
   });
 
   it("omits every default or empty value", () => {
@@ -17,6 +18,7 @@ describe("event portal URLs", () => {
       category: null,
       keyword: null,
       venueId: null,
+      sort: "recommended",
     })).toBe("/events");
   });
 });

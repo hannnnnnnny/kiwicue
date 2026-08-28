@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { parseEventKeyword, parseVenueId } from "../lib/event-search-params";
+import { parseEventKeyword, parseEventSort, parseVenueId } from "../lib/event-search-params";
 
 describe("event search parameters", () => {
+  it("accepts only supported result sorts", () => {
+    expect(parseEventSort("date")).toBe("date");
+    expect(parseEventSort("recommended")).toBe("recommended");
+    expect(parseEventSort("popular")).toBe("recommended");
+    expect(parseEventSort(["date"])).toBe("recommended");
+  });
+
   it.each([
     ["  Taylor   Swift  ", "Taylor Swift"],
     ["Beyonce\u0301", "Beyonc\u00e9"],
