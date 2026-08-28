@@ -1,7 +1,8 @@
 # Category Runway Redesign
 
-**Date:** 2026-08-28  
-**Status:** Approved through the user's explicit autonomous-design authorization  
+**Date:** 2026-08-28
+
+**Status:** Approved through the user's explicit autonomous-design authorization
 **Scope:** Event category navigation and recommendation-card surfaces
 
 ## Problem

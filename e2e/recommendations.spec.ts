@@ -141,4 +141,15 @@ test("event categories form an accessible, borderless discovery runway", async (
     await page.screenshot({ path: `output/playwright/category-runway-sports-${testInfo.project.name}.png`, fullPage: true });
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.goto("/events?category=sports");
+  const deepLinkNav = page.getByRole("navigation", { name: "Event categories" });
+  await expect(deepLinkNav).toHaveAttribute("data-active", "sports");
+  await expect.poll(() => deepLinkNav.evaluate((navigation) => {
+    const activeCategory = navigation.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!activeCategory) return Number.POSITIVE_INFINITY;
+    const navigationBounds = navigation.getBoundingClientRect();
+    const activeBounds = activeCategory.getBoundingClientRect();
+    return Math.max(navigationBounds.left - activeBounds.left, activeBounds.right - navigationBounds.right, 0);
+  })).toBeLessThanOrEqual(1);
 });

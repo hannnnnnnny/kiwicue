@@ -143,7 +143,10 @@
     overflow-x: visible;
     padding-right: 0;
   }
-  .event-category-grid { grid-auto-columns: max(9.15rem, 39vw); }
+  .event-category-grid {
+    grid-auto-columns: max(9.75rem, 41vw);
+    gap: var(--space-1);
+  }
   .event-category-card { min-height: 10.5rem; }
   .event-category-card[aria-current="page"] .event-category-name { max-width: 74%; }
   .portal-status-strip { gap: var(--space-2) var(--space-4); }

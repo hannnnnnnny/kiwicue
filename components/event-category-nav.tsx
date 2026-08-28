@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { EVENT_CATEGORIES, type EventCategory } from "../lib/event-categories";
 import { eventSearchHref, type EventSearchState } from "../lib/event-search-url";
 import { useLanguage } from "./language-provider";
@@ -57,13 +58,31 @@ export function EventCategoryNav({
   showCurrent = true,
 }: EventCategoryNavProps & { showCurrent?: boolean }) {
   const { language } = useLanguage();
+  const navigationRef = useRef<HTMLElement>(null);
   const content = copy[language];
   const categories: Array<EventCategory | null> = [null, ...EVENT_CATEGORIES];
+
+  useEffect(() => {
+    if (!showCurrent) return;
+
+    const navigation = navigationRef.current;
+    const activeCategory = navigation?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!navigation || !activeCategory) return;
+
+    const navigationBounds = navigation.getBoundingClientRect();
+    const activeBounds = activeCategory.getBoundingClientRect();
+    const centeredOffset = navigation.scrollLeft
+      + activeBounds.left
+      - navigationBounds.left
+      - (navigation.clientWidth - activeCategory.offsetWidth) / 2;
+    navigation.scrollLeft = Math.max(0, centeredOffset);
+  }, [category, language, showCurrent]);
 
   return (
     <section className="portal-filter-group event-category-group">
       <p className="portal-filter-label">{content.title}</p>
       <nav
+        ref={navigationRef}
         className="event-category-grid"
         aria-label={content.label}
         data-active={showCurrent ? category ?? "all" : "none"}

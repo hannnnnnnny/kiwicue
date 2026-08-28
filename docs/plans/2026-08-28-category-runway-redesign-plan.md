@@ -51,7 +51,7 @@ expect(css).not.toMatch(/\.recommendation-grid\s*\{[^}]*gap:\s*1px/s);
 
 - [ ] **Step 3: Confirm the tests fail**
 
-Run: `npx vitest run tests/portal-navigation.test.tsx tests/event-card.test.tsx --maxWorkers=1`  
+Run: `npx vitest run tests/portal-navigation.test.tsx tests/event-card.test.tsx --maxWorkers=1`
 Expected: FAIL because current markup and CSS do not satisfy the new contract.
 
 ### Task 2: Build semantic category posters
@@ -90,7 +90,7 @@ Each link renders glyph, kicker, label, description, current status, and arrow c
 
 - [ ] **Step 4: Run focused component tests**
 
-Run: `npx vitest run tests/portal-navigation.test.tsx --maxWorkers=1`  
+Run: `npx vitest run tests/portal-navigation.test.tsx --maxWorkers=1`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -142,7 +142,7 @@ Disable glyph, cue, and card transforms in the existing `prefers-reduced-motion`
 
 - [ ] **Step 5: Run focused tests**
 
-Run: `npx vitest run tests/event-card.test.tsx tests/portal-navigation.test.tsx --maxWorkers=1`  
+Run: `npx vitest run tests/event-card.test.tsx tests/portal-navigation.test.tsx --maxWorkers=1`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -191,7 +191,7 @@ Remove the bottom rule and use the soft green surface while retaining the reason
 
 - [ ] **Step 4: Run focused tests and commit**
 
-Run: `npx vitest run tests/event-card.test.tsx tests/recommendations-page-content.test.tsx --maxWorkers=1`  
+Run: `npx vitest run tests/event-card.test.tsx tests/recommendations-page-content.test.tsx --maxWorkers=1`
 Expected: PASS.
 
 ```powershell
