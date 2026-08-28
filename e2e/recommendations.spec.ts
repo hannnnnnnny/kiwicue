@@ -130,8 +130,15 @@ test("event categories form an accessible, borderless discovery runway", async (
   if (testInfo.project.name === "mobile-375") {
     expect(await categoryNav.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
   }
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.screenshot({ path: `output/playwright/category-runway-${testInfo.project.name}.png`, fullPage: true });
+  }
   await categoryNav.getByRole("link", { name: /Sports/ }).click();
   await expect(page).toHaveURL(/category=sports/);
   await expect(page.getByRole("navigation", { name: "Event categories" })).toHaveAttribute("data-active", "sports");
+  if (process.env.CAPTURE_SCREENSHOTS === "1") {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: `output/playwright/category-runway-sports-${testInfo.project.name}.png`, fullPage: true });
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
