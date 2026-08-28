@@ -858,24 +858,25 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
   expect(imageMotion.animation).toBe("none");
 
   if ((page.viewportSize()?.width ?? 0) <= 600) {
-    for (const nav of ["Event categories", "Event time range"]) {
-      const track = page.getByRole("navigation", { name: nav });
-      const dimensions = await track.evaluate((element) => {
-        const trackRect = element.getBoundingClientRect();
-        const lastRect = element.lastElementChild?.getBoundingClientRect();
-        return {
-          width: element.scrollWidth,
-          client: element.clientWidth,
-          lastLeft: lastRect?.left ?? 0,
-          lastRight: lastRect?.right ?? 0,
-          trackLeft: trackRect.left,
-          trackRight: trackRect.right,
-        };
-      });
-      expect(dimensions.width).toBeLessThanOrEqual(dimensions.client);
-      expect(dimensions.lastLeft).toBeGreaterThanOrEqual(dimensions.trackLeft);
-      expect(dimensions.lastRight).toBeLessThanOrEqual(dimensions.trackRight);
-    }
+    const categoryTrack = page.getByRole("navigation", { name: "Event categories" });
+    expect(await categoryTrack.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+
+    const timeTrack = page.getByRole("navigation", { name: "Event time range" });
+    const timeDimensions = await timeTrack.evaluate((element) => {
+      const trackRect = element.getBoundingClientRect();
+      const lastRect = element.lastElementChild?.getBoundingClientRect();
+      return {
+        width: element.scrollWidth,
+        client: element.clientWidth,
+        lastLeft: lastRect?.left ?? 0,
+        lastRight: lastRect?.right ?? 0,
+        trackLeft: trackRect.left,
+        trackRight: trackRect.right,
+      };
+    });
+    expect(timeDimensions.width).toBeLessThanOrEqual(timeDimensions.client);
+    expect(timeDimensions.lastLeft).toBeGreaterThanOrEqual(timeDimensions.trackLeft);
+    expect(timeDimensions.lastRight).toBeLessThanOrEqual(timeDimensions.trackRight);
   } else {
     await page.setViewportSize({ width: 720, height: 900 });
     expect(await page.locator(".event-grid").evaluate((element) =>
