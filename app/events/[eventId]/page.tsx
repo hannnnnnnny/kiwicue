@@ -24,7 +24,10 @@ export default async function EventDetailPage({ params }: PageProps) {
   try {
     event = await loadEventPageData(eventId);
   } catch (error) {
-    if (error instanceof EventPageDataError && error.status === 404) notFound();
+    if (error instanceof EventPageDataError) {
+      if (error.status === 404) notFound();
+      return <EventDetailContent eventId={eventId} />;
+    }
     throw error;
   }
   const relatedEvents = selectRelatedEvents(event, await loadRelatedEventCandidates(), new Date(), 3);

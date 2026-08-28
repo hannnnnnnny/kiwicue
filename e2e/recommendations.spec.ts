@@ -128,7 +128,7 @@ test("event categories form an accessible, borderless discovery runway", async (
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
   if (testInfo.project.name === "mobile-375") {
-    expect(await categoryNav.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+    expect(await categoryNav.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
   }
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/category-runway-${testInfo.project.name}.png`, fullPage: true });

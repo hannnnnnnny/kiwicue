@@ -552,7 +552,6 @@
   align-content: center;
   padding: var(--space-5) 0;
   border: 0;
-  border-top: 1px solid var(--portal-line);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
