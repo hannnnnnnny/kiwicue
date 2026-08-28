@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-28
 
-**Status:** Approved direction, implementation pending written-spec review
+**Status:** Approved for implementation
 
 **Scope:** `/events`, `/events/[eventId]`, additive event-domain fields, and supporting tests/styles
 **Project:** KiwiCue / nz news center
