@@ -530,7 +530,7 @@ test("keyboard reaches every portal control in document order with visible focus
   for (const label of ["Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
     await tabTo(page, discoveryCategoryNav.getByRole("link", { name: label, exact: true }));
   }
-  await tabTo(page, page.getByRole("button", { name: "Show 1 more event" }));
+  await tabTo(page, page.getByRole("button", { name: "Check for more events" }));
   expect(errors).toEqual([]);
 });
 
@@ -697,7 +697,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
     body: "<!doctype html><title>Official fixture</title>",
   }));
   await page.goto("/events");
-  const more = page.getByRole("button", { name: "Show 1 more event" });
+  const more = page.getByRole("button", { name: "Check for more events" });
   await expect(more).toBeVisible();
   await more.scrollIntoViewIfNeeded();
   const layoutBefore = await measureLoadMoreLayout(page);
@@ -767,7 +767,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   }));
 
   await page.goto("/events?category=markets");
-  await expect(page.getByText("2 verified market schedules · 2 shown")).toBeVisible();
+  await expect(page.getByText("2 verified market schedules shown · 2 source records checked")).toBeVisible();
   await expect(page.getByText("Verified official market links")).toHaveCount(1);
   await expect(page.locator(".source-disclaimer")).not.toContainText("Ticketmaster");
 
@@ -847,7 +847,7 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   await resetApiRoutes(page);
   await installRoutes(page, { appendFailures: 1 });
   await page.goto("/events");
-  await page.getByRole("button", { name: "Show 1 more event" }).click();
+  await page.getByRole("button", { name: "Check for more events" }).click();
   await expect(page.locator(".event-load-more-error")).toContainText("shown events are still here");
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   await page.getByRole("button", { name: "Retry loading more events" }).click();

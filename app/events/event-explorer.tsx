@@ -67,15 +67,15 @@ const copy = {
     feedTitle: "Happening soon",
     feedIntro: "Dates stay easy to scan, with useful detail and verified sources kept visible.",
     loading: "Scanning Auckland for what is next",
-    count: (isFiltered: boolean, total: number, shown: number) => `${total} ${isFiltered ? "matching" : "upcoming"} Ticketmaster ${total === 1 ? "event" : "events"} · ${shown} shown`,
+    count: (isFiltered: boolean, checked: number, shown: number) => `${shown} eligible ${isFiltered ? "matching " : ""}Ticketmaster ${shown === 1 ? "event" : "events"} shown · ${checked} source ${checked === 1 ? "record" : "records"} checked`,
     sources: "Official source links included",
     disclaimer: "Event details and ticket availability come from Ticketmaster. KiwiCue helps you discover events and does not sell tickets.",
-    more: (count: number) => `Show ${count} more ${count === 1 ? "event" : "events"}`,
+    more: "Check for more events",
     loadingMore: "Loading more events",
     appendError: "Loading more events failed. Your shown events are still here.",
     retryMore: "Retry loading more events",
     complete: "All eligible Ticketmaster events are shown",
-    marketCount: (total: number, shown: number) => `${total} verified market ${total === 1 ? "schedule" : "schedules"} · ${shown} shown`,
+    marketCount: (checked: number, shown: number) => `${shown} verified market ${shown === 1 ? "schedule" : "schedules"} shown · ${checked} source ${checked === 1 ? "record" : "records"} checked`,
     marketSources: "Verified official market links",
     marketDisclaimer: "KiwiCue checks these recurring schedules against each market's official website. Confirm the latest details before travelling.",
     marketComplete: "All verified market schedules are shown",
@@ -84,6 +84,8 @@ const copy = {
     upcomingEmptyBody: "Check back soon—new Auckland events are added throughout the week.",
     matchingEmptyTitle: "No matching events found",
     matchingEmptyBody: "Try changing or clearing your filters.",
+    batchEmptyTitle: "No eligible events in this batch",
+    batchEmptyBody: "Check the next source page for more Auckland events.",
     emptyAction: "Clear all filters",
     errorCode: "SIGNAL LOST",
     errorTitle: "Auckland events are temporarily out of range",
@@ -95,17 +97,15 @@ const copy = {
     feedTitle: "即将发生",
     feedIntro: "日期仍然方便浏览，实用信息和可靠来源会保持可见。",
     loading: "正在扫描奥克兰近期活动",
-    count: (isFiltered: boolean, total: number, shown: number) => isFiltered
-      ? `Ticketmaster 共找到 ${total} 个匹配活动 · 已显示 ${shown} 个`
-      : `Ticketmaster 当前可查 ${total} 个未来活动 · 已显示 ${shown} 个`,
+    count: (isFiltered: boolean, checked: number, shown: number) => `已显示 ${shown} 个符合条件的${isFiltered ? "匹配" : ""} Ticketmaster 活动 · 已检查 ${checked} 条来源记录`,
     sources: "包含官方来源链接",
     disclaimer: "活动详情和余票状态来自 Ticketmaster。KiwiCue 帮你发现活动，不销售门票。",
-    more: (count: number) => `再显示 ${count} 个活动`,
+    more: "继续检查活动",
     loadingMore: "正在加载更多活动",
     appendError: "加载更多活动失败，已显示的活动仍会保留。",
     retryMore: "重新加载更多活动",
     complete: "符合条件的 Ticketmaster 活动已全部显示",
-    marketCount: (total: number, shown: number) => `已核实 ${total} 个市集日程 · 已显示 ${shown} 个`,
+    marketCount: (checked: number, shown: number) => `已显示 ${shown} 个核实市集日程 · 已检查 ${checked} 条来源记录`,
     marketSources: "包含已核实的市集官方链接",
     marketDisclaimer: "KiwiCue 会对照各市集官网核实定期日程；出发前请再次确认最新安排。",
     marketComplete: "已核实的市集日程已全部显示",
@@ -114,6 +114,8 @@ const copy = {
     upcomingEmptyBody: "请稍后再来，本周还会陆续加入新的奥克兰活动。",
     matchingEmptyTitle: "没有找到匹配的活动",
     matchingEmptyBody: "请更改或清除筛选条件后再试。",
+    batchEmptyTitle: "本批没有符合条件的活动",
+    batchEmptyBody: "可以继续检查下一页奥克兰活动来源。",
     emptyAction: "清除全部筛选",
     errorCode: "信号暂时中断",
     errorTitle: "暂时无法获取奥克兰活动",
@@ -281,18 +283,19 @@ export function EventExplorer({
   if (stateForRequest.status === "ready") {
     const shownEvents = filterEligibleDiscoveryEvents(stateForRequest.events, new Date());
     if (shownEvents.length === 0) {
+      const canCheckMore = Boolean(stateForRequest.nextCursor);
       return (
         <section className="event-state event-empty" aria-live="polite">
           <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
-          <h2>{isFiltered ? content.matchingEmptyTitle : content.upcomingEmptyTitle}</h2>
-          <p>{isFiltered ? content.matchingEmptyBody : content.upcomingEmptyBody}</p>
-          {stateForRequest.nextCursor && (
+          <h2>{canCheckMore ? content.batchEmptyTitle : isFiltered ? content.matchingEmptyTitle : content.upcomingEmptyTitle}</h2>
+          <p>{canCheckMore ? content.batchEmptyBody : isFiltered ? content.matchingEmptyBody : content.upcomingEmptyBody}</p>
+          {canCheckMore && (
             <div>
               {stateForRequest.appendStatus === "error" && <p role="alert">{content.appendError}</p>}
               <button type="button" onClick={loadMore} disabled={stateForRequest.appendStatus === "loading"}>
                 {stateForRequest.appendStatus === "loading"
                   ? content.loadingMore
-                  : stateForRequest.appendStatus === "error" ? content.retryMore : content.more(1)}
+                  : stateForRequest.appendStatus === "error" ? content.retryMore : content.more}
               </button>
             </div>
           )}
@@ -300,10 +303,6 @@ export function EventExplorer({
         </section>
       );
     }
-    const remaining = Math.max(stateForRequest.totalElements - stateForRequest.events.length, 0);
-    const eligibleTotal = shownEvents.length + remaining;
-    const moreCount = Math.min(50, Math.max(remaining, 1));
-
     return (
       <section className="event-feed" aria-live="polite">
         <header className="event-feed-heading">
@@ -313,8 +312,8 @@ export function EventExplorer({
         <div className="event-feed-toolbar">
           <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1}>
             {isMarketCategory
-              ? content.marketCount(eligibleTotal, shownEvents.length)
-              : content.count(isFiltered, eligibleTotal, shownEvents.length)}
+              ? content.marketCount(stateForRequest.events.length, shownEvents.length)
+              : content.count(isFiltered, stateForRequest.events.length, shownEvents.length)}
           </p>
           <span><i aria-hidden="true" /> {isMarketCategory ? content.marketSources : content.sources}</span>
         </div>
@@ -337,7 +336,7 @@ export function EventExplorer({
                 ? content.loadingMore
                 : stateForRequest.appendStatus === "error"
                   ? content.retryMore
-                  : content.more(moreCount)}
+                  : content.more}
             </button>
           </div>
         ) : (
