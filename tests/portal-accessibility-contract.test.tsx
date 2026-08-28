@@ -15,9 +15,9 @@ const eventResult = {
     url: "https://www.ticketmaster.co.nz/event/event-1",
     imageUrl: null,
     start: {
-      localDate: "2026-08-01",
+      localDate: "2026-09-01",
       localTime: "19:30:00",
-      dateTime: "2026-08-01T07:30:00Z",
+      dateTime: "2026-09-01T07:30:00Z",
       timezone: "Pacific/Auckland",
     },
     status: "onsale",
@@ -59,11 +59,12 @@ describe("complete portal accessibility contract", () => {
       view.container.querySelector(".skip-link"),
       view.container.querySelector(".portal-header"),
       screen.getByRole("search", { name: "Search Auckland events" }),
+      screen.getByRole("navigation", { name: "Sort results" }),
       screen.getByRole("heading", { name: "Choose how you want to go out" }),
       screen.getByRole("navigation", { name: "Event categories" }),
       screen.getByRole("navigation", { name: "Event time range" }),
       view.container.querySelector("#event-results-summary"),
-      view.container.querySelector(".event-grid"),
+      view.container.querySelector(".event-lead-story"),
       view.container.querySelector(".portal-about"),
       view.container.querySelector(".portal-footer"),
     ];
@@ -73,7 +74,14 @@ describe("complete portal accessibility contract", () => {
     }
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getAllByRole("navigation").map((nav) => nav.getAttribute("aria-label")))
-      .toEqual(["Primary navigation", "Event categories", "Event time range"]);
+      .toEqual([
+        "Primary navigation",
+        "Sort results",
+        "Event categories",
+        "Event time range",
+        "Explore by mood",
+        "Explore by category",
+      ]);
   });
 
   it("names every action and never renders a dead link", async () => {

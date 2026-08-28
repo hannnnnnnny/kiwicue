@@ -150,17 +150,12 @@ export function EventDetailContent({
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<DetailState>(initialEvent
     ? { status: "ready", event: initialEvent }
-    : { status: "loading" });
+    : eventId
+      ? { status: "loading" }
+      : { status: "not-found" });
 
   useEffect(() => {
-    if (initialEvent) {
-      setState({ status: "ready", event: initialEvent });
-      return;
-    }
-    if (!eventId) {
-      setState({ status: "not-found" });
-      return;
-    }
+    if (initialEvent || !eventId) return;
     let active = true;
     requestEventDetail(eventId)
       .then((event) => {
