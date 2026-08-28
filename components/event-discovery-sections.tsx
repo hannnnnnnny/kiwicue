@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EventCard } from "../app/events/event-card";
 import { EVENT_CATEGORIES, type EventCategory } from "../lib/event-categories";
-import { groupEventsByAucklandDate, sortDiscoveryEvents } from "../lib/event-discovery";
+import { buildEventDiscovery, groupEventsByAucklandDate, sortDiscoveryEvents } from "../lib/event-discovery";
 import { eventSearchHref } from "../lib/event-search-url";
 import type { EventSort } from "../lib/event-search-params";
 import type { KiwiCueEvent } from "../lib/events";
@@ -23,6 +23,9 @@ const copy = {
     moods: "Explore by mood",
     categories: "Explore by category",
     more: "More dates",
+    free: "Free to enter",
+    picks: "Verified picks",
+    weekend: "This weekend",
     result: (keyword: string | null) => keyword ? `Results for “${keyword}”` : "Filtered events",
   },
   zh: {
@@ -31,6 +34,9 @@ const copy = {
     moods: "按心情探索",
     categories: "按类型探索",
     more: "更多日期",
+    free: "免费入场",
+    picks: "已核实精选",
+    weekend: "本周末",
     result: (keyword: string | null) => keyword ? `“${keyword}”的搜索结果` : "筛选结果",
   },
 } as const;
@@ -42,6 +48,11 @@ const moods: Array<{ id: string; en: string; zh: string; category: EventCategory
   { id: "festival", en: "Festival day", zh: "节庆一日", category: "festivals", window: "30d" },
   { id: "match", en: "Match day", zh: "比赛日", category: "sports", window: "30d" },
 ];
+
+const categoryLabels: Record<Language, Record<EventCategory, string>> = {
+  en: { concerts: "Concerts", theatre: "Theatre", markets: "Markets", festivals: "Festivals", sports: "Sports" },
+  zh: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动", sports: "体育赛事" },
+};
 
 function DateGroup({ date, events, language, offset = 0 }: {
   date: string;
@@ -67,11 +78,29 @@ function DateGroup({ date, events, language, offset = 0 }: {
   );
 }
 
-export function EventDiscoveryView({ events, language }: { events: KiwiCueEvent[]; language: Language }) {
+export function EventDiscoveryView({ events, language, now = new Date() }: { events: KiwiCueEvent[]; language: Language; now?: Date }) {
   const content = copy[language];
-  const ordered = sortDiscoveryEvents(events, "recommended");
-  const lead = ordered.slice(0, 3);
-  const remaining = groupEventsByAucklandDate(ordered.slice(3));
+  const model = buildEventDiscovery(events, now);
+  const lead = model.lead;
+  const used = new Set(lead.map(({ id }) => id));
+  const take = (candidates: KiwiCueEvent[]) => candidates.filter(({ id }) => !used.has(id)).slice(0, 3);
+  const free = take(model.free);
+  free.forEach(({ id }) => used.add(id));
+  const picks = take(model.picks);
+  picks.forEach(({ id }) => used.add(id));
+  const weekend = take(model.weekend);
+  weekend.forEach(({ id }) => used.add(id));
+  const remaining = groupEventsByAucklandDate(
+    model.dateGroups.flatMap(({ events: groupEvents }) => groupEvents).filter(({ id }) => !used.has(id)),
+  );
+  const collection = (title: string, collectionEvents: KiwiCueEvent[], offset: number) => collectionEvents.length > 0 && (
+    <section className="event-discovery-section event-evidence-collection">
+      <h2>{title}</h2>
+      <ol className="event-collection-list">
+        {collectionEvents.map((event, index) => <li key={event.id}><EventCard event={event} index={offset + index} language={language} variant="row" /></li>)}
+      </ol>
+    </section>
+  );
   return (
     <div className="event-discovery-view">
       <section className="event-discovery-section event-start-here" aria-labelledby="start-here-title">
@@ -80,6 +109,9 @@ export function EventDiscoveryView({ events, language }: { events: KiwiCueEvent[
           {lead.map((event, index) => <li key={event.id}><EventCard event={event} index={index} language={language} variant={index === 0 ? "lead" : "supporting"} /></li>)}
         </ol>
       </section>
+      {collection(content.free, free, 20)}
+      {collection(content.picks, picks, 30)}
+      {collection(content.weekend, weekend, 40)}
       <section className="event-discovery-section" aria-labelledby="mood-title">
         <h2 id="mood-title">{content.moods}</h2>
         <nav className="event-mood-links" aria-label={content.moods}>
@@ -89,7 +121,7 @@ export function EventDiscoveryView({ events, language }: { events: KiwiCueEvent[
       <section className="event-discovery-section" aria-labelledby="category-discovery-title">
         <h2 id="category-discovery-title">{content.categories}</h2>
         <nav className="event-category-links" aria-label={content.categories}>
-          {EVENT_CATEGORIES.map((category) => <Link key={category} href={eventSearchHref({ window: "all", category, keyword: null, venueId: null, sort: "recommended" })}>{category}</Link>)}
+          {EVENT_CATEGORIES.map((category) => <Link key={category} href={eventSearchHref({ window: "all", category, keyword: null, venueId: null, sort: "recommended" })}>{categoryLabels[language][category]}</Link>)}
         </nav>
       </section>
       {remaining.length > 0 && <section className="event-discovery-section"><h2>{content.more}</h2>{remaining.map((group, index) => <DateGroup key={group.date} {...group} language={language} offset={index + 3} />)}</section>}

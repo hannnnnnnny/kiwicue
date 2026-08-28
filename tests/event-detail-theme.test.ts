@@ -9,6 +9,8 @@ describe("event detail visual contract", () => {
     expect(css).toMatch(/\.event-detail-venue\s*\{[^}]*position:\s*sticky/s);
     expect(css).toMatch(/\.event-detail-media\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*9/s);
     expect(css).toMatch(/\.event-map iframe\s*\{[^}]*aspect-ratio:\s*4\s*\/\s*3/s);
+    expect(css).toMatch(/\.event-detail-hero\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.15fr\)\s+minmax\(20rem,\s*\.85fr\)/s);
+    expect(css).toMatch(/\.event-detail-heading\s*\{[^}]*grid-column:\s*2/s);
   });
 
   it("keeps all new actions touchable and focus-visible", () => {

@@ -6,7 +6,7 @@ import type { EventCategory } from "../lib/event-categories";
 import type { EventSort } from "../lib/event-search-params";
 import type { EventWindow } from "../lib/event-window";
 import { EventCategoryNav } from "./event-category-nav";
-import { EventSearchPanel } from "./event-search-panel";
+import { EventDiscoveryControls } from "./event-discovery-controls";
 import { EventWindowNav } from "./event-window-nav";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
@@ -78,7 +78,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
             <h1 className="editorial-display" id="events-title">{content.title}</h1>
             <p className="portal-intro">{content.intro}</p>
           </div>
-          <EventSearchPanel {...searchState} />
+          <EventDiscoveryControls state={searchState} />
         </div>
       </section>
 

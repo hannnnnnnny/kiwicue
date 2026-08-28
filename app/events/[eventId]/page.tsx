@@ -1,16 +1,37 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { EventDetailContent } from "../../../components/event-detail-content";
+import { EventPageDataError, loadEventPageData, loadRelatedEventCandidates } from "../../../lib/event-detail-data";
+import { selectRelatedEvents } from "../../../lib/event-related";
+import { buildEventJsonLd, buildEventMetadata, serializeJsonLd } from "../../../lib/event-seo";
 
-export const metadata: Metadata = {
-  title: "Event details — KiwiCue",
-  description: "Official Auckland event information, venue map, distance and booking route.",
-};
+type PageProps = { params: Promise<{ eventId: string }> };
 
-export default async function EventDetailPage({
-  params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { eventId } = await params;
-  return <EventDetailContent eventId={eventId} />;
+  try {
+    return buildEventMetadata(await loadEventPageData(eventId));
+  } catch (error) {
+    return error instanceof EventPageDataError && error.status === 404
+      ? { title: "Event not found — KiwiCue" }
+      : { title: "Event details — KiwiCue" };
+  }
+}
+
+export default async function EventDetailPage({ params }: PageProps) {
+  const { eventId } = await params;
+  let event;
+  try {
+    event = await loadEventPageData(eventId);
+  } catch (error) {
+    if (error instanceof EventPageDataError && error.status === 404) notFound();
+    throw error;
+  }
+  const relatedEvents = selectRelatedEvents(event, await loadRelatedEventCandidates(), new Date(), 3);
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildEventJsonLd(event)) }} />
+      <EventDetailContent initialEvent={event} relatedEvents={relatedEvents} />
+    </>
+  );
 }

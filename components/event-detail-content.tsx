@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { EventCard } from "../app/events/event-card";
 import {
   eventDisplayDescription,
   eventDisplayName,
@@ -12,7 +13,7 @@ import {
   formatEventTime,
   formatVerifiedDate,
 } from "../lib/event-display";
-import type { KiwiCueEventDetail } from "../lib/events";
+import type { KiwiCueEvent, KiwiCueEventDetail } from "../lib/events";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
 import { EventEditorialPreviewMedia } from "./event-editorial-preview";
@@ -57,7 +58,8 @@ const copy = {
       "Select an available option and complete booking or payment on the official website.",
     ],
     information: "Event information",
-    noDescription: "No additional organiser description is available yet.",
+    organiser: "Organiser",
+    related: "You may also like",
     note: "Organiser note",
     venue: "Venue and map",
     addressUnavailable: "Street address is not available yet.",
@@ -94,7 +96,8 @@ const copy = {
       "在官方网站选择仍可用的场次或票种，并完成预约或付款。",
     ],
     information: "活动说明",
-    noDescription: "主办方暂未提供更多活动介绍。",
+    organiser: "主办方",
+    related: "你可能也喜欢",
     note: "主办方提示",
     venue: "场馆与地图",
     addressUnavailable: "场馆暂未提供街道地址。",
@@ -122,19 +125,42 @@ const copy = {
   },
 } as const;
 
+function formatAdmission(event: KiwiCueEventDetail, language: "en" | "zh"): string | null {
+  if (!event.admission || event.admission.kind === "unknown") return null;
+  if (event.admission.kind === "free") return language === "zh" ? "免费" : "Free";
+  const amount = (value: number) => `NZ$${new Intl.NumberFormat("en-NZ", { maximumFractionDigits: 2 }).format(value)}`;
+  return event.admission.min === event.admission.max
+    ? amount(event.admission.min)
+    : `${amount(event.admission.min)}–${amount(event.admission.max)}`;
+}
+
 export function EventDetailContent({
   eventId,
+  initialEvent,
+  relatedEvents = [],
   requestEventDetail = requestEventDetailFromApi,
 }: {
-  eventId: string;
+  eventId?: string;
+  initialEvent?: KiwiCueEventDetail;
+  relatedEvents?: KiwiCueEvent[];
   requestEventDetail?: (eventId: string) => Promise<KiwiCueEventDetail>;
 }) {
   const { language } = useLanguage();
   const content = copy[language];
   const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<DetailState>({ status: "loading" });
+  const [state, setState] = useState<DetailState>(initialEvent
+    ? { status: "ready", event: initialEvent }
+    : { status: "loading" });
 
   useEffect(() => {
+    if (initialEvent) {
+      setState({ status: "ready", event: initialEvent });
+      return;
+    }
+    if (!eventId) {
+      setState({ status: "not-found" });
+      return;
+    }
     let active = true;
     requestEventDetail(eventId)
       .then((event) => {
@@ -147,7 +173,7 @@ export function EventDetailContent({
           : { status: "error" });
       });
     return () => { active = false; };
-  }, [attempt, eventId, requestEventDetail]);
+  }, [attempt, eventId, initialEvent, requestEventDetail]);
 
   function shell(body: React.ReactNode) {
     return (
@@ -218,6 +244,7 @@ export function EventDetailContent({
   const bookingLabel = isCuratedMarket ? content.marketBooking : content.booking;
   const dateTime = `${formatEventDate(event.start.localDate, language)} · ${formatEventTime(event.start.localTime, language)}`;
   const venue = event.venue;
+  const admission = formatAdmission(event, language);
 
   return shell(
     <article id="event-detail" className="event-detail-shell" aria-labelledby="event-detail-title">
@@ -235,6 +262,7 @@ export function EventDetailContent({
                 {venue?.name ?? content.addressUnavailable}
                 {venue?.city ? ` · ${venue.city}` : ""}
               </p>
+              {admission && <p className="event-detail-admission">{admission}</p>}
               <div className="event-detail-tags">
                 <span>{formatEventCategory(event.category, language)}</span>
                 <span>{formatEventStatus(event.status, language)}</span>
@@ -264,16 +292,38 @@ export function EventDetailContent({
           <MarketPastHighlights event={event} language={language} />
         )}
 
-        <section className="event-detail-section" aria-labelledby="information-title">
-          <h2 id="information-title">{content.information}</h2>
-          <p>{description ?? content.noDescription}</p>
-          {note && (
-            <aside className="event-organiser-note">
-              <h3>{content.note}</h3>
-              <p>{note}</p>
-            </aside>
-          )}
-        </section>
+        {(description || note) && (
+          <section className="event-detail-section" aria-labelledby="information-title">
+            <h2 id="information-title">{content.information}</h2>
+            {description && <p>{description}</p>}
+            {note && (
+              <aside className="event-organiser-note">
+                <h3>{content.note}</h3>
+                <p>{note}</p>
+              </aside>
+            )}
+          </section>
+        )}
+
+        {event.organiserName && (
+          <section className="event-detail-section" aria-labelledby="organiser-title">
+            <h2 id="organiser-title">{content.organiser}</h2>
+            <p>{event.organiserName}</p>
+          </section>
+        )}
+
+        {relatedEvents.length > 0 && (
+          <section className="event-detail-related" aria-labelledby="related-events-title">
+            <h2 id="related-events-title">{content.related}</h2>
+            <ol>
+              {relatedEvents.map((relatedEvent, index) => (
+                <li key={relatedEvent.id}>
+                  <EventCard event={relatedEvent} index={index} language={language} variant="row" />
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
       </div>
 
       <aside className="event-detail-venue" aria-labelledby="venue-title">

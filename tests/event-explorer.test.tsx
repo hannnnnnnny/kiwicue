@@ -25,9 +25,9 @@ const eventResult = {
       url: "https://www.ticketmaster.co.nz/event/event-1",
       imageUrl: "https://img.example/harbour.jpg",
       start: {
-        localDate: "2026-08-01",
+        localDate: "2026-09-01",
         localTime: "19:30:00",
-        dateTime: "2026-08-01T07:30:00Z",
+        dateTime: "2026-09-01T07:30:00Z",
         timezone: "Pacific/Auckland",
       },
       status: "onsale",
@@ -149,7 +149,7 @@ describe("Auckland event explorer", () => {
     render(<EventExplorer requestEvents={requestEvents} />);
 
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
-    expect(screen.getByText("Sat, 1 Aug · 7:30 pm")).toBeInTheDocument();
+    expect(screen.getByText("Tue, 1 Sept · 7:30 pm")).toBeInTheDocument();
     expect(screen.getByText("Music")).toBeInTheDocument();
     expect(screen.getByText("The Civic · Auckland")).toBeInTheDocument();
     expect(screen.getByText("1 upcoming Ticketmaster event · 1 shown")).toBeInTheDocument();
@@ -605,7 +605,7 @@ describe("Auckland event explorer", () => {
     renderChineseExplorer(readyRequest);
 
     expect(await screen.findByRole("heading", { name: "Harbour Lights" })).toBeInTheDocument();
-    expect(screen.getByText("8月1日周六 · 19:30")).toBeInTheDocument();
+    expect(screen.getByText("9月1日周二 · 19:30")).toBeInTheDocument();
     expect(screen.getByText("Ticketmaster 当前可查 1 个未来活动 · 已显示 1 个")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看 Harbour Lights 详情" })).toHaveAttribute(
       "href",
