@@ -48,6 +48,13 @@ export interface EventLocalization {
   };
 }
 
+export type EventAdmission =
+  | { kind: "free"; currency: "NZD" }
+  | { kind: "range"; currency: "NZD"; min: number; max: number }
+  | { kind: "unknown" };
+
+export type EventAreaId = "central" | "north" | "west" | "south" | "east";
+
 export interface KiwiCueEvent {
   id: string;
   name: string;
@@ -65,6 +72,9 @@ export interface KiwiCueEvent {
   source?: EventSource;
   localization?: EventLocalization;
   editorialPreview?: EventEditorialPreview;
+  admission?: EventAdmission;
+  areaId?: EventAreaId;
+  organiserName?: string;
 }
 
 export interface KiwiCueEventDetail extends KiwiCueEvent {
