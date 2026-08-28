@@ -190,6 +190,10 @@ describe("portal navigation", () => {
       .toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Concerts/ }))
       .toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("Live sound")).toBeVisible();
+    expect(screen.getByText("Current category")).toBeVisible();
+    expect(screen.getByRole("navigation", { name: "Event categories" })
+      .querySelectorAll('.event-category-glyph[aria-hidden="true"]')).toHaveLength(6);
     expect(screen.getByRole("link", { name: /Markets/ })).toHaveAttribute(
       "href",
       "/events?window=weekend&category=markets&q=Taylor&venue=venue-1",
@@ -222,6 +226,10 @@ describe("portal navigation", () => {
     for (const label of ["全部", "演唱会", "话剧演出", "市集", "节日活动", "体育赛事"]) {
       expect(within(categoryNav).getByRole("link", { name: new RegExp(`^${label}`) })).toBeInTheDocument();
     }
+    for (const kicker of ["全部发现", "现场音乐", "舞台演出", "社区寻宝", "城市节庆", "比赛现场"]) {
+      expect(within(categoryNav).getByText(kicker)).toBeVisible();
+    }
+    expect(within(categoryNav).getByText("当前分类")).toBeVisible();
     for (const label of ["未来 7 天", "本周末", "未来 30 天", "全部未来"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
