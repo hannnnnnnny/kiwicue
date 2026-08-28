@@ -14,6 +14,10 @@ const transparentGif = Buffer.from(
 
 const pagesWithAssetRoutes = new WeakSet<Page>();
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-29T00:00:00+12:00"));
+});
+
 function event(id: string, name: string, options: { image?: boolean; status?: string } = {}) {
   return {
     id,
@@ -589,7 +593,7 @@ test("search, clear, back, forward, and reload keep one canonical shareable stat
   await page.goForward();
   await expect(page).toHaveURL(/\/events\?window=weekend&category=concerts$/);
   await page.reload();
-  await expect(page.getByRole("link", { name: "This weekend" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "This weekend", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("navigation", { name: "Event categories" }).getByRole("link", { name: /Concerts/ }))
     .toHaveAttribute("aria-current", "page");
   expect(errors).toEqual([]);

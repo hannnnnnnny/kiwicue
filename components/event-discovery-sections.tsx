@@ -78,6 +78,13 @@ function DateGroup({ date, events, language, offset = 0 }: {
   );
 }
 
+function addGroupOffsets(groups: ReturnType<typeof groupEventsByAucklandDate>, start = 0) {
+  return groups.map((group, index) => ({
+    group,
+    offset: start + groups.slice(0, index).reduce((total, item) => total + item.events.length, 0),
+  }));
+}
+
 export function EventDiscoveryView({ events, language, now = new Date() }: { events: KiwiCueEvent[]; language: Language; now?: Date }) {
   const content = copy[language];
   const model = buildEventDiscovery(events, now);
@@ -93,6 +100,10 @@ export function EventDiscoveryView({ events, language, now = new Date() }: { eve
   const remaining = groupEventsByAucklandDate(
     model.dateGroups.flatMap(({ events: groupEvents }) => groupEvents).filter(({ id }) => !used.has(id)),
   );
+  const freeOffset = lead.length;
+  const picksOffset = freeOffset + free.length;
+  const weekendOffset = picksOffset + picks.length;
+  const remainingWithOffsets = addGroupOffsets(remaining, weekendOffset + weekend.length);
   const collection = (title: string, collectionEvents: KiwiCueEvent[], offset: number) => collectionEvents.length > 0 && (
     <section className="event-discovery-section event-evidence-collection">
       <h2>{title}</h2>
@@ -109,9 +120,9 @@ export function EventDiscoveryView({ events, language, now = new Date() }: { eve
           {lead.map((event, index) => <li key={event.id}><EventCard event={event} index={index} language={language} variant={index === 0 ? "lead" : "supporting"} /></li>)}
         </ol>
       </section>
-      {collection(content.free, free, 20)}
-      {collection(content.picks, picks, 30)}
-      {collection(content.weekend, weekend, 40)}
+      {collection(content.free, free, freeOffset)}
+      {collection(content.picks, picks, picksOffset)}
+      {collection(content.weekend, weekend, weekendOffset)}
       <section className="event-discovery-section" aria-labelledby="mood-title">
         <h2 id="mood-title">{content.moods}</h2>
         <nav className="event-mood-links" aria-label={content.moods}>
@@ -124,7 +135,9 @@ export function EventDiscoveryView({ events, language, now = new Date() }: { eve
           {EVENT_CATEGORIES.map((category) => <Link key={category} href={eventSearchHref({ window: "all", category, keyword: null, venueId: null, sort: "recommended" })}>{categoryLabels[language][category]}</Link>)}
         </nav>
       </section>
-      {remaining.length > 0 && <section className="event-discovery-section"><h2>{content.more}</h2>{remaining.map((group, index) => <DateGroup key={group.date} {...group} language={language} offset={index + 3} />)}</section>}
+      {remaining.length > 0 && <section className="event-discovery-section"><h2>{content.more}</h2>{remainingWithOffsets.map(({ group, offset }) => (
+        <DateGroup key={group.date} {...group} language={language} offset={offset} />
+      ))}</section>}
     </div>
   );
 }
@@ -132,10 +145,13 @@ export function EventDiscoveryView({ events, language, now = new Date() }: { eve
 export function EventResultsView({ events, language, state }: { events: KiwiCueEvent[]; language: Language; state: SearchState }) {
   const ordered = sortDiscoveryEvents(events, state.sort);
   const groups = groupEventsByAucklandDate(ordered);
+  const groupsWithOffsets = addGroupOffsets(groups);
   return (
     <div className="event-results-view">
       <header className="event-results-heading"><p className="eyebrow">SEARCH / AUCKLAND</p><h2>{copy[language].result(state.keyword)}</h2></header>
-      {groups.map((group, index) => <DateGroup key={group.date} {...group} language={language} offset={index * 50} />)}
+      {groupsWithOffsets.map(({ group, offset }) => (
+        <DateGroup key={group.date} {...group} language={language} offset={offset} />
+      ))}
     </div>
   );
 }

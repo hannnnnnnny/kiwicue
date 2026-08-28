@@ -59,6 +59,16 @@ describe("event discovery derivation", () => {
       .toEqual(["2026-08-29", "2026-08-30"]);
   });
 
+  it("orders date groups chronologically without erasing the chosen within-day order", () => {
+    const sparse = event("a-sparse");
+    const complete = event("z-complete", { imageUrl: "https://example.com/complete.jpg" });
+    const recommended = sortDiscoveryEvents([sparse, complete], "recommended");
+    expect(groupEventsByAucklandDate(recommended)[0].events.map(({ id }) => id))
+      .toEqual(["z-complete", "a-sparse"]);
+    expect(groupEventsByAucklandDate(sortDiscoveryEvents([sparse, complete], "date"))[0].events.map(({ id }) => id))
+      .toEqual(["a-sparse", "z-complete"]);
+  });
+
   it("maps only finite coordinates inside the Auckland discovery bounds", () => {
     const at = (latitude: number, longitude: number) => event("area", {
       venue: { id: "v", name: "Venue", city: "Auckland", address: null, postalCode: null, coordinates: { latitude, longitude } },

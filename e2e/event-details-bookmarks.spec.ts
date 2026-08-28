@@ -1,5 +1,9 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-29T00:00:00+12:00"));
+});
+
 const event = {
   id: "audit-event",
   name: "Audit Harbour Live",

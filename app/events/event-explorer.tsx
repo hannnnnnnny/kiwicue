@@ -7,6 +7,7 @@ import { EventGridSkeleton } from "../../components/event-grid-skeleton";
 import { EventDiscoveryView, EventResultsView } from "../../components/event-discovery-sections";
 import type { EventCategory } from "../../lib/event-categories";
 import type { EventSort } from "../../lib/event-search-params";
+import { filterEligibleDiscoveryEvents } from "../../lib/event-discovery";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 import type { EventWindow } from "../../lib/event-window";
 
@@ -64,7 +65,7 @@ async function requestEventsFromApi({
 const copy = {
   en: {
     feedTitle: "Happening soon",
-    feedIntro: "Events stay in date order so the next useful option is easy to scan.",
+    feedIntro: "Dates stay easy to scan, with useful detail and verified sources kept visible.",
     loading: "Scanning Auckland for what is next",
     count: (isFiltered: boolean, total: number, shown: number) => `${total} ${isFiltered ? "matching" : "upcoming"} Ticketmaster ${total === 1 ? "event" : "events"} · ${shown} shown`,
     sources: "Official source links included",
@@ -73,7 +74,7 @@ const copy = {
     loadingMore: "Loading more events",
     appendError: "Loading more events failed. Your shown events are still here.",
     retryMore: "Retry loading more events",
-    complete: "All Ticketmaster events are shown",
+    complete: "All eligible Ticketmaster events are shown",
     marketCount: (total: number, shown: number) => `${total} verified market ${total === 1 ? "schedule" : "schedules"} · ${shown} shown`,
     marketSources: "Verified official market links",
     marketDisclaimer: "KiwiCue checks these recurring schedules against each market's official website. Confirm the latest details before travelling.",
@@ -92,7 +93,7 @@ const copy = {
   },
   zh: {
     feedTitle: "即将发生",
-    feedIntro: "活动继续按时间排列，方便快速找到下一项可选安排。",
+    feedIntro: "日期仍然方便浏览，实用信息和可靠来源会保持可见。",
     loading: "正在扫描奥克兰近期活动",
     count: (isFiltered: boolean, total: number, shown: number) => isFiltered
       ? `Ticketmaster 共找到 ${total} 个匹配活动 · 已显示 ${shown} 个`
@@ -103,7 +104,7 @@ const copy = {
     loadingMore: "正在加载更多活动",
     appendError: "加载更多活动失败，已显示的活动仍会保留。",
     retryMore: "重新加载更多活动",
-    complete: "Ticketmaster 活动已全部显示",
+    complete: "符合条件的 Ticketmaster 活动已全部显示",
     marketCount: (total: number, shown: number) => `已核实 ${total} 个市集日程 · 已显示 ${shown} 个`,
     marketSources: "包含已核实的市集官方链接",
     marketDisclaimer: "KiwiCue 会对照各市集官网核实定期日程；出发前请再次确认最新安排。",
@@ -278,7 +279,29 @@ export function EventExplorer({
   }
 
   if (stateForRequest.status === "ready") {
+    const shownEvents = filterEligibleDiscoveryEvents(stateForRequest.events, new Date());
+    if (shownEvents.length === 0) {
+      return (
+        <section className="event-state event-empty" aria-live="polite">
+          <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
+          <h2>{isFiltered ? content.matchingEmptyTitle : content.upcomingEmptyTitle}</h2>
+          <p>{isFiltered ? content.matchingEmptyBody : content.upcomingEmptyBody}</p>
+          {stateForRequest.nextCursor && (
+            <div>
+              {stateForRequest.appendStatus === "error" && <p role="alert">{content.appendError}</p>}
+              <button type="button" onClick={loadMore} disabled={stateForRequest.appendStatus === "loading"}>
+                {stateForRequest.appendStatus === "loading"
+                  ? content.loadingMore
+                  : stateForRequest.appendStatus === "error" ? content.retryMore : content.more(1)}
+              </button>
+            </div>
+          )}
+          {isFiltered && <Link className="portal-empty-action" href="/events">{content.emptyAction}</Link>}
+        </section>
+      );
+    }
     const remaining = Math.max(stateForRequest.totalElements - stateForRequest.events.length, 0);
+    const eligibleTotal = shownEvents.length + remaining;
     const moreCount = Math.min(50, Math.max(remaining, 1));
 
     return (
@@ -290,14 +313,14 @@ export function EventExplorer({
         <div className="event-feed-toolbar">
           <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1}>
             {isMarketCategory
-              ? content.marketCount(stateForRequest.totalElements, stateForRequest.events.length)
-              : content.count(isFiltered, stateForRequest.totalElements, stateForRequest.events.length)}
+              ? content.marketCount(eligibleTotal, shownEvents.length)
+              : content.count(isFiltered, eligibleTotal, shownEvents.length)}
           </p>
           <span><i aria-hidden="true" /> {isMarketCategory ? content.marketSources : content.sources}</span>
         </div>
         {isFiltered
-          ? <EventResultsView events={stateForRequest.events} language={language} state={{ window, category, keyword, venueId, sort }} />
-          : <EventDiscoveryView events={stateForRequest.events} language={language} />}
+          ? <EventResultsView events={shownEvents} language={language} state={{ window, category, keyword, venueId, sort }} />
+          : <EventDiscoveryView events={shownEvents} language={language} />}
 
         {stateForRequest.nextCursor ? (
           <div className="event-load-more-wrap" aria-busy={stateForRequest.appendStatus === "loading"}>

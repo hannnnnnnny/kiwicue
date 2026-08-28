@@ -49,12 +49,25 @@ export function sortDiscoveryEvents(events: KiwiCueEvent[], sort: EventSort): Ki
 
 export function groupEventsByAucklandDate(events: KiwiCueEvent[]): EventDateGroup[] {
   const groups = new Map<string, KiwiCueEvent[]>();
-  for (const event of sortDiscoveryEvents(events, "date")) {
+  for (const event of events) {
     const group = groups.get(event.start.localDate) ?? [];
     group.push(event);
     groups.set(event.start.localDate, group);
   }
-  return [...groups].map(([date, grouped]) => ({ date, events: grouped }));
+  return [...groups]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([date, grouped]) => ({ date, events: grouped }));
+}
+
+export function filterEligibleDiscoveryEvents(events: KiwiCueEvent[], now: Date): KiwiCueEvent[] {
+  if (!Number.isFinite(now.getTime())) throw new Error("Invalid discovery anchor");
+  const unique = [...new Map(events.map((event) => [event.id, event])).values()];
+  return unique.filter((event) => {
+    const start = eventInstant(event)?.epochMilliseconds;
+    return start !== undefined
+      && start >= now.getTime()
+      && !blockedStatuses.has(event.status.trim().toLowerCase());
+  });
 }
 
 export function deriveEventArea(event: KiwiCueEvent): EventAreaId | null {
@@ -74,13 +87,7 @@ export function deriveEventArea(event: KiwiCueEvent): EventAreaId | null {
 }
 
 export function buildEventDiscovery(events: KiwiCueEvent[], now: Date): DiscoveryModel {
-  if (!Number.isFinite(now.getTime())) throw new Error("Invalid discovery anchor");
-  const available = sortDiscoveryEvents(events, "recommended").filter((event) => {
-    const start = eventInstant(event)?.epochMilliseconds;
-    return start !== undefined
-      && start >= now.getTime()
-      && !blockedStatuses.has(event.status.trim().toLowerCase());
-  });
+  const available = sortDiscoveryEvents(filterEligibleDiscoveryEvents(events, now), "recommended");
   const weekendWindow = resolveEventWindow("weekend", now);
   const weekendEnd = weekendWindow.end?.getTime() ?? weekendWindow.start.getTime();
   const weekend = available.filter((event) => {

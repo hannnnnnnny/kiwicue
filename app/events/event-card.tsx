@@ -16,13 +16,11 @@ const copy = {
     venuePending: "Auckland venue to be confirmed",
     details: "View details",
     open: (name: string) => `View ${name} details`,
-    position: (position: number) => `Chronological position ${position}`,
   },
   zh: {
     venuePending: "奥克兰场馆待确认",
     details: "查看详情",
     open: (name: string) => `查看 ${name} 详情`,
-    position: (position: number) => `按时间排序第 ${position} 个`,
   },
 } as const;
 
@@ -51,7 +49,11 @@ export function EventCard({ event, index, language, rankLabel, variant }: {
         aria-label={content.open(displayName)}
       >
         <div className="portal-event-body">
-          <span className="portal-event-rank" aria-label={(rankLabel ?? content.position)(index + 1)}>
+          <span
+            className="portal-event-rank"
+            aria-hidden={rankLabel ? undefined : true}
+            aria-label={rankLabel?.(index + 1)}
+          >
             {String(index + 1).padStart(2, "0")}
           </span>
           <h2 id={titleId}>{displayName}</h2>

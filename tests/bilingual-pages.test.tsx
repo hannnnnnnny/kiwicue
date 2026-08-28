@@ -58,7 +58,7 @@ describe("bilingual route content", () => {
     expect(screen.getByRole("heading", { name: "Choose how you want to go out" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event categories" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event time range" })).toBeInTheDocument();
-    expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
+    expect(screen.getByText("All future · Recommended within each date")).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("Auckland events — KiwiCue"));
     expect(fetch).toHaveBeenCalledTimes(2);
@@ -69,7 +69,7 @@ describe("bilingual route content", () => {
     expect(screen.getByRole("heading", { name: "先选你想怎么出门" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "活动类型" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "时间范围" })).toBeInTheDocument();
-    expect(screen.getByText("全部未来 · 最早发生优先")).toBeInTheDocument();
+    expect(screen.getByText("全部未来 · 同日活动按推荐排序")).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
     expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toBeInTheDocument();

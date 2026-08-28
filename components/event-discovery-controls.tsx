@@ -6,8 +6,8 @@ import { EventSearchPanel } from "./event-search-panel";
 import { useLanguage } from "./language-provider";
 
 const copy = {
-  en: { active: "Active filters", clear: "Clear all filters", recommended: "Recommended", date: "Date", sort: "Sort results", remove: (label: string) => `Remove ${label} filter` },
-  zh: { active: "当前筛选", clear: "清除全部筛选", recommended: "推荐排序", date: "日期排序", sort: "结果排序", remove: (label: string) => `移除${label}筛选` },
+  en: { active: "Active filters", clear: "Clear all filters", recommended: "Recommended", date: "Date", sort: "Sort results", venue: "Selected venue", categories: { concerts: "Concerts", theatre: "Theatre", markets: "Markets", festivals: "Festivals", sports: "Sports" }, windows: { "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days" }, remove: (label: string) => `Remove ${label} filter` },
+  zh: { active: "当前筛选", clear: "清除全部筛选", recommended: "推荐排序", date: "日期排序", sort: "结果排序", venue: "所选场馆", categories: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动", sports: "体育赛事" }, windows: { "7d": "未来 7 天", weekend: "本周末", "30d": "未来 30 天" }, remove: (label: string) => `移除${label}筛选` },
 } as const;
 
 export function EventDiscoveryControls({ state }: { state: Required<EventSearchState> }) {
@@ -15,9 +15,9 @@ export function EventDiscoveryControls({ state }: { state: Required<EventSearchS
   const content = copy[language];
   const chips = [
     state.keyword ? { id: "keyword", label: state.keyword, next: { ...state, keyword: null } } : null,
-    state.category ? { id: "category", label: state.category, next: { ...state, category: null } } : null,
-    state.window !== "all" ? { id: "window", label: state.window, next: { ...state, window: "all" as const } } : null,
-    state.venueId ? { id: "venue", label: state.venueId, next: { ...state, venueId: null } } : null,
+    state.category ? { id: "category", label: content.categories[state.category], next: { ...state, category: null } } : null,
+    state.window !== "all" ? { id: "window", label: content.windows[state.window], next: { ...state, window: "all" as const } } : null,
+    state.venueId ? { id: "venue", label: content.venue, next: { ...state, venueId: null } } : null,
   ].filter((chip): chip is NonNullable<typeof chip> => chip !== null);
   const hasFilters = chips.length > 0 || state.sort !== "recommended";
   return (
