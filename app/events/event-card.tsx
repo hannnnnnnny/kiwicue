@@ -6,7 +6,7 @@ import {
   eventDisplayName,
   formatEventCategory,
   formatEventDate,
-  formatEventStatus,
+  formatEventStatusForDisplay,
   formatEventTime,
 } from "../../lib/event-display";
 import type { KiwiCueEvent } from "../../lib/events";
@@ -63,7 +63,7 @@ export function EventCard({ event, index, language, rankLabel, variant }: {
           <p className="portal-event-venue">{venue}</p>
           <div className="portal-event-meta">
             <span>{formatEventCategory(event.category, language)}</span>
-            <span>{formatEventStatus(event.status, language)}</span>
+            <span>{formatEventStatusForDisplay(event, language)}</span>
           </div>
         </div>
         <EventEditorialPreviewMedia event={event} language={language} placement="card" />

@@ -21,6 +21,7 @@ const movie: MoviePreviewDetail = {
 };
 
 describe("GET /api/movie-previews/[movieId]", () => {
+  const now = new Date("2026-08-12T02:00:00.000Z");
   const verifiedScreening = {
     id: "screening-1",
     filmId: "film-1",
@@ -39,22 +40,32 @@ describe("GET /api/movie-previews/[movieId]", () => {
   it("returns one localized normalized movie", async () => {
     const loadMovie = vi.fn().mockResolvedValue(movie);
     const loadScreenings = vi.fn().mockResolvedValue([verifiedScreening]);
-    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings);
+    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings, now);
 
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
     expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "all" });
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({ movie, sessionStatus: "verified" });
+    expect(await response.json()).toEqual({
+      movie,
+      screenings: [verifiedScreening],
+      sessionStatus: "verified",
+      checkedAt: expect.any(String),
+    });
   });
 
   it("returns preview metadata with an honest unverified status when no Auckland session matches", async () => {
     const loadMovie = vi.fn().mockResolvedValue(movie);
     const loadScreenings = vi.fn().mockResolvedValue([]);
-    const response = await handleMoviePreviewDetailRequest("550", "en", loadMovie, loadScreenings);
+    const response = await handleMoviePreviewDetailRequest("550", "en", loadMovie, loadScreenings, now);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ movie, sessionStatus: "unverified" });
+    expect(await response.json()).toEqual({
+      movie,
+      screenings: [],
+      sessionStatus: "unverified",
+      checkedAt: expect.any(String),
+    });
   });
 
   it("uses the stable English title to verify a localized Chinese detail", async () => {
@@ -67,13 +78,18 @@ describe("GET /api/movie-previews/[movieId]", () => {
       Promise.resolve(language === "zh" ? localizedMovie : movie));
     const loadScreenings = vi.fn().mockResolvedValue([verifiedScreening]);
 
-    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings);
+    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings, now);
 
     expect(response.status).toBe(200);
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "en" });
     expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "all" });
-    expect(await response.json()).toEqual({ movie: localizedMovie, sessionStatus: "verified" });
+    expect(await response.json()).toEqual({
+      movie: localizedMovie,
+      screenings: [verifiedScreening],
+      sessionStatus: "verified",
+      checkedAt: expect.any(String),
+    });
   });
 
   it("reports missing Auckland provider coverage without requesting a session catalog", async () => {
@@ -88,7 +104,12 @@ describe("GET /api/movie-previews/[movieId]", () => {
     );
 
     expect(loadScreenings).not.toHaveBeenCalled();
-    expect(await response.json()).toEqual({ movie, sessionStatus: "not-covered" });
+    expect(await response.json()).toEqual({
+      movie,
+      screenings: [],
+      sessionStatus: "not-covered",
+      checkedAt: "2026-08-12T02:00:00.000Z",
+    });
   });
 
   it("keeps the preview available but reports when live session verification is unavailable", async () => {
@@ -101,7 +122,33 @@ describe("GET /api/movie-previews/[movieId]", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({ movie, sessionStatus: "unavailable" });
+    expect(await response.json()).toEqual({
+      movie,
+      screenings: [],
+      sessionStatus: "unavailable",
+      checkedAt: expect.any(String),
+    });
+  });
+
+  it("returns only future, unique source-title matches in chronological order", async () => {
+    const response = await handleMoviePreviewDetailRequest(
+      "550",
+      "en",
+      vi.fn().mockResolvedValue(movie),
+      vi.fn().mockResolvedValue([
+        { ...verifiedScreening, id: "later", startTime: "2026-08-16T08:00:00.000Z" },
+        { ...verifiedScreening, id: "soon", startTime: "2026-08-13T08:00:00.000Z" },
+        { ...verifiedScreening, id: "soon", startTime: "2026-08-13T08:00:00.000Z" },
+        { ...verifiedScreening, id: "expired", startTime: "2026-08-11T08:00:00.000Z" },
+        { ...verifiedScreening, id: "wrong-runtime", runtimeMinutes: 170 },
+        { ...verifiedScreening, id: "invalid-time", startTime: "not-a-date" },
+      ]),
+      new Date("2026-08-12T02:00:00.000Z"),
+    );
+
+    const body = await response.json();
+    expect(body.screenings.map((session: { id: string }) => session.id)).toEqual(["soon", "later"]);
+    expect(body.checkedAt).toBe("2026-08-12T02:00:00.000Z");
   });
 
   it.each(["0", "-1", "1.5", "abc", "9007199254740992"])(

@@ -86,7 +86,7 @@ describe("movies page", () => {
     expect(directory.compareDocumentPosition(previews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("marks preview metadata as verified only when its title matches a live Auckland session", async () => {
+  it("does not promote title-only live-feed matches to source-matched film identity", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const payload = String(input).startsWith("/api/movie-previews")
         ? {
@@ -128,7 +128,7 @@ describe("movies page", () => {
     renderPage();
 
     expect(await screen.findByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
-    expect(screen.getByText("Verified Auckland session")).toBeVisible();
+    expect(screen.getByText("Auckland session not verified")).toBeVisible();
   });
 
   it("keeps a verified preview when Chinese localization changes every visible title", async () => {

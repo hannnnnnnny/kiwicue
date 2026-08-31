@@ -209,6 +209,43 @@ describe("Ticketmaster Discovery client", () => {
     });
   });
 
+  it("collects bounded, deduplicated genre labels across all classifications", () => {
+    const normalized = normalizeTicketmasterEvent({
+      id: "event-tags",
+      name: "Auckland genre night",
+      url: "https://ticketmaster.co.nz/event-tags",
+      dates: { start: { localDate: "2026-08-01" } },
+      classifications: [
+        {
+          segment: { name: "Music" },
+          genre: { name: "Rock" },
+          subGenre: { name: "Alternative" },
+          type: { name: "Concert" },
+          subType: { name: "Undefined" },
+        },
+        {
+          genre: { name: " rock " },
+          subGenre: { name: "Jazz" },
+          type: { name: "Festival" },
+        },
+      ],
+    });
+
+    expect(normalized?.tags).toEqual(["Rock", "Alternative", "Concert", "Jazz", "Festival"]);
+  });
+
+  it("omits classification labels when upstream only provides placeholders", () => {
+    const normalized = normalizeTicketmasterEvent({
+      id: "event-no-tags",
+      name: "Auckland event",
+      url: "https://ticketmaster.co.nz/event-no-tags",
+      dates: { start: { localDate: "2026-08-01" } },
+      classifications: [{ genre: { name: "Undefined" }, subGenre: { name: "N/A" } }],
+    });
+
+    expect(normalized).not.toHaveProperty("tags");
+  });
+
   it("keeps the Ticketmaster venue ID during normalization", () => {
     const normalized = normalizeTicketmasterEvent({
       id: "event-1",

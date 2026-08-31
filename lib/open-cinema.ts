@@ -1,5 +1,6 @@
 import "server-only";
 import type { KiwiCueScreening, MovieCoverageState, MovieDateFilter } from "./movies";
+import { isTrustedOfficialBookingUrl } from "./official-booking";
 
 const OPEN_CINEMA_URL = "https://opencinemaproject.com/api/v1/public/screenings";
 const OPEN_CINEMA_THEATERS_URL = "https://opencinemaproject.com/api/v1/public/theaters";
@@ -8,18 +9,6 @@ const SCREENING_REVALIDATE_SECONDS = 300;
 const COVERAGE_REVALIDATE_SECONDS = 3_600;
 const AUCKLAND_LATITUDE = "-36.8485";
 const AUCKLAND_LONGITUDE = "174.7633";
-const TRUSTED_BOOKING_HOSTS = [
-  "academycinemas.co.nz",
-  "bridgeway.co.nz",
-  "eventcinemas.co.nz",
-  "hoyts.co.nz",
-  "lido.co.nz",
-  "readingcinemas.co.nz",
-  "rialto.co.nz",
-  "silkyotter.co.nz",
-  "thecapitol.co.nz",
-  "veezi.com",
-] as const;
 
 type FetchImplementation = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -109,10 +98,7 @@ function parseOptionalNumber(value: unknown, maximum: number): number | null | u
 function parseBookingUrl(value: unknown): string | null | undefined {
   if (value === undefined || value === null) return null;
   if (!isRecord(value) || !safeHttpsUrl(value.url)) return undefined;
-  const hostname = new URL(value.url).hostname.toLocaleLowerCase("en-NZ");
-  const trusted = TRUSTED_BOOKING_HOSTS.some((allowed) =>
-    hostname === allowed || hostname.endsWith(`.${allowed}`));
-  return trusted ? value.url : null;
+  return isTrustedOfficialBookingUrl(value.url) ? value.url : null;
 }
 
 function parseScreening(value: unknown): KiwiCueScreening | null {

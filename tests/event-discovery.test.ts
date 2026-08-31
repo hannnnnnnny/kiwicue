@@ -88,6 +88,7 @@ describe("event discovery derivation", () => {
       valid,
       event("past", { start: { localDate: "2026-08-20", localTime: null, dateTime: "2026-08-20T00:00:00Z", timezone: "Pacific/Auckland" } }),
       event("cancelled", { status: "cancelled" }),
+      event("canceled", { status: "canceled" }),
       event("invalid", { start: { localDate: "bad", localTime: null, dateTime: null, timezone: "Pacific/Auckland" } }),
     ], NOW);
     expect(result.dateGroups.flatMap(({ events }) => events).map(({ id }) => id)).toEqual(["valid"]);

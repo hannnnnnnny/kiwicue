@@ -6,6 +6,7 @@ import type { EventCategory } from "../lib/event-categories";
 import type { EventSort } from "../lib/event-search-params";
 import type { EventWindow } from "../lib/event-window";
 import { EventCategoryNav } from "./event-category-nav";
+import { CuratedMarketDiscovery } from "./curated-market-discovery";
 import { EventDiscoveryControls } from "./event-discovery-controls";
 import { EventWindowNav } from "./event-window-nav";
 import { useLanguage } from "./language-provider";
@@ -101,6 +102,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
 
       <div id="event-results" tabIndex={-1}>
         <EventExplorer {...searchState} />
+        <CuratedMarketDiscovery {...searchState} />
       </div>
 
       <section className="portal-about">

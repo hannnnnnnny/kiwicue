@@ -108,13 +108,37 @@ function parseSource(value: unknown): EventSource | undefined {
     || !safeHttpsUrl(value.url)
     || !validLocalDate(value.verifiedAt)
   ) return undefined;
-  return { name: value.name, url: value.url, verifiedAt: value.verifiedAt };
+  const provenance = value.provenance === "official-listing" || value.provenance === "recurring-schedule"
+    ? value.provenance
+    : undefined;
+  return {
+    name: value.name,
+    url: value.url,
+    verifiedAt: value.verifiedAt,
+    ...(provenance ? { provenance } : {}),
+  };
 }
 
 function parseHighlights(value: unknown): string[] | undefined {
   if (!Array.isArray(value) || value.length < 1 || value.length > 4) return undefined;
   if (!value.every((item) => boundedString(item, 300))) return undefined;
   return [...value];
+}
+
+function parseTags(value: unknown): string[] | undefined {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 12) return undefined;
+  if (!value.every((item) => boundedString(item, 80))) return undefined;
+  const tags: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    const normalized = item.normalize("NFC").trim().replace(/\s+/gu, " ");
+    if (!normalized || /^(?:undefined|n\/a|na|none)$/iu.test(normalized)) continue;
+    const key = normalized.toLocaleLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tags.push(normalized);
+  }
+  return tags.length > 0 ? tags : undefined;
 }
 
 function parseEditorialImage(value: unknown): EventEditorialImage | undefined {
@@ -195,6 +219,7 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
   const source = parseSource(value.source);
   const localization = parseLocalization(value.localization);
   const editorialPreview = parseEditorialPreview(value.editorialPreview);
+  const tags = parseTags(value.tags);
   if (
     !boundedString(value.id, 128)
     || !/^[A-Za-z0-9_-]+$/.test(value.id)
@@ -223,6 +248,7 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
     },
     status: value.status,
     category: value.category,
+    ...(tags ? { tags } : {}),
     venue,
     ...(source ? { source } : {}),
     ...(localization ? { localization } : {}),

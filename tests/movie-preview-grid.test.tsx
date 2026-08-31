@@ -32,22 +32,22 @@ describe("movie preview grid", () => {
     expect(screen.getByRole("img", { name: "Fight Club poster" })).toHaveAttribute("loading", "lazy");
   });
 
-  it("reserves the verified label for a movie matched by the live feed", () => {
+  it("labels a supplied source match without calling it verified", () => {
     render(<MoviePreviewGrid movies={[movie]} state="ready" sessionState="ready" verifiedMovieIds={new Set([movie.id])} language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
-    expect(screen.getByText("Verified Auckland session")).toBeVisible();
+    expect(screen.getByText("Source-matched Auckland session")).toBeVisible();
     expect(screen.queryByText("Auckland session not verified")).not.toBeInTheDocument();
   });
 
   it("does not treat an unavailable session source as proof that a film is showing", () => {
     render(<MoviePreviewGrid movies={[movie]} state="ready" sessionState="unavailable" verifiedMovieIds={new Set()} language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
     expect(screen.getByText("Session check unavailable")).toBeVisible();
-    expect(screen.queryByText("Verified Auckland session")).not.toBeInTheDocument();
+    expect(screen.queryByText("Source-matched Auckland session")).not.toBeInTheDocument();
   });
 
   it("labels previews as metadata-only when Auckland is outside provider coverage", () => {
     render(<MoviePreviewGrid movies={[movie]} state="ready" sessionState="not-covered" verifiedMovieIds={new Set()} language="en" query={null} onRetry={vi.fn()} onReset={vi.fn()} />);
     expect(screen.getByText("Preview only · no Auckland live-data coverage")).toBeVisible();
-    expect(screen.queryByText("Verified Auckland session")).not.toBeInTheDocument();
+    expect(screen.queryByText("Source-matched Auckland session")).not.toBeInTheDocument();
   });
 
   it("promotes the first film as the editorial feature", () => {

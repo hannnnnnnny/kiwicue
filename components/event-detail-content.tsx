@@ -9,17 +9,19 @@ import {
   eventDisplayNote,
   formatEventCategory,
   formatEventDate,
-  formatEventStatus,
+  formatEventStatusForDisplay,
   formatEventTime,
   formatVerifiedDate,
+  isEventSourceFresh,
 } from "../lib/event-display";
-import type { KiwiCueEvent, KiwiCueEventDetail } from "../lib/events";
+import { isRecurringMarketEvent, type KiwiCueEvent, type KiwiCueEventDetail } from "../lib/events";
+import { getEventExperience } from "../lib/event-experience";
 import { BookmarkButton } from "./bookmark-button";
 import { DistancePanel } from "./distance-panel";
 import { EventEditorialPreviewMedia } from "./event-editorial-preview";
 import { EventMap } from "./event-map";
+import { EventExperienceGuide } from "./event-experience-guide";
 import { useLanguage } from "./language-provider";
-import { MarketPastHighlights } from "./market-past-highlights";
 import { PortalHeader } from "./portal-header";
 
 type DetailState =
@@ -82,7 +84,8 @@ const copy = {
     ],
     marketBooking: "Check official schedule",
     marketSource: "Official schedule source",
-    verified: (date: string) => `Schedule last checked ${date}`,
+    verified: (date: string) => `Schedule reference checked ${date}`,
+    stale: "This recurring schedule may be out of date; check the organiser before travelling.",
     marketSourceNote: "Market times can change. Confirm the latest schedule and access details on the official market website before travelling.",
   },
   zh: {
@@ -120,7 +123,8 @@ const copy = {
     ],
     marketBooking: "查看官方最新安排",
     marketSource: "官方日程来源",
-    verified: (date: string) => `日程核实日期：${date}`,
+    verified: (date: string) => `日程参考核对日期：${date}`,
+    stale: "这条周期日程可能已经过期；出发前请查看主办方最新安排。",
     marketSourceNote: "市集时间可能临时调整；出发前请在市集官网确认最新日程和入场信息。",
   },
 } as const;
@@ -229,7 +233,9 @@ export function EventDetailContent({
   }
 
   const event = state.event;
-  const isCuratedMarket = Boolean(event.source);
+  const isCuratedMarket = isRecurringMarketEvent(event);
+  const experienceGuide = getEventExperience(event);
+  const recurringSourceFresh = isEventSourceFresh(event.source?.verifiedAt);
   const displayName = eventDisplayName(event, language);
   const description = eventDisplayDescription(event, language);
   const note = eventDisplayNote(event, language);
@@ -260,7 +266,7 @@ export function EventDetailContent({
               {admission && <p className="event-detail-admission">{admission}</p>}
               <div className="event-detail-tags">
                 <span>{formatEventCategory(event.category, language)}</span>
-                <span>{formatEventStatus(event.status, language)}</span>
+                <span>{formatEventStatusForDisplay(event, language)}</span>
               </div>
             </div>
             <div className="event-detail-actions">
@@ -283,9 +289,7 @@ export function EventDetailContent({
           <ol>{bookingSteps.map((step) => <li key={step}>{step}</li>)}</ol>
         </section>
 
-        {isCuratedMarket && (
-          <MarketPastHighlights event={event} language={language} />
-        )}
+        {experienceGuide ? <EventExperienceGuide guide={experienceGuide} language={language} /> : null}
 
         {(description || note) && (
           <section className="event-detail-section" aria-labelledby="information-title">
@@ -349,6 +353,7 @@ export function EventDetailContent({
             <span>{content.marketSource}</span>
             <strong className="event-source-name">{event.source.name}</strong>
             <span>{content.verified(formatVerifiedDate(event.source.verifiedAt, language))}</span>
+            {isCuratedMarket && !recurringSourceFresh ? <strong className="event-source-stale">{content.stale}</strong> : null}
           </div>
         )}
         <p className="event-source-note">

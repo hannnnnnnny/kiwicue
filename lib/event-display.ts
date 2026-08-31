@@ -1,5 +1,5 @@
 import type { Language } from "../components/language-provider";
-import type { KiwiCueEvent, KiwiCueEventDetail } from "./events";
+import { isRecurringMarketEvent, type KiwiCueEvent, type KiwiCueEventDetail } from "./events";
 
 const timePending = { en: "Time to be confirmed", zh: "时间待定" } as const;
 const statuses = {
@@ -7,6 +7,7 @@ const statuses = {
     onsale: "On sale",
     offsale: "Off sale",
     cancelled: "Cancelled",
+    canceled: "Canceled",
     postponed: "Postponed",
     rescheduled: "Rescheduled",
     schedule_verified: "Schedule verified",
@@ -15,10 +16,17 @@ const statuses = {
     onsale: "售票中",
     offsale: "停止售票",
     cancelled: "已取消",
+    canceled: "已取消",
     postponed: "已延期",
     rescheduled: "已改期",
     schedule_verified: "日程已核实",
   },
+} as const;
+
+const RECURRING_SOURCE_MAX_AGE_DAYS = 120;
+const recurringScheduleStatus = {
+  en: { fresh: "Expected schedule", stale: "Schedule reference may be stale" },
+  zh: { fresh: "预计日程", stale: "日程参考可能已过期" },
 } as const;
 
 const categories = {
@@ -73,6 +81,24 @@ export function formatEventStatus(status: string, language: Language): string {
   return language === "en"
     ? normalized.replace(/\b\w/g, (letter) => letter.toUpperCase())
     : normalized;
+}
+
+export function isEventSourceFresh(verifiedAt: string | undefined, now = new Date()): boolean {
+  if (!verifiedAt || !Number.isFinite(now.getTime())) return false;
+  const verifiedTime = Date.parse(`${verifiedAt}T00:00:00Z`);
+  if (!Number.isFinite(verifiedTime)) return false;
+  const ageDays = Math.floor((now.getTime() - verifiedTime) / 86_400_000);
+  return ageDays >= 0 && ageDays <= RECURRING_SOURCE_MAX_AGE_DAYS;
+}
+
+export function formatEventStatusForDisplay(
+  event: KiwiCueEvent,
+  language: Language,
+  now = new Date(),
+): string {
+  if (!isRecurringMarketEvent(event)) return formatEventStatus(event.status, language);
+  const status = recurringScheduleStatus[language];
+  return isEventSourceFresh(event.source?.verifiedAt, now) ? status.fresh : status.stale;
 }
 
 export function formatEventCategory(category: string, language: Language): string {

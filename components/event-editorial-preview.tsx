@@ -1,12 +1,12 @@
 "use client";
 
-import type { KiwiCueEvent } from "../lib/events";
+import { isCuratedMarketEventId, type KiwiCueEvent } from "../lib/events";
 import { EventImage } from "./event-image";
 import type { Language } from "./language-provider";
 
 const labels = {
-  en: "What to expect",
-  zh: "第一次去可以期待",
+  en: { default: "What to expect", market: "First-visit guide" },
+  zh: { default: "可以先了解", market: "第一次去指南" },
 } as const;
 
 type EventEditorialPreviewMediaProps = {
@@ -42,7 +42,7 @@ export function EventEditorialPreviewMedia({
 
   const fallback = summary ? (
     <span className="event-editorial-fallback">
-      <strong>{labels[language]}</strong>
+      <strong>{event.category === "Market" && isCuratedMarketEventId(event.id) ? labels[language].market : labels[language].default}</strong>
       <span>{summary}</span>
     </span>
   ) : null;

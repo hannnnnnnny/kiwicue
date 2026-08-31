@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AUCKLAND_CINEMAS } from "../lib/cinema-directory";
+import { isTrustedOfficialBookingUrl } from "../lib/official-booking";
+import type { KiwiCueScreening } from "../lib/movies";
 import type {
   MoviePreviewDetail,
   MoviePreviewDetailResponse,
@@ -11,12 +13,13 @@ import type {
 import { CinemaDirectory } from "./cinema-directory";
 import { useLanguage, type Language } from "./language-provider";
 import { MoviePoster } from "./movie-poster";
+import { MovieDetailSessions } from "./movie-detail-sessions";
 import { PortalHeader } from "./portal-header";
 import { TmdbAttribution } from "./tmdb-attribution";
 
 type DetailState =
   | { status: "loading" }
-  | { status: "ready"; movie: MoviePreviewDetail; sessionStatus: MovieSessionStatus }
+  | { status: "ready"; language: Language; movie: MoviePreviewDetail; sessionStatus: MovieSessionStatus; screenings: KiwiCueScreening[]; checkedAt: string | null }
   | { status: "not-found" }
   | { status: "error" };
 
@@ -36,16 +39,38 @@ export async function requestMovieDetailFromApi(
   const response = await fetch(`/api/movie-previews/${encodeURIComponent(movieId)}?language=${language}`, {
     headers: { accept: "application/json" },
   });
-  const payload = await response.json() as Partial<MoviePreviewDetailResponse>;
-  const sessionStatus = payload.sessionStatus;
-  const validStatus = sessionStatus === "verified"
-    || sessionStatus === "unverified"
-    || sessionStatus === "not-covered"
-    || sessionStatus === "unavailable";
-  if (!response.ok || !payload.movie || String(payload.movie.id) !== movieId || !validStatus) {
+  const payload: unknown = await response.json();
+  if (!response.ok || !isDetailResponse(payload, movieId)) {
     throw new MovieDetailRequestError(response.status);
   }
-  return { movie: payload.movie, sessionStatus };
+  return payload;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isScreening(value: unknown): value is KiwiCueScreening {
+  if (!isRecord(value)) return false;
+  return typeof value.id === "string" && typeof value.filmId === "string" && typeof value.filmTitle === "string"
+    && (value.filmRating === null || typeof value.filmRating === "string")
+    && (value.runtimeMinutes === null || typeof value.runtimeMinutes === "number")
+    && typeof value.cinemaId === "string" && typeof value.cinemaName === "string"
+    && typeof value.startTime === "string" && Number.isFinite(Date.parse(value.startTime))
+    && Array.isArray(value.formats) && value.formats.every((format) => typeof format === "string")
+    && typeof value.soldOut === "boolean"
+    && (value.distanceKilometres === null || typeof value.distanceKilometres === "number")
+    && (value.bookingUrl === null || isTrustedOfficialBookingUrl(value.bookingUrl));
+}
+
+function isDetailResponse(value: unknown, movieId: string): value is MoviePreviewDetailResponse {
+  if (!isRecord(value) || !isRecord(value.movie) || String(value.movie.id) !== movieId) return false;
+  const status = value.sessionStatus;
+  const validStatus = status === "verified" || status === "unverified" || status === "not-covered" || status === "unavailable";
+  const validScreenings = value.screenings === undefined || Array.isArray(value.screenings) && value.screenings.every(isScreening);
+  const validCheckedAt = value.checkedAt === undefined || value.checkedAt === null
+    || typeof value.checkedAt === "string" && Number.isFinite(Date.parse(value.checkedAt));
+  return validStatus && validScreenings && validCheckedAt;
 }
 
 const copy = {
@@ -53,13 +78,13 @@ const copy = {
     loading: "Loading movie preview",
     back: "Back to movies",
     source: {
-      verified: "Verified Auckland session",
+      verified: "Source-matched Auckland sessions",
       unverified: "Release preview · Auckland session not verified",
       "not-covered": "Release preview · Auckland live-data coverage unavailable",
       unavailable: "Release preview · Session check unavailable",
     },
     availability: {
-      verified: "A current Auckland session matched this movie when the page loaded. Confirm final availability on the cinema's official site.",
+      verified: "Source title and runtime matched; this is not an exact cross-source identity proof. Confirm final availability on the cinema's official site.",
       unverified: "Use the official cinema links below to confirm whether this film is currently showing.",
       "not-covered": "The authorized data provider does not currently cover Auckland. This does not mean the film is not showing; check an official cinema site below.",
       unavailable: "The live Auckland session source could not be checked. Use the official cinema links below before planning your trip.",
@@ -73,8 +98,8 @@ const copy = {
     openTrailer: "Open trailer on YouTube",
     noTrailer: "No official trailer is currently available",
     noTrailerHelp: "You can still review the synopsis and check official cinema sessions below.",
-    cinemas: "Check Auckland cinema sessions",
-    cinemasHelp: "Confirm that this film is showing and choose a session on each cinema's official website.",
+    cinemas: "General Auckland cinema directory",
+    cinemasHelp: "This is a general lookup, not a list of cinemas showing this film. Confirm sessions on each official website.",
     notFound: "Movie preview not found",
     notFoundBody: "This movie is not available from the preview source.",
     browse: "Browse movie previews",
@@ -87,13 +112,13 @@ const copy = {
     loading: "正在加载电影预览",
     back: "返回电影页面",
     source: {
-      verified: "已验证奥克兰场次",
+      verified: "来源匹配的奥克兰场次",
       unverified: "电影预览 · 奥克兰场次尚未核实",
       "not-covered": "电影预览 · 暂无奥克兰实时数据覆盖",
       unavailable: "电影预览 · 暂时无法核对场次",
     },
     availability: {
-      verified: "页面加载时已匹配到奥克兰当前场次；最终余票和时间请以影院官网为准。",
+      verified: "已匹配来源片名和片长，并非跨来源身份的绝对证明；最终余票和时间请以影院官网为准。",
       unverified: "请使用下方影院官网入口确认这部电影目前是否上映。",
       "not-covered": "授权数据源目前尚未覆盖奥克兰；这不代表电影没有上映，请使用下方影院官网核实。",
       unavailable: "奥克兰实时场次源暂时无法核对，出发前请使用下方影院官网确认。",
@@ -107,8 +132,8 @@ const copy = {
     openTrailer: "在 YouTube 打开预告片",
     noTrailer: "暂未提供官方预告片",
     noTrailerHelp: "你仍可查看剧情简介，并在下方影院官网确认场次。",
-    cinemas: "查看奥克兰影院场次",
-    cinemasHelp: "请在各影院官网确认该电影是否上映并选择场次。",
+    cinemas: "奥克兰通用影院目录",
+    cinemasHelp: "这是通用查找目录，并非正在放映本片的影院列表；请到各影院官网确认场次。",
     notFound: "未找到电影预览",
     notFoundBody: "电影预览数据源暂未提供这部电影。",
     browse: "浏览电影预览",
@@ -168,10 +193,12 @@ function MovieFacts({ movie, language }: { movie: MoviePreviewDetail; language: 
   return <ul className="movie-detail-facts">{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>;
 }
 
-function MovieReady({ movie, language, sessionStatus }: {
+function MovieReady({ movie, language, sessionStatus, screenings, checkedAt }: {
   movie: MoviePreviewDetail;
   language: Language;
   sessionStatus: MovieSessionStatus;
+  screenings: KiwiCueScreening[];
+  checkedAt: string | null;
 }) {
   const content = copy[language];
   return (
@@ -192,6 +219,7 @@ function MovieReady({ movie, language, sessionStatus }: {
           <TmdbAttribution language={language} />
         </div>
       </div>
+      <MovieDetailSessions screenings={screenings} sessionStatus={sessionStatus} checkedAt={checkedAt} language={language} />
       <MovieTrailer movie={movie} language={language} />
       <section className="movie-detail-cinemas" aria-labelledby="movie-cinemas-title">
         <header><h2 id="movie-cinemas-title">{content.cinemas}</h2><p>{content.cinemasHelp}</p></header>
@@ -229,8 +257,8 @@ export function MovieDetailContent({ movieId, requestMovieDetail = requestMovieD
   const [state, setState] = useState<DetailState>({ status: "loading" });
   useEffect(() => {
     let active = true;
-    requestMovieDetail(movieId, language).then(({ movie, sessionStatus }) => {
-      if (active) setState({ status: "ready", movie, sessionStatus });
+    requestMovieDetail(movieId, language).then(({ movie, sessionStatus, screenings = [], checkedAt = null }) => {
+      if (active) setState({ status: "ready", language, movie, sessionStatus, screenings, checkedAt });
     }).catch((error: unknown) => {
       if (active) setState(error instanceof MovieDetailRequestError && error.status === 404 ? { status: "not-found" } : { status: "error" });
     });
@@ -238,11 +266,15 @@ export function MovieDetailContent({ movieId, requestMovieDetail = requestMovieD
   }, [attempt, language, movieId, requestMovieDetail]);
 
   const content = copy[language];
+  const isCurrent = state.status === "ready" && state.movie.id === Number(movieId) && state.language === language;
+  const displayState: Exclude<DetailState, { status: "ready" }> = state.status === "ready"
+    ? { status: "loading" }
+    : state;
   return (
     <main className="movie-detail-page">
       <PortalHeader currentPage="movies" skipTarget="movie-detail" />
-      {state.status === "ready" ? <MovieReady movie={state.movie} language={language} sessionStatus={state.sessionStatus} /> : (
-        <MovieDetailState state={state} language={language} onRetry={() => {
+      {isCurrent ? <MovieReady movie={state.movie} language={language} sessionStatus={state.sessionStatus} screenings={state.screenings} checkedAt={state.checkedAt} /> : (
+        <MovieDetailState state={displayState} language={language} onRetry={() => {
           setState({ status: "loading" });
           setAttempt((value) => value + 1);
         }} />

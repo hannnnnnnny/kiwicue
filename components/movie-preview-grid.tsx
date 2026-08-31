@@ -11,8 +11,8 @@ const copy = {
   en: {
     source: "Movie previews",
     title: "Explore recent New Zealand releases",
-    intro: "Posters, synopses, and trailers come from TMDB. Only films matched to the live Auckland feed carry a verified session label.",
-    verified: "Verified Auckland session",
+    intro: "Posters, synopses, and trailers come from TMDB. Session labels are source-title candidates, not proof of cross-source film identity.",
+    verified: "Source-matched Auckland session",
     unverified: "Auckland session not verified",
     checking: "Checking Auckland sessions",
     notCovered: "Preview only · no Auckland live-data coverage",
@@ -33,8 +33,8 @@ const copy = {
   zh: {
     source: "电影预览",
     title: "探索新西兰近期电影",
-    intro: "海报、简介和预告片来自 TMDB；只有与奥克兰实时数据匹配的电影才会标注已验证场次。",
-    verified: "已验证奥克兰场次",
+    intro: "海报、简介和预告片来自 TMDB；场次标签是来源标题候选匹配，并非跨来源电影身份的证明。",
+    verified: "来源匹配的奥克兰场次",
     unverified: "奥克兰场次尚未核实",
     checking: "正在核对奥克兰场次",
     notCovered: "仅电影资料 · 暂无奥克兰实时数据覆盖",

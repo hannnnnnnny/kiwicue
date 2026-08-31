@@ -610,6 +610,31 @@
 }
 .movie-synopsis p { max-width: 760px; margin: var(--space-3) 0 0; color: var(--portal-muted); line-height: 1.75; }
 
+.movie-detail-sessions {
+  margin-top: var(--space-10);
+  padding: var(--space-7);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-panel);
+  background: var(--portal-raised);
+}
+
+.movie-detail-sessions > h2 { margin: 0; font-family: var(--portal-display-font); font-size: clamp(1.5rem, 2.8vw, 2.2rem); font-weight: 500; letter-spacing: -.04em; }
+.movie-detail-sessions > p { max-width: 760px; margin: var(--space-3) 0 0; color: var(--portal-muted); line-height: 1.6; }
+.movie-detail-sessions-checked { font-size: .76rem; }
+.movie-detail-session-filters { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.movie-detail-session-filters label { display: grid; gap: var(--space-1); color: var(--portal-muted); font-size: .75rem; font-weight: 750; }
+.movie-detail-session-filters select { min-height: 44px; border: 1px solid var(--portal-line); border-radius: var(--radius-control); background: var(--portal-white); color: var(--portal-ink); padding: 0 var(--space-3); font: inherit; }
+.movie-detail-session-list { display: grid; gap: var(--space-3); margin: var(--space-5) 0 0; padding: 0; list-style: none; }
+.movie-detail-session-list > li { display: grid; grid-template-columns: minmax(144px, .8fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-4); padding: var(--space-4); border-top: 1px solid var(--portal-line); }
+.movie-detail-session-list > li > time { color: var(--portal-brand); font-size: .82rem; font-weight: 800; }
+.movie-detail-session-list > li > div { display: grid; gap: var(--space-1); }
+.movie-detail-session-list > li > div > span { color: var(--portal-muted); font-size: .76rem; }
+.movie-detail-session-list > li > a { min-height: 44px; display: inline-flex; align-items: center; color: var(--portal-brand); font-size: .78rem; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+.movie-detail-session-list > li > strong,
+.movie-detail-session-list > li > span { color: var(--portal-muted); font-size: .78rem; white-space: nowrap; }
+.movie-detail-sessions-empty { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-5); color: var(--portal-muted); }
+.movie-detail-sessions-empty button { min-height: 44px; border: 1px solid var(--portal-brand); border-radius: var(--radius-control); background: transparent; color: var(--portal-brand); padding: 0 var(--space-3); font: inherit; font-weight: 800; cursor: pointer; }
+
 .movie-trailer,
 .movie-trailer-empty {
   margin-top: var(--space-12);
@@ -695,3 +720,9 @@
 .movie-detail-loading span:first-child { width: 72%; height: 70px; }
 .movie-detail-loading span:nth-child(2) { width: 46%; }
 .movie-detail-loading span:last-child { width: 88%; height: 220px; }
+
+@media (max-width: 600px) {
+  .movie-detail-sessions { padding: var(--space-5); }
+  .movie-detail-session-list > li { grid-template-columns: 1fr; gap: var(--space-2); padding-inline: 0; }
+  .movie-detail-session-list > li > a { width: fit-content; }
+}

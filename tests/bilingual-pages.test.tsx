@@ -61,7 +61,7 @@ describe("bilingual route content", () => {
     expect(screen.getByText("All future · Recommended within each date")).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("Auckland events — KiwiCue"));
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
@@ -74,7 +74,7 @@ describe("bilingual route content", () => {
     expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("奥克兰活动 — KiwiCue"));
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
     expect(document.body).not.toHaveTextContent(/365|one year|一年|未来 365 天/i);
   });
 
