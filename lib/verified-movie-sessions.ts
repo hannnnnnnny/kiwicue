@@ -21,9 +21,9 @@ function titlesFor(movie: MatchableMovie, englishMovie?: MatchableMovie): Set<st
 }
 
 function compatibleRuntime(movie: MatchableMovie, screening: Pick<KiwiCueScreening, "runtimeMinutes">): boolean {
-  return movie.runtimeMinutes !== null && movie.runtimeMinutes !== undefined
-    && screening.runtimeMinutes !== null
-    && Math.abs(movie.runtimeMinutes - screening.runtimeMinutes) <= 10;
+  if (movie.runtimeMinutes === null || movie.runtimeMinutes === undefined
+    || screening.runtimeMinutes === null || screening.runtimeMinutes === undefined) return true;
+  return Math.abs(movie.runtimeMinutes - screening.runtimeMinutes) <= 10;
 }
 
 export function findMovieSessionMatches<T extends Pick<KiwiCueScreening, "filmTitle" | "runtimeMinutes">>(
@@ -47,5 +47,10 @@ export function filterVerifiedMoviePreviews(
   movies: MoviePreview[],
   screenings: KiwiCueScreening[],
 ): MoviePreview[] {
-  return movies.filter((movie) => movieHasVerifiedSession(movie, screenings));
+  return movies.filter((movie) => {
+    // List previews intentionally omit runtime; title-only matches are not enough
+    // to promote a film before its detail page can perform the stricter check.
+    const runtimeMinutes = "runtimeMinutes" in movie ? movie.runtimeMinutes : undefined;
+    return typeof runtimeMinutes === "number" && movieHasVerifiedSession({ ...movie, runtimeMinutes }, screenings);
+  });
 }

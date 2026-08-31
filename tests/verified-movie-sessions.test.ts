@@ -46,6 +46,10 @@ describe("verified movie sessions", () => {
     expect(findMovieSessionMatches(movie, [screening(movie.title, 142)])).toEqual([]);
   });
 
+  it("keeps an exact title match when the provider omits runtime", () => {
+    expect(findMovieSessionMatches(movie, [screening(movie.title, null)])).toHaveLength(1);
+  });
+
   it("accepts a bilingual title match when an English title is supplied", () => {
     const chineseMovie = { ...movie, title: "名侦探柯南：高速公路的堕天使", originalTitle: "名探偵コナン ハイウェイの堕天使" };
     const englishMovie = { ...movie, originalTitle: null };
