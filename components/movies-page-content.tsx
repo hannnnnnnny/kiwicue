@@ -33,7 +33,7 @@ const copy = {
   en: {
     eyebrow: "Auckland · Film finder",
     title: "Find films and check Auckland sessions",
-    intro: "Browse recent New Zealand movie previews, then look for a verified Auckland session before planning your trip.",
+    intro: "Browse recent New Zealand movie previews, then check source-matched Auckland sessions before planning your trip.",
     fallbackTitle: "Find a film, then check a nearby cinema",
     fallbackIntro: "Search movie previews or a nearby Auckland cinema, then open its official site for today's confirmed sessions.",
     distance: "Sort cinemas by my distance",
@@ -45,7 +45,7 @@ const copy = {
   zh: {
     eyebrow: "奥克兰 · 电影检索",
     title: "查找电影并核对奥克兰场次",
-    intro: "先浏览新西兰近期电影预览，再查看是否有已核实的奥克兰场次，出发前请以影院官网为准。",
+    intro: "先浏览新西兰近期电影预览，再查看来源匹配的奥克兰场次，出发前请以影院官网为准。",
     fallbackTitle: "先找电影，再查看附近影院",
     fallbackIntro: "搜索电影预览或附近的奥克兰影院，然后前往影院官网确认今天的真实场次。",
     distance: "按离我的距离排列影院",

@@ -11,7 +11,7 @@ import {
   OpenCinemaClientError,
 } from "../../../../lib/open-cinema";
 import { fetchTmdbMovieDetail, TmdbClientError } from "../../../../lib/tmdb";
-import { movieHasVerifiedSession } from "../../../../lib/verified-movie-sessions";
+import { findMovieSessionMatches } from "../../../../lib/verified-movie-sessions";
 
 type LoadMovie = (input: {
   movieId: number;
@@ -67,6 +67,16 @@ function detailError(error: unknown): Response {
   );
 }
 
+function validFutureScreenings(screenings: KiwiCueScreening[], now: Date): KiwiCueScreening[] {
+  const unique = new Map<string, KiwiCueScreening>();
+  for (const screening of screenings) {
+    if (Number.isFinite(Date.parse(screening.startTime)) && Date.parse(screening.startTime) >= now.getTime()) {
+      unique.set(screening.id, screening);
+    }
+  }
+  return [...unique.values()].sort((left, right) => Date.parse(left.startTime) - Date.parse(right.startTime));
+}
+
 export async function handleMoviePreviewDetailRequest(
   movieIdInput: string,
   languageInput: string | null,
@@ -92,6 +102,8 @@ export async function handleMoviePreviewDetailRequest(
       ? movie
       : await loadMovie({ movieId, language: "en" });
     let sessionStatus: MovieSessionStatus = "unavailable";
+    let screenings: KiwiCueScreening[] = [];
+    const checkedAt = now.toISOString();
     try {
       const coverage = await (loadCoverage ?? (loadScreenings
         ? async () => "covered" as const
@@ -99,18 +111,23 @@ export async function handleMoviePreviewDetailRequest(
       if (coverage === "not-covered") {
         sessionStatus = "not-covered";
       } else {
-        const screenings = await (loadScreenings ?? defaultScreeningLoader(now))({
+        const catalog = await (loadScreenings ?? defaultScreeningLoader(now))({
           query: null,
           date: "all",
         });
-        sessionStatus = movieHasVerifiedSession(verificationMovie, screenings)
+        screenings = findMovieSessionMatches(
+          verificationMovie,
+          validFutureScreenings(catalog, now),
+          language === "zh" ? movie : undefined,
+        );
+        sessionStatus = screenings.length > 0
           ? "verified"
           : "unverified";
       }
     } catch (error) {
       if (!(error instanceof OpenCinemaClientError)) throw error;
     }
-    return Response.json({ movie, sessionStatus }, { headers: { "cache-control": "no-store" } });
+    return Response.json({ movie, screenings, sessionStatus, checkedAt }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     return detailError(error);
   }

@@ -23,6 +23,8 @@ export interface MoviePreviewDetail extends MoviePreview {
 export interface MoviePreviewDetailResponse {
   movie: MoviePreviewDetail;
   sessionStatus: MovieSessionStatus;
+  screenings?: KiwiCueScreening[];
+  checkedAt?: string | null;
 }
 
 export interface MoviePreviewPage {
@@ -55,3 +57,4 @@ export function parseMovieId(value: unknown): number | null {
   const movieId = Number(value);
   return Number.isSafeInteger(movieId) ? movieId : null;
 }
+import type { KiwiCueScreening } from "./movies";
