@@ -92,13 +92,6 @@ const nightMarketPreview: EventEditorialPreview = {
     "The casual evening setting works for a quick dinner or a slow browse.",
     "The vendor mix changes, so each location can feel a little different.",
   ],
-  image: {
-    url: "https://static.wixstatic.com/media/7359e1_54610bf46d2748b18334076af1f3e304~mv2.jpg/v1/fill/w_458,h_458,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/111256382_3232249256866480_2220483253420627809_n-700x700.jpg",
-    alt: "Pan-fried dumplings from an Auckland Night Market food stall",
-    sourceName: "Auckland Night Markets",
-    sourceUrl: nightMarketSource,
-    verifiedAt: CURATED_MARKET_VERIFIED_AT,
-  },
 };
 const nightMarketPreviewZh = {
   summary: "以现点现做街头美食和甜点为主的热闹夜间市集。",
@@ -144,13 +137,6 @@ const avondalePreview: EventEditorialPreview = {
     "Pacific and Asian ingredients sit alongside ready-to-eat food.",
     "Second-hand and car-boot stalls reward an unhurried browse.",
   ],
-  image: {
-    url: "https://static.wixstatic.com/media/4b3423_6f7cdf6aa4374f0cb0d2fd6327384a71~mv2.png/v1/fill/w_540,h_282,al_c/4b3423_6f7cdf6aa4374f0cb0d2fd6327384a71~mv2.png",
-    alt: "Shoppers and stalls at Avondale Sunday Market",
-    sourceName: "Avondale Mainstreet",
-    sourceUrl: avondaleSource,
-    verifiedAt: CURATED_MARKET_VERIFIED_AT,
-  },
 };
 
 const greyLynnSource = "https://www.greylynnfarmersmarket.co.nz/";
@@ -161,13 +147,6 @@ const greyLynnPreview: EventEditorialPreview = {
     "Meet small local food makers in a neighbourhood setting.",
     "The community-owned market has a strong low-waste focus.",
   ],
-  image: {
-    url: "https://lh3.googleusercontent.com/sitesv/AG8ngQUtOsQqy-O5VscAgNuCL2sUbQSUUgpUK9bfv_Y_nnOUZwQIqx5nmEzIaz3sEA5fGEUd-kfNhdUzlxuEkiub3Kcb2UMtAoi85z-LzaV6BrSHhm2Lgfi09C8L28NelHwjZwDiAh9KIJON3pdaRiyy3WvhV1Nf1azBbw5tHWzB4H88epxCAfzBR4NLbS_xu1k=w1200",
-    alt: "Market stalls outside Grey Lynn Community Centre",
-    sourceName: "Grey Lynn Farmers Market",
-    sourceUrl: greyLynnSource,
-    verifiedAt: CURATED_MARKET_VERIFIED_AT,
-  },
 };
 
 const catalinaBaySource = "https://www.catalinabay.co.nz/farmers-market";
@@ -178,13 +157,6 @@ const catalinaBayPreview: EventEditorialPreview = {
     "Local produce and prepared food sit alongside artisan products.",
     "The Catalina Bay waterfront adds space for a walk before or after.",
   ],
-  image: {
-    url: "https://static1.squarespace.com/static/5d9bd88c8f3edd3787d85085/t/5df7f03456ec9170a9b7d596/1585860891628/GJT_5083+copy.jpg?format=1500w",
-    alt: "Market stalls inside the covered Catalina Bay Farmers Market",
-    sourceName: "Catalina Bay Precinct",
-    sourceUrl: catalinaBaySource,
-    verifiedAt: CURATED_MARKET_VERIFIED_AT,
-  },
 };
 
 const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
@@ -459,6 +431,7 @@ function toEvent(
       name: definition.sourceName,
       url: definition.sourceUrl,
       verifiedAt: CURATED_MARKET_VERIFIED_AT,
+      provenance: "recurring-schedule",
     },
     localization: {
       zh: {

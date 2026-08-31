@@ -31,6 +31,26 @@ describe("event SEO", () => {
     });
   });
 
+  it("uses a general place reference for recurring market expectations", () => {
+    const market = {
+      ...detail,
+      id: "kc-market-grey-lynn",
+      name: "Grey Lynn Farmers Market",
+      category: "Market",
+      status: "schedule_verified",
+      source: {
+        name: "Grey Lynn Farmers Market",
+        url: "https://www.greylynnfarmersmarket.co.nz/",
+        verifiedAt: "2026-08-12",
+        provenance: "recurring-schedule" as const,
+      },
+    };
+    const jsonLd = buildEventJsonLd(market);
+    expect(jsonLd).toMatchObject({ "@type": "Place" });
+    expect(jsonLd).not.toHaveProperty("startDate");
+    expect(jsonLd).not.toHaveProperty("eventStatus");
+  });
+
   it("escapes script-breaking JSON-LD text", () => {
     const serialized = serializeJsonLd({ name: "</script><script>alert(1)</script>" });
     expect(serialized).not.toContain("</script>");

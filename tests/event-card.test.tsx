@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EventCard } from "../app/events/event-card";
 import type { KiwiCueEvent } from "../lib/events";
@@ -42,16 +42,15 @@ const curatedMarket: KiwiCueEvent = {
       previewImageAlt: "Grey Lynn 农夫市集里的本地农产品",
     },
   },
+  source: {
+    name: "Grey Lynn Farmers Market",
+    url: "https://www.greylynnfarmersmarket.co.nz/",
+    verifiedAt: "2026-08-12",
+    provenance: "recurring-schedule",
+  },
   editorialPreview: {
     summary: "A community market where local growers sell directly.",
     highlights: ["Local produce", "Small food makers", "Low-waste focus"],
-    image: {
-      url: "https://images.example/grey-lynn.jpg",
-      alt: "Fresh produce at Grey Lynn Farmers Market",
-      sourceName: "Grey Lynn Farmers Market",
-      sourceUrl: "https://www.greylynnfarmersmarket.co.nz/",
-      verifiedAt: "2026-08-12",
-    },
   },
 };
 
@@ -101,14 +100,13 @@ describe("portal event card", () => {
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
   });
 
-  it("shows localized useful text when a market preview image fails", () => {
+  it("shows localized first-visit guidance when a market has no licensed image", () => {
     const view = render(<EventCard event={curatedMarket} index={0} language="zh" />);
 
-    fireEvent.error(view.container.querySelector("img")!);
-
-    expect(screen.getByText("第一次去可以期待")).toBeInTheDocument();
+    expect(screen.getByText("第一次去指南")).toBeInTheDocument();
     expect(screen.getByText("由社区运营，可以直接向本地种植者购买。")).toBeInTheDocument();
     expect(screen.queryByText("AKL")).not.toBeInTheDocument();
+    expect(view.container.querySelector("img")).not.toBeInTheDocument();
   });
 
   it("uses the localized market name and verified schedule label in Chinese", () => {
@@ -121,7 +119,7 @@ describe("portal event card", () => {
       "/events/kc-market-grey-lynn",
     );
     expect(screen.getByText("市集")).toBeInTheDocument();
-    expect(screen.getByText("日程已核实")).toBeInTheDocument();
+    expect(screen.getByText("预计日程")).toBeInTheDocument();
   });
 
   it("defines a full-width feature followed by an Apple-clean two-column discovery grid", () => {

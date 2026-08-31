@@ -139,50 +139,26 @@
 .event-detail-section li { padding-left: var(--space-2); }
 .event-detail-section li + li { margin-top: var(--space-3); }
 
-.event-market-highlights-copy { min-width: 0; }
-
-.event-market-highlights-copy > p:first-child {
-  margin: 0;
-  color: var(--portal-ink);
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.65;
-}
-
-.event-market-highlights-copy ul {
-  display: grid;
-  gap: var(--space-3);
-  margin: var(--space-5) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.event-market-highlights-copy li {
-  padding-left: var(--space-4);
-  border-left: 2px solid var(--portal-brand);
-  color: var(--portal-muted);
-  line-height: 1.6;
-}
-
-.event-market-highlights-caveat {
-  margin: var(--space-5) 0 0;
-  color: var(--portal-muted);
-  font-size: .72rem;
-  line-height: 1.6;
-}
-
-.event-market-highlights-copy a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  margin-top: var(--space-3);
-  color: var(--portal-brand);
-  font-size: .76rem;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.event-market-highlights-copy a:hover { text-decoration: underline; }
+.event-experience-list { display: grid; gap: var(--space-6); min-width: 0; }
+.event-experience-item { min-width: 0; padding-bottom: var(--space-6); border-bottom: 1px solid var(--portal-line); }
+.event-experience-item:last-child { padding-bottom: 0; border-bottom: 0; }
+.event-experience-item h3 { margin: 0 0 var(--space-3); font-size: 1.08rem; letter-spacing: -.02em; }
+.event-experience-item > p { margin: 0; color: var(--portal-muted); line-height: 1.7; }
+.event-experience-item > ul { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding-left: 1.2rem; color: var(--portal-muted); line-height: 1.6; }
+.event-experience-caveat { margin-top: var(--space-4) !important; color: var(--portal-muted); font-size: .76rem; }
+.event-experience-excerpt { margin-top: var(--space-5); border-top: 1px solid var(--portal-line); border-bottom: 1px solid var(--portal-line); }
+.event-experience-excerpt summary { min-height: 44px; display: flex; align-items: center; color: var(--portal-brand); cursor: pointer; font-size: .78rem; font-weight: 800; }
+.event-experience-excerpt > div { padding: 0 0 var(--space-4); }
+.event-experience-excerpt-label { display: block; margin-bottom: var(--space-2); color: var(--portal-muted); font-size: .7rem; font-weight: 780; }
+.event-experience-excerpt ol { margin: 0; padding-left: 1.2rem; color: var(--portal-ink); line-height: 1.7; }
+.event-experience-source { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-top: var(--space-5); color: var(--portal-muted); font-size: .68rem; line-height: 1.5; }
+.event-experience-source a,
+.event-experience-links a { color: var(--portal-brand); font-weight: 800; text-decoration: none; }
+.event-experience-source a:hover,
+.event-experience-links a:hover { text-decoration: underline; }
+.event-experience-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-3); }
+.event-experience-links a { min-height: 44px; display: inline-flex; align-items: center; font-size: .76rem; }
+.event-source-stale { color: var(--portal-danger); font-size: .72rem; font-weight: 700; }
 
 .event-organiser-note {
   grid-column: 2;

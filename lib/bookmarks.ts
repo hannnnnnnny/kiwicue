@@ -108,7 +108,15 @@ function parseSource(value: unknown): EventSource | undefined {
     || !safeHttpsUrl(value.url)
     || !validLocalDate(value.verifiedAt)
   ) return undefined;
-  return { name: value.name, url: value.url, verifiedAt: value.verifiedAt };
+  const provenance = value.provenance === "official-listing" || value.provenance === "recurring-schedule"
+    ? value.provenance
+    : undefined;
+  return {
+    name: value.name,
+    url: value.url,
+    verifiedAt: value.verifiedAt,
+    ...(provenance ? { provenance } : {}),
+  };
 }
 
 function parseHighlights(value: unknown): string[] | undefined {

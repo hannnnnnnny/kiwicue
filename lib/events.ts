@@ -21,6 +21,7 @@ export interface EventSource {
   name: string;
   url: string;
   verifiedAt: string;
+  provenance?: "official-listing" | "recurring-schedule";
 }
 
 export interface EventEditorialImage {
@@ -46,6 +47,46 @@ export interface EventLocalization {
     previewHighlights?: string[];
     previewImageAlt?: string;
   };
+}
+
+export type EventExperienceKind =
+  | "official"
+  | "first-visit"
+  | "historical-report"
+  | "historical-organizer";
+
+export interface EventExperienceSource {
+  name: string;
+  url: string;
+  checkedAt: string;
+  scope: string;
+}
+
+export interface EventExperienceLink {
+  label: string;
+  labelZh: string;
+  url: string;
+}
+
+export interface EventExperienceSection {
+  kind: EventExperienceKind;
+  heading: string;
+  headingZh: string;
+  summary: string;
+  summaryZh: string;
+  points?: string[];
+  pointsZh?: string[];
+  disclosure?: string;
+  disclosureZh?: string;
+  songs?: string[];
+  caveat?: string;
+  caveatZh?: string;
+  links?: EventExperienceLink[];
+  source: EventExperienceSource;
+}
+
+export interface EventExperienceGuide {
+  sections: EventExperienceSection[];
 }
 
 export type EventAdmission =
@@ -75,6 +116,16 @@ export interface KiwiCueEvent {
   admission?: EventAdmission;
   areaId?: EventAreaId;
   organiserName?: string;
+}
+
+export function isCuratedMarketEventId(eventId: string): boolean {
+  return /^kc-market-[A-Za-z0-9-]+$/.test(eventId);
+}
+
+export function isRecurringMarketEvent(event: Pick<KiwiCueEvent, "id" | "category" | "source" | "status">): boolean {
+  return event.category === "Market" && isCuratedMarketEventId(event.id)
+    && (event.source?.provenance === "recurring-schedule"
+      || (event.status === "schedule_verified" && Boolean(event.source)));
 }
 
 export interface KiwiCueEventDetail extends KiwiCueEvent {

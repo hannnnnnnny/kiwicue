@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { KiwiCueEventDetail } from "./events";
+import { isRecurringMarketEvent, type KiwiCueEventDetail } from "./events";
 
 const SITE_ORIGIN = new URL("https://kiwicue.vercel.app");
 
@@ -56,6 +56,27 @@ export function buildEventJsonLd(event: KiwiCueEventDetail): Record<string, unkn
     : event.admission?.kind === "range"
       ? { "@type": "AggregateOffer", lowPrice: event.admission.min, highPrice: event.admission.max, priceCurrency: "NZD", ...(officialUrl ? { url: officialUrl } : {}) }
       : null;
+  const location = event.venue ? {
+    "@type": "Place",
+    name: event.venue.name,
+    ...(event.venue.address ? { address: {
+      "@type": "PostalAddress",
+      streetAddress: event.venue.address,
+      addressLocality: event.venue.city,
+      ...(event.venue.postalCode ? { postalCode: event.venue.postalCode } : {}),
+      addressCountry: "NZ",
+    } } : {}),
+  } : undefined;
+  if (isRecurringMarketEvent(event)) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Place",
+      name: event.name,
+      description: shortDescription(event),
+      url: officialUrl ?? new URL(`/events/${encodeURIComponent(event.id)}`, SITE_ORIGIN).toString(),
+      ...(location ? { location } : {}),
+    };
+  }
   return {
     "@context": "https://schema.org",
     "@type": "Event",
@@ -64,17 +85,7 @@ export function buildEventJsonLd(event: KiwiCueEventDetail): Record<string, unkn
     url: new URL(`/events/${encodeURIComponent(event.id)}`, SITE_ORIGIN).toString(),
     ...(status ? { eventStatus: status } : {}),
     ...(image ? { image: [image] } : {}),
-    ...(event.venue ? { location: {
-      "@type": "Place",
-      name: event.venue.name,
-      ...(event.venue.address ? { address: {
-        "@type": "PostalAddress",
-        streetAddress: event.venue.address,
-        addressLocality: event.venue.city,
-        ...(event.venue.postalCode ? { postalCode: event.venue.postalCode } : {}),
-        addressCountry: "NZ",
-      } } : {}),
-    } } : {}),
+    ...(location ? { location } : {}),
     ...(event.organiserName ? { organizer: { "@type": "Organization", name: event.organiserName } } : {}),
     ...(offers ? { offers } : {}),
   };
