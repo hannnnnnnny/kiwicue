@@ -61,6 +61,9 @@ interface TicketmasterEventPayload {
   classifications?: Array<{
     segment?: { name?: string };
     genre?: { name?: string };
+    subGenre?: { name?: string };
+    type?: { name?: string };
+    subType?: { name?: string };
   }>;
   _embedded?: {
     venues?: TicketmasterVenuePayload[];
@@ -130,6 +133,32 @@ function normalizeText(value?: string, maximumLength = 12_000): string | null {
   if (!value) return null;
   const normalized = value.normalize("NFC").trim().replace(/\s+/gu, " ");
   return normalized ? normalized.slice(0, maximumLength) : null;
+}
+
+const OMITTED_CLASSIFICATION_LABELS = new Set(["undefined", "n/a", "na", "none"]);
+
+function normalizeClassificationTags(
+  classifications: TicketmasterEventPayload["classifications"],
+): string[] | undefined {
+  const tags: string[] = [];
+  const seen = new Set<string>();
+  for (const classification of classifications ?? []) {
+    for (const value of [
+      classification.genre?.name,
+      classification.subGenre?.name,
+      classification.type?.name,
+      classification.subType?.name,
+    ]) {
+      const normalized = normalizeText(value, 80);
+      if (!normalized || OMITTED_CLASSIFICATION_LABELS.has(normalized.toLowerCase())) continue;
+      const key = normalized.toLocaleLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      tags.push(normalized);
+      if (tags.length === 12) return tags;
+    }
+  }
+  return tags.length > 0 ? tags : undefined;
 }
 
 function normalizeAdmission(
@@ -262,6 +291,7 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
   const image = images.find((candidate) => candidate.ratio === "16_9" && candidate.url) ??
     images.find((candidate) => candidate.url);
   const classification = event.classifications?.[0];
+  const tags = normalizeClassificationTags(event.classifications);
   const venue = normalizeVenue(event._embedded?.venues?.[0]);
   const admission = normalizeAdmission(event.priceRanges?.[0]);
   const organiserName = normalizeText(event.promoter?.name, 120) ?? undefined;
@@ -279,6 +309,7 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
     },
     status: event.dates?.status?.code ?? "unknown",
     category: classification?.segment?.name ?? classification?.genre?.name ?? "Other",
+    ...(tags ? { tags } : {}),
     venue,
     ...(admission ? { admission } : {}),
     ...(organiserName ? { organiserName } : {}),

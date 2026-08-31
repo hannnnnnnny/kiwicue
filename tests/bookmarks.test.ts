@@ -84,6 +84,18 @@ describe("local event bookmarks", () => {
     expect(parseBookmarks(serializeBookmarks([saved]))).toEqual([saved]);
   });
 
+  it("round-trips normalized classification tags and drops malformed tag arrays", () => {
+    const tagged = { ...event(), tags: ["Rock", "Alternative"] };
+    const saved = toBookmark(tagged, "2026-08-12T08:00:00.000Z");
+    expect(parseBookmarks(serializeBookmarks([saved]))[0]?.event.tags).toEqual(["Rock", "Alternative"]);
+
+    const malformed = JSON.stringify({
+      version: 1,
+      items: [{ event: { ...event(), tags: ["Rock", 42] }, savedAt: "2026-08-12T08:00:00.000Z" }],
+    });
+    expect(parseBookmarks(malformed)[0]?.event).not.toHaveProperty("tags");
+  });
+
   it("drops an unsafe preview image without losing safe preview text", () => {
     const market = {
       ...event("kc-market-grey-lynn"),

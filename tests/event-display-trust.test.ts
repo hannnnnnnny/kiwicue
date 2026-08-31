@@ -15,6 +15,11 @@ const market = {
 } satisfies KiwiCueEvent;
 
 describe("event trust display", () => {
+  it("normalizes US and UK cancellation spellings", () => {
+    expect(formatEventStatusForDisplay({ ...market, id: "event-canceled", status: "canceled", category: "Music" }, "en")).toBe("Canceled");
+    expect(formatEventStatusForDisplay({ ...market, id: "event-canceled", status: "canceled", category: "Music" }, "zh")).toBe("已取消");
+  });
+
   it("calls recurring dates expected schedules instead of verified occurrences", () => {
     expect(formatEventStatusForDisplay(market, "en", new Date("2026-08-31T00:00:00Z"))).toBe("Expected schedule");
     expect(formatEventStatusForDisplay(market, "zh", new Date("2026-08-31T00:00:00Z"))).toBe("预计日程");

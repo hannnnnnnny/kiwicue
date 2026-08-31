@@ -442,6 +442,43 @@ describe("Auckland event explorer", () => {
     expect(await screen.findByText("符合条件的 Ticketmaster 活动已全部显示")).toBeInTheDocument();
   });
 
+  it("filters loaded results locally without changing the server query", async () => {
+    const loaded = {
+      ...eventResult,
+      events: [
+        { ...numberedEvent(1), tags: ["Rock"] },
+        { ...numberedEvent(2), tags: ["Jazz"] },
+      ],
+      page: { size: 50, totalElements: 2, totalPages: 1, number: 0 },
+    };
+    const requestEvents = vi.fn().mockResolvedValue(loaded);
+    render(<EventExplorer requestEvents={requestEvents} />);
+
+    expect(await screen.findByRole("button", { name: "Jazz1" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Jazz1" }));
+    expect(screen.getByRole("heading", { name: "Event 2" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Event 1" })).not.toBeInTheDocument();
+    expect(requestEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it("resets a local refinement when the server search changes", async () => {
+    const first = {
+      ...eventResult,
+      events: [{ ...numberedEvent(1), tags: ["Rock"] }, { ...numberedEvent(2), tags: ["Jazz"] }],
+      page: { size: 50, totalElements: 2, totalPages: 1, number: 0 },
+    };
+    const second = { ...eventResult, events: [{ ...numberedEvent(3), tags: ["Rock"] }] };
+    const requestEvents = vi.fn((options: { keyword?: string }) => Promise.resolve(options.keyword ? second : first));
+    const view = render(<EventExplorer requestEvents={requestEvents} />);
+    expect(await screen.findByRole("button", { name: "Jazz1" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Jazz1" }));
+    expect(screen.queryByRole("heading", { name: "Event 1" })).not.toBeInTheDocument();
+
+    view.rerender(<EventExplorer keyword="new" requestEvents={requestEvents} />);
+    expect(await screen.findByRole("heading", { name: "Event 3" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Jazz1" })).not.toBeInTheDocument();
+  });
+
   it("describes curated market results without Ticketmaster claims in both languages", async () => {
     const marketResult: AucklandEventsResult = {
       ...eventResult,

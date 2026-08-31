@@ -14,7 +14,7 @@ export type DiscoveryModel = {
   dateGroups: EventDateGroup[];
 };
 
-const blockedStatuses = new Set(["cancelled", "postponed", "offsale"]);
+const blockedStatuses = new Set(["cancelled", "canceled", "postponed", "offsale"]);
 
 function eventInstant(event: KiwiCueEvent): Temporal.Instant | null {
   try {

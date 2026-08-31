@@ -109,6 +109,8 @@ export interface KiwiCueEvent {
   };
   status: string;
   category: string;
+  /** Normalized labels from every upstream classification, suitable for local refinements. */
+  tags?: string[];
   venue: KiwiCueVenue | null;
   source?: EventSource;
   localization?: EventLocalization;

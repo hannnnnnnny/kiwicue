@@ -160,8 +160,11 @@
   .event-feed { padding-top: var(--space-6); }
   .event-feed-toolbar { align-items: flex-start; flex-direction: column; }
   .event-feed-toolbar span { display: none; }
+  .event-local-facets { grid-template-columns: 1fr; align-items: start; gap: var(--space-3); }
+  .event-local-facets-controls { justify-content: flex-start; }
   .event-grid,
   .event-grid-skeleton,
+  .curated-market-grid { grid-template-columns: 1fr; }
   .saved-event-grid { grid-template-columns: 1fr; }
   .event-grid > li:first-child,
   .event-grid-skeleton > :first-child { grid-column: auto; }

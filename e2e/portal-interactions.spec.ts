@@ -710,7 +710,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   releaseAppend();
   await expect(page.getByRole("heading", { name: "Waterfront Night Market" })).toBeVisible();
   expect(requests.eventRequests.filter((request) => request.includes("cursor=page-two"))).toHaveLength(1);
-  await expect(page.locator(".portal-event-card")).toHaveCount(2);
+  await expect(page.locator(".event-feed .portal-event-card")).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "A very long Auckland event title that remains readable on a small screen" })).toHaveCount(0);
   const layoutAfter = await measureLoadMoreLayout(page);
   expect(
@@ -785,12 +785,12 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
 
   await page.getByRole("link", { name: "View Grey Lynn Farmers Market details" }).click();
   await expect(page.getByRole("heading", { name: "Plan your visit" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Past highlights" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Previous organiser notice · 30 Aug 2026" })).toBeVisible();
   await expect(page.getByText("Shop seasonal produce directly from growers and producers.")).toBeVisible();
-  const pastPreviewLink = page.getByRole("link", { name: "Open official past preview" });
+  const pastPreviewLink = page.getByRole("link", { name: "Open the dated organiser notice" });
   await expect(pastPreviewLink).toBeVisible();
   expect((await pastPreviewLink.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
-  await expect(page.getByText(/Schedule last checked.*12 Aug 2026/)).toBeVisible();
+  await expect(page.getByText(/Schedule reference checked.*12 Aug 2026/)).toBeVisible();
   await expect(page.getByTitle("Map of Grey Lynn Community Centre")).toBeVisible();
   await page.getByRole("button", { name: "Show distance from me" }).click();
   await expect(page.getByText(/^About .* km away/)).toBeVisible();
@@ -800,7 +800,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "切换到中文" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "出发前确认" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "往期精选" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "往期主办方通知 · 2026年8月30日" })).toBeVisible();
   await expect(page.getByText("可以直接向种植者选购当季本地农产品。")).toBeVisible();
   await expect(page.getByRole("link", { name: "查看官方最新安排" })).toBeVisible();
   await expect(page.getByRole("button", { name: "从收藏中移除 Grey Lynn 农夫市集" })).toBeVisible();
@@ -817,7 +817,7 @@ test("a failed official market image becomes a useful text preview", async ({ pa
 
   await page.goto("/events?category=markets&q=Grey");
 
-  await expect(page.getByText("What to expect")).toBeVisible();
+  await expect(page.getByText("First-visit guide")).toBeVisible();
   await expect(page.getByText("A community market where local growers sell directly.")).toBeVisible();
   await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
@@ -862,7 +862,7 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
   await page.goto("/events");
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
 
-  const imageMotion = await page.locator(".portal-event-media img").evaluate((element) => ({
+  const imageMotion = await page.locator(".event-feed .portal-event-media img").evaluate((element) => ({
     transition: getComputedStyle(element).transitionDuration,
     animation: getComputedStyle(element).animationName,
   }));
@@ -1046,7 +1046,7 @@ test("movie cards open a complete in-site preview with a safe trailer", async ({
     "https://www.youtube-nocookie.com/embed/Abc_123-x",
   );
   await expect(page.getByRole("link", { name: "Open trailer on YouTube" })).toHaveAttribute("rel", /noopener/);
-  await expect(page.getByRole("heading", { name: "Check Auckland cinema sessions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Source-matched Auckland sessions" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/price|pricing|fees|NZ\$|价格|费用|票价/i);
   await expectNoHorizontalOverflow(page);
   if (process.env.CAPTURE_SCREENSHOTS === "1") {

@@ -1,7 +1,7 @@
 import { deriveEventArea } from "./event-discovery";
 import type { KiwiCueEvent } from "./events";
 
-const unavailableStatuses = new Set(["cancelled", "postponed", "offsale"]);
+const unavailableStatuses = new Set(["cancelled", "canceled", "postponed", "offsale"]);
 
 function eventTime(event: KiwiCueEvent): number | null {
   const source = event.start.dateTime

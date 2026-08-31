@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../../components/language-provider";
 import { EventGridSkeleton } from "../../components/event-grid-skeleton";
 import { EventDiscoveryView, EventResultsView } from "../../components/event-discovery-sections";
+import { EventLocalFacets } from "../../components/event-local-facets";
 import type { EventCategory } from "../../lib/event-categories";
 import type { EventSort } from "../../lib/event-search-params";
 import { filterEligibleDiscoveryEvents } from "../../lib/event-discovery";
+import { buildEventFacetOptions, filterEventFacet, type EventLocalFacet } from "../../lib/event-facets";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
 import type { EventWindow } from "../../lib/event-window";
 
@@ -92,6 +94,8 @@ const copy = {
     errorBody: "We could not refresh the event feed. Your Ticketmaster key and technical details remain private.",
     retryLabel: "Retry event scan",
     retryText: "Scan again",
+    localEmptyTitle: "No loaded events match this refinement",
+    localEmptyBody: "Reset the refinement or load another source page to keep browsing.",
   },
   zh: {
     feedTitle: "即将发生",
@@ -122,6 +126,8 @@ const copy = {
     errorBody: "活动信息刷新失败。你的 Ticketmaster 密钥和技术详情仍然保密。",
     retryLabel: "重新扫描活动",
     retryText: "重新扫描",
+    localEmptyTitle: "当前已加载活动不符合这个细筛条件",
+    localEmptyBody: "可以重置细筛，或继续加载下一页来源记录。",
   },
 } as const;
 
@@ -170,6 +176,7 @@ export function EventExplorer({
   const content = copy[language];
   const [state, setState] = useState<ExplorerState>({ status: "loading", events: [] });
   const [attempt, setAttempt] = useState(0);
+  const [localFacetState, setLocalFacetState] = useState<{ requestKey: string; facet: EventLocalFacet }>({ requestKey: "", facet: "all" });
   const generationRef = useRef(0);
   const appendInFlightRef = useRef(false);
   const resultsSummaryRef = useRef<HTMLParagraphElement>(null);
@@ -303,6 +310,11 @@ export function EventExplorer({
         </section>
       );
     }
+    const facetOptions = buildEventFacetOptions(shownEvents);
+    const localFacet = localFacetState.requestKey === requestKey ? localFacetState.facet : "all";
+    const selectedFacet = facetOptions.some((option) => option.id === localFacet) ? localFacet : "all";
+    const refinedEvents = filterEventFacet(shownEvents, selectedFacet);
+    const hasLocalRefinement = selectedFacet !== "all";
     return (
       <section className="event-feed" aria-live="polite">
         <header className="event-feed-heading">
@@ -312,14 +324,27 @@ export function EventExplorer({
         <div className="event-feed-toolbar">
           <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1}>
             {isMarketCategory
-              ? content.marketCount(stateForRequest.events.length, shownEvents.length)
-              : content.count(isFiltered, stateForRequest.events.length, shownEvents.length)}
+              ? content.marketCount(stateForRequest.events.length, refinedEvents.length)
+              : content.count(isFiltered || hasLocalRefinement, stateForRequest.events.length, refinedEvents.length)}
           </p>
           <span><i aria-hidden="true" /> {isMarketCategory ? content.marketSources : content.sources}</span>
         </div>
-        {isFiltered
-          ? <EventResultsView events={shownEvents} language={language} state={{ window, category, keyword, venueId, sort }} />
-          : <EventDiscoveryView events={shownEvents} language={language} />}
+        <EventLocalFacets
+          options={facetOptions}
+          value={selectedFacet}
+          onChange={(facet) => setLocalFacetState({ requestKey, facet })}
+        />
+        {refinedEvents.length > 0 ? (
+          isFiltered || hasLocalRefinement
+            ? <EventResultsView events={refinedEvents} language={language} state={{ window, category, keyword, venueId, sort }} />
+            : <EventDiscoveryView events={refinedEvents} language={language} />
+        ) : (
+          <div className="event-local-empty" role="status">
+            <h3>{content.localEmptyTitle}</h3>
+            <p>{content.localEmptyBody}</p>
+            <button type="button" onClick={() => setLocalFacetState({ requestKey, facet: "all" })}>{content.emptyAction}</button>
+          </div>
+        )}
 
         {stateForRequest.nextCursor ? (
           <div className="event-load-more-wrap" aria-busy={stateForRequest.appendStatus === "loading"}>

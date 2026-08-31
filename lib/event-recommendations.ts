@@ -40,6 +40,7 @@ interface RecommendationContext {
 
 const BLOCKED_STATUSES = new Set([
   "cancelled",
+  "canceled",
   "postponed",
   "rescheduled",
   "offsale",
