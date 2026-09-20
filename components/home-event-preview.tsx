@@ -64,7 +64,7 @@ function firstEvent(value: unknown): KiwiCueEvent | null {
   return isEvent(events[0]) ? events[0] : null;
 }
 
-export function HomeEventPreview({ language }: { language: Language }) {
+export function HomeEventPreview({ language, titleAsText = false }: { language: Language; titleAsText?: boolean }) {
   const content = copy[language];
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<HomePreviewState>({ status: "loading" });
@@ -132,7 +132,9 @@ export function HomeEventPreview({ language }: { language: Language }) {
         </div>
         <div className="home-feature-copy">
           <p>{content.feature}</p>
-          <h2 id="home-feature-title">{displayName}</h2>
+          {titleAsText
+            ? <p className="home-feature-event-title" id="home-feature-title">{displayName}</p>
+            : <h2 id="home-feature-title">{displayName}</h2>}
           <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
           <span>{event.venue?.name ?? content.venuePending}</span>
           <strong>{content.details}<span aria-hidden="true"> ↗</span></strong>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
+import { DiscoveryMotion } from "../components/discovery-motion";
 import "@fontsource-variable/inter";
 import "./globals.css";
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body>
         <LanguageProvider>
           <BookmarkProvider>{children}</BookmarkProvider>
+          <DiscoveryMotion />
         </LanguageProvider>
       </body>
     </html>

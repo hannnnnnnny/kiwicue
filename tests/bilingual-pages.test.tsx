@@ -54,19 +54,19 @@ describe("bilingual route content", () => {
       </LanguageProvider>,
     );
 
-    expect(screen.getByRole("heading", { name: "Find something worth doing." })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Choose how you want to go out" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Find your next scene." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What are you into?" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event categories" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event time range" })).toBeInTheDocument();
     expect(screen.getByText("All future · Recommended within each date")).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("Auckland events — KiwiCue"));
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
-    expect(screen.getByRole("heading", { name: "找到真正值得去的活动。" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "先选你想怎么出门" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "这座城，总有你的下一场。" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "今天，想去哪里？" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "活动类型" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "时间范围" })).toBeInTheDocument();
     expect(screen.getByText("全部未来 · 同日活动按推荐排序")).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe("bilingual route content", () => {
     expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("奥克兰活动 — KiwiCue"));
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
     expect(document.body).not.toHaveTextContent(/365|one year|一年|未来 365 天/i);
   });
 

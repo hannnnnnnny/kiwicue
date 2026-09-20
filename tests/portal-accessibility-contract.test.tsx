@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventsPageContent } from "../components/events-page-content";
 import { LanguageProvider } from "../components/language-provider";
 import { readApplicationCss } from "./css-source";
@@ -28,7 +28,10 @@ const eventResult = {
   nextCursor: null,
 };
 
+beforeEach(() => vi.setSystemTime(new Date("2026-08-29T00:00:00+12:00")));
+
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
   localStorage.clear();
   sessionStorage.clear();
@@ -53,14 +56,14 @@ describe("complete portal accessibility contract", () => {
       </LanguageProvider>,
     );
 
-    await screen.findByRole("heading", { name: "Harbour Lights" });
+    await screen.findAllByRole("heading", { name: "Harbour Lights" });
     expect(screen.getByRole("heading", { name: "Happening soon" })).toBeInTheDocument();
     const ordered = [
       view.container.querySelector(".skip-link"),
       view.container.querySelector(".portal-header"),
       screen.getByRole("search", { name: "Search Auckland events" }),
       screen.getByRole("navigation", { name: "Sort results" }),
-      screen.getByRole("heading", { name: "Choose how you want to go out" }),
+      screen.getByRole("heading", { name: "What are you into?" }),
       screen.getByRole("navigation", { name: "Event categories" }),
       screen.getByRole("navigation", { name: "Event time range" }),
       view.container.querySelector("#event-results-summary"),
@@ -94,7 +97,7 @@ describe("complete portal accessibility contract", () => {
         <EventsPageContent window="all" category={null} keyword={null} venueId={null} />
       </LanguageProvider>,
     );
-    await screen.findByRole("heading", { name: "Harbour Lights" });
+    await screen.findAllByRole("heading", { name: "Harbour Lights" });
 
     const interactive = Array.from(view.container.querySelectorAll<HTMLElement>("a, button, input, select"));
     expect(interactive.length).toBeGreaterThan(10);

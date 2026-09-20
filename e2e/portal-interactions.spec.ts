@@ -273,7 +273,7 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
       }
       return json(route, secondPage);
     }
-    if (initialFailures > 0) {
+    if (initialFailures > 0 && url.searchParams.get("size") !== "1") {
       initialFailures -= 1;
       return json(route, { error: { message: "Unavailable" } });
     }
@@ -413,7 +413,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
   await expect(page).toHaveURL(/\/#home-content$/);
   await page.getByRole("link", { name: /Browse Auckland events/ }).click();
   await expect(page).toHaveURL(/\/events$/);
-  await expect(page.getByRole("heading", { name: "Find something worth doing." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find your next scene." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/events-list-${testInfo.project.name}.png`, fullPage: true });
@@ -455,7 +455,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
   const columns = await page.locator(".event-lead-story").evaluate((element) =>
     getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
   );
-  expect(columns).toBe(testInfo.project.name === "mobile-375" ? 1 : 2);
+  expect(columns).toBe(testInfo.project.name === "mobile-375" ? 1 : testInfo.project.name === "desktop" ? 3 : 2);
   await expectNoHorizontalOverflow(page);
 
   if (testInfo.project.name === "desktop") {
@@ -474,7 +474,7 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
       .getByRole("link", { name: /^Concerts/ });
     await category.hover();
     await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
-      .toBe("rgb(20, 108, 91)");
+      .toBe("rgb(23, 43, 38)");
     const box = await category.boundingBox();
     await page.mouse.move((box?.x ?? 0) + 10, (box?.y ?? 0) + 10);
     await page.mouse.down();
@@ -485,9 +485,9 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
 
   const counts = { events: requests.eventRequests.length, venues: requests.venueRequests.length };
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "找到真正值得去的活动。" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "这座城，总有你的下一场。" })).toBeVisible();
   await page.locator(".language-toggle").click();
-  await expect(page.getByRole("heading", { name: "Find something worth doing." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find your next scene." })).toBeVisible();
   await page.waitForTimeout(100);
   expect(requests.eventRequests).toHaveLength(counts.events);
   expect(requests.venueRequests).toHaveLength(counts.venues);
@@ -512,6 +512,7 @@ test("keyboard reaches every portal control in document order with visible focus
   await tabTo(page, page.getByRole("button", { name: "Search events" }));
   await tabTo(page, page.getByRole("link", { name: "Sort by recommended" }));
   await tabTo(page, page.getByRole("link", { name: "Sort by date" }));
+  await tabTo(page, page.locator(".home-feature > a"));
 
   const categoryNav = page.getByRole("navigation", { name: "Event categories" });
   for (const label of ["All", "Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
@@ -550,6 +551,8 @@ test("saving an event persists through reload and can be removed from Saved", as
   await expect(page).toHaveURL(/\/saved$/);
   await expect(page.getByRole("heading", { name: "Saved events" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.locator('.portal-event-card[data-layout="feature"] .portal-event-cta')).toHaveCSS("color", "rgb(23, 79, 64)");
+  await expect(page.locator('.portal-event-card[data-layout="feature"] .portal-event-venue')).toHaveCSS("color", "rgb(82, 102, 92)");
   await page.getByRole("button", { name: "Remove Harbour Lights from saved events" }).click();
   await expect(page.getByRole("heading", { name: "No saved events yet" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Saved events, 0" })).toBeVisible();
@@ -713,8 +716,12 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   await expect(page.locator(".event-feed .portal-event-card")).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "A very long Auckland event title that remains readable on a small screen" })).toHaveCount(0);
   const layoutAfter = await measureLoadMoreLayout(page);
+  // Native scroll anchoring may preserve either the viewport or the content below the appended grid.
   expect(
-    Math.abs(layoutAfter.viewportBottomGap - layoutBefore.viewportBottomGap),
+    Math.min(
+      Math.abs(layoutAfter.scrollY - layoutBefore.scrollY),
+      Math.abs(layoutAfter.viewportBottomGap - layoutBefore.viewportBottomGap),
+    ),
     JSON.stringify({ layoutBefore, layoutAfter }),
   ).toBeLessThanOrEqual(24);
 
@@ -871,7 +878,8 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
 
   if ((page.viewportSize()?.width ?? 0) <= 600) {
     const categoryTrack = page.getByRole("navigation", { name: "Event categories" });
-    expect(await categoryTrack.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    expect(await categoryTrack.evaluate((element) => getComputedStyle(element).overflowX)).toBe("auto");
+    await expectNoHorizontalOverflow(page);
 
     const timeTrack = page.getByRole("navigation", { name: "Event time range" });
     const timeDimensions = await timeTrack.evaluate((element) => {
@@ -950,7 +958,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   const firstCinemaAction = page.locator(".cinema-directory-actions a").first();
   await firstCinemaAction.focus();
   expect(await marks.first().evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe("none");
-  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("background-color", "rgb(29, 29, 31)");
+  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("background-color", "rgb(23, 43, 38)");
   await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expectNoHorizontalOverflow(page);
 

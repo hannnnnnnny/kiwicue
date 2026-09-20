@@ -35,17 +35,17 @@ describe("editorial information hub design system", () => {
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
-  it("defines an Apple-clean neutral palette with one KiwiCue fern accent", () => {
+  it("defines the city-guide palette with readable brand and accent tokens", () => {
     const css = applicationCss().toLowerCase();
     for (const token of [
-      "--portal-bg: #f5f5f7",
-      "--portal-surface: #fbfbfd",
-      "--portal-raised: #ffffff",
-      "--portal-ink: #1d1d1f",
-      "--portal-muted: #6e6e73",
-      "--portal-line: #d2d2d7",
-      "--portal-brand: #146c5b",
-      "--portal-accent: #146c5b",
+      "--portal-bg: #f4f6f2",
+      "--portal-surface: #e8eee7",
+      "--portal-raised: #fcfdf9",
+      "--portal-ink: #172b26",
+      "--portal-muted: #52665c",
+      "--portal-line: #c6d2c8",
+      "--portal-brand: #174f40",
+      "--portal-accent: #a63522",
       "--portal-display-font:",
       "--portal-ui-font:",
       "--radius-control: 8px",

@@ -1,16 +1,23 @@
 :root {
   color-scheme: light;
-  --portal-bg: #f5f5f7;
-  --portal-surface: #fbfbfd;
-  --portal-raised: #ffffff;
-  --portal-ink: #1d1d1f;
-  --portal-muted: #6e6e73;
-  --portal-line: #d2d2d7;
-  --portal-brand: #146c5b;
-  --portal-brand-hover: #0d5144;
-  --portal-brand-soft: #e3f1ed;
-  --portal-accent: #146c5b;
-  --portal-focus: #0071e3;
+  --portal-bg: #f4f6f2;
+  --portal-surface: #e8eee7;
+  --portal-raised: #fcfdf9;
+  --portal-ink: #172b26;
+  --portal-muted: #52665c;
+  --portal-line: #c6d2c8;
+  --portal-brand: #174f40;
+  --portal-brand-hover: #10392e;
+  --portal-brand-soft: #dbeade;
+  --portal-accent: #a63522;
+  --portal-focus: #b2412c;
+  --scene-dark: #142e27;
+  --scene-light: #f4f6ed;
+  --scene-muted: #bfcec5;
+  --scene-pop: #ff896d;
+  --scene-pop-ink: #392119;
+  --scene-scrim: rgb(10 25 20 / 88%);
+  --scene-overlay: rgb(10 25 20 / 8%);
   --portal-danger: #b3261e;
   --portal-danger-soft: #f9dedc;
   --portal-white: #ffffff;
@@ -38,4 +45,24 @@
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --portal-bg: #13251f;
+    --portal-surface: #1e352c;
+    --portal-raised: #20392f;
+    --portal-ink: #f0f4eb;
+    --portal-muted: #b5c7ba;
+    --portal-line: #456153;
+    --portal-brand: #a9d8bf;
+    --portal-brand-hover: #c1e8d1;
+    --portal-brand-soft: #2b493c;
+    --portal-accent: #ffab92;
+    --portal-focus: #ffab92;
+    --portal-white: #13251f;
+    --portal-danger: #ffb4ab;
+    --portal-danger-soft: #4c2826;
+  }
 }

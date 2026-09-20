@@ -126,7 +126,7 @@ describe("Auckland event explorer", () => {
     const page = await EventsPage();
     render(page);
 
-    expect(screen.getByRole("heading", { name: "Find something worth doing." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Find your next scene." })).toBeInTheDocument();
     expect(screen.getByText("Discover Auckland")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/");
   });

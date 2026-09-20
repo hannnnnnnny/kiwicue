@@ -1,0 +1,296 @@
+/* City-guide visual system. Existing semantic components retain their behavior. */
+.portal-header-shell { background: var(--portal-raised); border-bottom: 1px solid var(--portal-line); }
+.portal-header { min-height: 76px; }
+.portal-header-link { font-size: .88rem; }
+.portal-header-link[aria-current="page"] { color: var(--portal-brand); box-shadow: inset 0 -3px var(--portal-accent); }
+.portal-brand-wordmark { width: 174px; }
+.portal-command-inner, .home-hero { gap: 32px; }
+.events-page .portal-command {
+  width: 100%; margin: 0; padding: 0;
+  background: var(--scene-dark); color: var(--scene-light);
+}
+.events-page .portal-command-inner {
+  display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  width: min(var(--container), calc(100% - 48px)); margin: auto;
+  align-items: center; padding: 36px 0 24px;
+}
+.events-page .portal-command-copy { padding: 16px 0 24px; }
+.events-page .portal-command .eyebrow { color: var(--scene-pop); font-size: .8rem; }
+.events-page .portal-command h1 {
+  max-width: 11ch; color: var(--scene-light); font-size: clamp(3.4rem, 5.5vw, 5.3rem);
+  font-weight: 800; letter-spacing: -.07em; line-height: .96; margin: 20px 0;
+  text-wrap: balance;
+}
+:lang(zh) .events-page .portal-command h1 { max-width: 10ch; font-size: clamp(2.7rem, 5.3vw, 5rem); line-height: 1.15; letter-spacing: -.04em; }
+.events-page .portal-intro { color: var(--scene-muted); max-width: 34ch; font-size: 1.06rem; }
+.events-page .event-discovery-controls { grid-column: 1 / -1; color: var(--portal-ink); }
+.events-page .home-feature { grid-column: 2; grid-row: 1; }
+.events-page .event-search-panel { padding: 20px; border: 0; box-shadow: none; }
+.events-page .event-search-form { grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 20px; }
+.events-page .event-search-fields { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
+.events-page .event-search-actions { margin-top: 26px; }
+.events-page .event-search-submit { background: var(--scene-pop); color: var(--scene-pop-ink); border-color: transparent; }
+.events-page .event-search-submit:hover:not(:disabled) { background: var(--scene-pop); }
+.events-page .event-control-meta { color: var(--scene-light); }
+.events-page .event-sort-links a, .events-page .event-active-filters a { border-color: var(--scene-muted); }
+.events-page .event-sort-links a[aria-current="page"] { background: var(--scene-light); color: var(--scene-dark); border-color: transparent; }
+.events-page .event-clear-all { color: var(--scene-light); }
+.home-feature { border-radius: var(--radius-panel); box-shadow: none; }
+.home-feature > a { position: relative; display: flex; flex-direction: column; min-height: 400px; isolation: isolate; background: var(--scene-dark); }
+.home-feature-media { position: relative; height: 220px; flex: 0 0 auto; }
+.home-feature-media img { object-fit: cover; }
+.home-feature-copy { display: flex; flex-direction: column; align-self: stretch; gap: 8px; padding: 20px 24px; color: var(--scene-light); }
+.home-feature-copy h2, .home-feature-copy .home-feature-event-title { font-size: clamp(1.5rem, 2.2vw, 2rem); font-weight: 760; line-height: 1.1; color: var(--scene-light); letter-spacing: -.035em; }
+.home-feature-copy p, .home-feature-copy time, .home-feature-copy > span { color: var(--scene-light); text-align: left; font-size: .84rem; }
+.home-feature-copy p { color: var(--scene-pop); }
+.home-feature-copy .home-feature-event-title { color: var(--scene-light); font-size: clamp(1.5rem, 2.2vw, 2rem); letter-spacing: -.035em; }
+.home-feature-copy strong { display: inline-flex; align-self: start; min-height: 44px; align-items: center; color: var(--scene-light); border-bottom: 1px solid; font-size: .83rem; }
+.home-feature-image-fallback { background: var(--scene-dark); color: var(--scene-muted); }
+.events-page .home-feature-loading, .events-page .home-feature-message { min-height: 400px; }
+.home-feature-message { color: var(--portal-ink); }
+.home-feature-message p { font-size: 2rem; }
+.events-page .portal-command[data-filtered="true"] .portal-command-inner { grid-template-columns: 1fr; gap: 8px; padding-top: 24px; }
+.events-page .portal-command[data-filtered="true"] h1 { max-width: none; font-size: clamp(2.1rem, 4vw, 3.4rem); margin-block: 8px; }
+.events-page .portal-command[data-filtered="true"] .portal-intro { max-width: none; }
+
+/* Compact category tickets: the whole surface is a link; labels remain explicit. */
+.events-page .portal-navigation-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; padding: 32px 0; border: 0; background: transparent; box-shadow: none; }
+.portal-filter-intro h2 { font-size: clamp(1.5rem, 2.3vw, 2.15rem); font-weight: 780; }
+.portal-filter-intro p { max-width: none; font-size: .85rem; }
+.events-page .event-window-group { grid-column: 2; grid-row: 1; align-self: center; }
+.events-page .event-category-group { grid-column: 1 / -1; padding: 0; }
+.event-category-group > .portal-filter-label { margin-bottom: 12px; }
+.events-page .event-category-grid, .event-category-grid {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row;
+  gap: 12px; padding: 4px 0 12px; margin: 0; overflow: visible;
+}
+.events-page .event-category-card, .event-category-card {
+  display: flex; flex-direction: column; position: relative; min-height: 172px;
+  padding: 18px; border-radius: var(--radius-panel); border: 1px solid var(--portal-line);
+  background: var(--portal-surface); color: var(--portal-ink); box-shadow: none; overflow: hidden;
+  transition: transform 240ms cubic-bezier(.2,.7,.2,1);
+}
+.events-page .event-category-card::after, .event-category-card::after { display: none; }
+.events-page .event-category-card[data-category="concerts"], .event-category-card[data-category="concerts"] { background: var(--scene-dark); color: var(--scene-light); }
+.events-page .event-category-card[data-category="festivals"], .event-category-card[data-category="festivals"] { background: var(--scene-pop); color: var(--scene-pop-ink); }
+.events-page .event-category-card[aria-current="page"], .event-category-card[aria-current="page"] {
+  grid-column: auto; background: var(--portal-brand); color: var(--portal-white); border-color: var(--portal-brand);
+  box-shadow: inset 0 -5px var(--scene-pop);
+}
+.events-page .event-category-glyph, .events-page .event-category-card[aria-current="page"] .event-category-glyph,
+.event-category-glyph, .event-category-card[aria-current="page"] .event-category-glyph {
+  position: absolute; width: 82px; height: 82px; top: -4px; right: -8px; margin: 0;
+  color: currentColor; opacity: .22; transform: rotate(-12deg); pointer-events: none;
+}
+.events-page .event-category-kicker, .event-category-kicker { color: currentColor; font-size: .64rem; margin: 0 0 20px; text-transform: none; letter-spacing: .02em; }
+.events-page .event-category-name, .events-page .event-category-card[aria-current="page"] .event-category-name,
+.event-category-name, .event-category-card[aria-current="page"] .event-category-name {
+  max-width: none; font-size: clamp(1.1rem, 1.7vw, 1.55rem); letter-spacing: -.04em; line-height: 1.2; margin: 0;
+}
+.events-page .event-category-card small, .events-page .event-category-card[aria-current="page"] small,
+.event-category-card small, .event-category-card[aria-current="page"] small { color: inherit; font-size: .73rem; line-height: 1.4; margin-top: 8px; }
+.events-page .event-category-footer, .event-category-footer { display: flex; width: 100%; margin-top: auto; padding-top: 10px; align-self: auto; }
+.events-page .event-category-card[aria-current="page"] .event-category-kicker { color: inherit; }
+.event-category-current { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.event-category-cue { margin-left: auto; font-size: 1.2rem; }
+.events-page .event-category-card:hover:not([aria-current="page"]), .event-category-card:hover:not([aria-current="page"]) { background: var(--portal-brand-soft); color: var(--portal-ink); transform: translateY(-5px); box-shadow: none; }
+.portal-status-strip i, .event-feed-toolbar i { display: none; }
+.events-page .portal-status-strip { margin-top: 0; }
+
+/* Event photography comes first, with date and place immediately beneath. */
+.portal-event-card, .portal-event-card[data-layout="row"], .portal-event-card[data-layout="lead"], .portal-event-card[data-layout="feature"] {
+  display: flex; flex-direction: column; height: 100%; min-width: 0; grid-column: auto;
+  border: 0; border-radius: var(--radius-panel); background: var(--portal-raised); color: var(--portal-ink);
+  box-shadow: none; overflow: hidden;
+}
+.portal-event-card .portal-event-link, .portal-event-card[data-layout="feature"] .portal-event-link,
+.portal-event-card[data-layout="lead"] .portal-event-link {
+  display: flex; flex-direction: column; flex: 1; color: inherit;
+}
+.portal-event-card .portal-event-media, .portal-event-card[data-layout="lead"] .portal-event-media,
+.portal-event-card[data-layout="feature"] .portal-event-media {
+  order: 0; width: 100%; aspect-ratio: 16 / 10; min-height: 0; height: auto;
+  margin: 0; border-radius: 0; overflow: hidden;
+}
+.portal-event-card[data-layout="lead"] .portal-event-media { aspect-ratio: 16 / 11; }
+.portal-event-body, .portal-event-card[data-layout="feature"] .portal-event-body { padding: 20px 20px 12px; }
+.portal-event-rank { display: none; }
+.portal-event-body h2, .portal-event-card[data-layout="feature"] .portal-event-body h2 { font-size: 1.45rem; line-height: 1.16; font-weight: 760; }
+.portal-event-card[data-layout="lead"] .portal-event-body h2 { font-size: clamp(2rem, 3.2vw, 3rem); line-height: 1.06; }
+.portal-event-card[data-layout="lead"] .portal-event-venue,
+.portal-event-card[data-layout="feature"] .portal-event-venue { color: var(--portal-muted); }
+.portal-event-card[data-layout="feature"] .portal-event-meta span { background: var(--portal-brand-soft); color: var(--portal-brand); }
+.portal-event-card[data-layout="feature"] .portal-event-cta { color: var(--portal-brand); }
+.portal-event-date { font-size: .87rem; color: var(--portal-brand); }
+.portal-event-venue { font-size: .82rem; }
+.portal-event-meta { margin-top: 12px; }
+.portal-event-meta span { border-radius: var(--radius-control); font-size: .68rem; }
+.portal-event-cta, .portal-event-card[data-layout="feature"] .portal-event-cta { margin-top: auto; min-height: 44px; padding: 0 20px; }
+.portal-event-card > .bookmark-button-card, .portal-event-card[data-layout="feature"] > .bookmark-button-card {
+  position: static; margin: 4px 20px 16px; align-self: start; min-height: 44px;
+}
+.event-editorial-preview-card .event-editorial-fallback { min-height: 210px; background: var(--portal-brand-soft); }
+.event-lead-story { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+.event-lead-story > li:first-child { grid-row: auto; }
+.event-discovery-section > header { display: block; }
+.event-discovery-section > header > p:last-child { margin-top: 12px; max-width: 50ch; }
+.event-discovery-section h2, .event-results-heading h2 { font-size: clamp(2.2rem, 4vw, 4rem); line-height: 1.08; font-weight: 780; }
+.event-discovery-section .portal-event-body h2 { font-size: 1.45rem; }
+.event-discovery-section .portal-event-card[data-layout="lead"] h2 { font-size: clamp(1.8rem, 2.8vw, 2.7rem); }
+.event-date-list { gap: 24px; }
+.event-date-marker { background: var(--portal-brand-soft); padding: 18px; border-radius: var(--radius-panel); gap: 8px; }
+.event-date-marker strong { font-size: 3rem; }
+.event-mood-links a, .event-category-links a { background: var(--portal-surface); }
+.event-mood-links a:hover, .event-category-links a:hover { background: var(--portal-brand); color: var(--portal-white); }
+.event-local-facets { border: 0; border-bottom: 1px solid var(--portal-line); background: transparent; }
+.event-state, .recommendation-state { padding-block: 64px; }
+.event-state h2, .recommendation-state h2 { font-size: clamp(1.8rem, 4vw, 3rem); }
+
+/* Shared landing, detail, cinema, saved and recommendation surfaces. */
+.home-hero { padding-block: 44px 64px; }
+.home-hero-copy h1 { font-size: clamp(3.3rem, 6vw, 6rem); font-weight: 800; letter-spacing: -.065em; }
+.home-hero .home-feature { transform: rotate(1deg); }
+.home-hero .home-feature > a { min-height: 0; }
+.home-hero .home-feature-media { height: 320px; }
+.home-primary-action { background: var(--scene-pop); color: var(--scene-pop-ink); border: 0; font-size: .9rem; }
+.home-index { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; border: 0; }
+.home-index-row { display: flex; flex-direction: column; align-items: start; gap: 10px; min-height: 200px; padding: 24px; border: 0; border-radius: var(--radius-panel); background: var(--portal-brand-soft); }
+.home-index-row:nth-child(2n) { background: var(--scene-dark); color: var(--scene-light); }
+.home-index-row:nth-child(2n) small, .home-index-row:nth-child(2n) > span { color: var(--scene-muted); }
+.home-index-row strong { font-size: 1.8rem; font-weight: 780; }
+.home-index-row > span:first-child { display: none; }
+.home-index-row > span:last-child { align-self: end; margin-top: auto; }
+.home-promise { padding-block: 72px; }
+.home-promise > h2 { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 750; }
+.home-promise-grid { gap: 24px; }
+.home-promise-grid article { border-right: 0; }
+.event-detail-hero { gap: 36px; padding-top: 24px; align-items: center; }
+.event-detail-media { border-radius: var(--radius-panel); overflow: hidden; }
+.event-detail-heading h1 { font-weight: 780; font-size: clamp(2.2rem, 4.7vw, 4.7rem); line-height: 1.04; }
+.event-detail-actions .event-booking-action { background: var(--scene-pop); color: var(--scene-pop-ink); border: 0; }
+.event-detail-section h2, .movie-detail-section h2 { font-weight: 760; }
+.event-experience-item { padding: 24px; background: var(--portal-raised); border-radius: var(--radius-panel); border: 0; }
+.event-detail-venue { padding: 32px; background: var(--portal-surface); border: 0; border-radius: var(--radius-panel); }
+.movies-command { padding-block: 40px 24px; }
+.movies-command h1, .saved-masthead h1 { font-size: clamp(3rem, 6vw, 5.8rem); font-weight: 800; letter-spacing: -.06em; }
+.movie-search-panel { border: 0; border-top: 4px solid var(--scene-pop); box-shadow: none; background: var(--portal-raised); }
+.movie-preview-grid, .movie-preview-skeletons { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.movie-preview-card, .movie-preview-card[data-layout="feature"] { grid-column: auto; border: 0; box-shadow: none; background: var(--portal-raised); }
+.movie-preview-card > a, .movie-preview-card[data-layout="feature"] > a { display: flex; flex-direction: column; height: 100%; }
+.movie-preview-card .movie-preview-poster, .movie-preview-card[data-layout="feature"] .movie-preview-poster { aspect-ratio: 2 / 3; min-height: 0; width: 100%; }
+.movie-preview-card .movie-preview-body, .movie-preview-card[data-layout="feature"] .movie-preview-body { padding: 20px; }
+.movie-preview-card .movie-preview-body h3, .movie-preview-card[data-layout="feature"] .movie-preview-body h3 { font-size: 1.4rem; line-height: 1.15; font-weight: 780; }
+.movie-preview-body > p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.movie-preview-body > strong { min-height: 44px; }
+.cinema-directory > header, .movie-preview-section > header { display: block; }
+.cinema-directory > header > p:last-child { margin-top: 12px; }
+.cinema-directory-list > li { border: 0; background: var(--portal-raised); padding: 24px; box-shadow: inset 0 4px var(--portal-brand); }
+.cinema-directory-identity { align-items: center; }
+.cinema-directory h2, .movie-preview-section > header h2 { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 780; }
+.movie-detail-summary h1 { font-size: clamp(2.5rem, 4.8vw, 4.5rem); font-weight: 780; }
+.movie-detail-poster { box-shadow: 12px 12px 0 var(--portal-brand-soft); }
+.saved-masthead { padding-block: 40px 28px; }
+.saved-editorial-empty { border-radius: var(--radius-panel); background: var(--portal-surface); margin-bottom: 40px; }
+.recommendations-page { min-height: 100dvh; }
+.recommendations-hero { padding-block: 48px; }
+.recommendations-hero h1 { font-weight: 800; }
+.recommendations-hero aside { border: 0; border-left: 4px solid var(--scene-pop); border-radius: var(--radius-control); }
+.recommendation-section > header { display: block; }
+.recommendation-section > header > span { display: block; margin-top: 12px; max-width: 60ch; }
+.recommendation-card-shell { box-shadow: none; }
+.portal-footer { padding-block: 32px; }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .portal-event-card, .movie-preview-card, .cinema-directory-list > li { transition: transform 240ms cubic-bezier(.2,.7,.2,1); }
+  .portal-event-card:hover, .movie-preview-card:hover, .cinema-directory-list > li:hover { transform: translateY(-5px); }
+  .portal-event-media img, .home-feature-media img, .movie-preview-poster img { transition: transform 450ms cubic-bezier(.2,.7,.2,1); }
+  .portal-event-card:hover .portal-event-media img, .home-feature:hover img, .movie-preview-card:hover img { transform: scale(1.045); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .portal-command-copy, .home-hero-copy { animation: scene-enter 550ms cubic-bezier(.2,.7,.2,1) both; }
+  .events-page .home-feature { animation: scene-enter 650ms 90ms cubic-bezier(.2,.7,.2,1) both; }
+}
+@keyframes scene-enter { from { opacity: .3; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 1023px) {
+  .events-page .portal-command-inner { gap: 24px; }
+  .events-page .portal-command h1 { font-size: 3.7rem; }
+  .events-page .portal-navigation-shell { grid-template-columns: minmax(0, 1fr); }
+  .events-page .event-window-group { grid-row: 2; grid-column: 1; }
+  .events-page .event-category-group { grid-row: 3; }
+  .events-page .event-category-grid, .event-category-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .event-lead-story { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .event-lead-story > li:first-child { grid-column: 1 / -1; }
+  .event-lead-story > li:first-child .portal-event-media { aspect-ratio: 2 / 1; }
+  .movie-preview-grid, .movie-preview-skeletons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  .portal-header { min-height: 68px; gap: 8px; }
+  .portal-header { flex-wrap: nowrap; }
+  .portal-brand { flex: 0 0 40px; min-width: 40px; }
+  .portal-header-actions { width: auto; min-width: 0; flex: 1; border-top: 0; }
+  .portal-header-link, .language-toggle { padding-inline: 5px; font-size: .74rem; white-space: nowrap; }
+  .language-toggle { flex-shrink: 0; }
+  .portal-brand-wordmark { display: none; }
+  .portal-brand-symbol { display: block; width: 38px; }
+  .events-page .portal-command-inner { width: calc(100% - 32px); grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 28px 0 20px; }
+  .events-page .portal-command-copy { padding: 0; }
+  .events-page .portal-command h1 { max-width: 14ch; font-size: 2.85rem; line-height: 1; margin-block: 14px; }
+  :lang(zh) .events-page .portal-command h1 { font-size: 2.6rem; }
+  .events-page .portal-intro { font-size: .95rem; max-width: 36ch; }
+  .events-page .home-feature { grid-column: 1; grid-row: 3; }
+  .events-page .home-feature > a { min-height: 270px; }
+  .events-page .home-feature-loading, .events-page .home-feature-message { min-height: 270px; }
+  .events-page .event-discovery-controls { grid-row: 2; }
+  .events-page .event-search-panel { padding: 16px; }
+  .events-page .event-search-form, .events-page .event-search-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .events-page .event-search-actions { margin-top: 0; }
+  .events-page .event-control-meta { margin-top: 10px; }
+  .events-page .portal-navigation-shell { width: calc(100% - 32px); gap: 16px; padding-block: 28px 16px; }
+  .events-page .event-category-grid, .event-category-grid {
+    display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 160px;
+    overflow-x: auto; padding: 4px 4px 14px; margin-inline: -4px; gap: 10px;
+    scroll-snap-type: inline mandatory; scroll-padding-inline: 4px;
+  }
+  .events-page .event-category-card, .event-category-card,
+  .event-category-card[aria-current="page"] { width: 100%; min-width: 0; min-height: 170px; padding: 16px; scroll-snap-align: start; }
+  .portal-nav-track { flex-wrap: wrap; overflow: visible; }
+  .portal-nav-link { padding-inline: 12px; font-size: .75rem; }
+  .event-lead-story, .event-date-list { grid-template-columns: minmax(0, 1fr); }
+  .event-lead-story > li:first-child { grid-column: auto; }
+  .event-lead-story > li:first-child .portal-event-media { aspect-ratio: 16 / 10; }
+  .event-date-marker { display: flex; align-items: center; gap: 10px; padding: 14px; }
+  .event-date-marker strong { font-size: 2rem; }
+  .event-discovery-view, .event-results-view { gap: 40px; }
+  .event-discovery-section h2 { font-size: 2rem; }
+  .home-hero { grid-template-columns: 1fr; padding-block: 32px; }
+  .home-hero-copy h1 { font-size: 3.2rem; }
+  .home-hero .home-feature { transform: none; }
+  .home-hero .home-feature > a { min-height: 340px; }
+  .home-index-row { padding: 16px; min-height: 180px; }
+  .home-index-row strong { font-size: 1.45rem; }
+  .home-promise-grid { grid-template-columns: 1fr; gap: 0; }
+  .home-promise-grid article + article { padding-left: 0; }
+  .event-detail-hero { grid-template-columns: 1fr; gap: 24px; }
+  .event-detail-heading { grid-column: 1; grid-row: 2; }
+  .event-detail-media { grid-column: 1; grid-row: 1; }
+  .event-detail-venue { grid-template-columns: 1fr; padding: 20px; }
+  .event-experience-item { padding: 20px; }
+  .movie-preview-grid, .movie-preview-skeletons { gap: 12px; }
+  .movie-preview-card .movie-preview-body, .movie-preview-card[data-layout="feature"] .movie-preview-body { padding: 12px; }
+  .movie-preview-card .movie-preview-body h3, .movie-preview-card[data-layout="feature"] .movie-preview-body h3 { font-size: 1.05rem; }
+  .movie-preview-body > p { display: none; }
+  .movie-preview-meta { flex-wrap: wrap; }
+  .movies-command h1, .saved-masthead h1 { font-size: 2.8rem; }
+  .cinema-directory-list { grid-template-columns: 1fr; }
+  .movie-detail-summary h1 { font-size: 2.5rem; }
+}
+@media (prefers-color-scheme: dark) {
+  .portal-brand-wordmark { filter: brightness(0) invert(1); }
+  .portal-brand-symbol { filter: brightness(0) invert(1); }
+  .event-search-submit, .movie-search-submit, .cinema-tools button { color: var(--portal-white); }
+  .events-page .event-search-submit { color: var(--scene-pop-ink); }
+  .cinema-brand-mark { background: var(--scene-light); }
+  .home-feature-image-fallback { color: var(--scene-muted); }
+}
