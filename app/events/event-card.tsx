@@ -48,6 +48,7 @@ export function EventCard({ event, index, language, rankLabel, variant }: {
         href={`/events/${encodeURIComponent(event.id)}`}
         aria-label={content.open(displayName)}
       >
+        <EventEditorialPreviewMedia event={event} language={language} placement="card" />
         <div className="portal-event-body">
           <span
             className="portal-event-rank"
@@ -66,7 +67,6 @@ export function EventCard({ event, index, language, rankLabel, variant }: {
             <span>{formatEventStatusForDisplay(event, language)}</span>
           </div>
         </div>
-        <EventEditorialPreviewMedia event={event} language={language} placement="card" />
         <span className="portal-event-cta">
           {content.details}<span aria-hidden="true">↗</span>
         </span>

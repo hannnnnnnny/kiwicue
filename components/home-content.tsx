@@ -7,9 +7,9 @@ import { PortalHeader } from "./portal-header";
 
 const copy = {
   en: {
-    eyebrow: "Auckland, in time to make a plan",
+    eyebrow: "Your Auckland, discovered",
     title: "Find something worth leaving home for.",
-    intro: "Concerts, theatre, markets, festivals and movies—sorted by when they happen, with the useful details close at hand.",
+    intro: "The next great gig. Your new favourite market. A night at the movies. Find your Auckland.",
     action: "Browse Auckland events",
     actionNote: "Official listings and verified local schedules.",
     coverageLabel: "Browse Auckland by event type",
@@ -29,7 +29,7 @@ const copy = {
     footer: "Independent Auckland event discovery",
   },
   zh: {
-    eyebrow: "趁还来得及安排，发现奥克兰",
+    eyebrow: "发现属于你的奥克兰",
     title: "找一件值得出门的事。",
     intro: "演唱会、话剧、市集、节日和电影，按发生时间整理；想知道的日期、地点和官网入口都放在近处。",
     action: "浏览奥克兰活动",

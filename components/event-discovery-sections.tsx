@@ -115,7 +115,7 @@ export function EventDiscoveryView({ events, language, now = new Date() }: { eve
   return (
     <div className="event-discovery-view">
       <section className="event-discovery-section event-start-here" aria-labelledby="start-here-title">
-        <header><p className="eyebrow">01 / CURATED</p><h2 id="start-here-title">{content.start}</h2><p>{content.startBody}</p></header>
+        <header><h2 id="start-here-title">{content.start}</h2><p>{content.startBody}</p></header>
         <ol className="event-lead-story">
           {lead.map((event, index) => <li key={event.id}><EventCard event={event} index={index} language={language} variant={index === 0 ? "lead" : "supporting"} /></li>)}
         </ol>

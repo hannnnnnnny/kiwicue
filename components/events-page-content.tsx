@@ -11,6 +11,7 @@ import { EventDiscoveryControls } from "./event-discovery-controls";
 import { EventWindowNav } from "./event-window-nav";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
+import { HomeEventPreview } from "./home-event-preview";
 
 const windowLabels = {
   en: { "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days", all: "All future" },
@@ -20,10 +21,10 @@ const windowLabels = {
 const copy = {
   en: {
     eyebrow: "Discover Auckland",
-    title: "Find something worth doing.",
-    intro: "Search by name, date or venue, or start with a useful Auckland edit.",
-    filterTitle: "Choose how you want to go out",
-    filterBody: "Pick one option or combine a few. Results update without hiding what matters.",
+    title: "Find your next scene.",
+    intro: "Big stages, little discoveries. Find your next Auckland moment.",
+    filterTitle: "What are you into?",
+    filterBody: "Pick a date, find your scene, make it happen.",
     statusLabel: "Current event search",
     location: "Auckland",
     source: "Ticketmaster source",
@@ -36,10 +37,10 @@ const copy = {
   },
   zh: {
     eyebrow: "探索奥克兰",
-    title: "找到真正值得去的活动。",
-    intro: "按名称、日期或场馆搜索，也可以从奥克兰精选开始。",
-    filterTitle: "先选你想怎么出门",
-    filterBody: "可以只选一项，也可以组合筛选，重要信息不会被藏起来。",
+    title: "这座城，总有你的下一场。",
+    intro: "从万人现场到街角市集，发现让你想出门的奥克兰。",
+    filterTitle: "今天，想去哪里？",
+    filterBody: "选个时间，找到喜欢的现场，然后出发。",
     statusLabel: "当前活动检索范围",
     location: "奥克兰",
     source: "Ticketmaster 官方来源",
@@ -63,6 +64,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
   const content = copy[language];
   const searchState = { window, category, keyword, venueId, sort };
   const sourceLabel = category === "markets" ? content.marketSource : content.source;
+  const isFiltered = Boolean(category || keyword || venueId || window !== "all");
 
   useEffect(() => {
     document.title = language === "zh"
@@ -74,7 +76,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
     <main className="events-page">
       <PortalHeader />
 
-      <section className="portal-command" aria-labelledby="events-title">
+      <section className="portal-command" data-filtered={isFiltered} aria-labelledby="events-title">
         <div className="portal-command-inner">
           <div className="portal-command-copy">
             <p className="eyebrow">{content.eyebrow}</p>
@@ -82,6 +84,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
             <p className="portal-intro">{content.intro}</p>
           </div>
           <EventDiscoveryControls state={searchState} />
+          {!isFiltered && <HomeEventPreview language={language} titleAsText />}
         </div>
       </section>
 

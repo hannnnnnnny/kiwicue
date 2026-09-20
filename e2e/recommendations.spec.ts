@@ -100,7 +100,7 @@ test("recommendations provide a responsive, bilingual path from the main navigat
   await expect(page.getByRole("link", { name: "推荐", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
-test("event categories form an accessible, borderless discovery runway", async ({ page }, testInfo) => {
+test("event categories form an accessible discovery ticket runway", async ({ page }, testInfo) => {
   await installRecommendationRoutes(page);
   await page.route("**/api/venues**", (route) => route.fulfill({
     status: 200,
@@ -118,7 +118,7 @@ test("event categories form an accessible, borderless discovery runway", async (
   await expect(categoryNav.getByRole("link", { name: /Sports/ })).toBeVisible();
   await expect(categoryNav.getByText("Live sport across Auckland")).toBeVisible();
   expect(await categoryNav.locator(".event-category-card").first().evaluate((node) => getComputedStyle(node).borderTopWidth))
-    .toBe("0px");
+    .toBe("1px");
   const firstCategory = categoryNav.locator(".event-category-card").first();
   await firstCategory.focus();
   expect(await firstCategory.evaluate((node) => parseFloat(getComputedStyle(node).outlineWidth))).toBeGreaterThan(0);
@@ -128,7 +128,8 @@ test("event categories form an accessible, borderless discovery runway", async (
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
   if (testInfo.project.name === "mobile-375") {
-    expect(await categoryNav.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+    expect(await categoryNav.evaluate((node) => getComputedStyle(node).overflowX)).toBe("auto");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/category-runway-${testInfo.project.name}.png`, fullPage: true });
