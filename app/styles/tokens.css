@@ -1,16 +1,29 @@
 :root {
   color-scheme: light;
-  --portal-bg: #f4f6f2;
-  --portal-surface: #e8eee7;
-  --portal-raised: #fcfdf9;
-  --portal-ink: #172b26;
-  --portal-muted: #52665c;
-  --portal-line: #c6d2c8;
-  --portal-brand: #174f40;
-  --portal-brand-hover: #10392e;
-  --portal-brand-soft: #dbeade;
-  --portal-accent: #a63522;
-  --portal-focus: #b2412c;
+  --portal-white: #ffffff;
+  --portal-bg: #f5f5f7;
+  --portal-surface: #f5f5f7;
+  --portal-raised: #ffffff;
+  --portal-ink: #191b20;
+  --portal-muted: #626772;
+  --portal-line: #e1e4e8;
+  --portal-brand: #0071e3;
+  --portal-brand-hover: #005bb5;
+  --portal-brand-soft: #e8f3ff;
+  --portal-accent: #0071e3;
+  --portal-focus: #0071e3;
+  --radius-panel: 24px;
+  --radius-control: 16px;
+  --radius-tag: 8px;
+  --shadow-raised: 0 4px 12px rgb(0 0 0 / 8%);
+  --chip-lavender: #e8f3ff; --chip-lavender-ink: #004d99;
+  --chip-coral: #f0f0f2; --chip-coral-ink: #303239;
+  --chip-mint: #e8f3ff; --chip-mint-ink: #004d99;
+  --chip-blue: #f0f0f2; --chip-blue-ink: #303239;
+  --chip-pink: #e8f3ff; --chip-pink-ink: #004d99;
+  --chip-yellow: #f0f0f2; --chip-yellow-ink: #303239;
+  --discovery-overlay: rgb(9 15 21 / 75%);
+
   --scene-dark: #142e27;
   --scene-light: #f4f6ed;
   --scene-muted: #bfcec5;
@@ -20,12 +33,10 @@
   --scene-overlay: rgb(10 25 20 / 8%);
   --portal-danger: #b3261e;
   --portal-danger-soft: #f9dedc;
-  --portal-white: #ffffff;
+
   --portal-shadow-color: rgb(29 29 31 / 10%);
   --portal-display-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --portal-ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-  --radius-control: 8px;
-  --radius-panel: 12px;
   --radius-pill: 999px;
   --container: 1320px;
   --space-1: 4px;
@@ -37,7 +48,7 @@
   --space-8: 32px;
   --space-12: 48px;
   --space-16: 64px;
-  --shadow-raised: 0 18px 48px var(--portal-shadow-color);
+
   --motion-fast: 200ms ease;
   background: var(--portal-bg);
   color: var(--portal-ink);
@@ -45,24 +56,4 @@
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --portal-bg: #13251f;
-    --portal-surface: #1e352c;
-    --portal-raised: #20392f;
-    --portal-ink: #f0f4eb;
-    --portal-muted: #b5c7ba;
-    --portal-line: #456153;
-    --portal-brand: #a9d8bf;
-    --portal-brand-hover: #c1e8d1;
-    --portal-brand-soft: #2b493c;
-    --portal-accent: #ffab92;
-    --portal-focus: #ffab92;
-    --portal-white: #13251f;
-    --portal-danger: #ffb4ab;
-    --portal-danger-soft: #4c2826;
-  }
 }
