@@ -1,6 +1,7 @@
 "use client";
 
 import { isCuratedMarketEventId, type KiwiCueEvent } from "../lib/events";
+import { formatEventCategory } from "../lib/event-display";
 import { EventImage } from "./event-image";
 import type { Language } from "./language-provider";
 
@@ -13,6 +14,7 @@ type EventEditorialPreviewMediaProps = {
   event: KiwiCueEvent;
   language: Language;
   placement: "card" | "detail";
+  showSummaryInFallback?: boolean;
 };
 
 function localizedSummary(event: KiwiCueEvent, language: Language): string | null {
@@ -35,6 +37,7 @@ export function EventEditorialPreviewMedia({
   event,
   language,
   placement,
+  showSummaryInFallback = true,
 }: EventEditorialPreviewMediaProps) {
   const summary = localizedSummary(event, language);
   const imageUrl = event.editorialPreview?.image?.url ?? event.imageUrl;
@@ -43,7 +46,7 @@ export function EventEditorialPreviewMedia({
   const fallback = (
     <span className="event-editorial-fallback">
       <strong>{event.category === "Market" && isCuratedMarketEventId(event.id) ? labels[language].market : labels[language].default}</strong>
-      <span>{summary ?? event.name}</span>
+      <span>{showSummaryInFallback ? summary ?? event.name : formatEventCategory(event.category, language)}</span>
     </span>
   );
 

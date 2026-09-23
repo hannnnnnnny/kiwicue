@@ -795,7 +795,7 @@ test("a failed official market image becomes a useful text preview", async ({ pa
   await page.goto("/events?category=markets&q=Grey");
 
   await expect(page.getByText("First-visit guide")).toBeVisible();
-  await expect(page.getByText("A community market where local growers sell directly.")).toBeVisible();
+  await expect(page.locator(".portal-event-preview").getByText("A community market where local growers sell directly.")).toBeVisible();
   await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 });
