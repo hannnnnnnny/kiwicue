@@ -11,7 +11,6 @@ import { EventDiscoveryControls } from "./event-discovery-controls";
 import { EventWindowNav } from "./event-window-nav";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
-import { HomeEventPreview } from "./home-event-preview";
 
 const windowLabels = {
   en: { "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days", all: "All future" },
@@ -21,8 +20,8 @@ const windowLabels = {
 const copy = {
   en: {
     eyebrow: "Discover Auckland",
-    title: "Find your next scene.",
-    intro: "Big stages, little discoveries. Find your next Auckland moment.",
+    title: "What do you feel like?",
+    intro: "Find something worth going out for.",
     filterTitle: "What are you into?",
     filterBody: "Pick a date, find your scene, make it happen.",
     statusLabel: "Current event search",
@@ -37,8 +36,8 @@ const copy = {
   },
   zh: {
     eyebrow: "探索奥克兰",
-    title: "这座城，总有你的下一场。",
-    intro: "从万人现场到街角市集，发现让你想出门的奥克兰。",
+    title: "今天，想做点什么？",
+    intro: "发现让你想出门的奥克兰。",
     filterTitle: "今天，想去哪里？",
     filterBody: "选个时间，找到喜欢的现场，然后出发。",
     statusLabel: "当前活动检索范围",
@@ -83,11 +82,12 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
             <h1 className="editorial-display" id="events-title">{content.title}</h1>
             <p className="portal-intro">{content.intro}</p>
           </div>
-          <EventDiscoveryControls state={searchState} />
-          {!isFiltered && <HomeEventPreview language={language} titleAsText />}
         </div>
       </section>
 
+      <details className="discovery-search" open={isFiltered || undefined}>
+        <summary>{language === "zh" ? "搜索与筛选" : "Search & filters"}<span aria-hidden="true">⌕</span></summary>
+        <EventDiscoveryControls state={searchState} />
       <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
         <div className="portal-filter-intro">
           <h2 id="discovery-filter-title">{content.filterTitle}</h2>
@@ -96,6 +96,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
         <EventCategoryNav {...searchState} />
         <EventWindowNav {...searchState} />
       </section>
+      </details>
 
       <div className="portal-status-strip" aria-label={content.statusLabel}>
         <span>{content.location}</span>
