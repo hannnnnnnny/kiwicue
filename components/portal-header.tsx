@@ -5,6 +5,18 @@ import Image from "next/image";
 import { useBookmarks } from "./bookmark-provider";
 import { LanguageToggle } from "./language-toggle";
 import { useLanguage } from "./language-provider";
+import { DiscoveryIcon } from "./discovery-icon";
+import type { MouseEvent } from "react";
+import { navigateDiscovery, useDiscoveryCollection } from "./use-discovery-collection";
+
+function navigateOnDiscoveryPage(event: MouseEvent<HTMLAnchorElement>, collection: "all" | "nearby") {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  if (window.location.pathname !== "/events" && window.location.pathname !== "/") return;
+  // Filters require a route navigation to restore the full discovery view.
+  if (window.location.search) return;
+  event.preventDefault();
+  navigateDiscovery(collection);
+}
 
 const copy = {
   en: {
@@ -72,6 +84,8 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
   const content = copy[language];
   const activePage = currentPage ?? (skipTarget === "saved-events" ? "saved" : "events");
   const skipLabel = getSkipLabel(skipTarget, content);
+  const collection = useDiscoveryCollection();
+  const isMap = activePage === "events" && collection === "nearby";
 
   return (
     <>
@@ -134,6 +148,13 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
           </div>
         </header>
       </div>
+      <nav className="discovery-bottom-nav" aria-label={language === "zh" ? "手机导航" : "Mobile navigation"}>
+        <Link href="/events" onClick={event => navigateOnDiscoveryPage(event, "all")} aria-current={activePage === "events" && !isMap ? "page" : undefined}><DiscoveryIcon name="search" /><span>{language === "zh" ? "发现" : "Discover"}</span></Link>
+        <Link href="/events#map" onClick={event => navigateOnDiscoveryPage(event, "nearby")} aria-current={isMap ? "page" : undefined}><DiscoveryIcon name="map" /><span>{language === "zh" ? "地图" : "Map"}</span></Link>
+        <Link href="/recommendations" aria-current={activePage === "recommendations" ? "page" : undefined}><DiscoveryIcon name="star" /><span>{content.recommendations}</span></Link>
+        <Link href="/movies" aria-current={activePage === "movies" ? "page" : undefined}><DiscoveryIcon name="film" /><span>{content.movies}</span></Link>
+        <Link href="/saved" aria-current={activePage === "saved" ? "page" : undefined}><DiscoveryIcon name="heart" /><span>{content.saved}{count > 0 ? ` · ${count}` : ""}</span></Link>
+      </nav>
     </>
   );
 }
