@@ -469,6 +469,18 @@ test("discovery stays usable across narrow phones, tablets, and desktop", async 
   }
 });
 
+test("the mobile map destination brings its content into view", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-375", "The fixed map destination is mobile-only.");
+  await installRoutes(page);
+  await page.goto("/events");
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Map" }).click();
+  await expect(page).toHaveURL(/#map$/);
+  await expect(page.getByRole("heading", { name: "Around Auckland" })).toBeInViewport();
+
+  await page.goto("/events#map");
+  await expect(page.getByRole("heading", { name: "Around Auckland" })).toBeInViewport();
+});
+
 test("keyboard reaches visible discovery controls with a focus indicator", async ({ page }) => {
   const errors = runtimeErrors(page);
   await installRoutes(page);
@@ -489,7 +501,7 @@ test("keyboard reaches visible discovery controls with a focus indicator", async
   }
   await tabTo(page, page.locator(".discovery-search > summary"));
   await tabTo(page, page.getByRole("button", { name: "Tonight", exact: true }));
-  await tabTo(page, page.getByRole("button", { name: "Nearby", exact: true }));
+  await tabTo(page, page.getByRole("button", { name: "Map", exact: true }));
   expect(errors).toEqual([]);
 });
 
@@ -740,6 +752,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "Search events" }).click();
   await expect(page).toHaveURL(/category=markets&q=Grey&venue=kc-venue-grey-lynn$/);
   await expect(page.getByRole("heading", { name: "Grey Lynn Farmers Market" })).toBeVisible();
+  await expect(page.locator(".portal-event-card").getByText("Schedule verified")).toBeVisible();
   await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
   await expect(page.locator('img[src="https://images.example/grey-lynn.gif"]')).toBeVisible();
   await expectNoHorizontalOverflow(page);
