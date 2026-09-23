@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EventCard } from "../app/events/event-card";
 import type { KiwiCueEvent } from "../lib/events";
@@ -98,6 +98,15 @@ describe("portal event card", () => {
     expect(screen.queryByText("AKL")).not.toBeInTheDocument();
     expect(view.container.querySelector(".portal-event-media")).not.toBeInTheDocument();
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("replaces a failed official image with the real event name", () => {
+    const view = render(<EventCard event={event} index={1} language="en" />);
+    const image = view.container.querySelector(".portal-event-media img");
+    expect(image).not.toBeNull();
+    fireEvent.error(image as HTMLImageElement);
+    expect(view.container.querySelector(".portal-event-media img")).toBeNull();
+    expect(view.container.querySelector(".event-editorial-fallback")).toHaveTextContent("Harbour Lights");
   });
 
   it("shows localized first-visit guidance when a market has no licensed image", () => {

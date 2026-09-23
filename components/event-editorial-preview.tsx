@@ -40,12 +40,12 @@ export function EventEditorialPreviewMedia({
   const imageUrl = event.editorialPreview?.image?.url ?? event.imageUrl;
   if (!imageUrl && !summary) return null;
 
-  const fallback = summary ? (
+  const fallback = (
     <span className="event-editorial-fallback">
       <strong>{event.category === "Market" && isCuratedMarketEventId(event.id) ? labels[language].market : labels[language].default}</strong>
-      <span>{summary}</span>
+      <span>{summary ?? event.name}</span>
     </span>
-  ) : null;
+  );
 
   return (
     <div className={`${placement === "card" ? "portal-event-media" : "event-detail-media"} event-editorial-preview event-editorial-preview-${placement}`}>
