@@ -118,6 +118,11 @@ describe("portal event card", () => {
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
   });
 
+  it("previews only source-backed editorial detail in a compact row", () => {
+    const view = render(<EventCard event={curatedMarket} index={0} language="zh" variant="row" />);
+    expect(view.container.querySelector(".portal-event-preview")).toHaveTextContent("由社区运营，可以直接向本地种植者购买。");
+  });
+
   it("uses the localized market name and verified schedule label in Chinese", () => {
     render(<EventCard event={curatedMarket} index={0} language="zh" />);
 

@@ -40,6 +40,9 @@ export function EventCard({ event, index, language, rankLabel, variant }: {
     ? `${event.venue.name} · ${event.venue.city}`
     : content.venuePending;
   const layout = variant ?? (index === 0 ? "feature" : "standard");
+  const preview = language === "zh"
+    ? event.localization?.zh?.previewSummary ?? event.editorialPreview?.summary
+    : event.editorialPreview?.summary;
 
   return (
     <article className="portal-event-card" data-layout={layout} aria-labelledby={titleId}>
@@ -62,6 +65,7 @@ export function EventCard({ event, index, language, rankLabel, variant }: {
             <time dateTime={event.start.dateTime ?? event.start.localDate}>{dateTime}</time>
           </p>
           <p className="portal-event-venue">{venue}</p>
+          {variant === "row" && preview && <p className="portal-event-preview">{preview}</p>}
           <div className="portal-event-meta">
             <span>{formatEventCategory(event.category, language)}</span>
             <span>{formatEventStatusForDisplay(event, language)}</span>
