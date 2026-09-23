@@ -63,7 +63,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
   const content = copy[language];
   const searchState = { window, category, keyword, venueId, sort };
   const sourceLabel = category === "markets" ? content.marketSource : content.source;
-  const isFiltered = Boolean(category || keyword || venueId || window !== "all");
+  const isFiltered = Boolean(category || keyword || venueId || window !== "all" || sort !== "recommended");
 
   useEffect(() => {
     document.title = language === "zh"
@@ -88,14 +88,14 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
       <details className="discovery-search" open={isFiltered || undefined}>
         <summary>{language === "zh" ? "搜索与筛选" : "Search & filters"}<span aria-hidden="true">⌕</span></summary>
         <EventDiscoveryControls state={searchState} />
-      <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
-        <div className="portal-filter-intro">
-          <h2 id="discovery-filter-title">{content.filterTitle}</h2>
-          <p>{content.filterBody}</p>
-        </div>
-        <EventCategoryNav {...searchState} />
-        <EventWindowNav {...searchState} />
-      </section>
+        <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
+          <div className="portal-filter-intro">
+            <h2 id="discovery-filter-title">{content.filterTitle}</h2>
+            <p>{content.filterBody}</p>
+          </div>
+          <EventCategoryNav {...searchState} />
+          <EventWindowNav {...searchState} />
+        </section>
       </details>
 
       <div className="portal-status-strip" aria-label={content.statusLabel}>

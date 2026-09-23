@@ -102,6 +102,16 @@ describe("bilingual route content", () => {
     expect(within(invalidCategoryNav).getByRole("link", { name: /^All/ })).toHaveAttribute("aria-current", "page");
   });
 
+  it("keeps date-only sorting visible with its search controls", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const sortedPage = await EventsPage({ searchParams: Promise.resolve({ sort: "date" }) });
+    const view = render(<LanguageProvider>{sortedPage}</LanguageProvider>);
+
+    expect(view.container.querySelector(".discovery-search")).toHaveAttribute("open");
+    expect(view.container.querySelector(".portal-command")).toHaveAttribute("data-filtered", "true");
+    expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
+  });
+
   it("labels the market source as KiwiCue-verified instead of Ticketmaster", async () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
     const marketPage = await EventsPage({
