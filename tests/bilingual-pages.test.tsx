@@ -54,18 +54,19 @@ describe("bilingual route content", () => {
       </LanguageProvider>,
     );
 
-    expect(screen.getByRole("heading", { name: "Find your next scene." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What do you feel like?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Search & filters"));
     expect(screen.getByRole("heading", { name: "What are you into?" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event categories" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event time range" })).toBeInTheDocument();
     expect(screen.getByText("All future · Recommended within each date")).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("Auckland events — KiwiCue"));
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(fetch).toHaveBeenCalledTimes(3);
 
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
-    expect(screen.getByRole("heading", { name: "这座城，总有你的下一场。" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "今天，想做点什么？" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "今天，想去哪里？" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "活动类型" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "时间范围" })).toBeInTheDocument();
@@ -74,7 +75,7 @@ describe("bilingual route content", () => {
     expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("奥克兰活动 — KiwiCue"));
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(fetch).toHaveBeenCalledTimes(3);
     expect(document.body).not.toHaveTextContent(/365|one year|一年|未来 365 天/i);
   });
 
@@ -99,6 +100,16 @@ describe("bilingual route content", () => {
 
     const invalidCategoryNav = screen.getByRole("navigation", { name: "Event categories" });
     expect(within(invalidCategoryNav).getByRole("link", { name: /^All/ })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("keeps date-only sorting visible with its search controls", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<never>(() => undefined)));
+    const sortedPage = await EventsPage({ searchParams: Promise.resolve({ sort: "date" }) });
+    const view = render(<LanguageProvider>{sortedPage}</LanguageProvider>);
+
+    expect(view.container.querySelector(".discovery-search")).toHaveAttribute("open");
+    expect(view.container.querySelector(".portal-command")).toHaveAttribute("data-filtered", "true");
+    expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
   });
 
   it("labels the market source as KiwiCue-verified instead of Ticketmaster", async () => {

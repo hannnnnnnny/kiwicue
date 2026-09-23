@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventsPageContent } from "../components/events-page-content";
 import { LanguageProvider } from "../components/language-provider";
@@ -57,7 +57,8 @@ describe("complete portal accessibility contract", () => {
     );
 
     await screen.findAllByRole("heading", { name: "Harbour Lights" });
-    expect(screen.getByRole("heading", { name: "Happening soon" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "More to discover" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Search & filters"));
     const ordered = [
       view.container.querySelector(".skip-link"),
       view.container.querySelector(".portal-header"),
@@ -66,8 +67,9 @@ describe("complete portal accessibility contract", () => {
       screen.getByRole("heading", { name: "What are you into?" }),
       screen.getByRole("navigation", { name: "Event categories" }),
       screen.getByRole("navigation", { name: "Event time range" }),
-      view.container.querySelector("#event-results-summary"),
-      view.container.querySelector(".event-lead-story"),
+      screen.getByRole("navigation", { name: "Quick discovery" }),
+      view.container.querySelector(".discovery-feature"),
+      view.container.querySelector(".discovery-feed"),
       view.container.querySelector(".portal-about"),
       view.container.querySelector(".portal-footer"),
     ];
@@ -79,11 +81,11 @@ describe("complete portal accessibility contract", () => {
     expect(screen.getAllByRole("navigation").map((nav) => nav.getAttribute("aria-label")))
       .toEqual([
         "Primary navigation",
+        "Mobile navigation",
         "Sort results",
         "Event categories",
         "Event time range",
-        "Explore by mood",
-        "Explore by category",
+        "Quick discovery",
       ]);
   });
 

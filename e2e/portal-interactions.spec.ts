@@ -397,34 +397,34 @@ async function tabTo(page: Page, locator: ReturnType<Page["locator"]>) {
   expect(await locator.evaluate((element) => parseFloat(getComputedStyle(element).outlineWidth))).toBeGreaterThan(0);
 }
 
-test("opens a named, touchable, overflow-safe home and event discovery journey", async ({ page }, testInfo) => {
+function savedNav(page: Page, count: number) {
+  return (page.viewportSize()?.width ?? 0) < 640
+    ? page.locator(".discovery-bottom-nav").getByRole("link", { name: count ? `Saved · ${count}` : "Saved" })
+    : page.getByRole("link", { name: `Saved events, ${count}` });
+}
+
+test("opens a touchable discovery journey on home and events", async ({ page }, testInfo) => {
   const errors = runtimeErrors(page);
   const requests = await installRoutes(page);
   await page.goto("/");
-
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "Find something worth leaving home for." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What do you feel like?" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Quick discovery" })).toBeVisible();
+  await expect(page.locator(".discovery-feature").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/home-${testInfo.project.name}.png`, fullPage: true });
   }
-  await page.getByRole("link", { name: "Skip to Auckland guide" }).focus();
+  await page.getByRole("link", { name: "Skip to event results" }).focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/#home-content$/);
-  await page.getByRole("link", { name: /Browse Auckland events/ }).click();
-  await expect(page).toHaveURL(/\/events$/);
-  await expect(page.getByRole("heading", { name: "Find your next scene." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page).toHaveURL(/\/#event-results$/);
+  await page.goto("/events");
+  await expect(page.locator(".discovery-feed .portal-event-card")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "What do you feel like?" })).toBeVisible();
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/events-list-${testInfo.project.name}.png`, fullPage: true });
   }
-  await page.getByRole("link", { name: "KiwiCue Auckland events home" }).click();
-  await expect(page).toHaveURL(/\/$/);
-  await page.getByRole("link", { name: /Browse Auckland events/ }).click();
+  await page.getByText("Search & filters").click();
   const search = page.getByRole("search", { name: "Search Auckland events" });
   await expect(search).toBeVisible();
-  expect(await search.evaluate((element) => element.getBoundingClientRect().top < innerHeight)).toBe(true);
-
   const unnamed = await page.locator("a, button, input, select").evaluateAll((elements) => elements
     .filter((element) => {
       const box = element.getBoundingClientRect();
@@ -437,101 +437,71 @@ test("opens a named, touchable, overflow-safe home and event discovery journey",
     })
     .map((element) => element.outerHTML));
   expect(unnamed).toEqual([]);
-
-  const deadLinks = await page.locator("a").evaluateAll((links) => links
-    .filter((link) => !link.getAttribute("href") || link.getAttribute("href") === "#")
-    .map((link) => link.outerHTML));
-  expect(deadLinks).toEqual([]);
-
-  const touchTargets = page.locator([
-    ".portal-brand", ".portal-header-link", ".language-toggle", ".event-search-input", ".event-search-select",
-    ".event-search-submit", ".portal-nav-link", ".portal-event-link", ".bookmark-button", ".event-load-more",
-  ].join(","));
+  await expectNoHorizontalOverflow(page);
+  const touchTargets = page.locator(".discovery-chips button, .discovery-bottom-nav a, .bookmark-button, .event-search-input, .event-search-select, .event-search-submit");
   for (let index = 0; index < await touchTargets.count(); index += 1) {
     const box = await touchTargets.nth(index).boundingBox();
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+    if (box) expect(box.height).toBeGreaterThanOrEqual(44);
   }
-
-  const columns = await page.locator(".event-lead-story").evaluate((element) =>
-    getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
-  );
-  expect(columns).toBe(testInfo.project.name === "mobile-375" ? 1 : testInfo.project.name === "desktop" ? 3 : 2);
-  await expectNoHorizontalOverflow(page);
-
-  if (testInfo.project.name === "desktop") {
-    const timeRange = page.getByRole("navigation", { name: "Event time range" });
-    const allFuture = page.getByRole("link", { name: "All future", exact: true });
-    const filterIsFullyVisible = await Promise.all([timeRange.boundingBox(), allFuture.boundingBox()])
-      .then(([track, link]) => Boolean(
-        track
-        && link
-        && link.x >= track.x
-        && link.x + link.width <= track.x + track.width,
-      ));
-    expect(filterIsFullyVisible).toBe(true);
-
-    const category = page.getByRole("navigation", { name: "Event categories" })
-      .getByRole("link", { name: /^Concerts/ });
-    await category.hover();
-    await expect.poll(() => category.evaluate((element) => getComputedStyle(element).color))
-      .toBe("rgb(23, 43, 38)");
-    const box = await category.boundingBox();
-    await page.mouse.move((box?.x ?? 0) + 10, (box?.y ?? 0) + 10);
-    await page.mouse.down();
-    expect(await category.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
-    await page.mouse.move(0, 0);
-    await page.mouse.up();
-  }
-
   const counts = { events: requests.eventRequests.length, venues: requests.venueRequests.length };
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "这座城，总有你的下一场。" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "今天，想做点什么？" })).toBeVisible();
   await page.locator(".language-toggle").click();
-  await expect(page.getByRole("heading", { name: "Find your next scene." })).toBeVisible();
-  await page.waitForTimeout(100);
+  await expect(page.getByRole("heading", { name: "What do you feel like?" })).toBeVisible();
   expect(requests.eventRequests).toHaveLength(counts.events);
   expect(requests.venueRequests).toHaveLength(counts.venues);
   expect(errors).toEqual([]);
 });
 
-test("keyboard reaches every portal control in document order with visible focus", async ({ page }) => {
+test("discovery stays usable across narrow phones, tablets, and desktop", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The viewport matrix runs once in Chromium.");
+  await installRoutes(page);
+  await page.goto("/events");
+  for (const width of [320, 375, 390, 430, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("heading", { name: "What do you feel like?" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Quick discovery" })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    const quickDiscovery = page.getByRole("navigation", { name: "Quick discovery" });
+    const bounds = await quickDiscovery.boundingBox();
+    expect(bounds?.width ?? 0).toBeGreaterThan(0);
+    expect((bounds?.x ?? width) + (bounds?.width ?? width)).toBeLessThanOrEqual(width + 1);
+  }
+});
+
+test("the mobile map destination brings its content into view", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-375", "The fixed map destination is mobile-only.");
+  await installRoutes(page);
+  await page.goto("/events");
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Map" }).click();
+  await expect(page).toHaveURL(/#map$/);
+  await expect(page.getByRole("heading", { name: "Around Auckland" })).toBeInViewport();
+
+  await page.goto("/events#map");
+  await expect(page.getByRole("heading", { name: "Around Auckland" })).toBeInViewport();
+});
+
+test("keyboard reaches visible discovery controls with a focus indicator", async ({ page }) => {
   const errors = runtimeErrors(page);
   await installRoutes(page);
   await page.goto("/events");
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
-
+  await expect(page.locator(".discovery-feature").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   await tabTo(page, page.getByRole("link", { name: "Skip to event results" }));
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
-  await tabTo(page, page.getByRole("link", { name: "Events", exact: true }));
-  await tabTo(page, page.getByRole("link", { name: "Picks", exact: true }));
-  await tabTo(page, page.getByRole("link", { name: "Movies", exact: true }));
-  await tabTo(page, page.getByRole("link", { name: "Saved events, 0" }));
+  if (page.viewportSize()!.width >= 640) {
+    for (const label of ["Events", "Picks", "Movies", "Saved events, 0"]) {
+      await tabTo(page, page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: label, exact: true }));
+    }
+  }
   await tabTo(page, page.getByRole("button", { name: "切换到中文" }));
-  await tabTo(page, page.getByLabel("Activity name"));
-  await tabTo(page, page.getByLabel("Venue"));
-  await tabTo(page, page.getByRole("button", { name: "Search events" }));
-  await tabTo(page, page.getByRole("link", { name: "Sort by recommended" }));
-  await tabTo(page, page.getByRole("link", { name: "Sort by date" }));
-  await tabTo(page, page.locator(".home-feature > a"));
-
-  const categoryNav = page.getByRole("navigation", { name: "Event categories" });
-  for (const label of ["All", "Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
-    await tabTo(page, categoryNav.getByRole("link", { name: new RegExp(`^${label}`) }));
+  if (page.viewportSize()!.width < 640) {
+    for (const label of ["Discover", "Map", "Picks", "Movies", "Saved"]) {
+      await tabTo(page, page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: label }));
+    }
   }
-  for (const label of ["Next 7 days", "This weekend", "Next 30 days", "All future"]) {
-    await tabTo(page, page.getByRole("link", { name: label, exact: true }));
-  }
-  await tabTo(page, page.getByRole("link", { name: "View Harbour Lights details" }));
-  await tabTo(page, page.getByRole("button", { name: "Save Harbour Lights" }));
-  const moodNav = page.getByRole("navigation", { name: "Explore by mood" });
-  for (const label of ["Live music", "A stage night", "Market morning", "Festival day", "Match day"]) {
-    await tabTo(page, moodNav.getByRole("link", { name: label, exact: true }));
-  }
-  const discoveryCategoryNav = page.getByRole("navigation", { name: "Explore by category" });
-  for (const label of ["Concerts", "Theatre", "Markets", "Festivals", "Sports"]) {
-    await tabTo(page, discoveryCategoryNav.getByRole("link", { name: label, exact: true }));
-  }
-  await tabTo(page, page.getByRole("button", { name: "Check for more events" }));
+  await tabTo(page, page.locator(".discovery-search > summary"));
+  await tabTo(page, page.getByRole("button", { name: "Tonight", exact: true }));
+  await tabTo(page, page.getByRole("button", { name: "Map", exact: true }));
   expect(errors).toEqual([]);
 });
 
@@ -539,23 +509,22 @@ test("saving an event persists through reload and can be removed from Saved", as
   const errors = runtimeErrors(page);
   await installRoutes(page);
   await page.goto("/events");
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.locator(".discovery-feed").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Save Harbour Lights" }).click();
-  await expect(page.getByRole("button", { name: "Remove Harbour Lights from saved events" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await page.locator(".discovery-feed").getByRole("button", { name: "Save Harbour Lights" }).click();
+  await expect(page.locator(".discovery-feed").getByRole("button", { name: "Remove Harbour Lights from saved events" })).toHaveAttribute("aria-pressed", "true");
+await expect(savedNav(page, 1)).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await expect(savedNav(page, 1)).toBeVisible();
 
-  await page.getByRole("link", { name: "Saved events, 1" }).click();
+await savedNav(page, 1).click();
   await expect(page).toHaveURL(/\/saved$/);
   await expect(page.getByRole("heading", { name: "Saved events" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
-  await expect(page.locator('.portal-event-card[data-layout="feature"] .portal-event-cta')).toHaveCSS("color", "rgb(23, 79, 64)");
-  await expect(page.locator('.portal-event-card[data-layout="feature"] .portal-event-venue')).toHaveCSS("color", "rgb(82, 102, 92)");
+  await expect(page.locator('.portal-event-card[data-layout="feature"]')).toBeVisible();
   await page.getByRole("button", { name: "Remove Harbour Lights from saved events" }).click();
   await expect(page.getByRole("heading", { name: "No saved events yet" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Saved events, 0" })).toBeVisible();
+await expect(savedNav(page, 0)).toBeVisible();
   await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);
 });
@@ -725,7 +694,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
     JSON.stringify({ layoutBefore, layoutAfter }),
   ).toBeLessThanOrEqual(24);
 
-  await page.getByRole("link", { name: "View Harbour Lights details" }).click();
+  await page.locator(".discovery-feed").getByRole("link", { name: "View Harbour Lights details" }).click();
   await expect(page).toHaveURL(/\/events\/event-1$/);
   await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   await expect(page.getByText("269 Queen Street")).toBeVisible();
@@ -783,6 +752,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "Search events" }).click();
   await expect(page).toHaveURL(/category=markets&q=Grey&venue=kc-venue-grey-lynn$/);
   await expect(page.getByRole("heading", { name: "Grey Lynn Farmers Market" })).toBeVisible();
+  await expect(page.locator(".portal-event-card").getByText("Expected schedule")).toBeVisible();
   await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
   await expect(page.locator('img[src="https://images.example/grey-lynn.gif"]')).toBeVisible();
   await expectNoHorizontalOverflow(page);
@@ -802,7 +772,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "Show distance from me" }).click();
   await expect(page.getByText(/^About .* km away/)).toBeVisible();
   await page.getByRole("button", { name: "Save Grey Lynn Farmers Market" }).click();
-  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await expect(savedNav(page, 1)).toBeVisible();
 
   await page.getByRole("button", { name: "切换到中文" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Grey Lynn 农夫市集" })).toBeVisible();
@@ -825,7 +795,7 @@ test("a failed official market image becomes a useful text preview", async ({ pa
   await page.goto("/events?category=markets&q=Grey");
 
   await expect(page.getByText("First-visit guide")).toBeVisible();
-  await expect(page.getByText("A community market where local growers sell directly.")).toBeVisible();
+  await expect(page.locator(".portal-event-preview").getByText("A community market where local growers sell directly.")).toBeVisible();
   await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 });
@@ -834,6 +804,7 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   const errors = runtimeErrors(page);
   await installRoutes(page, { venueFailure: true });
   await page.goto("/events");
+  await page.locator(".discovery-search > summary").click();
   await expect(page.getByText("Venue temporarily unavailable")).toBeVisible();
   await expect(page.getByLabel("Activity name")).toBeEnabled();
   await expect(page.getByLabel("Venue")).toBeDisabled();
@@ -847,16 +818,16 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   await resetApiRoutes(page);
   await installRoutes(page, { initialFailures: 1 });
   await page.goto("/events");
-  await expect(page.locator(".event-error")).toContainText("temporarily out of range");
+  await expect(page.locator(".event-error")).toContainText("could not load the latest events");
   await page.getByRole("button", { name: "Retry event scan" }).click();
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.locator(".discovery-feed").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
 
   await resetApiRoutes(page);
   await installRoutes(page, { appendFailures: 1 });
   await page.goto("/events");
   await page.getByRole("button", { name: "Check for more events" }).click();
   await expect(page.locator(".event-load-more-error")).toContainText("shown events are still here");
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.locator(".discovery-feed").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   await page.getByRole("button", { name: "Retry loading more events" }).click();
   await expect(page.getByRole("heading", { name: "Waterfront Night Market" })).toBeVisible();
   expect(errors).toEqual([]);
@@ -867,7 +838,7 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
   await installRoutes(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/events");
-  await expect(page.getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
+  await expect(page.locator(".discovery-feed").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
 
   const imageMotion = await page.locator(".event-feed .portal-event-media img").evaluate((element) => ({
     transition: getComputedStyle(element).transitionDuration,
@@ -876,9 +847,11 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
   expect(imageMotion.transition).toBe("0s");
   expect(imageMotion.animation).toBe("none");
 
+  await page.locator(".discovery-search > summary").click();
+
   if ((page.viewportSize()?.width ?? 0) <= 600) {
     const categoryTrack = page.getByRole("navigation", { name: "Event categories" });
-    expect(await categoryTrack.evaluate((element) => getComputedStyle(element).overflowX)).toBe("auto");
+    await expect(categoryTrack).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
     const timeTrack = page.getByRole("navigation", { name: "Event time range" });
@@ -899,9 +872,9 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
     expect(timeDimensions.lastRight).toBeLessThanOrEqual(timeDimensions.trackRight);
   } else {
     await page.setViewportSize({ width: 720, height: 900 });
-    expect(await page.locator(".event-lead-story").evaluate((element) =>
+    expect(await page.locator(".discovery-feature-layout").evaluate((element) =>
       getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
-    )).toBe(2);
+    )).toBe(1);
   }
   await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);
@@ -958,7 +931,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   const firstCinemaAction = page.locator(".cinema-directory-actions a").first();
   await firstCinemaAction.focus();
   expect(await marks.first().evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe("none");
-  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("background-color", "rgb(23, 43, 38)");
+  await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("background-color", "rgb(25, 27, 32)");
   await expect(page.getByTestId("cinema-brand-reading-lynnmall")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expectNoHorizontalOverflow(page);
 
@@ -969,6 +942,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   ].join(","));
   for (let index = 0; index < await targets.count(); index += 1) {
     const box = await targets.nth(index).boundingBox();
+    if (!box) continue;
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }

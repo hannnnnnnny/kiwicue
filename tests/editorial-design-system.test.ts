@@ -38,18 +38,19 @@ describe("editorial information hub design system", () => {
   it("defines the city-guide palette with readable brand and accent tokens", () => {
     const css = applicationCss().toLowerCase();
     for (const token of [
-      "--portal-bg: #f4f6f2",
-      "--portal-surface: #e8eee7",
-      "--portal-raised: #fcfdf9",
-      "--portal-ink: #172b26",
-      "--portal-muted: #52665c",
-      "--portal-line: #c6d2c8",
-      "--portal-brand: #174f40",
-      "--portal-accent: #a63522",
+      "--portal-bg: #f5f5f7",
+      "--portal-surface: #f5f5f7",
+      "--portal-raised: #ffffff",
+      "--portal-ink: #191b20",
+      "--portal-muted: #626772",
+      "--portal-line: #e1e4e8",
+      "--portal-brand: #0071e3",
+      "--portal-accent: #0071e3",
       "--portal-display-font:",
       "--portal-ui-font:",
-      "--radius-control: 8px",
-      "--radius-panel: 12px",
+      "--radius-control: 16px",
+      "--radius-panel: 24px",
+      "--radius-tag: 8px",
       "--radius-pill: 999px",
       "--container: 1320px",
     ]) {
@@ -64,7 +65,7 @@ describe("editorial information hub design system", () => {
 
     expect(radiusDeclarations.length).toBeGreaterThan(10);
     for (const value of radiusDeclarations) {
-      expect(["0", "var(--radius-control)", "var(--radius-panel)", "var(--radius-pill)"])
+      expect(["0", "var(--radius-control)", "var(--radius-panel)", "var(--radius-tag)", "var(--radius-pill)", "0 0 var(--radius-panel) var(--radius-panel)"])
         .toContain(value);
     }
     expect(css).toMatch(/main\s*\{[^}]*min-height:\s*100dvh/s);

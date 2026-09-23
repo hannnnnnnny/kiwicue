@@ -19,7 +19,7 @@ export function DiscoveryMotion() {
         if (preference.matches) return;
         const animation = target.animate(
           [{ opacity: 0.35, transform: "translateY(20px)" }, { opacity: 1, transform: "none" }],
-          { duration: 450, easing: "cubic-bezier(.2,.7,.2,1)" },
+          { duration: 250, easing: "cubic-bezier(.2,.7,.2,1)" },
         );
         animations.add(animation);
         animation.onfinish = () => animations.delete(animation);

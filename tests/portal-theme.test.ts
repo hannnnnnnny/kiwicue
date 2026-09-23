@@ -7,15 +7,15 @@ const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 const tokens = {
-  "portal-bg": "#f4f6f2",
-  "portal-surface": "#e8eee7",
-  "portal-raised": "#fcfdf9",
-  "portal-ink": "#172b26",
-  "portal-muted": "#52665c",
-  "portal-line": "#c6d2c8",
-  "portal-brand": "#174f40",
-  "portal-brand-hover": "#10392e",
-  "portal-focus": "#b2412c",
+  "portal-bg": "#f5f5f7",
+  "portal-surface": "#f5f5f7",
+  "portal-raised": "#ffffff",
+  "portal-ink": "#191b20",
+  "portal-muted": "#626772",
+  "portal-line": "#e1e4e8",
+  "portal-brand": "#0071e3",
+  "portal-brand-hover": "#005bb5",
+  "portal-focus": "#0071e3",
   "portal-danger": "#b3261e",
 } as const;
 

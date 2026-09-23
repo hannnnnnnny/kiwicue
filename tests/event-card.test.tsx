@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EventCard } from "../app/events/event-card";
 import type { KiwiCueEvent } from "../lib/events";
@@ -100,6 +100,15 @@ describe("portal event card", () => {
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
   });
 
+  it("replaces a failed official image with the real event name", () => {
+    const view = render(<EventCard event={event} index={1} language="en" />);
+    const image = view.container.querySelector(".portal-event-media img");
+    expect(image).not.toBeNull();
+    fireEvent.error(image as HTMLImageElement);
+    expect(view.container.querySelector(".portal-event-media img")).toBeNull();
+    expect(view.container.querySelector(".event-editorial-fallback")).toHaveTextContent("Harbour Lights");
+  });
+
   it("shows localized first-visit guidance when a market has no licensed image", () => {
     const view = render(<EventCard event={curatedMarket} index={0} language="zh" />);
 
@@ -107,6 +116,12 @@ describe("portal event card", () => {
     expect(screen.getByText("由社区运营，可以直接向本地种植者购买。")).toBeInTheDocument();
     expect(screen.queryByText("AKL")).not.toBeInTheDocument();
     expect(view.container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("previews only source-backed editorial detail in a compact row", () => {
+    const view = render(<EventCard event={curatedMarket} index={0} language="zh" variant="row" />);
+    expect(view.container.querySelector(".portal-event-preview")).toHaveTextContent("由社区运营，可以直接向本地种植者购买。");
+    expect(view.container.querySelector(".event-editorial-fallback")).not.toHaveTextContent("由社区运营，可以直接向本地种植者购买。");
   });
 
   it("uses the localized market name and verified schedule label in Chinese", () => {

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../../components/language-provider";
 import { EventGridSkeleton } from "../../components/event-grid-skeleton";
-import { EventDiscoveryView, EventResultsView } from "../../components/event-discovery-sections";
+import { EventResultsView } from "../../components/event-discovery-sections";
+import { DiscoveryHub } from "../../components/discovery-hub";
+import { DiscoverySkeleton } from "../../components/discovery-skeleton";
 import { EventLocalFacets } from "../../components/event-local-facets";
 import type { EventCategory } from "../../lib/event-categories";
 import type { EventSort } from "../../lib/event-search-params";
@@ -89,9 +91,9 @@ const copy = {
     batchEmptyTitle: "No eligible events in this batch",
     batchEmptyBody: "Check the next source page for more Auckland events.",
     emptyAction: "Clear all filters",
-    errorCode: "SIGNAL LOST",
-    errorTitle: "Auckland events are temporarily out of range",
-    errorBody: "We could not refresh the event feed. Your Ticketmaster key and technical details remain private.",
+    errorCode: "Events unavailable",
+    errorTitle: "We could not load the latest events",
+    errorBody: "Try again, or explore the Auckland markets below. Check the official listing before you go.",
     retryLabel: "Retry event scan",
     retryText: "Scan again",
     localEmptyTitle: "No loaded events match this refinement",
@@ -121,9 +123,9 @@ const copy = {
     batchEmptyTitle: "本批没有符合条件的活动",
     batchEmptyBody: "可以继续检查下一页奥克兰活动来源。",
     emptyAction: "清除全部筛选",
-    errorCode: "信号暂时中断",
-    errorTitle: "暂时无法获取奥克兰活动",
-    errorBody: "活动信息刷新失败。你的 Ticketmaster 密钥和技术详情仍然保密。",
+    errorCode: "活动暂不可用",
+    errorTitle: "暂时无法加载最新活动",
+    errorBody: "可以重试，或先看看下方奥克兰市集。出发前请以官方信息为准。",
     retryLabel: "重新扫描活动",
     retryText: "重新扫描",
     localEmptyTitle: "当前已加载活动不符合这个细筛条件",
@@ -282,7 +284,7 @@ export function EventExplorer({
     return (
       <section className="event-state event-loading" role="status" aria-busy="true">
         <p>{content.loading}</p>
-        <EventGridSkeleton />
+        {isFiltered ? <EventGridSkeleton /> : <DiscoverySkeleton />}
       </section>
     );
   }
@@ -316,29 +318,29 @@ export function EventExplorer({
     const refinedEvents = filterEventFacet(shownEvents, selectedFacet);
     const hasLocalRefinement = selectedFacet !== "all";
     return (
-      <section className="event-feed" aria-live="polite">
-        <header className="event-feed-heading">
+      <section className="event-feed">
+        {(isFiltered || hasLocalRefinement) && <header className="event-feed-heading">
           <h2>{content.feedTitle}</h2>
           <p>{content.feedIntro}</p>
-        </header>
-        <div className="event-feed-toolbar">
-          <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1}>
+        </header>}
+        {!isFiltered && !hasLocalRefinement && <DiscoveryHub events={refinedEvents} language={language} />}
+        <div className="event-feed-toolbar" data-discovery={!isFiltered && !hasLocalRefinement}>
+          <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1} aria-live="polite" aria-atomic="true">
             {isMarketCategory
               ? content.marketCount(stateForRequest.events.length, refinedEvents.length)
               : content.count(isFiltered || hasLocalRefinement, stateForRequest.events.length, refinedEvents.length)}
           </p>
           <span><i aria-hidden="true" /> {isMarketCategory ? content.marketSources : content.sources}</span>
         </div>
-        <EventLocalFacets
+        <details className="discovery-refine"><summary>{language === "zh" ? "按类型细筛" : "Refine by type"}</summary><EventLocalFacets
           options={facetOptions}
           value={selectedFacet}
           onChange={(facet) => setLocalFacetState({ requestKey, facet })}
-        />
-        {refinedEvents.length > 0 ? (
-          isFiltered || hasLocalRefinement
-            ? <EventResultsView events={refinedEvents} language={language} state={{ window, category, keyword, venueId, sort }} />
-            : <EventDiscoveryView events={refinedEvents} language={language} />
-        ) : (
+        /></details>
+        {(isFiltered || hasLocalRefinement) && refinedEvents.length > 0 && (
+          <EventResultsView events={refinedEvents} language={language} state={{ window, category, keyword, venueId, sort }} />
+        )}
+        {refinedEvents.length === 0 && (
           <div className="event-local-empty" role="status">
             <h3>{content.localEmptyTitle}</h3>
             <p>{content.localEmptyBody}</p>

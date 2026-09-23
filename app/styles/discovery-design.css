@@ -1,296 +1,179 @@
-/* City-guide visual system. Existing semantic components retain their behavior. */
-.portal-header-shell { background: var(--portal-raised); border-bottom: 1px solid var(--portal-line); }
-.portal-header { min-height: 76px; }
-.portal-header-link { font-size: .88rem; }
-.portal-header-link[aria-current="page"] { color: var(--portal-brand); box-shadow: inset 0 -3px var(--portal-accent); }
-.portal-brand-wordmark { width: 174px; }
-.portal-command-inner, .home-hero { gap: 32px; }
-.events-page .portal-command {
-  width: 100%; margin: 0; padding: 0;
-  background: var(--scene-dark); color: var(--scene-light);
+/* Image-first discovery; shared API and routing are unchanged. */
+body { background: var(--portal-bg); }
+.portal-header-shell { background: var(--portal-raised); }
+.portal-header { min-height: 80px; border: 0; }
+.portal-header-link { border: 0; border-radius: 0; }
+.events-page .portal-command { background: transparent; color: var(--portal-ink); padding: 0; }
+.portal-command-inner { display: block; padding: 30px 0 12px; }
+.portal-command-copy .eyebrow { display: none; }
+.events-page .portal-command h1 { max-width: none; margin: 0; font-size: clamp(1.65rem, 3.3vw, 2.7rem); line-height: 1.15; letter-spacing: -.045em; }
+.portal-command .portal-intro { margin: 10px 0 0; max-width: none; font-size: 1rem; color: var(--portal-muted); }
+.discovery-search { width: min(var(--container), calc(100% - 48px)); margin: 8px auto 0; }
+.discovery-search > summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; cursor: pointer; color: var(--portal-muted); font-size: .9rem; list-style: none; }
+.discovery-search > summary span { font-size: 1.8rem; }
+.discovery-search[open] > summary { margin-bottom: 12px; color: var(--portal-brand); }
+.discovery-search .portal-navigation-shell { border: 0; margin-top: 16px; padding: 0; background: none; box-shadow: none; }
+.discovery-search .portal-filter-intro { display: none; }
+.portal-status-strip { font-size: .75rem; margin: 12px 0; padding: 12px 0; }
+.events-page:has(.discovery-search:not([open])) .portal-status-strip { display: none; }
+.event-feed { padding-top: 12px; }
+.event-feed:has(.discovery-hub) > .event-feed-toolbar { margin-top: 24px; }
+.discovery-refine { margin: 12px 0; }
+.discovery-refine > summary { cursor: pointer; color: var(--portal-muted); min-height: 44px; align-content: center; }
+.discovery-chips { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
+.discovery-chips button { min-height: 48px; border: 1px solid transparent; border-radius: var(--radius-pill); display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 10px; font: inherit; font-size: .88rem; font-weight: 650; cursor: pointer; transition: opacity 200ms cubic-bezier(.25,.1,.25,1), transform 200ms cubic-bezier(.25,.1,.25,1); }
+.discovery-chips svg { flex-shrink: 0; }
+[data-tone="tonight"] { background: var(--chip-lavender); color: var(--chip-lavender-ink); }
+[data-tone="nearby"] { background: var(--chip-coral); color: var(--chip-coral-ink); }
+[data-tone="free"] { background: var(--chip-mint); color: var(--chip-mint-ink); }
+[data-tone="weekend"] { background: var(--chip-blue); color: var(--chip-blue-ink); }
+[data-tone="music"] { background: var(--chip-pink); color: var(--chip-pink-ink); }
+[data-tone="surprise"] { background: var(--chip-yellow); color: var(--chip-yellow-ink); }
+.discovery-chips button[aria-pressed="true"] { border-color: currentColor; }
+.discovery-chips button:disabled { opacity: .55; cursor: not-allowed; }
+.discovery-chips button:active, .event-stack:active { transform: scale(.98); }
+.discovery-feature-layout { display: block; }
+.discovery-feature { position: relative; isolation: isolate; border-radius: var(--radius-panel); overflow: hidden; background: var(--portal-brand-soft); }
+.discovery-feature > a { display: block; aspect-ratio: 21/8; position: relative; color: var(--portal-white); text-decoration: none; }
+.discovery-feature img, .event-stack img { width: 100%; height: 100%; object-fit: cover; }
+.discovery-feature-caption { position: absolute; z-index: 1; inset: auto 0 0; padding: 20px 24px 24px; width: 100%; background: var(--discovery-overlay); }
+.discovery-feature-caption h2 { font-size: clamp(1.4rem, 2.5vw, 2.5rem); line-height: 1.1; margin: 10px 0 8px; letter-spacing: -.04em; overflow-wrap: anywhere; }
+.discovery-feature-caption p { margin: 4px 0 0; font-size: .88rem; }
+.discovery-category { display: inline-block; background: var(--chip-lavender); color: var(--chip-lavender-ink); padding: 5px 10px; border-radius: var(--radius-tag); font-size: .75rem; font-weight: 650; }
+.discovery-feature .bookmark-button { position: absolute; right: 12px; top: 12px; margin: 0; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-pill); background: var(--portal-raised); color: var(--portal-ink); display: grid; place-items: center; }
+.discovery-feature .bookmark-button span:first-child { font-size: 26px; }
+.discovery-feature .bookmark-button span:last-child { display: none; }
+.discovery-stacks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-top: 36px; }
+.discovery-collection { min-width: 0; }
+.discovery-collection header { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
+.discovery-collection h2 { font-size: 1.3rem; letter-spacing: -.04em; margin: 0; }
+.discovery-collection header button { padding: 0; min-height: 44px; background: none; border: 0; color: var(--portal-muted); cursor: pointer; font: inherit; font-size: .82rem; }
+.event-stack { display: block; width: 100%; aspect-ratio: 4/3; position: relative; isolation: isolate; border: 0; background: transparent; padding: 0 20px 20px 0; cursor: pointer; text-align: left; transition: transform 220ms ease; }
+.event-stack-layer { position: absolute; inset: 0 20px 20px 0; border-radius: var(--radius-panel); overflow: hidden; background: var(--portal-brand-soft); box-shadow: 0 4px 12px var(--portal-shadow-color); }
+.event-stack-layer[data-depth="1"] { transform: translate(10px, 10px); }
+.event-stack-layer[data-depth="2"] { transform: translate(20px, 20px); }
+.event-stack-caption { position: absolute; inset: auto 20px 20px 0; color: var(--portal-white); z-index: 1; display: grid; gap: 8px; padding: 14px 16px; background: var(--discovery-overlay); border-radius: 0 0 var(--radius-panel) var(--radius-panel); }
+.event-stack-caption strong { font-size: 1.15rem; line-height: 1.25; overflow-wrap: anywhere; }
+.event-stack-caption > span { font-size: .74rem; }
+.discovery-scope { margin: 24px 0; color: var(--portal-muted); font-size: .78rem; }
+.discovery-scope a { color: var(--portal-brand); text-underline-offset: 3px; }
+.discovery-back { min-height: 44px; border: 0; background: none; color: var(--portal-brand); font: inherit; cursor: pointer; padding: 0; }
+.discovery-list-section { margin-top: 28px; scroll-margin-top: 100px; }
+.discovery-list-section > h2 { font-size: 1.6rem; letter-spacing: -.04em; margin-bottom: 20px; }
+.discovery-feed { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.discovery-feed > li { min-width: 0; }
+.discovery-image-fallback { display: grid; place-items: center; padding: 24px; width: 100%; height: 100%; background: var(--portal-brand-soft); color: var(--portal-brand); font-size: 1.3rem; font-weight: 700; }
+.discovery-empty { background: var(--portal-surface); padding: 24px; border-radius: var(--radius-panel); line-height: 1.6; }
+.discovery-nearby { margin-bottom: 24px; }
+.discovery-nearby > button { min-height: 48px; border: 0; border-radius: var(--radius-control); padding: 12px 20px; background: var(--portal-brand); color: var(--portal-white); font: inherit; cursor: pointer; }
+.discovery-nearby p, .discovery-distance { color: var(--portal-muted); font-size: .82rem; }
+.discovery-distance { margin: 8px 12px; }
+.discovery-nearby iframe { height: 220px; }
+.discovery-venue-map { display: grid; gap: 8px; max-width: 100%; margin-top: 16px; }
+.discovery-venue-map label { color: var(--portal-ink); font-size: .875rem; font-weight: 650; }
+.discovery-venue-map select { min-width: 0; width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--portal-line); border-radius: var(--radius-control); background: var(--portal-raised); color: var(--portal-ink); font: inherit; }
+.discovery-venue-map .event-map { min-width: 0; }
+.events-page .event-loading, .events-page .event-error, .events-page .event-empty { min-height: 0; align-content: start; justify-items: start; padding: 24px 0 32px; text-align: left; }
+.events-page .event-error h2, .events-page .event-empty h2 { max-width: 40rem; font-size: clamp(1.5rem, 3vw, 2.25rem); }
+.events-page .event-error p { max-width: 46rem; }
+.events-page .event-error button { min-height: 48px; }
+.discovery-skeleton { display: grid; gap: 20px; margin-top: 20px; }
+.discovery-skeleton-chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.discovery-skeleton-chips span { height: 48px; background: var(--portal-surface); border-radius: var(--radius-pill); }
+.discovery-skeleton-feature { width: 62%; aspect-ratio: 16/10; background: var(--portal-surface); border-radius: var(--radius-panel); }
+.discovery-skeleton-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.discovery-skeleton-rows div { min-height: 170px; padding: 16px 16px 16px 38%; border-radius: var(--radius-panel); background: var(--portal-raised); display: grid; align-content: start; gap: 12px; }
+.discovery-skeleton-rows span { height: 16px; border-radius: var(--radius-tag); background: var(--portal-surface); }
+.discovery-skeleton-rows span:last-child { width: 70%; }
+.portal-event-card, .portal-event-card[data-layout="feature"], .portal-event-card[data-layout="lead"] { position: relative; background: var(--portal-raised); color: var(--portal-ink); border: 1px solid var(--portal-line); border-radius: var(--radius-panel); padding: 0; box-shadow: none; overflow: hidden; }
+.portal-event-card .portal-event-link, .portal-event-card[data-layout="lead"] .portal-event-link { color: inherit; }
+.portal-event-card .portal-event-body { padding: 18px; }
+.portal-event-card .portal-event-rank { display: none; }
+.portal-event-card .portal-event-meta span { color: var(--portal-brand); background: var(--portal-brand-soft); }
+.portal-event-card .portal-event-venue { color: var(--portal-muted); }
+.portal-event-card .portal-event-date { color: var(--portal-ink); }
+.portal-event-card .portal-event-cta { color: var(--portal-brand); }
+.portal-event-card .bookmark-button-card { min-width: 44px; min-height: 44px; }
+.portal-event-card[data-layout="row"] .portal-event-link { display: grid; grid-template-columns: 36% minmax(0, 1fr); gap: 0; padding: 0; }
+.portal-event-card[data-layout="row"] .portal-event-media { grid-column: 1; grid-row: 1 / 3; width: 100%; height: 100%; min-height: 170px; aspect-ratio: 1; border-radius: 0; margin: 0; }
+.portal-event-card[data-layout="row"] .portal-event-body { grid-column: 2; padding: 18px 42px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+.portal-event-card[data-layout="row"] h2 { margin: 0; font-size: 1.05rem; line-height: 1.25; letter-spacing: -.025em; min-height: 0; }
+.portal-event-card[data-layout="row"] .portal-event-meta { order: -1; margin: 0; }
+.portal-event-card[data-layout="row"] .portal-event-meta span { padding: 3px 8px; font-size: .7rem; border-radius: var(--radius-tag); }
+.portal-event-card[data-layout="row"] .portal-event-date, .portal-event-card[data-layout="row"] .portal-event-venue { font-size: .78rem; line-height: 1.4; margin: 0; }
+.portal-event-card[data-layout="row"] .portal-event-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin: 2px 0 0; color: var(--portal-muted); font-size: .78rem; line-height: 1.4; }
+.portal-event-card[data-layout="row"] .portal-event-cta { display: none; }
+.portal-event-card[data-layout="row"] .bookmark-button { position: absolute; top: 6px; right: 4px; padding: 0; margin: 0; width: 44px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; }
+.portal-event-card[data-layout="row"] .bookmark-button span:first-child { font-size: 24px; }
+.portal-event-card[data-layout="row"] .bookmark-button span:last-child { display: none; }
+.portal-event-card[data-layout="row"]:not(:has(.portal-event-media)) .portal-event-link { grid-template-columns: 1fr; }
+.portal-event-card[data-layout="row"]:not(:has(.portal-event-media)) .portal-event-body { grid-column: 1; }
+.event-detail-hero { display: flex; flex-direction: column; }
+.event-detail-heading { background: var(--portal-raised); border-radius: var(--radius-panel); position: relative; margin: -24px 0 0; padding: 24px; }
+.event-detail-heading h1 { font-size: clamp(1.8rem, 3.5vw, 3rem); line-height: 1.1; margin: 8px 0 16px; }
+.event-detail-heading .eyebrow { display: none; }
+.event-detail-facts { margin-top: 12px; border: 0; gap: 12px; grid-template-columns: 1fr 1fr; }
+.event-detail-date, .event-detail-venue-summary { font-size: .9rem; line-height: 1.5; color: var(--portal-ink); }
+.event-detail-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.event-booking-inline { grid-column: 1 / -1; justify-content: center; font-size: 1rem; min-height: 54px; }
+.event-detail-actions .bookmark-button-detail, .event-share button { width: 100%; margin: 0; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--portal-surface); color: var(--portal-ink); border: 0; border-radius: var(--radius-control); font: inherit; cursor: pointer; }
+.event-share > span { display: block; color: var(--portal-muted); font-size: .8rem; margin-top: 8px; }
+.event-detail-venue { box-shadow: none; background: transparent; }
+.event-map iframe { height: 220px; }
+.discovery-bottom-nav { display: none; }
+@media (hover: hover) {
+  .event-stack:hover, .portal-event-card:hover, .discovery-chips button:hover { transform: translateY(-2px); }
 }
-.events-page .portal-command-inner {
-  display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-  width: min(var(--container), calc(100% - 48px)); margin: auto;
-  align-items: center; padding: 36px 0 24px;
-}
-.events-page .portal-command-copy { padding: 16px 0 24px; }
-.events-page .portal-command .eyebrow { color: var(--scene-pop); font-size: .8rem; }
-.events-page .portal-command h1 {
-  max-width: 11ch; color: var(--scene-light); font-size: clamp(3.4rem, 5.5vw, 5.3rem);
-  font-weight: 800; letter-spacing: -.07em; line-height: .96; margin: 20px 0;
-  text-wrap: balance;
-}
-:lang(zh) .events-page .portal-command h1 { max-width: 10ch; font-size: clamp(2.7rem, 5.3vw, 5rem); line-height: 1.15; letter-spacing: -.04em; }
-.events-page .portal-intro { color: var(--scene-muted); max-width: 34ch; font-size: 1.06rem; }
-.events-page .event-discovery-controls { grid-column: 1 / -1; color: var(--portal-ink); }
-.events-page .home-feature { grid-column: 2; grid-row: 1; }
-.events-page .event-search-panel { padding: 20px; border: 0; box-shadow: none; }
-.events-page .event-search-form { grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 20px; }
-.events-page .event-search-fields { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
-.events-page .event-search-actions { margin-top: 26px; }
-.events-page .event-search-submit { background: var(--scene-pop); color: var(--scene-pop-ink); border-color: transparent; }
-.events-page .event-search-submit:hover:not(:disabled) { background: var(--scene-pop); }
-.events-page .event-control-meta { color: var(--scene-light); }
-.events-page .event-sort-links a, .events-page .event-active-filters a { border-color: var(--scene-muted); }
-.events-page .event-sort-links a[aria-current="page"] { background: var(--scene-light); color: var(--scene-dark); border-color: transparent; }
-.events-page .event-clear-all { color: var(--scene-light); }
-.home-feature { border-radius: var(--radius-panel); box-shadow: none; }
-.home-feature > a { position: relative; display: flex; flex-direction: column; min-height: 400px; isolation: isolate; background: var(--scene-dark); }
-.home-feature-media { position: relative; height: 220px; flex: 0 0 auto; }
-.home-feature-media img { object-fit: cover; }
-.home-feature-copy { display: flex; flex-direction: column; align-self: stretch; gap: 8px; padding: 20px 24px; color: var(--scene-light); }
-.home-feature-copy h2, .home-feature-copy .home-feature-event-title { font-size: clamp(1.5rem, 2.2vw, 2rem); font-weight: 760; line-height: 1.1; color: var(--scene-light); letter-spacing: -.035em; }
-.home-feature-copy p, .home-feature-copy time, .home-feature-copy > span { color: var(--scene-light); text-align: left; font-size: .84rem; }
-.home-feature-copy p { color: var(--scene-pop); }
-.home-feature-copy .home-feature-event-title { color: var(--scene-light); font-size: clamp(1.5rem, 2.2vw, 2rem); letter-spacing: -.035em; }
-.home-feature-copy strong { display: inline-flex; align-self: start; min-height: 44px; align-items: center; color: var(--scene-light); border-bottom: 1px solid; font-size: .83rem; }
-.home-feature-image-fallback { background: var(--scene-dark); color: var(--scene-muted); }
-.events-page .home-feature-loading, .events-page .home-feature-message { min-height: 400px; }
-.home-feature-message { color: var(--portal-ink); }
-.home-feature-message p { font-size: 2rem; }
-.events-page .portal-command[data-filtered="true"] .portal-command-inner { grid-template-columns: 1fr; gap: 8px; padding-top: 24px; }
-.events-page .portal-command[data-filtered="true"] h1 { max-width: none; font-size: clamp(2.1rem, 4vw, 3.4rem); margin-block: 8px; }
-.events-page .portal-command[data-filtered="true"] .portal-intro { max-width: none; }
-
-/* Compact category tickets: the whole surface is a link; labels remain explicit. */
-.events-page .portal-navigation-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; padding: 32px 0; border: 0; background: transparent; box-shadow: none; }
-.portal-filter-intro h2 { font-size: clamp(1.5rem, 2.3vw, 2.15rem); font-weight: 780; }
-.portal-filter-intro p { max-width: none; font-size: .85rem; }
-.events-page .event-window-group { grid-column: 2; grid-row: 1; align-self: center; }
-.events-page .event-category-group { grid-column: 1 / -1; padding: 0; }
-.event-category-group > .portal-filter-label { margin-bottom: 12px; }
-.events-page .event-category-grid, .event-category-grid {
-  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row;
-  gap: 12px; padding: 4px 0 12px; margin: 0; overflow: visible;
-}
-.events-page .event-category-card, .event-category-card {
-  display: flex; flex-direction: column; position: relative; min-height: 172px;
-  padding: 18px; border-radius: var(--radius-panel); border: 1px solid var(--portal-line);
-  background: var(--portal-surface); color: var(--portal-ink); box-shadow: none; overflow: hidden;
-  transition: transform 240ms cubic-bezier(.2,.7,.2,1);
-}
-.events-page .event-category-card::after, .event-category-card::after { display: none; }
-.events-page .event-category-card[data-category="concerts"], .event-category-card[data-category="concerts"] { background: var(--scene-dark); color: var(--scene-light); }
-.events-page .event-category-card[data-category="festivals"], .event-category-card[data-category="festivals"] { background: var(--scene-pop); color: var(--scene-pop-ink); }
-.events-page .event-category-card[aria-current="page"], .event-category-card[aria-current="page"] {
-  grid-column: auto; background: var(--portal-brand); color: var(--portal-white); border-color: var(--portal-brand);
-  box-shadow: inset 0 -5px var(--scene-pop);
-}
-.events-page .event-category-glyph, .events-page .event-category-card[aria-current="page"] .event-category-glyph,
-.event-category-glyph, .event-category-card[aria-current="page"] .event-category-glyph {
-  position: absolute; width: 82px; height: 82px; top: -4px; right: -8px; margin: 0;
-  color: currentColor; opacity: .22; transform: rotate(-12deg); pointer-events: none;
-}
-.events-page .event-category-kicker, .event-category-kicker { color: currentColor; font-size: .64rem; margin: 0 0 20px; text-transform: none; letter-spacing: .02em; }
-.events-page .event-category-name, .events-page .event-category-card[aria-current="page"] .event-category-name,
-.event-category-name, .event-category-card[aria-current="page"] .event-category-name {
-  max-width: none; font-size: clamp(1.1rem, 1.7vw, 1.55rem); letter-spacing: -.04em; line-height: 1.2; margin: 0;
-}
-.events-page .event-category-card small, .events-page .event-category-card[aria-current="page"] small,
-.event-category-card small, .event-category-card[aria-current="page"] small { color: inherit; font-size: .73rem; line-height: 1.4; margin-top: 8px; }
-.events-page .event-category-footer, .event-category-footer { display: flex; width: 100%; margin-top: auto; padding-top: 10px; align-self: auto; }
-.events-page .event-category-card[aria-current="page"] .event-category-kicker { color: inherit; }
-.event-category-current { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.event-category-cue { margin-left: auto; font-size: 1.2rem; }
-.events-page .event-category-card:hover:not([aria-current="page"]), .event-category-card:hover:not([aria-current="page"]) { background: var(--portal-brand-soft); color: var(--portal-ink); transform: translateY(-5px); box-shadow: none; }
-.portal-status-strip i, .event-feed-toolbar i { display: none; }
-.events-page .portal-status-strip { margin-top: 0; }
-
-/* Event photography comes first, with date and place immediately beneath. */
-.portal-event-card, .portal-event-card[data-layout="row"], .portal-event-card[data-layout="lead"], .portal-event-card[data-layout="feature"] {
-  display: flex; flex-direction: column; height: 100%; min-width: 0; grid-column: auto;
-  border: 0; border-radius: var(--radius-panel); background: var(--portal-raised); color: var(--portal-ink);
-  box-shadow: none; overflow: hidden;
-}
-.portal-event-card .portal-event-link, .portal-event-card[data-layout="feature"] .portal-event-link,
-.portal-event-card[data-layout="lead"] .portal-event-link {
-  display: flex; flex-direction: column; flex: 1; color: inherit;
-}
-.portal-event-card .portal-event-media, .portal-event-card[data-layout="lead"] .portal-event-media,
-.portal-event-card[data-layout="feature"] .portal-event-media {
-  order: 0; width: 100%; aspect-ratio: 16 / 10; min-height: 0; height: auto;
-  margin: 0; border-radius: 0; overflow: hidden;
-}
-.portal-event-card[data-layout="lead"] .portal-event-media { aspect-ratio: 16 / 11; }
-.portal-event-body, .portal-event-card[data-layout="feature"] .portal-event-body { padding: 20px 20px 12px; }
-.portal-event-rank { display: none; }
-.portal-event-body h2, .portal-event-card[data-layout="feature"] .portal-event-body h2 { font-size: 1.45rem; line-height: 1.16; font-weight: 760; }
-.portal-event-card[data-layout="lead"] .portal-event-body h2 { font-size: clamp(2rem, 3.2vw, 3rem); line-height: 1.06; }
-.portal-event-card[data-layout="lead"] .portal-event-venue,
-.portal-event-card[data-layout="feature"] .portal-event-venue { color: var(--portal-muted); }
-.portal-event-card[data-layout="feature"] .portal-event-meta span { background: var(--portal-brand-soft); color: var(--portal-brand); }
-.portal-event-card[data-layout="feature"] .portal-event-cta { color: var(--portal-brand); }
-.portal-event-date { font-size: .87rem; color: var(--portal-brand); }
-.portal-event-venue { font-size: .82rem; }
-.portal-event-meta { margin-top: 12px; }
-.portal-event-meta span { border-radius: var(--radius-control); font-size: .68rem; }
-.portal-event-cta, .portal-event-card[data-layout="feature"] .portal-event-cta { margin-top: auto; min-height: 44px; padding: 0 20px; }
-.portal-event-card > .bookmark-button-card, .portal-event-card[data-layout="feature"] > .bookmark-button-card {
-  position: static; margin: 4px 20px 16px; align-self: start; min-height: 44px;
-}
-.event-editorial-preview-card .event-editorial-fallback { min-height: 210px; background: var(--portal-brand-soft); }
-.event-lead-story { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-.event-lead-story > li:first-child { grid-row: auto; }
-.event-discovery-section > header { display: block; }
-.event-discovery-section > header > p:last-child { margin-top: 12px; max-width: 50ch; }
-.event-discovery-section h2, .event-results-heading h2 { font-size: clamp(2.2rem, 4vw, 4rem); line-height: 1.08; font-weight: 780; }
-.event-discovery-section .portal-event-body h2 { font-size: 1.45rem; }
-.event-discovery-section .portal-event-card[data-layout="lead"] h2 { font-size: clamp(1.8rem, 2.8vw, 2.7rem); }
-.event-date-list { gap: 24px; }
-.event-date-marker { background: var(--portal-brand-soft); padding: 18px; border-radius: var(--radius-panel); gap: 8px; }
-.event-date-marker strong { font-size: 3rem; }
-.event-mood-links a, .event-category-links a { background: var(--portal-surface); }
-.event-mood-links a:hover, .event-category-links a:hover { background: var(--portal-brand); color: var(--portal-white); }
-.event-local-facets { border: 0; border-bottom: 1px solid var(--portal-line); background: transparent; }
-.event-state, .recommendation-state { padding-block: 64px; }
-.event-state h2, .recommendation-state h2 { font-size: clamp(1.8rem, 4vw, 3rem); }
-
-/* Shared landing, detail, cinema, saved and recommendation surfaces. */
-.home-hero { padding-block: 44px 64px; }
-.home-hero-copy h1 { font-size: clamp(3.3rem, 6vw, 6rem); font-weight: 800; letter-spacing: -.065em; }
-.home-hero .home-feature { transform: rotate(1deg); }
-.home-hero .home-feature > a { min-height: 0; }
-.home-hero .home-feature-media { height: 320px; }
-.home-primary-action { background: var(--scene-pop); color: var(--scene-pop-ink); border: 0; font-size: .9rem; }
-.home-index { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; border: 0; }
-.home-index-row { display: flex; flex-direction: column; align-items: start; gap: 10px; min-height: 200px; padding: 24px; border: 0; border-radius: var(--radius-panel); background: var(--portal-brand-soft); }
-.home-index-row:nth-child(2n) { background: var(--scene-dark); color: var(--scene-light); }
-.home-index-row:nth-child(2n) small, .home-index-row:nth-child(2n) > span { color: var(--scene-muted); }
-.home-index-row strong { font-size: 1.8rem; font-weight: 780; }
-.home-index-row > span:first-child { display: none; }
-.home-index-row > span:last-child { align-self: end; margin-top: auto; }
-.home-promise { padding-block: 72px; }
-.home-promise > h2 { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 750; }
-.home-promise-grid { gap: 24px; }
-.home-promise-grid article { border-right: 0; }
-.event-detail-hero { gap: 36px; padding-top: 24px; align-items: center; }
-.event-detail-media { border-radius: var(--radius-panel); overflow: hidden; }
-.event-detail-heading h1 { font-weight: 780; font-size: clamp(2.2rem, 4.7vw, 4.7rem); line-height: 1.04; }
-.event-detail-actions .event-booking-action { background: var(--scene-pop); color: var(--scene-pop-ink); border: 0; }
-.event-detail-section h2, .movie-detail-section h2 { font-weight: 760; }
-.event-experience-item { padding: 24px; background: var(--portal-raised); border-radius: var(--radius-panel); border: 0; }
-.event-detail-venue { padding: 32px; background: var(--portal-surface); border: 0; border-radius: var(--radius-panel); }
-.movies-command { padding-block: 40px 24px; }
-.movies-command h1, .saved-masthead h1 { font-size: clamp(3rem, 6vw, 5.8rem); font-weight: 800; letter-spacing: -.06em; }
-.movie-search-panel { border: 0; border-top: 4px solid var(--scene-pop); box-shadow: none; background: var(--portal-raised); }
-.movie-preview-grid, .movie-preview-skeletons { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-.movie-preview-card, .movie-preview-card[data-layout="feature"] { grid-column: auto; border: 0; box-shadow: none; background: var(--portal-raised); }
-.movie-preview-card > a, .movie-preview-card[data-layout="feature"] > a { display: flex; flex-direction: column; height: 100%; }
-.movie-preview-card .movie-preview-poster, .movie-preview-card[data-layout="feature"] .movie-preview-poster { aspect-ratio: 2 / 3; min-height: 0; width: 100%; }
-.movie-preview-card .movie-preview-body, .movie-preview-card[data-layout="feature"] .movie-preview-body { padding: 20px; }
-.movie-preview-card .movie-preview-body h3, .movie-preview-card[data-layout="feature"] .movie-preview-body h3 { font-size: 1.4rem; line-height: 1.15; font-weight: 780; }
-.movie-preview-body > p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.movie-preview-body > strong { min-height: 44px; }
-.cinema-directory > header, .movie-preview-section > header { display: block; }
-.cinema-directory > header > p:last-child { margin-top: 12px; }
-.cinema-directory-list > li { border: 0; background: var(--portal-raised); padding: 24px; box-shadow: inset 0 4px var(--portal-brand); }
-.cinema-directory-identity { align-items: center; }
-.cinema-directory h2, .movie-preview-section > header h2 { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 780; }
-.movie-detail-summary h1 { font-size: clamp(2.5rem, 4.8vw, 4.5rem); font-weight: 780; }
-.movie-detail-poster { box-shadow: 12px 12px 0 var(--portal-brand-soft); }
-.saved-masthead { padding-block: 40px 28px; }
-.saved-editorial-empty { border-radius: var(--radius-panel); background: var(--portal-surface); margin-bottom: 40px; }
-.recommendations-page { min-height: 100dvh; }
-.recommendations-hero { padding-block: 48px; }
-.recommendations-hero h1 { font-weight: 800; }
-.recommendations-hero aside { border: 0; border-left: 4px solid var(--scene-pop); border-radius: var(--radius-control); }
-.recommendation-section > header { display: block; }
-.recommendation-section > header > span { display: block; margin-top: 12px; max-width: 60ch; }
-.recommendation-card-shell { box-shadow: none; }
-.portal-footer { padding-block: 32px; }
-
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .portal-event-card, .movie-preview-card, .cinema-directory-list > li { transition: transform 240ms cubic-bezier(.2,.7,.2,1); }
-  .portal-event-card:hover, .movie-preview-card:hover, .cinema-directory-list > li:hover { transform: translateY(-5px); }
-  .portal-event-media img, .home-feature-media img, .movie-preview-poster img { transition: transform 450ms cubic-bezier(.2,.7,.2,1); }
-  .portal-event-card:hover .portal-event-media img, .home-feature:hover img, .movie-preview-card:hover img { transform: scale(1.045); }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .portal-command-copy, .home-hero-copy { animation: scene-enter 550ms cubic-bezier(.2,.7,.2,1) both; }
-  .events-page .home-feature { animation: scene-enter 650ms 90ms cubic-bezier(.2,.7,.2,1) both; }
-}
-@keyframes scene-enter { from { opacity: .3; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-
-@media (max-width: 1023px) {
-  .events-page .portal-command-inner { gap: 24px; }
-  .events-page .portal-command h1 { font-size: 3.7rem; }
-  .events-page .portal-navigation-shell { grid-template-columns: minmax(0, 1fr); }
-  .events-page .event-window-group { grid-row: 2; grid-column: 1; }
-  .events-page .event-category-group { grid-row: 3; }
-  .events-page .event-category-grid, .event-category-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .event-lead-story { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .event-lead-story > li:first-child { grid-column: 1 / -1; }
-  .event-lead-story > li:first-child .portal-event-media { aspect-ratio: 2 / 1; }
-  .movie-preview-grid, .movie-preview-skeletons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .home-index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  .discovery-skeleton-rows { grid-template-columns: 1fr; }
+  .discovery-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .discovery-stacks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .discovery-feed { grid-template-columns: 1fr; }
 }
 @media (max-width: 639px) {
-  .portal-header { min-height: 68px; gap: 8px; }
-  .portal-header { flex-wrap: nowrap; }
-  .portal-brand { flex: 0 0 40px; min-width: 40px; }
-  .portal-header-actions { width: auto; min-width: 0; flex: 1; border-top: 0; }
-  .portal-header-link, .language-toggle { padding-inline: 5px; font-size: .74rem; white-space: nowrap; }
-  .language-toggle { flex-shrink: 0; }
-  .portal-brand-wordmark { display: none; }
-  .portal-brand-symbol { display: block; width: 38px; }
-  .events-page .portal-command-inner { width: calc(100% - 32px); grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 28px 0 20px; }
-  .events-page .portal-command-copy { padding: 0; }
-  .events-page .portal-command h1 { max-width: 14ch; font-size: 2.85rem; line-height: 1; margin-block: 14px; }
-  :lang(zh) .events-page .portal-command h1 { font-size: 2.6rem; }
-  .events-page .portal-intro { font-size: .95rem; max-width: 36ch; }
-  .events-page .home-feature { grid-column: 1; grid-row: 3; }
-  .events-page .home-feature > a { min-height: 270px; }
-  .events-page .home-feature-loading, .events-page .home-feature-message { min-height: 270px; }
-  .events-page .event-discovery-controls { grid-row: 2; }
-  .events-page .event-search-panel { padding: 16px; }
-  .events-page .event-search-form, .events-page .event-search-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .events-page .event-search-actions { margin-top: 0; }
-  .events-page .event-control-meta { margin-top: 10px; }
-  .events-page .portal-navigation-shell { width: calc(100% - 32px); gap: 16px; padding-block: 28px 16px; }
-  .events-page .event-category-grid, .event-category-grid {
-    display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 160px;
-    overflow-x: auto; padding: 4px 4px 14px; margin-inline: -4px; gap: 10px;
-    scroll-snap-type: inline mandatory; scroll-padding-inline: 4px;
-  }
-  .events-page .event-category-card, .event-category-card,
-  .event-category-card[aria-current="page"] { width: 100%; min-width: 0; min-height: 170px; padding: 16px; scroll-snap-align: start; }
-  .portal-nav-track { flex-wrap: wrap; overflow: visible; }
-  .portal-nav-link { padding-inline: 12px; font-size: .75rem; }
-  .event-lead-story, .event-date-list { grid-template-columns: minmax(0, 1fr); }
-  .event-lead-story > li:first-child { grid-column: auto; }
-  .event-lead-story > li:first-child .portal-event-media { aspect-ratio: 16 / 10; }
-  .event-date-marker { display: flex; align-items: center; gap: 10px; padding: 14px; }
-  .event-date-marker strong { font-size: 2rem; }
-  .event-discovery-view, .event-results-view { gap: 40px; }
-  .event-discovery-section h2 { font-size: 2rem; }
-  .home-hero { grid-template-columns: 1fr; padding-block: 32px; }
-  .home-hero-copy h1 { font-size: 3.2rem; }
-  .home-hero .home-feature { transform: none; }
-  .home-hero .home-feature > a { min-height: 340px; }
-  .home-index-row { padding: 16px; min-height: 180px; }
-  .home-index-row strong { font-size: 1.45rem; }
-  .home-promise-grid { grid-template-columns: 1fr; gap: 0; }
-  .home-promise-grid article + article { padding-left: 0; }
-  .event-detail-hero { grid-template-columns: 1fr; gap: 24px; }
-  .event-detail-heading { grid-column: 1; grid-row: 2; }
-  .event-detail-media { grid-column: 1; grid-row: 1; }
-  .event-detail-venue { grid-template-columns: 1fr; padding: 20px; }
-  .event-experience-item { padding: 20px; }
-  .movie-preview-grid, .movie-preview-skeletons { gap: 12px; }
-  .movie-preview-card .movie-preview-body, .movie-preview-card[data-layout="feature"] .movie-preview-body { padding: 12px; }
-  .movie-preview-card .movie-preview-body h3, .movie-preview-card[data-layout="feature"] .movie-preview-body h3 { font-size: 1.05rem; }
-  .movie-preview-body > p { display: none; }
-  .movie-preview-meta { flex-wrap: wrap; }
-  .movies-command h1, .saved-masthead h1 { font-size: 2.8rem; }
-  .cinema-directory-list { grid-template-columns: 1fr; }
-  .movie-detail-summary h1 { font-size: 2.5rem; }
+  .discovery-skeleton-chips { grid-template-columns: repeat(3, 1fr); }
+  .discovery-skeleton-feature { width: 100%; aspect-ratio: 4/3; }
+  body { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .portal-header { min-height: 66px; display: flex; flex-wrap: nowrap; }
+  .portal-brand-wordmark { display: block; width: 144px; height: auto; }
+  .portal-brand-symbol { display: none; }
+  .portal-header-actions { width: auto; margin: 0; gap: 0; }
+  .portal-primary-nav { display: none; }
+  .portal-command-inner { padding: 22px 0 4px; }
+  .events-page .portal-command h1 { font-size: 1.65rem; }
+  .portal-command .portal-intro { font-size: .95rem; margin-top: 8px; }
+  .discovery-search { margin-top: 0; }
+  .discovery-search > summary { font-size: .82rem; min-height: 44px; }
+  .event-feed { padding-top: 4px; }
+  .discovery-chips { gap: 8px; margin-bottom: 18px; }
+  .discovery-chips button { font-size: .75rem; padding: 8px 4px; gap: 5px; }
+  .discovery-chips svg { width: 18px; height: 18px; }
+  .discovery-feature > a { aspect-ratio: 4/3; }
+  .discovery-feature-caption { inset: auto 0 0; padding: 16px; }
+  .discovery-feature-caption h2 { font-size: 1.4rem; }
+  .discovery-feature-caption p { font-size: .8rem; }
+  .discovery-stacks { grid-template-columns: 1fr; gap: 24px; margin-top: 26px; }
+  .event-stack { aspect-ratio: 4/3; }
+  .discovery-feed { gap: 12px; }
+  .portal-event-card[data-layout="row"] .portal-event-media { min-height: 154px; }
+  .portal-event-card[data-layout="row"] .portal-event-body { padding: 12px 34px 12px 12px; }
+  .portal-event-card[data-layout="row"] h2 { font-size: 1rem; }
+  .portal-event-card[data-layout="row"] .bookmark-button { right: 0; top: 0; }
+  .event-date-group { display: block; }
+  .event-date-marker { display: flex; gap: 8px; align-items: baseline; margin-bottom: 12px; }
+  .event-date-marker strong { font-size: 1.1rem; }
+  .event-detail-shell { padding-top: 8px; gap: 24px; }
+  .event-detail-media { height: 40dvh; max-height: 400px; aspect-ratio: auto; }
+  .event-detail-heading { padding: 22px 16px; }
+  .event-detail-heading h1 { font-size: 1.8rem; }
+  .event-detail-facts { grid-template-columns: 1fr; }
+  .event-detail-section { display: block; padding: 24px 0; }
+  .event-detail-section h2 { font-size: 1.3rem; margin-bottom: 12px; }
+  .discovery-bottom-nav { position: fixed; z-index: 40; bottom: 0; inset-inline: 0; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--portal-raised); border-top: 1px solid var(--portal-line); padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); }
+  .discovery-bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; color: var(--portal-muted); font-size: .7rem; text-decoration: none; }
+  .discovery-bottom-nav a[aria-current="page"] { color: var(--portal-brand); font-weight: 700; }
+  :focus-visible { scroll-margin-block: 100px; }
 }
-@media (prefers-color-scheme: dark) {
-  .portal-brand-wordmark { filter: brightness(0) invert(1); }
-  .portal-brand-symbol { filter: brightness(0) invert(1); }
-  .event-search-submit, .movie-search-submit, .cinema-tools button { color: var(--portal-white); }
-  .events-page .event-search-submit { color: var(--scene-pop-ink); }
-  .cinema-brand-mark { background: var(--scene-light); }
-  .home-feature-image-fallback { color: var(--scene-muted); }
+@media (prefers-reduced-motion: reduce) {
+  .event-stack, .discovery-chips button, .portal-event-card { transition: none; }
 }

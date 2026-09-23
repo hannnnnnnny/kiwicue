@@ -11,7 +11,7 @@ describe("Next.js application shell", () => {
     expect(existsSync(pagePath)).toBe(true);
 
     const pageSource = readFileSync(pagePath, "utf8");
-    expect(pageSource).toContain("HomeContent");
+    expect(pageSource).toContain("EventsPageContent");
     expect(pageSource).not.toContain("permanentRedirect");
   });
 

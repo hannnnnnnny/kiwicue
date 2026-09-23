@@ -23,6 +23,7 @@ import { EventMap } from "./event-map";
 import { EventExperienceGuide } from "./event-experience-guide";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
+import { EventShareButton } from "./event-share-button";
 
 type DetailState =
   | { status: "loading" }
@@ -252,6 +253,7 @@ export function EventDetailContent({
       <div className="event-detail-primary">
         <Link className="event-detail-back" href="/events">← {content.back}</Link>
         <div className="event-detail-hero">
+          <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
           <header className="event-detail-heading">
             <p className="eyebrow">{content.eyebrow}</p>
             <h1 className="editorial-display" id="event-detail-title">{displayName}</h1>
@@ -279,9 +281,9 @@ export function EventDetailContent({
                 {bookingLabel}<span aria-hidden="true"> ↗</span>
               </a>
               <BookmarkButton event={event} language={language} placement="detail" />
+              <EventShareButton title={displayName} language={language} />
             </div>
           </header>
-          <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
         </div>
 
         <section className="event-detail-section" aria-labelledby="booking-title">
