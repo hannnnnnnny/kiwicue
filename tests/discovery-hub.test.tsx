@@ -26,7 +26,7 @@ describe("mobile discovery interactions", () => {
     const getCurrentPosition = vi.fn();
     vi.stubGlobal("navigator", { geolocation: { getCurrentPosition } });
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Nearby", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
     expect(getCurrentPosition).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Sort by my distance" }));
     expect(getCurrentPosition).toHaveBeenCalledOnce();
@@ -34,7 +34,7 @@ describe("mobile discovery interactions", () => {
   });
   it("keeps Auckland venues accessible when permission is denied", () => {
     vi.stubGlobal("navigator", { geolocation: { getCurrentPosition: (_success: unknown, fail: () => void) => fail() } });
-    mount(); fireEvent.click(screen.getByRole("button", { name: "Nearby", exact: true }));
+    mount(); fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
     fireEvent.click(screen.getByRole("button", { name: "Sort by my distance" }));
     expect(screen.getByRole("status")).toHaveTextContent("Location unavailable");
     expect(document.querySelectorAll(".discovery-feed article")).toHaveLength(3);

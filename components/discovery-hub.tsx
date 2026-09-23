@@ -56,7 +56,10 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
   const feature = available.find(event => event.id === surpriseId) ?? available.find(event => event.imageUrl || event.editorialPreview?.image) ?? available[0];
 
   useEffect(() => {
-    if (collection !== "all") resultHeading.current?.focus({ preventScroll: true });
+    if (collection !== "all") {
+      resultHeading.current?.focus({ preventScroll: true });
+      resultHeading.current?.scrollIntoView?.({ block: "start" });
+    }
   }, [collection]);
 
   function open(next: DiscoveryCollection) {
@@ -83,7 +86,7 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
   ] as const;
   return <div className="discovery-hub">
     <nav className="discovery-chips" aria-label={language === "zh" ? "快捷发现" : "Quick discovery"}>
-      {chips.map(chip => <button key={chip.id} data-tone={chip.id} aria-pressed={collection === chip.id} onClick={() => open(chip.id)}><DiscoveryIcon name={chip.icon} />{chip.id === "nearby" ? language === "zh" ? "附近" : "Nearby" : content[chip.id]}</button>)}
+      {chips.map(chip => <button key={chip.id} data-tone={chip.id} aria-pressed={collection === chip.id} onClick={() => open(chip.id)}><DiscoveryIcon name={chip.icon} />{chip.id === "nearby" ? language === "zh" ? "地图" : "Map" : content[chip.id]}</button>)}
       <button data-tone="surprise" onClick={surprise} disabled={available.length < 2}><DiscoveryIcon name="dice" />{content.surprise}</button>
     </nav>
     {collection === "all" ? <>

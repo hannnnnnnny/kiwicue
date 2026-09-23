@@ -30,7 +30,7 @@ it("synchronizes collection, history hash, and mobile active navigation", () => 
   expect(screen.getByRole("heading", { name: "Around Auckland" })).toBeVisible();
 });
 it("lets users inspect another event venue without requesting their location", () => {
-  mount(); fireEvent.click(screen.getByRole("button", { name: "Nearby", exact: true }));
+  mount(); fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
   expect(screen.getByTitle("Map of Venue 1")).toBeInTheDocument();
   fireEvent.change(screen.getByRole("combobox", { name: "Choose an event on the map" }), { target: { value: "2" } });
   expect(screen.getByTitle("Map of Venue 2")).toBeInTheDocument();
