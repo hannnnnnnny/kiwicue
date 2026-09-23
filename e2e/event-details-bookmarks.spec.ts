@@ -1,5 +1,13 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
+function savedNav(page: Page, count: number, language: "en" | "zh" = "en") {
+  if ((page.viewportSize()?.width ?? 0) < 640) {
+    const label = language === "zh" ? `收藏${count ? ` · ${count}` : ""}` : `Saved${count ? ` · ${count}` : ""}`;
+    return page.locator(".discovery-bottom-nav").getByRole("link", { name: label });
+  }
+  return page.getByRole("link", { name: language === "zh" ? `收藏活动，${count} 个` : `Saved events, ${count}` });
+}
+
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-08-29T00:00:00+12:00"));
 });
@@ -125,7 +133,7 @@ test("detail keeps booking, map, distance, and a persistent bookmark in one safe
   expect(await page.evaluate(() => (window as Window & { __locationCalls?: number }).__locationCalls)).toBe(1);
 
   await page.getByRole("button", { name: `Save ${event.name}` }).click();
-  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await expect(savedNav(page, 1)).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button", { name: `Remove ${event.name} from saved events` })).toBeVisible();
 
@@ -242,7 +250,7 @@ test("saved events invalidate stale clear confirmation and support a complete Ch
   await page.goto("/saved");
   await expect(page.getByText("2 saved events", { exact: true })).toBeVisible();
   await expectMinimumTouchTarget(page, [
-    ".saved-link",
+    (page.viewportSize()?.width ?? 0) < 640 ? '.discovery-bottom-nav a[href="/saved"]' : ".saved-link",
     ".language-toggle",
     ".saved-toolbar button",
     ".bookmark-button-card",
@@ -251,7 +259,7 @@ test("saved events invalidate stale clear confirmation and support a complete Ch
   await expect(page.getByRole("button", { name: "Confirm clearing all saved events" })).toBeVisible();
   await page.getByRole("button", { name: `Remove ${event.name} from saved events` }).click();
   await expect(page.getByRole("button", { name: "Clear all saved events" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+  await expect(savedNav(page, 1)).toBeVisible();
 
   await page.getByRole("button", { name: "切换到中文" }).click();
   await expect(page.getByRole("heading", { name: "我收藏的活动" })).toBeVisible();
@@ -259,7 +267,7 @@ test("saved events invalidate stale clear confirmation and support a complete Ch
   await expect(page.getByRole("heading", { name: secondEvent.name })).toBeVisible();
   await page.getByRole("button", { name: "确认清空全部收藏" }).click();
   await expect(page.getByRole("heading", { name: "还没有收藏活动" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "收藏活动，0 个" })).toBeVisible();
+  await expect(savedNav(page, 0, "zh")).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("kiwicue:bookmarks:v1"))).toBeNull();
   await expectMinimumTouchTarget(page, [".portal-empty-action"]);
   await expectNoHorizontalOverflow(page);
