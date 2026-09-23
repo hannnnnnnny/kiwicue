@@ -752,7 +752,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   await page.getByRole("button", { name: "Search events" }).click();
   await expect(page).toHaveURL(/category=markets&q=Grey&venue=kc-venue-grey-lynn$/);
   await expect(page.getByRole("heading", { name: "Grey Lynn Farmers Market" })).toBeVisible();
-  await expect(page.locator(".portal-event-card").getByText("Schedule verified")).toBeVisible();
+  await expect(page.locator(".portal-event-card").getByText("Expected schedule")).toBeVisible();
   await expect(page.getByText("AKL", { exact: true })).toHaveCount(0);
   await expect(page.locator('img[src="https://images.example/grey-lynn.gif"]')).toBeVisible();
   await expectNoHorizontalOverflow(page);
