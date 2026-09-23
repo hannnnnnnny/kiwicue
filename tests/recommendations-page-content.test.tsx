@@ -55,7 +55,7 @@ describe("RecommendationsPageContent", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Building your Auckland shortlist");
 
     expect(await screen.findByRole("heading", { name: "Start here" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Picks" })).toHaveAttribute("aria-current", "page");
+    expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Picks" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "This weekend" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Try something different" })).toBeInTheDocument();
     expect(screen.getByText("Matches what you save")).toBeInTheDocument();
