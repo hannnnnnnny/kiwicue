@@ -15,14 +15,19 @@ describe("Next.js application shell", () => {
     expect(pageSource).not.toContain("permanentRedirect");
   });
 
-  it("documents server-only API credentials without public prefixes", () => {
+  it("documents public Supabase configuration and server-only secrets separately", () => {
     const envExample = readFileSync(resolve(projectRoot, ".env.example"), "utf8");
 
     expect(envExample.trimEnd().split(/\r?\n/)).toEqual([
       "TICKETMASTER_API_KEY=",
       "TMDB_READ_ACCESS_TOKEN=",
       "OPEN_CINEMA_API_KEY=",
+      "NEXT_PUBLIC_SUPABASE_URL=",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=",
+      "SUPABASE_SERVICE_ROLE_KEY=",
+      "SUPABASE_SECRET_KEY=",
     ]);
-    expect(envExample).not.toContain("NEXT_PUBLIC_");
+    expect(envExample).not.toContain("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY");
+    expect(envExample).not.toContain("NEXT_PUBLIC_SUPABASE_SECRET_KEY");
   });
 });

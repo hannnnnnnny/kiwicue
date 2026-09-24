@@ -24,13 +24,13 @@ it("synchronizes collection, history hash, and mobile active navigation", () => 
   expect(navigation.getByRole("link", { name: "Discover" })).toHaveAttribute("aria-current", "page");
   fireEvent.click(navigation.getByRole("link", { name: "Map" }));
   expect(screen.getByRole("heading", { name: "Around Auckland" })).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Tonight", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: /^Tonight$/ }));
   expect(window.location.hash).toBe("#tonight");
   act(() => { window.history.replaceState(null, "", "/events#map"); window.dispatchEvent(new PopStateEvent("popstate")); });
   expect(screen.getByRole("heading", { name: "Around Auckland" })).toBeVisible();
 });
 it("lets users inspect another event venue without requesting their location", () => {
-  mount(); fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
+  mount(); fireEvent.click(screen.getByRole("button", { name: /^Map$/ }));
   expect(screen.getByTitle("Map of Venue 1")).toBeInTheDocument();
   fireEvent.change(screen.getByRole("combobox", { name: "Choose an event on the map" }), { target: { value: "2" } });
   expect(screen.getByTitle("Map of Venue 2")).toBeInTheDocument();

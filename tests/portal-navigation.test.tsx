@@ -174,7 +174,7 @@ describe("portal navigation", () => {
     );
 
     const links = screen.getByRole("navigation", { name: "Primary navigation" }).querySelectorAll("a");
-    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Events", "Picks", "Movies", "Saved"]);
+    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Events", "Picks", "For You", "Movies", "Saved"]);
     expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("Skip to movie sessions")).toHaveAttribute("href", "#movie-results");
   });
@@ -239,7 +239,7 @@ describe("portal navigation", () => {
   it("gives every portal navigation target a real destination", () => {
     renderPortalControls();
     for (const link of screen.getAllByRole("link")) {
-      expect(link.getAttribute("href")).toMatch(/^(?:\/$|\/(?:events|movies|recommendations|saved)(?:\?|#map$|$)|#event-results$)/);
+      expect(link.getAttribute("href")).toMatch(/^(?:\/$|\/(?:events|movies|recommendations|for-you|saved)(?:\?|#map$|$)|#event-results$)/);
       expect(link.getAttribute("href")).not.toBe("#");
     }
   });

@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { supabaseConnectOrigin } from "./lib/supabase/config";
+
+const supabaseOrigin = supabaseConnectOrigin(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -6,7 +9,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
   "frame-src https://www.youtube-nocookie.com https://www.openstreetmap.org",
   "media-src 'self'",
   "worker-src 'self' blob:",

@@ -256,6 +256,10 @@ function parseEvent(value: unknown): KiwiCueEvent | null {
   };
 }
 
+export function parseEventSnapshot(value: unknown): KiwiCueEvent | null {
+  return parseEvent(value);
+}
+
 function parseBookmark(value: unknown): EventBookmark | null {
   if (!isRecord(value) || !validIsoDate(value.savedAt)) return null;
   const event = parseEvent(value.event);

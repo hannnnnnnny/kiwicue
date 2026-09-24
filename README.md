@@ -23,7 +23,9 @@ KiwiCue is a bilingual Auckland event and movie discovery platform. It brings co
 - Find verified Auckland cinema sessions and recent movie releases
 - Keep live screening data separate from movie-release previews
 - Sort cinemas by distance using optional browser geolocation
-- Save events locally without creating an account
+- Save events locally as a guest; opt into an account for cross-device syncing, collections and social features
+- Mark activities as Interested, Going or Went, and discuss them with one-level replies
+- Choose interests for explainable, deterministic For You recommendations
 - Switch between English and Simplified Chinese
 - Use the site across desktop and mobile layouts
 
@@ -37,7 +39,7 @@ KiwiCue is designed to reduce that friction:
 2. **One Auckland view** — different event categories and movie information share one consistent interface.
 3. **Clear source links** — final details and booking remain with the official provider.
 4. **Honest data states** — verified sessions, release previews, empty results and unavailable sources are clearly distinguished.
-5. **Privacy by default** — bookmarks and optional location data remain in the browser.
+5. **Privacy by default** — guest bookmarks and optional location data remain in the browser. Account data is private unless sharing is explicitly enabled.
 
 ## Data Sources
 
@@ -62,8 +64,10 @@ flowchart LR
     D --> E[Validation and normalisation]
     E --> F[Events and movie UI]
     F --> G[Official booking source]
-    F --> H[Browser bookmarks]
-    H --> I[Local recommendation preferences]
+    F --> H[Guest browser bookmarks]
+    H --> I[Recommendation preferences]
+    F --> J[Optional Supabase account]
+    J --> I
     E --> I
 ```
 
@@ -77,7 +81,12 @@ flowchart LR
 | `/recommendations` | Explainable event picks using timing, detail quality and browser-local saved preferences |
 | `/movies` | Live sessions, movie previews and Auckland cinema directory |
 | `/movies/[movieId]` | Movie details, ratings, metadata and trailers |
-| `/saved` | Events stored in the current browser |
+| `/saved` | Guest browser saves or private, account-synced saves |
+| `/for-you` | Explainable recommendations from real events and chosen interests |
+| `/collections` | Private-by-default event collections |
+| `/account` | Profile, interests, privacy, notification and deletion settings |
+| `/notifications` | Private in-app updates |
+| `/u/[username]` | Opt-in public profile and collections |
 
 ### Tech Stack
 
@@ -88,6 +97,7 @@ flowchart LR
 - Vitest, Testing Library and jsdom
 - Playwright end-to-end testing
 - Vercel deployment
+- Optional Supabase Auth, PostgreSQL and RLS for account features
 
 ## Development
 
@@ -108,7 +118,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Add the server-side credentials to `.env.local`:
+Add the event/movie server-side credentials to `.env.local`:
 
 ```env
 TICKETMASTER_API_KEY=your_ticketmaster_consumer_key
@@ -126,6 +136,22 @@ Open [http://localhost:3000](http://localhost:3000).
 
 > [!IMPORTANT]
 > Never prefix these credentials with `NEXT_PUBLIC_`, commit `.env.local`, include secret values in command arguments, or expose them in logs.
+
+### Optional accounts and social features
+
+Anonymous discovery and local Saved work without Supabase. To enable accounts, create a Supabase project and apply every file in `supabase/migrations/` in filename order. Set these variables locally and in Vercel:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+SUPABASE_SECRET_KEY=your_server_only_secret_key
+```
+
+The URL and publishable key are intended for browser clients. The secret key is used only by the account-deletion route and must never have a `NEXT_PUBLIC_` prefix. The legacy `SUPABASE_SERVICE_ROLE_KEY` remains supported as a fallback, but new installations should use `SUPABASE_SECRET_KEY`. Configure Supabase Auth Site URL and redirect allowlist for your local origin and production `/auth/callback` URL. Email/password sign-up, recovery and account deletion require working Auth email delivery and correctly applied migrations. Do not enable account UI in production before RLS policies and deletion have been checked with two separate test users.
+
+Profiles, saved events, interests, comments and notifications are stored in Supabase for signed-in users. Guest bookmarks remain browser-local and are merged on login only after server confirmation. Profiles and collections start private. Behavioural activity is off by default and can be enabled in Account settings; turning it off deletes existing activity records. Search text, credentials and precise browser location are not stored in that activity table.
+
+The checked-in tests validate component and request logic, but they do not replace a live Supabase signup → login → sync → RLS → deletion test. No Supabase credentials are included in this repository.
 
 ## Testing
 
@@ -163,7 +189,7 @@ kiwicue/
 
 ## Deployment
 
-KiwiCue is deployed from this repository to Vercel. Configure `TICKETMASTER_API_KEY`, `TMDB_READ_ACCESS_TOKEN`, and `OPEN_CINEMA_API_KEY` as Sensitive production environment variables before deploying.
+KiwiCue is deployed from this repository to Vercel. Configure `TICKETMASTER_API_KEY`, `TMDB_READ_ACCESS_TOKEN`, and `OPEN_CINEMA_API_KEY` as Sensitive production environment variables before deploying. If enabling accounts, also configure the Supabase variables above and apply migrations first.
 
 ```bash
 vercel link --yes --project kiwicue

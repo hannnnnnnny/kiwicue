@@ -24,6 +24,10 @@ import { EventExperienceGuide } from "./event-experience-guide";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
 import { EventShareButton } from "./event-share-button";
+import { EventIntent } from "./event-intent";
+import { SaveToCollection } from "./save-to-collection";
+import { EventDiscussion } from "./event-discussion";
+import { EventSocialProof } from "./event-social-proof";
 
 type DetailState =
   | { status: "loading" }
@@ -283,6 +287,9 @@ export function EventDetailContent({
               <BookmarkButton event={event} language={language} placement="detail" />
               <EventShareButton title={displayName} language={language} />
             </div>
+            <EventIntent event={event} />
+            <EventSocialProof eventId={event.id} language={language} />
+            <SaveToCollection event={event} />
           </header>
         </div>
 
@@ -325,6 +332,7 @@ export function EventDetailContent({
             </ol>
           </section>
         )}
+        <EventDiscussion eventId={event.id} />
       </div>
 
       <aside className="event-detail-venue" aria-labelledby="venue-title">
