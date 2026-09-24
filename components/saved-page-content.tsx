@@ -9,6 +9,7 @@ import { requestEventDetailFromApi } from "./event-detail-content";
 import { EventGridSkeleton } from "./event-grid-skeleton";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
+import { useAuth } from "./auth-provider";
 
 type RefreshState = {
   key: string;
@@ -21,6 +22,7 @@ const copy = {
     eyebrow: "Your Auckland shortlist",
     title: "Saved events",
     intro: "Keep the useful ones together on this device—no account needed.",
+    cloudIntro: "Your saved events sync to your KiwiCue account.",
     count: (count: number) => `${count} saved ${count === 1 ? "event" : "events"}`,
     clear: "Clear all saved events",
     confirmClear: "Confirm clearing all saved events",
@@ -33,12 +35,15 @@ const copy = {
     browse: "Browse Auckland events",
     loading: "Loading saved events",
     privacy: "Saved events stay in this browser. KiwiCue does not receive your shortlist.",
+    cloudPrivacy: "Your saved events are private unless you choose to share them in Account settings.",
+    cloudError: "Cloud sync is temporarily unavailable. Your saved list may be out of date; please retry later.",
     footer: "A shorter list for quicker decisions.",
   },
   zh: {
     eyebrow: "你的奥克兰活动清单",
     title: "我收藏的活动",
     intro: "把真正想去的活动留在这台设备，无需注册账号。",
+    cloudIntro: "收藏活动会同步到你的 KiwiCue 账号。",
     count: (count: number) => `已收藏 ${count} 个活动`,
     clear: "清空全部收藏",
     confirmClear: "确认清空全部收藏",
@@ -51,6 +56,8 @@ const copy = {
     browse: "浏览奥克兰活动",
     loading: "正在加载收藏活动",
     privacy: "收藏只保存在这个浏览器里，KiwiCue 不会收到你的清单。",
+    cloudPrivacy: "收藏默认私密，只有你在账号设置中选择公开时才会分享。",
+    cloudError: "云端同步暂时不可用，清单可能不是最新的，请稍后重试。",
     footer: "清单更短，决定更快。",
   },
 } as const;
@@ -61,6 +68,7 @@ export function SavedPageContent({
   requestEventDetail?: (eventId: string) => Promise<KiwiCueEventDetail>;
 }) {
   const { language } = useLanguage();
+  const { user, enabled } = useAuth();
   const {
     bookmarks,
     clearBookmarks,
@@ -68,6 +76,7 @@ export function SavedPageContent({
     storageError,
   } = useBookmarks();
   const content = copy[language];
+  const usesCloud = enabled && Boolean(user);
   const requestKey = bookmarks.map((bookmark) => `${bookmark.event.id}:${bookmark.savedAt}`).join("|");
   const [clearConfirmationKey, setClearConfirmationKey] = useState<string | null>(null);
   const clearArmed = clearConfirmationKey === requestKey;
@@ -102,7 +111,7 @@ export function SavedPageContent({
       <section className="saved-masthead">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display">{content.title}</h1>
-        <p>{content.intro}</p>
+        <p>{usesCloud ? content.cloudIntro : content.intro}</p>
       </section>
 
       {!isHydrated ? (
@@ -115,7 +124,7 @@ export function SavedPageContent({
           <span className="state-code" aria-hidden="true">{content.emptyCode}</span>
           <h2>{content.emptyTitle}</h2>
           <p>{content.emptyBody}</p>
-          {storageError && <p className="saved-storage-error" role="alert">{content.storageError}</p>}
+          {storageError && <p className="saved-storage-error" role="alert">{usesCloud ? content.cloudError : content.storageError}</p>}
           <Link className="portal-empty-action" href="/events">{content.browse}</Link>
         </section>
       ) : (
@@ -133,7 +142,7 @@ export function SavedPageContent({
               {clearArmed ? content.confirmClear : content.clear}
             </button>
           </div>
-          {storageError && <p className="saved-storage-error" role="alert">{content.storageError}</p>}
+          {storageError && <p className="saved-storage-error" role="alert">{usesCloud ? content.cloudError : content.storageError}</p>}
           {!currentRefresh && <p className="saved-refresh-status" role="status">{content.refreshing(bookmarks.length)}</p>}
           {currentRefresh && currentRefresh.failures > 0 && (
             <p className="saved-refresh-warning" role="alert">{content.partial(currentRefresh.failures)}</p>
@@ -143,7 +152,7 @@ export function SavedPageContent({
               <li key={event.id}><EventCard event={event} index={index} language={language} /></li>
             ))}
           </ol>
-          <p className="saved-privacy">{content.privacy}</p>
+          <p className="saved-privacy">{usesCloud ? content.cloudPrivacy : content.privacy}</p>
         </section>
       )}
 
