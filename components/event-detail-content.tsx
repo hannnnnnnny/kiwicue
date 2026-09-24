@@ -27,6 +27,7 @@ import { EventShareButton } from "./event-share-button";
 import { EventIntent } from "./event-intent";
 import { SaveToCollection } from "./save-to-collection";
 import { EventDiscussion } from "./event-discussion";
+import { EventSocialProof } from "./event-social-proof";
 
 type DetailState =
   | { status: "loading" }
@@ -287,6 +288,7 @@ export function EventDetailContent({
               <EventShareButton title={displayName} language={language} />
             </div>
             <EventIntent event={event} />
+            <EventSocialProof eventId={event.id} language={language} />
             <SaveToCollection event={event} />
           </header>
         </div>

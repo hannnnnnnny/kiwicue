@@ -48,6 +48,7 @@
 .event-intent button { min-height: 44px; padding: 0 16px; border: 1px solid var(--portal-line); border-radius: var(--radius-pill); background: var(--portal-raised); color: var(--portal-ink); font: inherit; cursor: pointer; }
 .event-intent button[aria-pressed=true] { background: var(--portal-brand); border-color: var(--portal-brand); color: var(--portal-raised); }
 .event-intent-prompt { margin-top: 14px; font-size: 14px; }
+.event-social-proof { margin-top: 8px; color: var(--portal-muted); font-size: 14px; }
 .for-you-page { min-height: 100dvh; }
 .for-you-content { width: min(100% - 32px, 1320px); margin: 38px auto 80px; }
 .for-you-content h1 { margin: 8px 0; font-size: clamp(42px, 7vw, 72px); letter-spacing: -.055em; }
