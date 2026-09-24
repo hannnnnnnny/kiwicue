@@ -13,6 +13,9 @@
 .account-success { color: var(--portal-brand); }
 .account-links { display: grid; gap: 10px; margin-top: 22px; font-size: 14px; }
 .account-links a { color: var(--portal-brand); text-underline-offset: 3px; }
+.account-verification { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--portal-line); border-radius: var(--radius-panel); background: var(--portal-brand-soft); line-height: 1.6; }
+.account-verification p, .account-panel > p:not(.eyebrow) { margin: 0 0 14px; line-height: 1.65; }
+.account-verification button { padding: 0 20px; }
 .account-nav-login { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--portal-brand); font-weight: 700; text-decoration: none; }
 .account-nav-loading { display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--portal-brand-soft); }
 .account-nav-menu { position: relative; }
