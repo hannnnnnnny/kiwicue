@@ -22,6 +22,7 @@ describe("cross-device signup continuation", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
@@ -55,5 +56,19 @@ describe("cross-device signup continuation", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(15 * 60_000 + 20_000); });
     expect(screen.getByRole("alert")).toHaveTextContent("Verification wait expired");
     expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("keeps checking and completes when the desktop tab is in the background", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ pending: true }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ confirmed: true }) }));
+    signInWithPassword.mockResolvedValue({ error: null });
+    render(<AuthForm mode="signup" />);
+    await act(async () => fillSignup());
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(signInWithPassword).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith("/account");
   });
 });

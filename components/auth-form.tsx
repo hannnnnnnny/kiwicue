@@ -72,18 +72,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setSignupPhase("expired");
         return;
       }
-      if (document.visibilityState === "visible") {
-        try {
-          const response = await fetch("/api/auth/signup-status", { credentials: "same-origin", cache: "no-store" });
-          if (!active) return;
-          if (response.status === 401) { signupCredentials.current = null; setSignupPhase("expired"); return; }
-          if (response.ok && (await response.json() as { confirmed?: unknown }).confirmed === true) {
-            setSignupPhase("completing");
-            return;
-          }
-        } catch { /* A temporary network failure is retried before the deadline. */ }
-      }
-      if (active) timer = setTimeout(check, 5_000);
+      try {
+        const response = await fetch("/api/auth/signup-status", { credentials: "same-origin", cache: "no-store" });
+        if (!active) return;
+        if (response.status === 401) { signupCredentials.current = null; setSignupPhase("expired"); return; }
+        if (response.ok && (await response.json() as { confirmed?: unknown }).confirmed === true) {
+          setSignupPhase("completing");
+          return;
+        }
+      } catch { /* A temporary network failure is retried before the deadline. */ }
+      if (active) timer = setTimeout(check, document.visibilityState === "visible" ? 5_000 : 10_000);
     };
     timer = setTimeout(check, 3_000);
     return () => { active = false; clearTimeout(timer); };
