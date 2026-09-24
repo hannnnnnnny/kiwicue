@@ -1,0 +1,99 @@
+.account-page { min-height: 100dvh; background: var(--portal-bg); }
+.account-panel { width: min(100% - 32px, 520px); margin: clamp(36px, 8vw, 100px) auto; padding: clamp(24px, 4vw, 40px); background: var(--portal-raised); border: 1px solid var(--portal-line); border-radius: var(--radius-panel); }
+.account-panel h1 { margin: 8px 0 28px; font-size: clamp(32px, 5vw, 46px); letter-spacing: -.045em; }
+.account-panel form, .account-panel label { display: grid; gap: 9px; }
+.account-panel form { gap: 18px; }
+.account-panel label { font-size: 14px; font-weight: 650; }
+.account-panel input { min-height: 48px; width: 100%; padding: 10px 14px; border: 1px solid var(--portal-line); border-radius: var(--radius-control); color: var(--portal-ink); background: var(--portal-raised); }
+.account-panel button { min-height: 48px; border: 0; border-radius: var(--radius-control); background: var(--portal-brand); color: var(--portal-raised); font-weight: 700; cursor: pointer; }
+.account-panel button:disabled { opacity: .55; cursor: not-allowed; }
+.account-panel input:focus-visible, .account-panel button:focus-visible, .account-links a:focus-visible { outline: 3px solid var(--portal-focus); outline-offset: 2px; }
+.account-help { margin: -8px 0 0; color: var(--portal-muted); font-size: 13px; }
+.account-error { color: var(--portal-danger); }
+.account-success { color: var(--portal-brand); }
+.account-links { display: grid; gap: 10px; margin-top: 22px; font-size: 14px; }
+.account-links a { color: var(--portal-brand); text-underline-offset: 3px; }
+.account-nav-login { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--portal-brand); font-weight: 700; text-decoration: none; }
+.account-nav-loading { display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--portal-brand-soft); }
+.account-nav-menu { position: relative; }
+.account-nav-menu summary { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--portal-brand-soft); color: var(--portal-brand); font-weight: 800; cursor: pointer; list-style: none; }
+.account-nav-menu summary::-webkit-details-marker { display: none; }
+.account-unread { position: absolute; top: 1px; right: 1px; width: 9px; height: 9px; border-radius: var(--radius-pill); background: var(--portal-brand); }
+.account-nav-dropdown { position: absolute; z-index: 30; right: 0; top: 52px; display: grid; min-width: 190px; padding: 8px; border: 1px solid var(--portal-line); border-radius: var(--radius-control); background: var(--portal-raised); box-shadow: 0 12px 30px var(--portal-shadow-color); }
+.account-nav-dropdown a, .account-nav-dropdown button { display: flex; align-items: center; min-height: 44px; padding: 8px 12px; border: 0; border-radius: var(--radius-tag); background: none; color: var(--portal-ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.account-nav-dropdown a:hover, .account-nav-dropdown button:hover { background: var(--portal-brand-soft); }
+.account-nav-dropdown p { padding: 0 12px; color: var(--portal-danger); font-size: 13px; }
+.account-settings { width: min(100% - 32px, 760px); margin: 42px auto 80px; }
+.account-settings h1 { font-size: clamp(32px, 5vw, 48px); letter-spacing: -.04em; }
+.account-section { padding: 28px 0; border-top: 1px solid var(--portal-line); }
+.account-section h2 { margin: 0 0 18px; font-size: 24px; }
+.account-section form { display: grid; gap: 16px; }
+.account-section form label, .account-danger label { display: grid; gap: 6px; font-weight: 650; }
+.account-section input:not([type=checkbox]), .account-section textarea { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); color: var(--portal-ink); font: inherit; }
+.account-section textarea { min-height: 100px; resize: vertical; }
+.account-section form button, .account-danger button { width: fit-content; min-height: 44px; padding: 0 20px; border: 0; border-radius: var(--radius-tag); background: var(--portal-brand); color: var(--portal-raised); font-weight: 700; cursor: pointer; }
+.account-section button:disabled { opacity: .5; cursor: not-allowed; }
+.account-check { display: flex !important; align-items: center; gap: 10px; }
+.account-toggle-list { display: grid; gap: 4px; }
+.account-toggle-list label { display: flex; align-items: center; justify-content: space-between; min-height: 48px; gap: 16px; border-bottom: 1px solid var(--portal-line); }
+.account-toggle-list input { width: 22px; height: 22px; }
+.account-interest-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.account-interest-grid button { min-height: 44px; padding: 0 16px; border: 1px solid var(--portal-line); border-radius: var(--radius-pill); background: var(--portal-raised); cursor: pointer; }
+.account-interest-grid button[aria-pressed=true] { background: var(--portal-brand-soft); border-color: var(--portal-brand); color: var(--portal-brand); }
+.account-danger button { margin-top: 14px; background: var(--portal-danger); }
+.account-section :focus-visible { outline: 3px solid var(--portal-focus); outline-offset: 2px; }
+.event-intent { margin-top: 18px; }
+.event-intent > p { margin: 0 0 9px; font-size: 14px; font-weight: 700; }
+.event-intent > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.event-intent button { min-height: 44px; padding: 0 16px; border: 1px solid var(--portal-line); border-radius: var(--radius-pill); background: var(--portal-raised); color: var(--portal-ink); font: inherit; cursor: pointer; }
+.event-intent button[aria-pressed=true] { background: var(--portal-brand); border-color: var(--portal-brand); color: var(--portal-raised); }
+.event-intent-prompt { margin-top: 14px; font-size: 14px; }
+.for-you-page { min-height: 100dvh; }
+.for-you-content { width: min(100% - 32px, 1320px); margin: 38px auto 80px; }
+.for-you-content h1 { margin: 8px 0; font-size: clamp(42px, 7vw, 72px); letter-spacing: -.055em; }
+.for-you-content header > p:last-child { max-width: 650px; color: var(--portal-muted); }
+.for-you-hint { margin: 24px 0; padding: 18px; border-radius: var(--radius-control); background: var(--portal-brand-soft); }
+.for-you-reason { margin: 0 0 8px; color: var(--portal-brand); font-size: 13px; font-weight: 700; }
+.collection-list { display: grid; gap: 12px; padding: 0; list-style: none; }
+.collection-row { padding: 18px; border: 1px solid var(--portal-line); border-radius: var(--radius-control); background: var(--portal-raised); }
+.collection-row > div:first-child > a { color: var(--portal-ink); font-size: 20px; font-weight: 750; }
+.collection-row p { margin: 6px 0; }
+.collection-row small { color: var(--portal-muted); }
+.collection-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.collection-row-actions button, .collection-row-actions summary { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); color: var(--portal-ink); font: inherit; cursor: pointer; }
+.collection-row-actions details form { display: grid; gap: 8px; margin-top: 8px; }
+.collection-row-actions .destructive { border-color: var(--portal-danger); color: var(--portal-danger); }
+.collection-login { display: inline-flex; align-items: center; min-height: 44px; color: var(--portal-brand); font-weight: 700; }
+.event-collections { margin-top: 18px; }
+.event-collections h2 { margin: 0 0 10px; font-size: 16px; }
+.event-collection-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.event-collection-choices button { min-height: 44px; padding: 0 14px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); color: var(--portal-ink); font: inherit; cursor: pointer; }
+.event-collection-choices button[aria-pressed=true] { border-color: var(--portal-brand); background: var(--portal-brand-soft); color: var(--portal-brand); }
+.event-collections :focus-visible, .collection-login:focus-visible { outline: 3px solid var(--portal-focus); outline-offset: 2px; }
+.collection-event-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px; margin-top: 24px; }
+.collection-event-grid > div > button { min-height: 44px; margin-top: 8px; padding: 0 14px; border: 1px solid var(--portal-danger); border-radius: var(--radius-tag); background: var(--portal-raised); color: var(--portal-danger); cursor: pointer; }
+.public-profile header > button { min-height: 44px; padding: 0 20px; border: 1px solid var(--portal-brand); border-radius: var(--radius-tag); background: var(--portal-brand); color: var(--portal-raised); font: inherit; font-weight: 700; cursor: pointer; }
+.public-profile header > button[aria-pressed=true] { background: var(--portal-raised); color: var(--portal-brand); }
+.event-discussion { margin: 36px 0; padding-top: 28px; border-top: 1px solid var(--portal-line); }
+.event-discussion h2 { margin: 0 0 18px; font-size: clamp(24px, 4vw, 34px); }
+.comment-composer label, .comment-actions form label { display: grid; gap: 8px; font-weight: 700; }
+.comment-composer textarea, .comment-actions textarea, .comment-actions select { width: 100%; min-height: 90px; padding: 12px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); color: var(--portal-ink); font: inherit; }
+.comment-actions select { min-height: 44px; }
+.comment-composer > div, .comment-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.comment-composer button, .comment-actions button, .comment-pagination button { min-height: 44px; padding: 0 14px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); color: var(--portal-ink); font: inherit; cursor: pointer; }
+.comment-composer button[type=submit] { border-color: var(--portal-brand); background: var(--portal-brand); color: var(--portal-raised); }
+.comment-list, .comment-replies { padding: 0; list-style: none; }
+.comment-root { padding: 20px 0; border-top: 1px solid var(--portal-line); }
+.comment-reply { margin-left: 18px; padding: 14px 0 0 16px; border-left: 2px solid var(--portal-line); }
+.comment-byline { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 8px; font-weight: 700; }
+.comment-byline time { color: var(--portal-muted); font-size: 13px; font-weight: 400; }
+.comment-content { white-space: pre-wrap; overflow-wrap: anywhere; }
+.comment-actions > form, .comment-actions > .comment-composer { flex-basis: 100%; }
+.comment-pagination { display: flex; gap: 10px; }
+.event-discussion :focus-visible { outline: 3px solid var(--portal-focus); outline-offset: 2px; }
+.notification-list { display: grid; gap: 0; padding: 0; list-style: none; }
+.notification-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px 0; border-top: 1px solid var(--portal-line); }
+.notification-list li[data-read=false] { border-left: 3px solid var(--portal-brand); padding-left: 12px; }
+.notification-list a { display: grid; flex: 1 1 220px; gap: 4px; color: var(--portal-ink); text-decoration: none; }
+.notification-list a span, .notification-list time { color: var(--portal-muted); font-size: 13px; }
+.notification-list button { min-height: 44px; padding: 0 12px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); cursor: pointer; }
