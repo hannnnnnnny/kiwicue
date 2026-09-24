@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useBookmarks } from "./bookmark-provider";
 import { LanguageToggle } from "./language-toggle";
+import { AccountControl } from "./account-control";
 import { useLanguage } from "./language-provider";
 import { DiscoveryIcon } from "./discovery-icon";
 import type { MouseEvent } from "react";
@@ -34,6 +35,7 @@ const copy = {
     events: "Events",
     movies: "Movies",
     recommendations: "Picks",
+    forYou: "For You",
     saved: "Saved",
     savedLabel: (count: number) => `Saved events, ${count}`,
   },
@@ -52,12 +54,13 @@ const copy = {
     events: "活动",
     movies: "电影",
     recommendations: "推荐",
+    forYou: "为你推荐",
     saved: "收藏",
     savedLabel: (count: number) => `收藏活动，${count} 个`,
   },
 } as const;
 
-type PortalPage = "events" | "movies" | "recommendations" | "saved";
+type PortalPage = "events" | "movies" | "recommendations" | "saved" | "for-you";
 type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
@@ -128,6 +131,7 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
               >
                 {content.recommendations}
               </Link>
+              <Link className="portal-header-link" href="/for-you" aria-current={activePage === "for-you" ? "page" : undefined}>{content.forYou}</Link>
               <Link
                 className="portal-header-link"
                 href="/movies"
@@ -145,6 +149,7 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
               </Link>
             </nav>
             <LanguageToggle />
+            <AccountControl language={language} />
           </div>
         </header>
       </div>

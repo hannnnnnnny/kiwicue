@@ -489,7 +489,7 @@ test("keyboard reaches visible discovery controls with a focus indicator", async
   await tabTo(page, page.getByRole("link", { name: "Skip to event results" }));
   await tabTo(page, page.getByRole("link", { name: "KiwiCue Auckland events home" }));
   if (page.viewportSize()!.width >= 640) {
-    for (const label of ["Events", "Picks", "Movies", "Saved events, 0"]) {
+    for (const label of ["Events", "Picks", "For You", "Movies", "Saved events, 0"]) {
       await tabTo(page, page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: label, exact: true }));
     }
   }

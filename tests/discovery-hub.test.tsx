@@ -17,7 +17,7 @@ describe("mobile discovery interactions", () => {
   it("expands a real stack and returns without losing available events", () => {
     mount();
     fireEvent.click(screen.getByRole("button", { name: "Tonight · 3 loaded events" }));
-    expect(screen.getByRole("heading", { name: "Tonight", exact: true })).toBeVisible();
+    expect(screen.getByRole("heading", { name: /^Tonight$/ })).toBeVisible();
     expect(document.querySelectorAll(".discovery-feed article")).toHaveLength(3);
     fireEvent.click(screen.getByRole("button", { name: "Back to discovery" }));
     expect(document.querySelector(".discovery-feature")).toBeInTheDocument();
@@ -26,7 +26,7 @@ describe("mobile discovery interactions", () => {
     const getCurrentPosition = vi.fn();
     vi.stubGlobal("navigator", { geolocation: { getCurrentPosition } });
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Map$/ }));
     expect(getCurrentPosition).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Sort by my distance" }));
     expect(getCurrentPosition).toHaveBeenCalledOnce();
@@ -34,14 +34,14 @@ describe("mobile discovery interactions", () => {
   });
   it("keeps Auckland venues accessible when permission is denied", () => {
     vi.stubGlobal("navigator", { geolocation: { getCurrentPosition: (_success: unknown, fail: () => void) => fail() } });
-    mount(); fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
+    mount(); fireEvent.click(screen.getByRole("button", { name: /^Map$/ }));
     fireEvent.click(screen.getByRole("button", { name: "Sort by my distance" }));
     expect(screen.getByRole("status")).toHaveTextContent("Location unavailable");
     expect(document.querySelectorAll(".discovery-feed article")).toHaveLength(3);
     expect(localStorage.length).toBe(0);
   });
   it("shows an honest empty free collection instead of inventing prices", () => {
-    mount(); fireEvent.click(screen.getByRole("button", { name: "Free", exact: true }));
+    mount(); fireEvent.click(screen.getByRole("button", { name: /^Free$/ }));
     expect(screen.getByRole("status")).toHaveTextContent("No matching events in the loaded selection");
     expect(document.querySelectorAll(".discovery-feed article")).toHaveLength(0);
   });
