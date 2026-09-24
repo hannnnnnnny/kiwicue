@@ -45,6 +45,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const configured = Boolean(supabaseBrowser());
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,9 +96,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
           {mode !== "reset" && <label>{copy.email}<input type="email" name="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={254} /></label>}
           {mode !== "forgot" && <label>{copy.password}<input type="password" name="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} maxLength={128} /></label>}
           {mode !== "forgot" && <p className="account-help">{language === "zh" ? "密码至少 8 位。" : "Use at least 8 characters."}</p>}
+          {!configured && <p role="alert" className="account-error">{copy.unavailable}</p>}
           {error && <p role="alert" className="account-error">{error}</p>}
           {message && <p role="status" className="account-success">{message}</p>}
-          <button type="submit" disabled={pending || !supabaseBrowser()}>{pending ? copy.busy : copy[mode]}</button>
+          <button type="submit" disabled={pending || !configured}>{pending ? copy.busy : copy[mode]}</button>
         </form>
         <div className="account-links">
           {mode === "login" && <><Link href="/forgot-password">{copy.forgotLink}</Link><span>{copy.noAccount} <Link href="/signup">{copy.signup}</Link></span></>}

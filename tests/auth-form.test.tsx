@@ -10,5 +10,7 @@ describe("authentication forms", () => {
     expect(screen.getByRole("textbox", { name: "Email" })).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Account features are not configured yet");
+    expect(screen.getByRole("button", { name: "Log in" })).toBeDisabled();
   });
 });
