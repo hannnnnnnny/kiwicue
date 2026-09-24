@@ -144,10 +144,10 @@ Anonymous discovery and local Saved work without Supabase. To enable accounts, c
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
-SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
+SUPABASE_SECRET_KEY=your_server_only_secret_key
 ```
 
-The URL and publishable key are intended for browser clients. The service-role key is used only by the account-deletion route and must never have a `NEXT_PUBLIC_` prefix. Configure Supabase Auth Site URL and redirect allowlist for your local origin and production `/auth/callback` URL. Email/password sign-up, recovery and account deletion require working Auth email delivery and correctly applied migrations. Do not enable account UI in production before RLS policies and deletion have been checked with two separate test users.
+The URL and publishable key are intended for browser clients. The secret key is used only by the account-deletion route and must never have a `NEXT_PUBLIC_` prefix. The legacy `SUPABASE_SERVICE_ROLE_KEY` remains supported as a fallback, but new installations should use `SUPABASE_SECRET_KEY`. Configure Supabase Auth Site URL and redirect allowlist for your local origin and production `/auth/callback` URL. Email/password sign-up, recovery and account deletion require working Auth email delivery and correctly applied migrations. Do not enable account UI in production before RLS policies and deletion have been checked with two separate test users.
 
 Profiles, saved events, interests, comments and notifications are stored in Supabase for signed-in users. Guest bookmarks remain browser-local and are merged on login only after server confirmation. Profiles and collections start private. Behavioural activity is off by default and can be enabled in Account settings; turning it off deletes existing activity records. Search text, credentials and precise browser location are not stored in that activity table.
 

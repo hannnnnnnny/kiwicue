@@ -23,9 +23,9 @@ export async function DELETE(request: Request) {
   const { user } = await verifiedUser();
   if (!user) return fail("Sign in again before deleting your account.", 401);
   const config = supabasePublicConfig();
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!config || !serviceKey) return fail("Account deletion is temporarily unavailable.", 503);
-  const admin = createClient(config.url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const adminKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!config || !adminKey) return fail("Account deletion is temporarily unavailable.", 503);
+  const admin = createClient(config.url, adminKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) return fail("Account deletion failed. Please contact support.", 503);
   return Response.json({ deleted: true }, { headers: privateHeaders });
