@@ -1,0 +1,430 @@
+/* Chip field — glass filter + tag system. Motion for layout is driven from chip-field-motion.ts;
+   CSS only owns state transitions (hover, press, check reveal, badge pop). */
+.chipfield {
+  --cf-ink: rgb(255 255 255 / 92%);
+  --cf-muted: rgb(226 232 240 / 62%);
+  --cf-faint: rgb(226 232 240 / 38%);
+  --cf-glass: rgb(255 255 255 / 6%);
+  --cf-glass-strong: rgb(255 255 255 / 10%);
+  --cf-line: rgb(255 255 255 / 14%);
+  --cf-line-bright: rgb(255 255 255 / 26%);
+  --cf-cyan: #67e8f9;
+  --cf-mint: #6ee7b7;
+  --cf-pink: #f9a8d4;
+  --cf-violet: #c4b5fd;
+  --cf-warn: #fda4af;
+  --cf-focus: #a5f3fc;
+  --cf-gap: 8px;
+  --cf-chip-h: 40px;
+  --cf-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  padding: 20px;
+  border: 1px solid var(--cf-line);
+  border-radius: var(--radius-panel);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 9%), rgb(255 255 255 / 3%)),
+    rgb(15 18 30 / 42%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    0 30px 60px -30px rgb(0 0 0 / 60%),
+    0 12px 24px -16px rgb(0 0 0 / 40%);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  color: var(--cf-ink);
+  font-family: var(--portal-ui-font);
+  isolation: isolate;
+}
+
+.chipfield__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chipfield__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Filter button + badge ---------- */
+.chipfield-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 8px 0 14px;
+  border: 1px solid var(--cf-line);
+  border-radius: var(--radius-pill);
+  background: var(--cf-glass);
+  color: var(--cf-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms var(--cf-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chipfield-filter-button svg { color: var(--cf-muted); }
+
+.chipfield-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--cf-cyan), var(--cf-violet) 60%, var(--cf-pink));
+  color: #0b1020;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 4px 14px -4px rgb(103 232 249 / 60%);
+  transition: opacity 200ms ease, filter 200ms ease;
+}
+
+.chipfield-badge[data-empty] {
+  opacity: 0.55;
+  filter: saturate(0.2);
+  box-shadow: none;
+}
+
+.chipfield-badge__value {
+  display: block;
+  animation: chipfield-badge-pop 320ms var(--cf-ease);
+}
+
+@keyframes chipfield-badge-pop {
+  0% { transform: scale(0.55) translateY(3px); opacity: 0; }
+  55% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Collapsible body ---------- */
+.chipfield__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 300ms var(--cf-ease), opacity 220ms ease;
+}
+
+.chipfield__body[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.chipfield__body-inner {
+  min-height: 0;
+  overflow: hidden;
+  /* Room for focus rings and glows that would otherwise be clipped by overflow. */
+  margin: 0 -8px -8px;
+  padding: 18px 8px 8px;
+}
+
+/* ---------- Chip shared anatomy ---------- */
+.chipfield__options,
+.chipfield__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cf-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chipfield-chip,
+.chipfield-tag {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chipfield-chip__press {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--cf-chip-h);
+  border-radius: var(--radius-pill);
+  isolation: isolate;
+  transition: transform 220ms var(--cf-ease);
+}
+
+.chipfield-chip__surface {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid var(--cf-line);
+  border-radius: var(--radius-pill);
+  background: var(--cf-glass);
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 240ms ease;
+}
+
+.chipfield-chip__surface::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(115deg,
+      rgb(103 232 249 / 30%),
+      rgb(110 231 183 / 18%) 35%,
+      rgb(196 181 253 / 24%) 70%,
+      rgb(249 168 212 / 26%));
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+/* ---------- Filter chip ---------- */
+.chipfield-chip {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cf-muted);
+  transition: color 200ms ease;
+}
+
+/* Padding lives on the press layer so the label box itself moves and can be FLIP-animated.
+   No CSS transition here: width changes are interpolated by the motion layer. */
+.chipfield-chip .chipfield-chip__press { padding: 0 16px; }
+
+.chipfield-chip__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipfield-chip__check {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--cf-mint), var(--cf-cyan));
+  color: #06201c;
+  opacity: 0;
+  transform: scale(0.3) rotate(-35deg);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.chipfield-chip[data-selected] { color: #fff; font-weight: 600; }
+.chipfield-chip[data-selected] .chipfield-chip__press { padding-left: 39px; }
+
+.chipfield-chip[data-selected] .chipfield-chip__check {
+  opacity: 1;
+  transform: none;
+  transition: opacity 200ms ease 60ms, transform 300ms var(--cf-ease) 60ms;
+}
+
+.chipfield-chip[data-selected] .chipfield-chip__surface {
+  border-color: rgb(165 243 252 / 45%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 22%),
+    0 8px 22px -10px rgb(103 232 249 / 55%),
+    0 6px 20px -12px rgb(249 168 212 / 50%);
+}
+
+.chipfield-chip[data-selected] .chipfield-chip__surface::before { opacity: 1; }
+
+/* ---------- Removable tag ---------- */
+.chipfield-tag {
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--cf-ink);
+  transform-origin: center;
+}
+
+.chipfield-tag .chipfield-chip__press { padding: 0 5px 0 14px; gap: 6px; }
+
+.chipfield-tag__label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipfield-tag .chipfield-chip__surface {
+  background: var(--cf-glass-strong);
+  border-color: var(--cf-line-bright);
+}
+
+.chipfield-tag[data-kind="filter"] .chipfield-chip__surface::before { opacity: 0.55; }
+
+.chipfield-tag__remove {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 12%);
+  color: var(--cf-ink);
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 200ms var(--cf-ease), color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Extends the hit area to 40px without changing the visual size. */
+.chipfield-tag__remove::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---------- Tag field + input ---------- */
+.chipfield__label {
+  display: block;
+  margin: 20px 0 10px;
+  color: var(--cf-faint);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chipfield__field {
+  padding: 8px;
+  border: 1px solid var(--cf-line);
+  border-radius: var(--radius-panel);
+  background: rgb(0 0 0 / 16%);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 25%);
+  cursor: text;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.chipfield__field:focus-within {
+  border-color: rgb(165 243 252 / 40%);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 25%), 0 0 0 4px rgb(103 232 249 / 10%);
+}
+
+.chipfield__input-wrap {
+  display: flex;
+  /* Grows into whatever is left on the line; wraps once less than the draft needs. */
+  flex: 1 1 var(--draft-ch, 9ch);
+  min-width: min(var(--draft-ch, 9ch), 100%);
+}
+
+.chipfield__input {
+  width: 100%;
+  min-width: 0;
+  height: var(--cf-chip-h);
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--cf-ink);
+  font: inherit;
+  font-size: 15px;
+  caret-color: var(--cf-cyan);
+  outline: none;
+}
+
+.chipfield__input::placeholder { color: var(--cf-faint); }
+
+.chipfield__hint {
+  min-height: 1.5em;
+  margin: 10px 4px 0;
+  color: var(--cf-faint);
+  font-size: 12.5px;
+  transition: color 180ms ease;
+}
+
+.chipfield__hint[data-tone="warn"] { color: var(--cf-warn); }
+
+/* ---------- Interaction states ---------- */
+@media (hover: hover) {
+  .chipfield-chip:hover { color: var(--cf-ink); }
+  .chipfield-chip:hover .chipfield-chip__surface { background: var(--cf-glass-strong); border-color: var(--cf-line-bright); }
+  .chipfield-filter-button:hover { background: var(--cf-glass-strong); border-color: var(--cf-line-bright); }
+  .chipfield-tag__remove:hover { background: rgb(253 164 175 / 28%); color: #fff; }
+}
+
+.chipfield-chip:active .chipfield-chip__press,
+.chipfield-filter-button:active { transform: scale(0.95); transition-duration: 90ms; }
+.chipfield-tag__remove:active { transform: scale(0.86); transition-duration: 90ms; }
+
+.chipfield-chip:focus-visible,
+.chipfield-filter-button:focus-visible,
+.chipfield-tag__remove:focus-visible {
+  outline: 2px solid var(--cf-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .chipfield { --cf-chip-h: 44px; padding: 16px; }
+  }
+
+@media (prefers-reduced-motion: reduce) {
+  .chipfield *, .chipfield *::before { transition-duration: 0ms !important; animation: none !important; }
+}
+
+/* ---------- Lab page (demo backdrop so the glass has something to blur) ---------- */
+.chipfield-lab {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 28px;
+  min-height: 100dvh;
+  padding: clamp(40px, 10vh, 120px) 16px 64px;
+  overflow: hidden;
+  background: #090b14;
+  color: rgb(255 255 255 / 92%);
+}
+
+.chipfield-lab__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Soft colour fields behind the glass, made from blurred solid blobs to stay within the theme rules. */
+.chipfield-lab__glow span {
+  position: absolute;
+  width: 42vmax;
+  height: 42vmax;
+  border-radius: var(--radius-pill);
+  filter: blur(90px);
+  opacity: 0.32;
+}
+
+.chipfield-lab__glow span:nth-child(1) { top: 4%; left: -8%; background: #22d3ee; }
+.chipfield-lab__glow span:nth-child(2) { top: 18%; right: -12%; background: #a78bfa; }
+.chipfield-lab__glow span:nth-child(3) { bottom: -14%; left: 30%; background: #f472b6; opacity: 0.22; }
+
+.chipfield-lab > :not(.chipfield-lab__glow) { position: relative; z-index: 1; }
+
+.chipfield-lab__intro { width: 100%; max-width: 640px; }
+.chipfield-lab__intro h1 { margin: 0 0 8px; font-size: clamp(28px, 6vw, 40px); font-weight: 650; letter-spacing: -0.03em; }
+.chipfield-lab__intro p { margin: 0; color: rgb(226 232 240 / 62%); font-size: 15px; line-height: 1.55; }
+.chipfield-lab__intro .chipfield-lab__eyebrow {
+  margin-bottom: 10px;
+  color: #a5f3fc;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
