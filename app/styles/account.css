@@ -101,3 +101,7 @@
 .notification-list a { display: grid; flex: 1 1 220px; gap: 4px; color: var(--portal-ink); text-decoration: none; }
 .notification-list a span, .notification-list time { color: var(--portal-muted); font-size: 13px; }
 .notification-list button { min-height: 44px; padding: 0 12px; border: 1px solid var(--portal-line); border-radius: var(--radius-tag); background: var(--portal-raised); cursor: pointer; }
+.account-resend { display: grid; gap: 10px; justify-items: start; }
+.account-panel .account-resend-button { min-height: 44px; padding: 0 20px; border: 1px solid var(--portal-brand); border-radius: var(--radius-control); background: var(--portal-raised); color: var(--portal-brand); font: inherit; font-weight: 700; cursor: pointer; }
+.account-panel .account-resend-button:disabled { opacity: 1; border-color: var(--portal-line); color: var(--portal-muted); cursor: not-allowed; font-variant-numeric: tabular-nums; }
+.account-resend p { margin: 0; line-height: 1.5; }
