@@ -77,6 +77,17 @@ describe("signup confirmation resend route", () => {
     spy.mockRestore();
   });
 
+  it("answers an unknown user exactly like a successful resend and sends nothing", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    getUserById.mockResolvedValue({ data: { user: null }, error: { status: 404, code: "user_not_found", message: "User not found" } });
+    const response = await post(resendRequest());
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ sent: true });
+    expect(resend).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it("fails closed when Supabase cannot send", async () => {
     getUserById.mockResolvedValue({ data: { user: { id: userId, email: "person@example.com", email_confirmed_at: null } }, error: null });
     resend.mockResolvedValue({ data: {}, error: { status: 500, message: "smtp down" } });

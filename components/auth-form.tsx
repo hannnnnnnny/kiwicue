@@ -29,6 +29,7 @@ const labels = {
     completing: "Email confirmed. Signing you in…",
     expired: "Verification wait expired. If you confirmed the email, log in normally; otherwise start again.",
     retry: "Start again",
+    stuck: ["No email after a few minutes? Check your spam folder. If you've signed up with this email before, ", "log in", " or ", "reset your password", "."],
   },
   zh: {
     login: "登录", signup: "创建账号", forgot: "重设密码", reset: "设置新密码",
@@ -44,6 +45,7 @@ const labels = {
     completing: "邮箱已确认，正在自动登录…",
     expired: "验证等待已结束。如果已确认邮箱，请直接登录；否则可以重新开始。",
     retry: "重新开始",
+    stuck: ["几分钟后还没收到？请先检查垃圾邮件。如果这个邮箱以前注册过，可以直接", "登录", "或", "重设密码", "。"],
   },
 } as const;
 
@@ -163,6 +165,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
         {mode === "signup" && signupPhase !== "editing" ? (
           <div className="account-verification" role={signupPhase === "expired" || signupPhase === "failed" ? "alert" : "status"}>
             <p>{signupPhase === "waiting" ? copy.waiting : signupPhase === "completing" ? copy.completing : signupPhase === "expired" ? copy.expired : copy.failed}</p>
+            {/* Shown to everyone: an already-registered address gets no email, and saying so only
+                to those users would reveal which addresses have accounts. */}
+            {signupPhase === "waiting" && <p className="account-help">{copy.stuck[0]}<Link href="/login">{copy.stuck[1]}</Link>{copy.stuck[2]}<Link href="/forgot-password">{copy.stuck[3]}</Link>{copy.stuck[4]}</p>}
             {signupPhase === "waiting" && <SignupResend language={language} onConfirmed={() => setSignupPhase("completing")} onExpired={() => { signupCredentials.current = null; setSignupPhase("expired"); }} />}
             {(signupPhase === "expired" || signupPhase === "failed") && <button type="button" onClick={() => { signInStarted.current = false; setSignupPhase("editing"); }}>{copy.retry}</button>}
           </div>

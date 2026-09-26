@@ -45,6 +45,14 @@ describe("signup confirmation resend", () => {
     vi.clearAllMocks();
   });
 
+  it("always offers log-in and password-reset routes while waiting", async () => {
+    stubFetch([]);
+    await startSignup();
+    expect(screen.getByText(/signed up with this email before/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "log in" })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: "reset your password" })).toHaveAttribute("href", "/forgot-password");
+  });
+
   it("holds the button through the first-email cooldown, then resends and cools down again", async () => {
     vi.useFakeTimers();
     const fetchMock = stubFetch([{ status: 200, body: { sent: true } }]);

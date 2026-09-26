@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PENDING_SIGNUP_COOKIE, readPendingSignupTicket } from "../../../../lib/auth/pending-signup-ticket";
 import { supabasePublicConfig } from "../../../../lib/supabase/config";
 import { logAuthFailure } from "../../../../lib/auth/log-auth-failure";
+import { isUserNotFound } from "../../../../lib/auth/supabase-errors";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
   const admin = createClient(config.url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
   try {
     const { data, error } = await admin.auth.admin.getUserById(userId);
+    if (isUserNotFound(error)) return NextResponse.json({ confirmed: false }, { headers: privateHeaders });
     if (error) {
       logAuthFailure("signup-status", "admin-lookup", error);
       return NextResponse.json({ confirmed: false }, { status: 503, headers: privateHeaders });
