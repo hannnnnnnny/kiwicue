@@ -38,7 +38,7 @@ function FeaturedEvent({ event, language }: { event: KiwiCueEvent; language: Lan
   return <article className="discovery-feature">
     <Link href={`/events/${encodeURIComponent(event.id)}`} aria-label={language === "zh" ? `打开精选活动：${name}` : `Explore featured event: ${name}`}>
       <EventImage src={event.editorialPreview?.image?.url ?? event.imageUrl} alt="" loading="eager" fallback={<span className="discovery-image-fallback">{formatEventCategory(event.category, language)}</span>} />
-      <div className="discovery-feature-caption"><span className="discovery-category">{formatEventCategory(event.category, language)}</span><h2>{name}</h2><p>{formatEventDate(event.start.localDate, language)} · {formatEventTime(event.start.localTime, language)}</p>{event.venue && <p>{event.venue.name}</p>}</div>
+      <div className="discovery-feature-caption"><span className="discovery-category">{formatEventCategory(event.category, language)}</span><h2>{name}</h2><p>{formatEventDate(event.start.localDate, language)} · {formatEventTime(event.start.localTime, language)}</p>{event.venue && <p>{event.venue.name}</p>}<span className="discovery-feature-cta" aria-hidden="true">{language === "zh" ? "查看详情" : "View details"}<svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1.5v9L10.5 6 3 1.5Z" fill="currentColor" /></svg></span></div>
     </Link>
     <BookmarkButton event={event} language={language} />
   </article>;
