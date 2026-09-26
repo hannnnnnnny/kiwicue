@@ -7,6 +7,7 @@ import { safeNextPath } from "../lib/auth/safe-next-path";
 import { supabaseBrowser } from "./auth-provider";
 import { PortalHeader } from "./portal-header";
 import { useLanguage } from "./language-provider";
+import { SignupResend } from "./signup-resend";
 import { useRouter } from "next/navigation";
 
 type Mode = "login" | "signup" | "forgot" | "reset";
@@ -162,6 +163,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         {mode === "signup" && signupPhase !== "editing" ? (
           <div className="account-verification" role={signupPhase === "expired" || signupPhase === "failed" ? "alert" : "status"}>
             <p>{signupPhase === "waiting" ? copy.waiting : signupPhase === "completing" ? copy.completing : signupPhase === "expired" ? copy.expired : copy.failed}</p>
+            {signupPhase === "waiting" && <SignupResend language={language} onConfirmed={() => setSignupPhase("completing")} onExpired={() => { signupCredentials.current = null; setSignupPhase("expired"); }} />}
             {(signupPhase === "expired" || signupPhase === "failed") && <button type="button" onClick={() => { signInStarted.current = false; setSignupPhase("editing"); }}>{copy.retry}</button>}
           </div>
         ) : <form onSubmit={submit} noValidate>
