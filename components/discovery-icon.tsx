@@ -1,4 +1,4 @@
-export function DiscoveryIcon({ name }: { name: "moon" | "pin" | "tag" | "people" | "heart" | "dice" | "search" | "map" | "film" | "share" | "star" }) {
+export function DiscoveryIcon({ name }: { name: "moon" | "pin" | "tag" | "people" | "heart" | "dice" | "search" | "map" | "film" | "share" | "star" | "calendar" | "spark" }) {
   const paths = {
     moon: "M20 14A8 8 0 0 1 10 4 8 8 0 1 0 20 14Z",
     pin: "M12 21s7-7 7-12A7 7 0 0 0 5 9c0 5 7 12 7 12ZM12 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
@@ -10,6 +10,8 @@ export function DiscoveryIcon({ name }: { name: "moon" | "pin" | "tag" | "people
     map: "m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16",
     film: "M3 3h18v18H3V3Zm4 0v18M17 3v18M3 8h4m-4 8h4M17 8h4m-4 8h4",
     share: "M12 16V3m-4 4 4-4 4 4M7 11H4v10h16V11h-3",
+    calendar: "M4 5h16v16H4V5Zm0 5h16M8 3v4m8-4v4",
+    spark: "M12 3v4m0 10v4M3 12h4m10 0h4M6.3 6.3l2.8 2.8m5.8 5.8 2.8 2.8M6.3 17.7l2.8-2.8m5.8-5.8 2.8-2.8",
     star: "m12 2 3 6.2 6.8 1-4.9 4.8 1.2 6.8-6.1-3.2-6.1 3.2 1.2-6.8L2.2 9.2l6.8-1L12 2Z",
   };
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;

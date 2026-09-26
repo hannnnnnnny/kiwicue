@@ -122,22 +122,22 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
                 href="/events"
                 aria-current={activePage === "events" ? "page" : undefined}
               >
-                {content.events}
+                <DiscoveryIcon name="calendar" /><span>{content.events}</span>
               </Link>
               <Link
                 className="portal-header-link"
                 href="/recommendations"
                 aria-current={activePage === "recommendations" ? "page" : undefined}
               >
-                {content.recommendations}
+                <DiscoveryIcon name="star" /><span>{content.recommendations}</span>
               </Link>
-              <Link className="portal-header-link" href="/for-you" aria-current={activePage === "for-you" ? "page" : undefined}>{content.forYou}</Link>
+              <Link className="portal-header-link" href="/for-you" aria-current={activePage === "for-you" ? "page" : undefined}><DiscoveryIcon name="spark" /><span>{content.forYou}</span></Link>
               <Link
                 className="portal-header-link"
                 href="/movies"
                 aria-current={activePage === "movies" ? "page" : undefined}
               >
-                {content.movies}
+                <DiscoveryIcon name="film" /><span>{content.movies}</span>
               </Link>
               <Link
                 className="portal-header-link saved-link"
@@ -145,7 +145,7 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
                 aria-label={content.savedLabel(count)}
                 aria-current={activePage === "saved" ? "page" : undefined}
               >
-                <span>{content.saved}</span><strong>{count}</strong>
+                <DiscoveryIcon name="heart" /><span>{content.saved}</span><strong>{count}</strong>
               </Link>
             </nav>
             <LanguageToggle />

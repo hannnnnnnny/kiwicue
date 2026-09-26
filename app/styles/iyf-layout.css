@@ -1,0 +1,292 @@
+/* Streaming-portal layout: fixed side navigation, full-bleed hero, section rows and
+   16:9 card grids. Colours stay on the portal tokens; only structure changes here. */
+:root {
+  --sidebar-width: 208px;
+  --section-title-size: 1.375rem;
+}
+
+/* ---------- Hero ---------- */
+.discovery-feature { border-radius: var(--radius-control); }
+.discovery-feature > a { aspect-ratio: 21 / 8; }
+
+/* A left-weighted scrim keeps the artwork readable on the right while the copy sits on the left. */
+.discovery-feature-caption {
+  inset: 0 auto 0 0;
+  width: min(62%, 560px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 32px 40px 36px;
+  background: linear-gradient(90deg, rgb(9 15 21 / 82%), rgb(9 15 21 / 62%) 55%, rgb(9 15 21 / 0%));
+}
+
+.discovery-feature-caption h2 {
+  margin: 12px 0 10px;
+  font-size: clamp(1.5rem, 2.6vw, 2.5rem);
+  font-weight: 700;
+}
+
+.discovery-feature-caption p { color: rgb(255 255 255 / 78%); }
+
+.discovery-feature-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 18px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 22%);
+  color: var(--portal-white);
+  font-size: .95rem;
+  font-weight: 650;
+  backdrop-filter: blur(12px);
+  transition: background-color var(--motion-fast);
+}
+
+.discovery-feature > a:hover .discovery-feature-cta { background: var(--portal-brand); }
+
+/* ---------- Search pill ---------- */
+.discovery-search > summary {
+  min-height: 48px;
+  padding: 0 8px 0 20px;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  background: var(--portal-raised);
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
+}
+
+.discovery-search > summary:hover { border-color: var(--portal-brand); }
+.discovery-search > summary span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--portal-brand-soft);
+  color: var(--portal-brand);
+  font-size: 1.1rem;
+}
+
+.discovery-search[open] > summary { border-color: var(--portal-brand); box-shadow: 0 0 0 4px var(--portal-brand-soft); }
+
+/* ---------- Section rows ---------- */
+.discovery-collection h2,
+.discovery-list-section > h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--section-title-size);
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+.discovery-collection h2::before,
+.discovery-list-section > h2::before {
+  content: "";
+  width: 4px;
+  height: 1.1em;
+  border-radius: var(--radius-pill);
+  background: var(--portal-brand);
+}
+
+.discovery-collection header button {
+  color: var(--portal-muted);
+  font-size: .8rem;
+}
+
+.discovery-collection header button:hover { color: var(--portal-brand); }
+
+
+/* ---------- Feed as 16:9 card grid ---------- */
+.discovery-feed { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
+
+.discovery-feed .portal-event-card[data-layout="row"] {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-link { grid-template-columns: 1fr; }
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-media {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-tag);
+  background: var(--portal-brand-soft);
+  overflow: hidden;
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-media img {
+  transition: transform 320ms cubic-bezier(.2, .7, .2, 1);
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-body {
+  grid-column: 1;
+  grid-row: 2;
+  gap: 4px;
+  padding: 10px 2px 0;
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] h2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Category rides on the artwork as a corner badge, like a streaming poster tag. */
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-meta {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  left: 8px;
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-meta span {
+  background: var(--portal-brand);
+  color: var(--portal-white);
+  font-weight: 650;
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-meta span + span {
+  background: rgb(0 0 0 / 55%);
+  backdrop-filter: blur(8px);
+}
+
+.discovery-feed .portal-event-card[data-layout="row"] .portal-event-preview { -webkit-line-clamp: 1; }
+
+.discovery-feed .portal-event-card[data-layout="row"] .bookmark-button {
+  top: 6px;
+  right: 6px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 88%);
+  color: var(--portal-ink);
+}
+
+.discovery-feed .portal-event-card[data-layout="row"]:not(:has(.portal-event-media)) .portal-event-meta { position: static; }
+
+/* ---------- Side navigation (desktop) ---------- */
+@media (min-width: 1024px) {
+  body:has(.portal-header-shell) { padding-left: var(--sidebar-width); }
+
+  .portal-header-shell {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: var(--sidebar-width);
+    border-bottom: 0;
+    border-right: 1px solid var(--portal-line);
+    background: var(--portal-raised);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .portal-header {
+    width: auto;
+    min-height: 100%;
+    margin: 0;
+    padding: 20px 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 20px;
+  }
+
+  .portal-brand { padding: 0 12px; }
+  .portal-brand-wordmark { width: 132px; }
+
+  .portal-header-actions {
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .portal-primary-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .portal-header-link {
+    justify-content: flex-start;
+    gap: 14px;
+    min-height: 46px;
+    padding: 0 14px;
+    border-radius: var(--radius-control);
+    color: var(--portal-muted);
+    font-size: .95rem;
+    font-weight: 550;
+    transition: background-color var(--motion-fast), color var(--motion-fast);
+  }
+
+  .portal-header-link:hover { background: var(--portal-surface); color: var(--portal-ink); }
+
+  .portal-header-link[aria-current="page"] {
+    box-shadow: none;
+    background: var(--portal-brand-soft);
+    color: var(--portal-brand);
+    font-weight: 700;
+  }
+
+  .saved-link strong { margin-left: auto; }
+
+  /* Utilities sit at the foot of the rail, iOS-sidebar style. */
+  .language-toggle {
+    margin-top: auto;
+    justify-content: flex-start;
+    padding: 0 14px;
+    border-radius: var(--radius-control);
+  }
+
+  .portal-header-actions > :last-child { padding: 0 8px; }
+  .account-nav-dropdown { top: auto; bottom: 52px; right: auto; left: 0; }
+
+  .discovery-bottom-nav { display: none; }
+}
+
+/* Between phone and desktop the classic top bar returns, so drop the rail-only icons. */
+@media (max-width: 1023px) {
+  .portal-header-link svg { display: none; }
+  .discovery-feed { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 639px) {
+  .discovery-feature > a { aspect-ratio: 4 / 3; }
+
+  .discovery-feature-caption {
+    inset: auto 0 0;
+    width: 100%;
+    padding: 56px 16px 16px;
+    background: linear-gradient(0deg, rgb(9 15 21 / 85%), rgb(9 15 21 / 55%) 60%, rgb(9 15 21 / 0%));
+  }
+
+  .discovery-feature-cta { min-height: 44px; margin-top: 12px; padding: 0 18px; font-size: .85rem; }
+  .discovery-feed { gap: 20px 12px; }
+  .discovery-feed .portal-event-card[data-layout="row"] .portal-event-body { padding: 8px 0 0; }
+  .discovery-feed .portal-event-card[data-layout="row"] h2 { font-size: .9rem; -webkit-line-clamp: 2; }
+  .discovery-feed .portal-event-card[data-layout="row"] .portal-event-preview { display: none; }
+  .discovery-feed .portal-event-card[data-layout="row"] .portal-event-venue { display: none; }
+  /* Narrow cards keep one badge so the 44px bookmark target never sits under a label. */
+  .discovery-feed .portal-event-card[data-layout="row"] .portal-event-meta span + span { display: none; }
+  .discovery-feed .portal-event-card[data-layout="row"] .portal-event-meta { top: 6px; left: 6px; max-width: calc(100% - 60px); }
+}
+
+@media (hover: hover) {
+  .discovery-feed .portal-event-card:hover { transform: none; }
+  .discovery-feed .portal-event-card:hover .portal-event-media img { transform: scale(1.05); }
+  .discovery-feed .portal-event-card:hover h2 { color: var(--portal-brand); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discovery-feed .portal-event-card .portal-event-media img,
+  .portal-header-link,
+  .discovery-feature-cta { transition: none; }
+}
