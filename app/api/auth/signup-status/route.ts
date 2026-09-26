@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { PENDING_SIGNUP_COOKIE, readPendingSignupTicket } from "../../../../lib/auth/pending-signup-ticket";
 import { supabasePublicConfig } from "../../../../lib/supabase/config";
+import { logAuthFailure } from "../../../../lib/auth/log-auth-failure";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
@@ -16,9 +17,13 @@ export async function GET(request: NextRequest) {
   const admin = createClient(config.url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
   try {
     const { data, error } = await admin.auth.admin.getUserById(userId);
-    if (error) return NextResponse.json({ confirmed: false }, { status: 503, headers: privateHeaders });
+    if (error) {
+      logAuthFailure("signup-status", "admin-lookup", error);
+      return NextResponse.json({ confirmed: false }, { status: 503, headers: privateHeaders });
+    }
     return NextResponse.json({ confirmed: Boolean(data.user?.email_confirmed_at) }, { headers: privateHeaders });
-  } catch {
+  } catch (error) {
+    logAuthFailure("signup-status", "admin-lookup", error);
     return NextResponse.json({ confirmed: false }, { status: 503, headers: privateHeaders });
   }
 }

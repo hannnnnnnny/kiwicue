@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { authInput } from "../../../../lib/social/validation";
 import { supabasePublicConfig } from "../../../../lib/supabase/config";
+import { logAuthFailure } from "../../../../lib/auth/log-auth-failure";
 import { createPendingSignupTicket, PENDING_SIGNUP_COOKIE, PENDING_SIGNUP_TTL_MS } from "../../../../lib/auth/pending-signup-ticket";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
@@ -37,7 +38,10 @@ export async function POST(request: NextRequest) {
       ...parsed.data,
       options: { emailRedirectTo: new URL("/auth/confirmed", request.nextUrl.origin).href },
     });
-    if (error || !data.user) return fail(503);
+    if (error || !data.user) {
+      logAuthFailure("signup", "signup", error ?? { message: "No user returned" });
+      return fail(503);
+    }
     const response = NextResponse.json({ pending: !data.session }, { headers: privateHeaders });
     if (!data.session) {
       response.cookies.set(PENDING_SIGNUP_COOKIE, createPendingSignupTicket(data.user.id, secret), {
@@ -46,5 +50,8 @@ export async function POST(request: NextRequest) {
       });
     }
     return response;
-  } catch { return fail(503); }
+  } catch (error) {
+    logAuthFailure("signup", "signup", error);
+    return fail(503);
+  }
 }

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { PENDING_SIGNUP_COOKIE, readPendingSignupTicket } from "../../../../../lib/auth/pending-signup-ticket";
 import { supabasePublicConfig } from "../../../../../lib/supabase/config";
+import { logAuthFailure } from "../../../../../lib/auth/log-auth-failure";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
@@ -27,7 +28,10 @@ export async function POST(request: NextRequest) {
   try {
     const { data, error } = await createClient(config.url, secret, options).auth.admin.getUserById(userId);
     const email = data.user?.email;
-    if (error || !email) return reply(503, { sent: false });
+    if (error || !email) {
+      logAuthFailure("signup-resend", "admin-lookup", error ?? { message: "User has no email" });
+      return reply(503, { sent: false });
+    }
     if (data.user?.email_confirmed_at) return reply(409, { confirmed: true });
 
     const { error: sendError } = await createClient(config.url, config.key, options).auth.resend({
@@ -36,9 +40,13 @@ export async function POST(request: NextRequest) {
       options: { emailRedirectTo: new URL("/auth/confirmed", request.nextUrl.origin).href },
     });
     if (sendError?.status === 429) return reply(429, { sent: false });
-    if (sendError) return reply(503, { sent: false });
+    if (sendError) {
+      logAuthFailure("signup-resend", "resend", sendError);
+      return reply(503, { sent: false });
+    }
     return reply(200, { sent: true });
-  } catch {
+  } catch (error) {
+    logAuthFailure("signup-resend", "resend", error);
     return reply(503, { sent: false });
   }
 }
