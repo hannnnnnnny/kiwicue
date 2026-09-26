@@ -66,6 +66,19 @@ describe("cross-device signup routes", () => {
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
 
+  it("answers a ticket for an unknown user exactly like a pending signup, without logging a failure", async () => {
+    // Supabase hands back a decoy user id when the email is already registered.
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    getUserById.mockResolvedValue({ data: { user: null }, error: { status: 404, code: "user_not_found", message: "User not found" } });
+    const { GET } = await import("../app/api/auth/signup-status/route");
+    const ticket = createPendingSignupTicket(userId, secret);
+    const response = await GET(new NextRequest(`${base}/api/auth/signup-status`, { headers: { cookie: `${PENDING_SIGNUP_COOKIE}=${ticket}` } }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ confirmed: false });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it("does not query users for an invalid ticket", async () => {
     const { GET } = await import("../app/api/auth/signup-status/route");
     const response = await GET(new NextRequest(`${base}/api/auth/signup-status`, { headers: { cookie: `${PENDING_SIGNUP_COOKIE}=garbage` } }));

@@ -105,3 +105,5 @@
 .account-panel .account-resend-button { min-height: 44px; padding: 0 20px; border: 1px solid var(--portal-brand); border-radius: var(--radius-control); background: var(--portal-raised); color: var(--portal-brand); font: inherit; font-weight: 700; cursor: pointer; }
 .account-panel .account-resend-button:disabled { opacity: 1; border-color: var(--portal-line); color: var(--portal-muted); cursor: not-allowed; font-variant-numeric: tabular-nums; }
 .account-resend p { margin: 0; line-height: 1.5; }
+.account-verification .account-help { margin: 0 0 16px; line-height: 1.6; }
+.account-verification .account-help a { color: var(--portal-brand); font-weight: 650; text-underline-offset: 3px; }

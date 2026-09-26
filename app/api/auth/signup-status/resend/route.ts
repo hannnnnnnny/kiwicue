@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PENDING_SIGNUP_COOKIE, readPendingSignupTicket } from "../../../../../lib/auth/pending-signup-ticket";
 import { supabasePublicConfig } from "../../../../../lib/supabase/config";
 import { logAuthFailure } from "../../../../../lib/auth/log-auth-failure";
+import { isUserNotFound } from "../../../../../lib/auth/supabase-errors";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
   const options = { auth: { persistSession: false, autoRefreshToken: false } };
   try {
     const { data, error } = await createClient(config.url, secret, options).auth.admin.getUserById(userId);
+    if (isUserNotFound(error)) return reply(200, { sent: true });
     const email = data.user?.email;
     if (error || !email) {
       logAuthFailure("signup-resend", "admin-lookup", error ?? { message: "User has no email" });
