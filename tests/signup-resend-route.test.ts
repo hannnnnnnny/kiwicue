@@ -67,10 +67,23 @@ describe("signup confirmation resend route", () => {
     expect((await post(resendRequest())).status).toBe(429);
   });
 
+  it("logs why the admin lookup failed so a misconfigured secret key is diagnosable", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    getUserById.mockResolvedValue({ data: { user: null }, error: { status: 401, code: "invalid_api_key", message: "Invalid API key" } });
+    expect((await post(resendRequest())).status).toBe(503);
+    const entry = JSON.parse(String(spy.mock.calls.at(-1)?.[0]));
+    expect(entry).toMatchObject({ route: "signup-resend", step: "admin-lookup", status: 401, code: "invalid_api_key" });
+    expect(resend).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it("fails closed when Supabase cannot send", async () => {
     getUserById.mockResolvedValue({ data: { user: { id: userId, email: "person@example.com", email_confirmed_at: null } }, error: null });
     resend.mockResolvedValue({ data: {}, error: { status: 500, message: "smtp down" } });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const response = await post(resendRequest());
+    expect(JSON.parse(String(spy.mock.calls.at(-1)?.[0]))).toMatchObject({ step: "resend", status: 500 });
+    spy.mockRestore();
     expect(response.status).toBe(503);
     expect(JSON.stringify(await response.json())).not.toContain("smtp");
   });
