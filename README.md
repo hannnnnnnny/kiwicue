@@ -11,7 +11,7 @@
 
 KiwiCue is a bilingual Auckland event and movie discovery platform. It brings concerts, theatre, markets, festivals, community events and cinema information into one place, organised around what is happening soon enough to make a plan.
 
-**Live site:** [kiwicue.vercel.app](https://kiwicue.vercel.app/)
+**Live site:** [kiwicue.nz](https://kiwicue.nz/)
 
 ## Features
 
