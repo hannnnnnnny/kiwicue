@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { isRecurringMarketEvent, type KiwiCueEventDetail } from "./events";
 
-const SITE_ORIGIN = new URL("https://kiwicue.vercel.app");
+const SITE_ORIGIN = new URL("https://kiwicue.nz");
 
 function safeHttpUrl(value: string | null | undefined): string | null {
   if (!value) return null;
