@@ -9,6 +9,8 @@
     <a href="https://kiwicue.nz"><strong>🥝 Open kiwicue.nz →</strong></a>
   </p>
 
+  <p><strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a></p>
+
   <p>
     <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs" />
     <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
@@ -23,8 +25,6 @@
   &nbsp;
   <img src="./docs/readme/mobile.jpg" alt="KiwiCue on mobile with bottom tab bar" width="21%" />
 </p>
-
-> **中文简介：** KiwiCue（纽村小报）是一个中英双语的奥克兰活动与电影指南。演唱会、话剧、市集、节日和电影场次集中在一个地方，按时间排序，一键跳转官方购票页面。无需注册即可浏览和收藏；登录后可跨设备同步。
 
 ---
 
