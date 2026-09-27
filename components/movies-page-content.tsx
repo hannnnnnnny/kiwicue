@@ -7,9 +7,9 @@ import {
   sortCinemasByDistance,
 } from "../lib/cinema-directory";
 import { parseMovieQuery } from "../lib/movie-search-params";
-import type { KiwiCueScreening, MovieDateFilter } from "../lib/movies";
+import type { CinemaChain, MovieDateFilter, MovieShowing } from "../lib/movies";
 import type { MoviePreview, MoviePreviewPage } from "../lib/movie-previews";
-import { filterVerifiedMoviePreviews } from "../lib/verified-movie-sessions";
+import { filterShowingMoviePreviews, normalizedMovieTitle } from "../lib/verified-movie-sessions";
 import { CinemaDirectory } from "./cinema-directory";
 import { useLanguage } from "./language-provider";
 import { MovieScreeningFeed, type MovieFeedState } from "./movie-screening-feed";
@@ -18,9 +18,9 @@ import { MoviePreviewGrid, type MoviePreviewState } from "./movie-preview-grid";
 import { PortalHeader } from "./portal-header";
 
 type FeedResponse = {
-  screenings: KiwiCueScreening[];
-  sourceState: "ready" | "empty" | "not-covered" | "unavailable";
-  coverageState: "covered" | "not-covered" | "unavailable";
+  films: MovieShowing[];
+  sourceState: "ready" | "empty" | "unavailable";
+  unavailableChains: CinemaChain[];
   checkedAt: string;
 };
 
@@ -33,9 +33,9 @@ const copy = {
   en: {
     eyebrow: "Auckland · Film finder",
     title: "Find films and check Auckland sessions",
-    intro: "Browse recent New Zealand movie previews, then check source-matched Auckland sessions before planning your trip.",
+    intro: "See what's on at HOYTS and EVENT Cinemas across Auckland, then open a film for every cinema showing it, session times and ticket prices.",
     fallbackTitle: "Find a film, then check a nearby cinema",
-    fallbackIntro: "Search movie previews or a nearby Auckland cinema, then open its official site for today's confirmed sessions.",
+    fallbackIntro: "Live sessions are unavailable right now. Search movie previews or open a cinema's official site for today's sessions.",
     distance: "Sort cinemas by my distance",
     locating: "Finding your location…",
     privacy: "Your location stays on this device and is never saved.",
@@ -45,9 +45,9 @@ const copy = {
   zh: {
     eyebrow: "奥克兰 · 电影检索",
     title: "查找电影并核对奥克兰场次",
-    intro: "先浏览新西兰近期电影预览，再查看来源匹配的奥克兰场次，出发前请以影院官网为准。",
+    intro: "查看奥克兰 HOYTS 和 EVENT Cinemas 正在放映的电影，点开即可看到哪些影院在放、场次时间和票价。",
     fallbackTitle: "先找电影，再查看附近影院",
-    fallbackIntro: "搜索电影预览或附近的奥克兰影院，然后前往影院官网确认今天的真实场次。",
+    fallbackIntro: "实时场次暂时不可用。可以搜索电影预览，或前往影院官网查看今天的场次。",
     distance: "按离我的距离排列影院",
     locating: "正在获取位置…",
     privacy: "你的位置只在当前设备使用，不会被保存。",
@@ -56,14 +56,21 @@ const copy = {
   },
 } as const;
 
+function isShowing(value: unknown): value is MovieShowing {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.id === "string" && typeof record.title === "string"
+    && typeof record.cinemaCount === "number" && typeof record.sessionCount === "number"
+    && typeof record.nextStartTime === "string" && Number.isFinite(Date.parse(record.nextStartTime))
+    && typeof record.nextCinemaName === "string" && Array.isArray(record.screenTypes);
+}
+
 function isFeedResponse(value: unknown): value is FeedResponse {
   if (typeof value !== "object" || value === null) return false;
   const record = value as Record<string, unknown>;
-  return Array.isArray(record.screenings)
-    && (record.sourceState === "ready" || record.sourceState === "empty"
-      || record.sourceState === "not-covered" || record.sourceState === "unavailable")
-    && (record.coverageState === "covered" || record.coverageState === "not-covered"
-      || record.coverageState === "unavailable")
+  return Array.isArray(record.films) && record.films.every(isShowing)
+    && (record.sourceState === "ready" || record.sourceState === "empty" || record.sourceState === "unavailable")
+    && Array.isArray(record.unavailableChains)
     && typeof record.checkedAt === "string" && Number.isFinite(Date.parse(record.checkedAt));
 }
 
@@ -140,7 +147,8 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [activeQuery, setActiveQuery] = useState(initialQuery);
   const [date, setDate] = useState(initialDate);
-  const [screenings, setScreenings] = useState<KiwiCueScreening[]>([]);
+  const [films, setFilms] = useState<MovieShowing[]>([]);
+  const [unavailableChains, setUnavailableChains] = useState<CinemaChain[]>([]);
   const [feedState, setFeedState] = useState<MovieFeedState>("loading");
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const [previewMovies, setPreviewMovies] = useState<MoviePreview[]>([]);
@@ -157,7 +165,8 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   useEffect(() => {
     const controller = new AbortController();
     requestScreenings(activeQuery, date, controller.signal).then((payload) => {
-      setScreenings(payload.screenings);
+      setFilms(payload.films);
+      setUnavailableChains(payload.unavailableChains);
       setFeedState(payload.sourceState);
       setCheckedAt(payload.checkedAt);
     }).catch((error: unknown) => {
@@ -192,11 +201,16 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     return origin ? sortCinemasByDistance(visible, origin) : visible;
   }, [origin, query]);
   const verifiedMovieIds = useMemo(
-    () => new Set(
-      filterVerifiedMoviePreviews(previewVerificationMovies, screenings).map(({ id }) => id),
-    ),
-    [previewVerificationMovies, screenings],
+    () => new Set(filterShowingMoviePreviews(previewVerificationMovies, films).map(({ id }) => id)),
+    [previewVerificationMovies, films],
   );
+  const movieIds = useMemo(() => {
+    const ids = new Map<string, number>();
+    for (const movie of [...previewVerificationMovies, ...previewMovies]) {
+      for (const title of [movie.title, movie.originalTitle]) if (title) ids.set(normalizedMovieTitle(title), movie.id);
+    }
+    return ids;
+  }, [previewMovies, previewVerificationMovies]);
   const sessionState = feedState === "error" ? "unavailable" : feedState;
   const showLiveFeed = feedState === "loading" || feedState === "ready" || feedState === "empty";
   const cinemaAccess = (
@@ -219,6 +233,16 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     setFeedState("loading");
     setPreviewState("loading");
     setActiveQuery(nextQuery);
+  }
+
+  function findFilm(title: string) {
+    const nextQuery = parseMovieQuery(title);
+    setQuery(title);
+    if (nextQuery === activeQuery) return;
+    setFeedState("loading");
+    setPreviewState("loading");
+    setActiveQuery(nextQuery);
+    document.getElementById("movie-previews")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
   function clearSearch() {
@@ -266,7 +290,10 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
       </section>
       <div className="movies-layout">
         {showLiveFeed ? (
-          <MovieScreeningFeed screenings={screenings} state={feedState} language={language} checkedAt={checkedAt} />
+          <MovieScreeningFeed
+            films={films} state={feedState} language={language} checkedAt={checkedAt}
+            unavailableChains={unavailableChains} movieIds={movieIds} onFind={findFilm}
+          />
         ) : cinemaAccess}
         <MoviePreviewGrid
           movies={previewMovies}

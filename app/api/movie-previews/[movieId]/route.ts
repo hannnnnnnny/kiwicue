@@ -4,12 +4,10 @@ import type {
   MovieSessionStatus,
 } from "../../../../lib/movie-previews";
 import { parseMovieId, parseMoviePreviewLanguage } from "../../../../lib/movie-previews";
-import type { KiwiCueScreening, MovieCoverageState, MovieDateFilter } from "../../../../lib/movies";
-import {
-  fetchAucklandCinemaCoverage,
-  fetchAucklandScreenings,
-  OpenCinemaClientError,
-} from "../../../../lib/open-cinema";
+import { fetchAucklandSessions, type AucklandSessions } from "../../../../lib/cinemas/auckland-sessions";
+import { attachHoytsPrices } from "../../../../lib/cinemas/hoyts";
+import { CinemaSourceError } from "../../../../lib/cinemas/source-fetch";
+import type { CinemaChain, KiwiCueScreening } from "../../../../lib/movies";
 import { fetchTmdbMovieDetail, TmdbClientError } from "../../../../lib/tmdb";
 import { findMovieSessionMatches } from "../../../../lib/verified-movie-sessions";
 
@@ -18,24 +16,8 @@ type LoadMovie = (input: {
   language: MoviePreviewLanguage;
 }) => Promise<MoviePreviewDetail>;
 
-type LoadScreenings = (input: {
-  query: string | null;
-  date: MovieDateFilter;
-}) => Promise<KiwiCueScreening[]>;
-type LoadCoverage = () => Promise<MovieCoverageState>;
-
-function defaultScreeningLoader(now: Date): LoadScreenings {
-  return ({ query, date }) => fetchAucklandScreenings({
-    query,
-    date,
-    now,
-    apiKey: process.env.OPEN_CINEMA_API_KEY,
-  });
-}
-
-function defaultCoverageLoader(): Promise<MovieCoverageState> {
-  return fetchAucklandCinemaCoverage({ apiKey: process.env.OPEN_CINEMA_API_KEY });
-}
+type LoadSessions = () => Promise<AucklandSessions>;
+type AttachPrices = (sessions: KiwiCueScreening[]) => Promise<KiwiCueScreening[]>;
 
 function invalidLanguageResponse(): Response {
   return Response.json(
@@ -54,36 +36,36 @@ function detailError(error: unknown): Response {
       { status: error.status, headers: { "cache-control": "no-store" } },
     );
   }
-  if (error instanceof OpenCinemaClientError) {
-    const status = error.code === "UPSTREAM_TIMEOUT" ? 504 : error.code === "UPSTREAM_BUSY" ? 503 : 502;
-    return Response.json(
-      { error: { code: error.code, message: "Current movie sessions are temporarily unavailable." } },
-      { status, headers: { "cache-control": "no-store" } },
-    );
-  }
   return Response.json(
     { error: { code: "INTERNAL_ERROR", message: "Movie previews are temporarily unavailable." } },
     { status: 500, headers: { "cache-control": "no-store" } },
   );
 }
 
-function validFutureScreenings(screenings: KiwiCueScreening[], now: Date): KiwiCueScreening[] {
-  const unique = new Map<string, KiwiCueScreening>();
-  for (const screening of screenings) {
-    if (Number.isFinite(Date.parse(screening.startTime)) && Date.parse(screening.startTime) >= now.getTime()) {
-      unique.set(screening.id, screening);
-    }
+async function matchSessions(
+  movie: MoviePreviewDetail,
+  localizedMovie: MoviePreviewDetail | undefined,
+  loadSessions: LoadSessions,
+  attachPrices: AttachPrices,
+): Promise<{ sessionStatus: MovieSessionStatus; screenings: KiwiCueScreening[]; unavailableChains: CinemaChain[] }> {
+  try {
+    const { screenings, unavailableChains } = await loadSessions();
+    const matches = findMovieSessionMatches(movie, screenings, localizedMovie);
+    if (matches.length === 0) return { sessionStatus: "unverified", screenings: [], unavailableChains };
+    return { sessionStatus: "verified", screenings: await attachPrices(matches), unavailableChains };
+  } catch (error) {
+    if (!(error instanceof CinemaSourceError)) throw error;
+    return { sessionStatus: "unavailable", screenings: [], unavailableChains: [] };
   }
-  return [...unique.values()].sort((left, right) => Date.parse(left.startTime) - Date.parse(right.startTime));
 }
 
 export async function handleMoviePreviewDetailRequest(
   movieIdInput: string,
   languageInput: string | null,
   loadMovie: LoadMovie = fetchTmdbMovieDetail,
-  loadScreenings?: LoadScreenings,
+  loadSessions?: LoadSessions,
   now = new Date(),
-  loadCoverage?: LoadCoverage,
+  attachPrices: AttachPrices = (sessions) => attachHoytsPrices(sessions),
 ): Promise<Response> {
   const movieId = parseMovieId(movieIdInput);
   if (!movieId) {
@@ -101,33 +83,14 @@ export async function handleMoviePreviewDetailRequest(
     const verificationMovie = language === "en"
       ? movie
       : await loadMovie({ movieId, language: "en" });
-    let sessionStatus: MovieSessionStatus = "unavailable";
-    let screenings: KiwiCueScreening[] = [];
+    const { sessionStatus, screenings, unavailableChains } = await matchSessions(
+      verificationMovie,
+      language === "zh" ? movie : undefined,
+      loadSessions ?? (() => fetchAucklandSessions({ date: "all", now })),
+      attachPrices,
+    );
     const checkedAt = now.toISOString();
-    try {
-      const coverage = await (loadCoverage ?? (loadScreenings
-        ? async () => "covered" as const
-        : defaultCoverageLoader))();
-      if (coverage === "not-covered") {
-        sessionStatus = "not-covered";
-      } else {
-        const catalog = await (loadScreenings ?? defaultScreeningLoader(now))({
-          query: null,
-          date: "all",
-        });
-        screenings = findMovieSessionMatches(
-          verificationMovie,
-          validFutureScreenings(catalog, now),
-          language === "zh" ? movie : undefined,
-        );
-        sessionStatus = screenings.length > 0
-          ? "verified"
-          : "unverified";
-      }
-    } catch (error) {
-      if (!(error instanceof OpenCinemaClientError)) throw error;
-    }
-    return Response.json({ movie, screenings, sessionStatus, checkedAt }, { headers: { "cache-control": "no-store" } });
+    return Response.json({ movie, screenings, sessionStatus, unavailableChains, checkedAt }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     return detailError(error);
   }

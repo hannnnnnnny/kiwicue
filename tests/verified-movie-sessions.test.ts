@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { MoviePreviewDetail } from "../lib/movie-previews";
 import type { KiwiCueScreening } from "../lib/movies";
-import { findMovieSessionMatches, movieHasVerifiedSession } from "../lib/verified-movie-sessions";
+import { filterShowingMoviePreviews, findMovieSessionMatches } from "../lib/verified-movie-sessions";
 
 const movie: MoviePreviewDetail = {
   id: 1545621,
@@ -26,20 +26,23 @@ function screening(filmTitle: string, runtimeMinutes: number | null = 109): Kiwi
     filmTitle,
     filmRating: null,
     runtimeMinutes,
-    cinemaId: "cinema-1",
-    cinemaName: "Academy Cinemas",
+    cinemaId: "hoyts-1002",
+    cinemaName: "HOYTS Sylvia Park",
+    chain: "HOYTS",
     startTime: "2026-08-15T08:00:00.000Z",
+    screenType: "Standard",
     formats: [],
     soldOut: false,
-    distanceKilometres: null,
+    discounted: false,
     bookingUrl: null,
+    price: null,
   };
 }
 
 describe("verified movie sessions", () => {
   it("matches a normalized complete title when both known runtimes agree", () => {
-    expect(movieHasVerifiedSession(movie, [screening("Detective Conan — Fallen Angel of the Highway")])).toBe(true);
-    expect(movieHasVerifiedSession(movie, [screening("Detective Conan")])).toBe(false);
+    expect(findMovieSessionMatches(movie, [screening("Detective Conan — Fallen Angel of the Highway")])).toHaveLength(1);
+    expect(findMovieSessionMatches(movie, [screening("Detective Conan")])).toEqual([]);
   });
 
   it("rejects a title match with contradictory known runtimes", () => {
@@ -54,5 +57,11 @@ describe("verified movie sessions", () => {
     const chineseMovie = { ...movie, title: "名侦探柯南：高速公路的堕天使", originalTitle: "名探偵コナン ハイウェイの堕天使" };
     const englishMovie = { ...movie, originalTitle: null };
     expect(findMovieSessionMatches(chineseMovie, [screening(movie.title)], englishMovie)).toHaveLength(1);
+  });
+
+  it("marks list previews as showing on a complete title match", () => {
+    const preview = { id: movie.id, title: movie.title, originalTitle: null, overview: null, posterUrl: null, releaseDate: null, rating: null, ratingCount: 0 };
+    expect(filterShowingMoviePreviews([preview], [{ title: "Detective Conan: Fallen Angel of the Highway" }])).toEqual([preview]);
+    expect(filterShowingMoviePreviews([preview], [{ title: "Detective Conan" }])).toEqual([]);
   });
 });

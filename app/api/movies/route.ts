@@ -1,12 +1,8 @@
+import { fetchAucklandSessions, summarizeShowings, type AucklandSessions } from "../../../lib/cinemas/auckland-sessions";
 import { isMovieDateFilter, parseMovieDateFilter, parseMovieQuery } from "../../../lib/movie-search-params";
-import type { KiwiCueScreening, MovieCoverageState, MovieDateFilter } from "../../../lib/movies";
-import { fetchAucklandCinemaCoverage, fetchAucklandScreenings } from "../../../lib/open-cinema";
+import type { KiwiCueScreening, MovieDateFilter } from "../../../lib/movies";
 
-type LoadScreenings = (input: {
-  query: string | null;
-  date: MovieDateFilter;
-}) => Promise<KiwiCueScreening[]>;
-type LoadCoverage = () => Promise<MovieCoverageState>;
+type LoadSessions = (input: { date: MovieDateFilter }) => Promise<AucklandSessions>;
 
 function invalidParameters(url: URL, query: string | null): boolean {
   const queryValues = url.searchParams.getAll("q");
@@ -16,19 +12,6 @@ function invalidParameters(url: URL, query: string | null): boolean {
   if (rawQuery !== undefined && rawQuery.trim().length > 0 && query === null) return true;
   const rawDate = dateValues[0];
   return rawDate !== undefined && !isMovieDateFilter(rawDate);
-}
-
-function defaultLoader(now: Date): LoadScreenings {
-  return ({ query, date }) => fetchAucklandScreenings({
-    query,
-    date,
-    now,
-    apiKey: process.env.OPEN_CINEMA_API_KEY,
-  });
-}
-
-function defaultCoverageLoader(): Promise<MovieCoverageState> {
-  return fetchAucklandCinemaCoverage({ apiKey: process.env.OPEN_CINEMA_API_KEY });
 }
 
 function normalizedSearchText(value: string): string {
@@ -44,9 +27,8 @@ function filterScreenings(screenings: KiwiCueScreening[], query: string | null):
 
 export async function handleMoviesRequest(
   request: Request,
-  loadScreenings?: LoadScreenings,
+  loadSessions?: LoadSessions,
   now = new Date(),
-  loadCoverage: LoadCoverage = defaultCoverageLoader,
 ): Promise<Response> {
   const url = new URL(request.url);
   const query = parseMovieQuery(url.searchParams.getAll("q")[0] ?? null);
@@ -59,31 +41,18 @@ export async function handleMoviesRequest(
 
   const date = parseMovieDateFilter(url.searchParams.getAll("date")[0] ?? null);
   const checkedAt = now.toISOString();
+  const load = loadSessions ?? (({ date: requested }) => fetchAucklandSessions({ date: requested, now }));
   try {
-    const coverageState = await loadCoverage();
-    if (coverageState === "not-covered") {
-      return Response.json({
-        screenings: [], source: "open-cinema", sourceState: "not-covered",
-        coverageState, checkedAt,
-      }, { headers: { "cache-control": "no-store" } });
-    }
-    const catalog = await (loadScreenings ?? defaultLoader(now))({ query: null, date });
-    const screenings = filterScreenings(catalog, query);
+    const { screenings, unavailableChains } = await load({ date });
+    const films = summarizeShowings(filterScreenings(screenings, query));
     return Response.json({
-      screenings,
-      source: "open-cinema",
-      sourceState: screenings.length > 0 ? "ready" : "empty",
-      coverageState,
-      checkedAt,
+      films, sourceState: films.length > 0 ? "ready" : "empty", unavailableChains, checkedAt,
     }, { headers: { "cache-control": "no-store" } });
   } catch {
-    return Response.json({
-      screenings: [],
-      source: "open-cinema",
-      sourceState: "unavailable",
-      coverageState: "unavailable",
-      checkedAt,
-    }, { headers: { "cache-control": "no-store" } });
+    return Response.json(
+      { films: [], sourceState: "unavailable", unavailableChains: [], checkedAt },
+      { headers: { "cache-control": "no-store" } },
+    );
   }
 }
 

@@ -1,61 +1,67 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MovieScreeningFeed } from "../components/movie-screening-feed";
-import type { KiwiCueScreening } from "../lib/movies";
+import type { MovieShowing } from "../lib/movies";
 
-const screening: KiwiCueScreening = {
-  id: "screening-1",
-  filmId: "film-1",
-  filmTitle: "Whina",
-  filmRating: "M",
+const film: MovieShowing = {
+  id: "whina",
+  title: "Whina",
+  rating: "M",
   runtimeMinutes: 112,
-  cinemaId: "academy",
-  cinemaName: "Academy Cinemas",
-  startTime: "2026-08-15T18:30:00+12:00",
-  formats: ["2D", "English subtitles"],
-  soldOut: false,
-  distanceKilometres: 1.4,
-  bookingUrl: "https://tickets.example/whina",
+  cinemaCount: 3,
+  sessionCount: 11,
+  nextStartTime: "2026-08-15T18:30:00+12:00",
+  nextCinemaName: "HOYTS Sylvia Park",
+  screenTypes: ["LUX", "Standard"],
 };
 
 afterEach(cleanup);
 
 describe("movie screening feed", () => {
-  it("shows the decision-making facts and one official booking action", () => {
-    render(<MovieScreeningFeed screenings={[screening]} state="ready" language="en" checkedAt="2026-08-12T02:00:00.000Z" />);
+  it("summarises each film and links to its detail page when the film is known", () => {
+    render(<MovieScreeningFeed films={[film]} state="ready" language="en" checkedAt="2026-08-12T02:00:00.000Z"
+      unavailableChains={[]} movieIds={new Map([["whina", 42]])} onFind={vi.fn()} />);
 
     expect(screen.getByRole("heading", { name: "Whina" })).toBeVisible();
-    expect(screen.getByText("Academy Cinemas")).toBeVisible();
-    expect(screen.getByText(/Sat, 15 Aug/)).toBeVisible();
     expect(screen.getByText("M · 112 min")).toBeVisible();
-    expect(screen.getByText("2D")).toBeVisible();
-    expect(screen.getByText("1.4 km away")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Book on official site" })).toHaveAttribute(
-      "href",
-      "https://tickets.example/whina",
-    );
-    expect(screen.getByText(/Coverage checked/)).toBeVisible();
+    expect(screen.getByText("3 cinemas · 11 sessions")).toBeVisible();
+    expect(screen.getByText(/Next: Sat, 15 Aug.*HOYTS Sylvia Park/)).toBeVisible();
+    expect(screen.getByText("LUX")).toBeVisible();
+    expect(screen.queryByText("Standard")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Cinemas, times & prices/ })).toHaveAttribute("href", "/movies/42");
+    expect(screen.getByText(/Updated/)).toBeVisible();
   });
 
-  it("shows a non-interactive sold-out state", () => {
-    render(<MovieScreeningFeed screenings={[{ ...screening, soldOut: true }]} state="ready" language="en" checkedAt={null} />);
-    expect(screen.getByText("Sold out")).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Book on official site" })).not.toBeInTheDocument();
+  it("offers a search for films without a known detail page", () => {
+    const onFind = vi.fn();
+    render(<MovieScreeningFeed films={[film]} state="ready" language="en" checkedAt={null} unavailableChains={[]} movieIds={new Map()} onFind={onFind} />);
+    fireEvent.click(screen.getByRole("button", { name: "Find this film" }));
+    expect(onFind).toHaveBeenCalledWith("Whina");
+  });
+
+  it("shows the first twelve films and reveals the rest on request", () => {
+    const films = Array.from({ length: 15 }, (_, index) => ({ ...film, id: `film-${index}`, title: `Film ${index}` }));
+    render(<MovieScreeningFeed films={films} state="ready" language="en" checkedAt={null} unavailableChains={[]} movieIds={new Map()} onFind={vi.fn()} />);
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(12);
+    fireEvent.click(screen.getByRole("button", { name: "Show all 15 films" }));
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(15);
+  });
+
+  it("warns when one chain is missing from the list", () => {
+    render(<MovieScreeningFeed films={[film]} state="ready" language="en" checkedAt={null} unavailableChains={["HOYTS"]} movieIds={new Map()} onFind={vi.fn()} />);
+    expect(screen.getByText(/HOYTS sessions are temporarily unavailable/)).toBeVisible();
   });
 
   it("uses structure-matched loading rows and clear empty states", () => {
-    const { rerender } = render(<MovieScreeningFeed screenings={[]} state="loading" language="en" checkedAt={null} />);
-    expect(screen.getByLabelText("Loading movie sessions")).toBeVisible();
+    const props = { language: "en" as const, checkedAt: null, unavailableChains: [], movieIds: new Map(), onFind: vi.fn() };
+    const { rerender } = render(<MovieScreeningFeed films={[]} state="loading" {...props} />);
+    expect(screen.getByLabelText("Loading Auckland sessions")).toBeVisible();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 
-    rerender(<MovieScreeningFeed screenings={[]} state="empty" language="en" checkedAt="2026-08-12T02:00:00.000Z" />);
-    expect(screen.getByText("No open-feed sessions found")).toBeVisible();
+    rerender(<MovieScreeningFeed films={[]} state="empty" {...props} />);
+    expect(screen.getByText("No sessions found for this date")).toBeVisible();
 
-    rerender(<MovieScreeningFeed screenings={[]} state="not-covered" language="en" checkedAt="2026-08-12T02:00:00.000Z" />);
-    expect(screen.getByText("Auckland live-data coverage is not available yet")).toBeVisible();
-    expect(screen.getByText(/not evidence that no films are showing/i)).toBeVisible();
-
-    rerender(<MovieScreeningFeed screenings={[]} state="unavailable" language="en" checkedAt="2026-08-12T02:00:00.000Z" />);
+    rerender(<MovieScreeningFeed films={[]} state="unavailable" {...props} />);
     expect(screen.getByText("Live sessions are temporarily unavailable")).toBeVisible();
   });
 });

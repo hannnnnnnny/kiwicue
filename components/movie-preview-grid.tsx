@@ -5,17 +5,16 @@ import { MoviePoster } from "./movie-poster";
 import { TmdbAttribution } from "./tmdb-attribution";
 
 export type MoviePreviewState = "loading" | "ready" | "empty" | "unavailable";
-export type MovieSessionCheckState = "loading" | "ready" | "empty" | "not-covered" | "unavailable";
+export type MovieSessionCheckState = "loading" | "ready" | "empty" | "unavailable";
 
 const copy = {
   en: {
     source: "Movie previews",
     title: "Explore recent New Zealand releases",
-    intro: "Posters, synopses, and trailers come from TMDB. Session labels are source-title candidates, not proof of cross-source film identity.",
-    verified: "Source-matched Auckland session",
-    unverified: "Auckland session not verified",
+    intro: "Posters, synopses and trailers come from TMDB. Open a film to see which Auckland cinemas are showing it, session times and ticket prices.",
+    verified: "Showing in Auckland",
+    unverified: "Not found at HOYTS or EVENT",
     checking: "Checking Auckland sessions",
-    notCovered: "Preview only · no Auckland live-data coverage",
     checkUnavailable: "Session check unavailable",
     preview: (title: string) => `Preview ${title}`,
     noOverview: "No synopsis is available from the source yet.",
@@ -33,11 +32,10 @@ const copy = {
   zh: {
     source: "电影预览",
     title: "探索新西兰近期电影",
-    intro: "海报、简介和预告片来自 TMDB；场次标签是来源标题候选匹配，并非跨来源电影身份的证明。",
-    verified: "来源匹配的奥克兰场次",
-    unverified: "奥克兰场次尚未核实",
+    intro: "海报、简介和预告片来自 TMDB。点开电影即可查看奥克兰哪些影院在放映、场次时间和票价。",
+    verified: "奥克兰有场次",
+    unverified: "HOYTS / EVENT 暂无场次",
     checking: "正在核对奥克兰场次",
-    notCovered: "仅电影资料 · 暂无奥克兰实时数据覆盖",
     checkUnavailable: "暂时无法核对场次",
     preview: (title: string) => `查看 ${title} 预览`,
     noOverview: "数据源暂未提供剧情简介。",
@@ -68,7 +66,7 @@ function MoviePreviewCard({ movie, language, layout, sessionStatus }: {
   movie: MoviePreview;
   language: Language;
   layout: "feature" | "standard";
-  sessionStatus: "verified" | "unverified" | "checking" | "not-covered" | "unavailable";
+  sessionStatus: "verified" | "unverified" | "checking" | "unavailable";
 }) {
   const content = copy[language];
   const releaseDate = formatReleaseDate(movie.releaseDate, language);
@@ -78,9 +76,7 @@ function MoviePreviewCard({ movie, language, layout, sessionStatus }: {
         <div className="movie-preview-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} /></div>
         <div className="movie-preview-body">
           <span className="movie-preview-availability" data-session-status={sessionStatus}>
-            {sessionStatus === "unavailable"
-              ? content.checkUnavailable
-              : sessionStatus === "not-covered" ? content.notCovered : content[sessionStatus]}
+            {sessionStatus === "unavailable" ? content.checkUnavailable : content[sessionStatus]}
           </span>
           <h3>{movie.title}</h3>
           <div className="movie-preview-meta">
@@ -159,7 +155,6 @@ export function MoviePreviewGrid({ movies, state, sessionState, verifiedMovieIds
               sessionStatus={verifiedMovieIds.has(movie.id)
                 ? "verified"
                 : sessionState === "loading" ? "checking"
-                  : sessionState === "not-covered" ? "not-covered"
                   : sessionState === "unavailable" ? "unavailable" : "unverified"}
             />
           ))}

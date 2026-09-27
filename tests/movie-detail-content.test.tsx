@@ -8,6 +8,7 @@ import {
 import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
 import type { MoviePreviewDetail, MoviePreviewDetailResponse } from "../lib/movie-previews";
+import type { KiwiCueScreening } from "../lib/movies";
 
 const movie: MoviePreviewDetail = {
   id: 550,
@@ -24,6 +25,16 @@ const movie: MoviePreviewDetail = {
   trailerKey: "Abc_123-x",
   tmdbUrl: "https://www.themoviedb.org/movie/550",
 };
+
+function session(overrides: Partial<Record<keyof KiwiCueScreening, unknown>> = {}): KiwiCueScreening {
+  return {
+    id: "hoyts-1002-1", filmId: "hoyts-HO1", filmTitle: "Fight Club", filmRating: "R16", runtimeMinutes: 139,
+    cinemaId: "hoyts-1002", cinemaName: "HOYTS Sylvia Park", chain: "HOYTS", startTime: "2026-08-15T18:30:00+12:00",
+    screenType: "Standard", formats: [], soldOut: false, discounted: false,
+    bookingUrl: "https://www.hoyts.co.nz/orders/tickets?cinemaId=1002&sessionId=1", price: null,
+    ...overrides,
+  } as KiwiCueScreening;
+}
 
 function renderDetail(requestMovieDetail: (movieId: string, language: "en" | "zh") => Promise<MoviePreviewDetailResponse>) {
   return render(
@@ -47,15 +58,11 @@ describe("movie detail experience", () => {
       movie,
       sessionStatus: "verified",
       checkedAt: "2026-08-12T02:00:00.000Z",
-      screenings: [{
-        id: "session-1", filmId: "source-film", filmTitle: "Fight Club", filmRating: "R16", runtimeMinutes: 139,
-        cinemaId: "academy", cinemaName: "Academy Cinemas", startTime: "2026-08-15T18:30:00+12:00",
-        formats: ["2D"], soldOut: false, distanceKilometres: null, bookingUrl: "https://academycinemas.co.nz/fight-club",
-      }],
+      screenings: [session()],
     }));
 
     const synopsis = await screen.findByRole("heading", { name: "Synopsis" });
-    const sessions = screen.getByRole("heading", { name: "Source-matched Auckland sessions" });
+    const sessions = screen.getByRole("heading", { name: "Where to watch in Auckland" });
     const trailer = screen.getByRole("heading", { name: "Official trailer" });
     expect(synopsis.compareDocumentPosition(sessions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(sessions.compareDocumentPosition(trailer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -67,15 +74,11 @@ describe("movie detail experience", () => {
       ? new Promise<MoviePreviewDetailResponse>((resolve) => { resolveFirst = resolve; })
       : Promise.resolve({ movie: { ...movie, id: 551, title: "Second Film" }, sessionStatus: "unverified", screenings: [], checkedAt: null }));
     const view = renderDetail(requestMovieDetail);
-    resolveFirst?.({ movie, sessionStatus: "verified", screenings: [{
-      id: "session-1", filmId: "source-film", filmTitle: "Fight Club", filmRating: null, runtimeMinutes: 139,
-      cinemaId: "academy", cinemaName: "Academy Cinemas", startTime: "2026-08-15T18:30:00+12:00",
-      formats: [], soldOut: false, distanceKilometres: null, bookingUrl: null,
-    }], checkedAt: null });
-    await screen.findByRole("heading", { name: "Source-matched Auckland sessions" });
+    resolveFirst?.({ movie, sessionStatus: "verified", screenings: [session()], checkedAt: null });
+    await screen.findByRole("heading", { name: "HOYTS Sylvia Park" });
     view.rerender(<LanguageProvider><BookmarkProvider><MovieDetailContent movieId="551" requestMovieDetail={requestMovieDetail} /></BookmarkProvider></LanguageProvider>);
     expect(screen.getByRole("status")).toHaveTextContent("Loading movie preview");
-    expect(screen.queryByText("Academy Cinemas")).not.toBeInTheDocument();
+    expect(screen.queryByText("HOYTS Sylvia Park")).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Second Film" })).toBeVisible();
   });
 
@@ -84,21 +87,25 @@ describe("movie detail experience", () => {
       movie,
       sessionStatus: "verified",
       checkedAt: "2026-08-12T02:00:00.000Z",
-      screenings: [{
-        id: "session-1", filmId: "source-film", filmTitle: "Fight Club", filmRating: null, runtimeMinutes: 139,
-        cinemaId: "academy", cinemaName: "Academy Cinemas", startTime: "2026-08-15T18:30:00+12:00",
-        formats: [], soldOut: false, distanceKilometres: null, bookingUrl: "javascript:alert(1)",
-      }],
+      screenings: [session({ bookingUrl: "javascript:alert(1)" })],
     })));
     await expect(requestMovieDetailFromApi("550", "en")).rejects.toMatchObject({ status: 200 });
   });
+
+  it("rejects malformed prices and unknown cinema chains from an API response", async () => {
+    for (const screening of [session({ price: { minCents: 4300, maxCents: 1900, bookingFeeCents: null } }), session({ chain: "Other" })]) {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ movie, sessionStatus: "verified", screenings: [screening] })));
+      await expect(requestMovieDetailFromApi("550", "en")).rejects.toMatchObject({ status: 200 });
+    }
+  });
+
   it("shows the full preview, safe trailer, attribution, and official cinema choices", async () => {
     const requestMovieDetail = vi.fn().mockResolvedValue({ movie, sessionStatus: "verified" });
     renderDetail(requestMovieDetail);
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading movie preview");
     expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
-    expect(screen.getByText(/not an exact cross-source identity proof/i)).toBeVisible();
+    expect(screen.getByText("See which cinemas are showing it, session times and ticket prices below.")).toBeVisible();
     expect(requestMovieDetail).toHaveBeenCalledWith("550", "en");
     expect(screen.getByText("15 Oct 1999")).toBeVisible();
     expect(screen.getByText("2 hr 19 min")).toBeVisible();
@@ -117,22 +124,16 @@ describe("movie detail experience", () => {
     );
     expect(screen.getByRole("link", { name: "Back to movies" })).toHaveAttribute("href", "/movies");
     expect(screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB.")).toBeVisible();
-    expect(screen.getByRole("heading", { name: "General Auckland cinema directory" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "More Auckland cinemas" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("target", "_blank");
+    expect(screen.queryByRole("link", { name: /HOYTS Sylvia Park sessions/ })).not.toBeInTheDocument();
   });
 
-  it("labels a release preview honestly when its Auckland session is not verified", async () => {
+  it("points to independent cinemas when HOYTS and EVENT have no sessions", async () => {
     renderDetail(vi.fn().mockResolvedValue({ movie, sessionStatus: "unverified" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
-    expect(screen.getByText("Release preview · Auckland session not verified")).toBeVisible();
-    expect(screen.getByText("Use the official cinema links below to confirm whether this film is currently showing.")).toBeVisible();
-  });
-
-  it("states that coverage is missing instead of claiming the movie is not showing", async () => {
-    renderDetail(vi.fn().mockResolvedValue({ movie, sessionStatus: "not-covered" }));
-    expect(await screen.findByRole("heading", { level: 1, name: "Fight Club" })).toBeVisible();
-    expect(screen.getByText("Release preview · Auckland live-data coverage unavailable")).toBeVisible();
-    expect(screen.getAllByText(/does not mean the film is not showing/i)).toHaveLength(2);
+    expect(screen.getByText("Movie preview")).toBeVisible();
+    expect(screen.getByText("No HOYTS or EVENT Cinemas sessions this week. Independent cinemas are listed below.")).toBeVisible();
   });
 
   it("shows honest fallbacks when optional metadata is absent", async () => {
@@ -192,7 +193,7 @@ describe("movie detail experience", () => {
     await screen.findByRole("heading", { level: 1, name: "Fight Club" });
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
     expect(await screen.findByTitle("Fight Club 官方预告片")).toBeVisible();
-    expect(screen.getByRole("heading", { name: "奥克兰通用影院目录" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "更多奥克兰影院" })).toBeVisible();
     expect(requestMovieDetail).toHaveBeenLastCalledWith("550", "zh");
   });
 });

@@ -34,7 +34,7 @@
 | --- | --- |
 | 🔎 **Discover** | Browse by category or tap a quick filter — *Tonight*, *This weekend*, *Free*, *Live music*, or *Surprise me*. Search by event name or venue. |
 | 🗺️ **Plan** | See dates, venues and maps at a glance, then go straight to the official ticket page. |
-| 🎬 **Movies** | Find verified Auckland cinema sessions and new releases, and sort cinemas by distance. |
+| 🎬 **Movies** | See what's on at HOYTS and EVENT Cinemas across Auckland: every cinema showing a film, session times, screen types (LUX, Gold Class, V-Max…) and HOYTS ticket prices. |
 | ⭐ **Picks & For You** | Get explainable recommendations — every pick says *why* it was suggested. |
 | ❤️ **Save** | Save events without an account. Sign up to sync saves, collections and interests across devices. |
 | 💬 **Social** *(optional)* | Mark events as Interested / Going / Went, comment, and share public collections. |
@@ -58,7 +58,7 @@ Auckland event information is scattered across ticketing sites, cinema pages, or
 | [Ticketmaster Discovery API](https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/) | Auckland events and official ticket links |
 | KiwiCue verified schedules | Local markets and community events |
 | [TMDB](https://www.themoviedb.org/) | Movie details, posters, ratings and trailers |
-| [Open Cinema Project](https://opencinemaproject.com/) | Auckland cinema sessions |
+| [HOYTS](https://www.hoyts.co.nz/) and [EVENT Cinemas](https://www.eventcinemas.co.nz/) | Live Auckland sessions from each chain's own site, plus HOYTS ticket prices |
 
 ## How it works
 
@@ -66,7 +66,7 @@ Auckland event information is scattered across ticketing sites, cinema pages, or
 flowchart LR
     A[Ticketmaster] --> D[Next.js server routes]
     B[TMDB] --> D
-    C[Open Cinema] --> D
+    C[HOYTS & EVENT Cinemas] --> D
     D --> E[Validate & normalise]
     E --> F[Events & movies UI]
     F --> G[Official booking page]
@@ -82,7 +82,7 @@ API keys stay on the server — external data is fetched and validated in route 
 
 ## Run it locally
 
-**You need:** Node.js 20+, npm, and API keys for Ticketmaster and TMDB (Open Cinema is optional locally).
+**You need:** Node.js 20+, npm, and API keys for Ticketmaster and TMDB. Cinema sessions need no key.
 
 ```bash
 git clone https://github.com/hannnnnnnny/kiwicue.git
@@ -95,7 +95,6 @@ npm run dev                  # http://localhost:3000
 ```env
 TICKETMASTER_API_KEY=your_ticketmaster_consumer_key
 TMDB_READ_ACCESS_TOKEN=your_tmdb_read_access_token
-OPEN_CINEMA_API_KEY=your_open_cinema_api_key
 ```
 
 > [!IMPORTANT]
@@ -187,7 +186,7 @@ npm run build
 
 KiwiCue deploys to Vercel from this repository and is served at [kiwicue.nz](https://kiwicue.nz).
 
-Add `TICKETMASTER_API_KEY`, `TMDB_READ_ACCESS_TOKEN` and `OPEN_CINEMA_API_KEY` as **Sensitive** production environment variables. If accounts are enabled, add the Supabase variables and apply migrations first.
+Add `TICKETMASTER_API_KEY` and `TMDB_READ_ACCESS_TOKEN` as **Sensitive** production environment variables. If accounts are enabled, add the Supabase variables and apply migrations first.
 
 ```bash
 vercel link --yes --project kiwicue

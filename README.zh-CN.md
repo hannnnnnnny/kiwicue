@@ -26,7 +26,7 @@
 | --- | --- |
 | 🔎 **发现** | 按分类浏览，或点快捷筛选：*今晚*、*这个周末*、*免费*、*现场音乐*、*随便看看*。可按活动名或场馆搜索。 |
 | 🗺️ **规划** | 日期、场馆、地图一目了然，一键跳转官方购票页面。 |
-| 🎬 **电影** | 查看经过核实的奥克兰影院场次和新片，影院可按距离排序。 |
+| 🎬 **电影** | 查看奥克兰 HOYTS 和 EVENT Cinemas 正在放映的电影：哪些影院在放、场次时间、影厅类型（LUX、Gold Class、V-Max 等）以及 HOYTS 票价。 |
 | ⭐ **精选与为你推荐** | 推荐结果可解释 —— 每条都会说明 *为什么* 推荐给你。 |
 | ❤️ **收藏** | 不注册也能收藏活动；注册后可在多台设备间同步收藏、合集和兴趣。 |
 | 💬 **社交**（可选） | 标记“感兴趣 / 要去 / 去过”，发表评论，分享公开合集。 |
@@ -50,7 +50,7 @@
 | [Ticketmaster Discovery API](https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/) | 奥克兰活动和官方购票链接 |
 | KiwiCue 核实的日程 | 本地市集和社区活动 |
 | [TMDB](https://www.themoviedb.org/) | 电影详情、海报、评分和预告片 |
-| [Open Cinema Project](https://opencinemaproject.com/) | 奥克兰影院场次 |
+| [HOYTS](https://www.hoyts.co.nz/) 和 [EVENT Cinemas](https://www.eventcinemas.co.nz/) | 来自两家院线官网的奥克兰实时场次，以及 HOYTS 票价 |
 
 ## 工作原理
 
@@ -58,7 +58,7 @@
 flowchart LR
     A[Ticketmaster] --> D[Next.js 服务端路由]
     B[TMDB] --> D
-    C[Open Cinema] --> D
+    C[HOYTS 和 EVENT Cinemas] --> D
     D --> E[校验与标准化]
     E --> F[活动与电影界面]
     F --> G[官方购票页面]
@@ -74,7 +74,7 @@ API 密钥只留在服务端 —— 外部数据在路由处理器里获取并�
 
 ## 本地运行
 
-**需要：** Node.js 20+、npm，以及 Ticketmaster 和 TMDB 的 API 密钥（本地可以不配 Open Cinema）。
+**需要：** Node.js 20+、npm，以及 Ticketmaster 和 TMDB 的 API 密钥。影院场次不需要密钥。
 
 ```bash
 git clone https://github.com/hannnnnnnny/kiwicue.git
@@ -87,7 +87,6 @@ npm run dev                  # http://localhost:3000
 ```env
 TICKETMASTER_API_KEY=your_ticketmaster_consumer_key
 TMDB_READ_ACCESS_TOKEN=your_tmdb_read_access_token
-OPEN_CINEMA_API_KEY=your_open_cinema_api_key
 ```
 
 > [!IMPORTANT]
@@ -179,7 +178,7 @@ npm run build
 
 KiwiCue 从本仓库部署到 Vercel，网址为 [kiwicue.nz](https://kiwicue.nz)。
 
-在 Vercel 中把 `TICKETMASTER_API_KEY`、`TMDB_READ_ACCESS_TOKEN` 和 `OPEN_CINEMA_API_KEY` 添加为 **Sensitive** 类型的生产环境变量。如果启用了账号功能，先添加 Supabase 变量并执行数据库迁移。
+在 Vercel 中把 `TICKETMASTER_API_KEY` 和 `TMDB_READ_ACCESS_TOKEN` 添加为 **Sensitive** 类型的生产环境变量。如果启用了账号功能，先添加 Supabase 变量并执行数据库迁移。
 
 ```bash
 vercel link --yes --project kiwicue
