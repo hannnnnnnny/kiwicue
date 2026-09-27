@@ -157,19 +157,34 @@ const curatedMarketDetail = {
   note: "Schedules can change around public holidays.",
 };
 
+const movieShowing = {
+  id: "whina",
+  title: "Whina",
+  rating: "M",
+  runtimeMinutes: 112,
+  cinemaCount: 2,
+  sessionCount: 6,
+  nextStartTime: "2026-08-15T18:30:00+12:00",
+  nextCinemaName: "HOYTS Sylvia Park",
+  screenTypes: ["LUX", "Standard"],
+};
+
 const movieScreening = {
-  id: "screening-1",
-  filmId: "film-1",
+  id: "hoyts-1002-1",
+  filmId: "hoyts-HO1",
   filmTitle: "Whina",
   filmRating: "M",
   runtimeMinutes: 112,
-  cinemaId: "academy",
-  cinemaName: "Academy Cinemas",
+  cinemaId: "hoyts-1002",
+  cinemaName: "HOYTS Sylvia Park",
+  chain: "HOYTS",
   startTime: "2026-08-15T18:30:00+12:00",
-  formats: ["2D", "English subtitles"],
+  screenType: "Standard",
+  formats: [],
   soldOut: false,
-  distanceKilometres: 1.4,
-  bookingUrl: "https://tickets.example/whina",
+  discounted: false,
+  bookingUrl: "https://www.hoyts.co.nz/orders/tickets?cinemaId=1002&sessionId=1",
+  price: { minCents: 1900, maxCents: 2400, bookingFeeCents: 180 },
 };
 
 const moviePreview = {
@@ -311,32 +326,17 @@ async function installRoutes(page: Page, options: RouteOptions = {}) {
     movieRequests.push(requestUrl);
     const checkedAt = "2026-08-12T02:00:00.000Z";
     if (url.searchParams.get("q") === "Offline") {
-      return json(route, {
-        screenings: [], source: "open-cinema", sourceState: "unavailable",
-        coverageState: "unavailable", checkedAt,
-      });
-    }
-    if (url.searchParams.get("q") === "NoCoverage") {
-      return json(route, {
-        screenings: [], source: "open-cinema", sourceState: "not-covered",
-        coverageState: "not-covered", checkedAt,
-      });
+      return json(route, { films: [], sourceState: "unavailable", unavailableChains: [], checkedAt });
     }
     if (url.searchParams.get("q") === "NoFilm") {
-      return json(route, {
-        screenings: [], source: "open-cinema", sourceState: "empty",
-        coverageState: "covered", checkedAt,
-      });
+      return json(route, { films: [], sourceState: "empty", unavailableChains: [], checkedAt });
     }
-    return json(route, {
-      screenings: [movieScreening], source: "open-cinema", sourceState: "ready",
-      coverageState: "covered", checkedAt,
-    });
+    return json(route, { films: [movieShowing], sourceState: "ready", unavailableChains: [], checkedAt });
   });
   await page.route("**/api/movie-previews**", async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.endsWith("/api/movie-previews/550")) {
-      return json(route, { movie: moviePreviewDetail, sessionStatus: "verified" });
+      return json(route, { movie: moviePreviewDetail, sessionStatus: "verified", screenings: [movieScreening], unavailableChains: [], checkedAt: "2026-08-12T02:00:00.000Z" });
     }
     if (url.searchParams.get("q") === "NoFilm") {
       return json(route, { movies: [], page: { number: 1, totalPages: 0, totalResults: 0 } });
@@ -950,7 +950,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   const input = page.getByLabel("Movie, cinema, or suburb");
   await input.fill("  NoFilm  ");
   await page.getByRole("button", { name: "Search movies" }).click();
-  await expect(page.getByText("No open-feed sessions found")).toBeVisible();
+  await expect(page.getByText("No sessions found for this date")).toBeVisible();
   await expect(page).toHaveURL(/\/movies\?q=NoFilm$/);
   expect(requests.movieRequests.at(-1)).toContain("q=NoFilm&date=today");
 
@@ -959,17 +959,13 @@ test("movie search, dates, distance, language, maps, and official links work wit
     await expect.poll(() => new URL(requests.movieRequests.at(-1) ?? "http://invalid").searchParams.get("date")).toBe(value);
   }
 
-  await input.fill("NoCoverage");
-  await page.getByRole("button", { name: "Search movies" }).click();
-  await expect(page.getByRole("heading", { name: "Live movie sessions" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
-  await expect(page.getByText("Preview only · no Auckland live-data coverage")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
-  await expect(page.getByRole("group", { name: "Choose a date" })).toHaveCount(0);
-
   await input.fill("Offline");
   await page.getByRole("button", { name: "Search movies" }).click();
+  await expect(page.getByRole("heading", { name: "Now showing in Auckland" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Choose a date" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Preview Whina" })).toBeVisible();
   await expect(page.getByText("Session check unavailable")).toBeVisible();
 
@@ -979,12 +975,8 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await page.getByRole("button", { name: "Sort cinemas by my distance" }).click();
   await expect(page.getByText("0.0 km away")).toBeVisible();
 
-  const sessionLink = page.getByRole("link", { name: "Book on official site" });
-  await expect(sessionLink).toHaveAttribute("rel", /noopener/);
-  const [bookingPopup] = await Promise.all([page.waitForEvent("popup"), sessionLink.click()]);
-  await expect(bookingPopup).toHaveURL("https://tickets.example/whina");
-  expect(await bookingPopup.evaluate(() => window.opener === null)).toBe(true);
-  await bookingPopup.close();
+  await expect(page.getByText("Showing in Auckland", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Cinemas, times & prices/ })).toHaveAttribute("href", "/movies/550");
 
   const cinemaLink = page.getByRole("link", { name: "Academy Cinemas sessions" });
   const [cinemaPopup] = await Promise.all([page.waitForEvent("popup"), cinemaLink.click()]);
@@ -1028,8 +1020,13 @@ test("movie cards open a complete in-site preview with a safe trailer", async ({
     "https://www.youtube-nocookie.com/embed/Abc_123-x",
   );
   await expect(page.getByRole("link", { name: "Open trailer on YouTube" })).toHaveAttribute("rel", /noopener/);
-  await expect(page.getByRole("heading", { name: "Source-matched Auckland sessions" })).toBeVisible();
-  await expect(page.locator("body")).not.toContainText(/price|pricing|fees|NZ\$|价格|费用|票价/i);
+  await expect(page.getByRole("heading", { name: "Where to watch in Auckland" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "HOYTS Sylvia Park" })).toBeVisible();
+  await expect(page.getByText("$19.00 – $24.00 per ticket")).toBeVisible();
+  const showtime = page.getByRole("link", { name: /Book .* at HOYTS Sylvia Park/ });
+  await expect(showtime).toHaveAttribute("href", movieScreening.bookingUrl);
+  await expect(showtime).toHaveAttribute("rel", /noopener/);
+  expect((await showtime.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   await expectNoHorizontalOverflow(page);
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/movie-detail-${testInfo.project.name}.png`, fullPage: true });

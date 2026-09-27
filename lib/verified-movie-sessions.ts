@@ -1,9 +1,9 @@
 import type { MoviePreview } from "./movie-previews";
-import type { KiwiCueScreening } from "./movies";
+import type { KiwiCueScreening, MovieShowing } from "./movies";
 
 type MatchableMovie = Pick<MoviePreview, "title" | "originalTitle"> & { runtimeMinutes?: number | null };
 
-function normalizedMovieTitle(value: string): string {
+export function normalizedMovieTitle(value: string): string {
   return value
     .normalize("NFKD")
     .replace(/\p{Mark}/gu, "")
@@ -36,21 +36,14 @@ export function findMovieSessionMatches<T extends Pick<KiwiCueScreening, "filmTi
     && compatibleRuntime(movie, screening));
 }
 
-export function movieHasVerifiedSession(
-  movie: MatchableMovie,
-  screenings: Array<Pick<KiwiCueScreening, "filmTitle" | "runtimeMinutes">>,
-): boolean {
-  return findMovieSessionMatches(movie, screenings).length > 0;
-}
-
-export function filterVerifiedMoviePreviews(
+/**
+ * List previews carry no runtime, so the list badge matches on title alone. That is enough to
+ * say a film is showing; the detail page repeats the match with runtime before listing sessions.
+ */
+export function filterShowingMoviePreviews(
   movies: MoviePreview[],
-  screenings: KiwiCueScreening[],
+  showings: Array<Pick<MovieShowing, "title">>,
 ): MoviePreview[] {
-  return movies.filter((movie) => {
-    // List previews intentionally omit runtime; title-only matches are not enough
-    // to promote a film before its detail page can perform the stricter check.
-    const runtimeMinutes = "runtimeMinutes" in movie ? movie.runtimeMinutes : undefined;
-    return typeof runtimeMinutes === "number" && movieHasVerifiedSession({ ...movie, runtimeMinutes }, screenings);
-  });
+  const showingTitles = new Set(showings.map(({ title }) => normalizedMovieTitle(title)));
+  return movies.filter((movie) => [...titlesFor(movie)].some((title) => showingTitles.has(title)));
 }

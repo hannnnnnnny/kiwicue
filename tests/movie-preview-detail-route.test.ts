@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { GET, handleMoviePreviewDetailRequest } from "../app/api/movie-previews/[movieId]/route";
 import type { MoviePreviewDetail } from "../lib/movie-previews";
-import { OpenCinemaClientError } from "../lib/open-cinema";
+import { CinemaSourceError } from "../lib/cinemas/source-fetch";
+import type { KiwiCueScreening } from "../lib/movies";
 import { TmdbClientError } from "../lib/tmdb";
 
 const movie: MoviePreviewDetail = {
@@ -22,48 +23,58 @@ const movie: MoviePreviewDetail = {
 
 describe("GET /api/movie-previews/[movieId]", () => {
   const now = new Date("2026-08-12T02:00:00.000Z");
-  const verifiedScreening = {
-    id: "screening-1",
-    filmId: "film-1",
+  const verifiedScreening: KiwiCueScreening = {
+    id: "hoyts-1002-1",
+    filmId: "hoyts-HO1",
     filmTitle: "Fight Club",
     filmRating: "R16",
     runtimeMinutes: 139,
-    cinemaId: "cinema-1",
-    cinemaName: "Academy Cinemas",
+    cinemaId: "hoyts-1002",
+    cinemaName: "HOYTS Sylvia Park",
+    chain: "HOYTS",
     startTime: "2026-08-15T08:00:00.000Z",
-    formats: ["2D"],
+    screenType: "LUX",
+    formats: [],
     soldOut: false,
-    distanceKilometres: 1.2,
-    bookingUrl: "https://academycinemas.co.nz/film/fight-club",
+    discounted: false,
+    bookingUrl: "https://www.hoyts.co.nz/orders/tickets?cinemaId=1002&sessionId=1",
+    price: null,
   };
+  const priced = { ...verifiedScreening, price: { minCents: 2800, maxCents: 4300, bookingFeeCents: 345 } };
+  const sessions = (screenings: KiwiCueScreening[], unavailableChains: string[] = []) =>
+    vi.fn().mockResolvedValue({ screenings, unavailableChains });
+  const attachPrices = vi.fn(async (matches: KiwiCueScreening[]) => matches.map((match) => ({ ...match, price: priced.price })));
 
   it("returns one localized normalized movie", async () => {
     const loadMovie = vi.fn().mockResolvedValue(movie);
-    const loadScreenings = vi.fn().mockResolvedValue([verifiedScreening]);
-    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings, now);
+    const loadSessions = sessions([verifiedScreening, { ...verifiedScreening, id: "other", filmTitle: "Other Film" }], ["EVENT Cinemas"]);
+    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadSessions, now, attachPrices);
 
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
-    expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "all" });
+    expect(attachPrices).toHaveBeenCalledWith([verifiedScreening]);
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       movie,
-      screenings: [verifiedScreening],
+      screenings: [priced],
       sessionStatus: "verified",
+      unavailableChains: ["EVENT Cinemas"],
       checkedAt: expect.any(String),
     });
   });
 
   it("returns preview metadata with an honest unverified status when no Auckland session matches", async () => {
     const loadMovie = vi.fn().mockResolvedValue(movie);
-    const loadScreenings = vi.fn().mockResolvedValue([]);
-    const response = await handleMoviePreviewDetailRequest("550", "en", loadMovie, loadScreenings, now);
+    const noPrices = vi.fn();
+    const response = await handleMoviePreviewDetailRequest("550", "en", loadMovie, sessions([]), now, noPrices);
 
     expect(response.status).toBe(200);
+    expect(noPrices).not.toHaveBeenCalled();
     expect(await response.json()).toEqual({
       movie,
       screenings: [],
       sessionStatus: "unverified",
+      unavailableChains: [],
       checkedAt: expect.any(String),
     });
   });
@@ -76,39 +87,17 @@ describe("GET /api/movie-previews/[movieId]", () => {
     };
     const loadMovie = vi.fn().mockImplementation(({ language }: { language: "en" | "zh" }) =>
       Promise.resolve(language === "zh" ? localizedMovie : movie));
-    const loadScreenings = vi.fn().mockResolvedValue([verifiedScreening]);
-
-    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, loadScreenings, now);
+    const response = await handleMoviePreviewDetailRequest("550", "zh", loadMovie, sessions([verifiedScreening]), now, attachPrices);
 
     expect(response.status).toBe(200);
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "zh" });
     expect(loadMovie).toHaveBeenCalledWith({ movieId: 550, language: "en" });
-    expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "all" });
     expect(await response.json()).toEqual({
       movie: localizedMovie,
-      screenings: [verifiedScreening],
+      screenings: [priced],
       sessionStatus: "verified",
+      unavailableChains: [],
       checkedAt: expect.any(String),
-    });
-  });
-
-  it("reports missing Auckland provider coverage without requesting a session catalog", async () => {
-    const loadScreenings = vi.fn();
-    const response = await handleMoviePreviewDetailRequest(
-      "550",
-      "en",
-      vi.fn().mockResolvedValue(movie),
-      loadScreenings,
-      new Date("2026-08-12T02:00:00.000Z"),
-      vi.fn().mockResolvedValue("not-covered"),
-    );
-
-    expect(loadScreenings).not.toHaveBeenCalled();
-    expect(await response.json()).toEqual({
-      movie,
-      screenings: [],
-      sessionStatus: "not-covered",
-      checkedAt: "2026-08-12T02:00:00.000Z",
     });
   });
 
@@ -117,7 +106,7 @@ describe("GET /api/movie-previews/[movieId]", () => {
       "550",
       "en",
       vi.fn().mockResolvedValue(movie),
-      vi.fn().mockRejectedValue(new OpenCinemaClientError("UPSTREAM_BUSY")),
+      vi.fn().mockRejectedValue(new CinemaSourceError("UPSTREAM_BUSY")),
     );
 
     expect(response.status).toBe(200);
@@ -126,29 +115,18 @@ describe("GET /api/movie-previews/[movieId]", () => {
       movie,
       screenings: [],
       sessionStatus: "unavailable",
+      unavailableChains: [],
       checkedAt: expect.any(String),
     });
   });
 
-  it("returns only future, unique source-title matches in chronological order", async () => {
+  it("drops a same-title session whose runtime does not match", async () => {
     const response = await handleMoviePreviewDetailRequest(
-      "550",
-      "en",
-      vi.fn().mockResolvedValue(movie),
-      vi.fn().mockResolvedValue([
-        { ...verifiedScreening, id: "later", startTime: "2026-08-16T08:00:00.000Z" },
-        { ...verifiedScreening, id: "soon", startTime: "2026-08-13T08:00:00.000Z" },
-        { ...verifiedScreening, id: "soon", startTime: "2026-08-13T08:00:00.000Z" },
-        { ...verifiedScreening, id: "expired", startTime: "2026-08-11T08:00:00.000Z" },
-        { ...verifiedScreening, id: "wrong-runtime", runtimeMinutes: 170 },
-        { ...verifiedScreening, id: "invalid-time", startTime: "not-a-date" },
-      ]),
-      new Date("2026-08-12T02:00:00.000Z"),
+      "550", "en", vi.fn().mockResolvedValue(movie),
+      sessions([verifiedScreening, { ...verifiedScreening, id: "remake", runtimeMinutes: 170 }]), now, attachPrices,
     );
-
     const body = await response.json();
-    expect(body.screenings.map((session: { id: string }) => session.id)).toEqual(["soon", "later"]);
-    expect(body.checkedAt).toBe("2026-08-12T02:00:00.000Z");
+    expect(body.screenings.map((session: { id: string }) => session.id)).toEqual(["hoyts-1002-1"]);
   });
 
   it.each(["0", "-1", "1.5", "abc", "9007199254740992"])(

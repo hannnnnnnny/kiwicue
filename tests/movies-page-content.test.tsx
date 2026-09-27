@@ -4,6 +4,18 @@ import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
 import { MoviesPageContent } from "../components/movies-page-content";
 
+function showing(title: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id: title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(), title, rating: "R16", runtimeMinutes: 139,
+    cinemaCount: 2, sessionCount: 5, nextStartTime: "2026-08-15T08:00:00.000Z", nextCinemaName: "HOYTS Sylvia Park",
+    screenTypes: ["Standard"], ...overrides,
+  };
+}
+
+function feed(films: unknown[], sourceState = films.length > 0 ? "ready" : "empty") {
+  return { films, sourceState, unavailableChains: [], checkedAt: "2026-08-12T02:00:00.000Z" };
+}
+
 function renderPage() {
   return render(
     <LanguageProvider>
@@ -32,10 +44,7 @@ beforeEach(() => {
           }],
           page: { number: 1, totalPages: 1, totalResults: 1 },
         }
-      : {
-          screenings: [], source: "open-cinema", sourceState: "empty",
-          coverageState: "covered", checkedAt: "2026-08-12T02:00:00.000Z",
-        };
+      : feed([]);
     return Promise.resolve(new Response(JSON.stringify(payload), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -55,22 +64,19 @@ describe("movies page", () => {
     expect(screen.getByRole("search", { name: "Find a movie or cinema" })).toBeVisible();
     const previews = await screen.findByRole("heading", { name: "Explore recent New Zealand releases" });
     expect(screen.getByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
-    expect(screen.getByText("Auckland session not verified")).toBeVisible();
-    const liveSessions = await screen.findByRole("heading", { name: "Live movie sessions" });
+    expect(screen.getByText("Not found at HOYTS or EVENT")).toBeVisible();
+    const liveSessions = await screen.findByRole("heading", { name: "Now showing in Auckland" });
     expect(liveSessions.compareDocumentPosition(previews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText("No open-feed sessions found")).toBeVisible();
+    expect(screen.getByText("No sessions found for this date")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("href", "https://academycinemas.co.nz/");
   });
 
-  it("prioritizes official cinema links when the provider does not cover Auckland", async () => {
+  it("prioritizes official cinema links when live sessions are unavailable", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const payload = String(input).startsWith("/api/movie-previews")
         ? { movies: [], page: { number: 1, totalPages: 1, totalResults: 0 } }
-        : {
-            screenings: [], source: "open-cinema", sourceState: "not-covered",
-            coverageState: "not-covered", checkedAt: "2026-08-12T02:00:00.000Z",
-          };
+        : feed([], "unavailable");
       return Promise.resolve(Response.json(payload));
     }));
 
@@ -79,14 +85,13 @@ describe("movies page", () => {
     const directory = await screen.findByRole("heading", { name: "Auckland cinema directory" });
     expect(screen.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
     expect(screen.queryByRole("group", { name: "Choose a date" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Live movie sessions" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Auckland live-data coverage is not available yet")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Now showing in Auckland" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
     const previews = screen.getByRole("heading", { name: "Explore recent New Zealand releases" });
     expect(directory.compareDocumentPosition(previews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("does not promote title-only live-feed matches to source-matched film identity", async () => {
+  it("marks a showing preview and links the live film straight to its detail page", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const payload = String(input).startsWith("/api/movie-previews")
         ? {
@@ -102,59 +107,29 @@ describe("movies page", () => {
             }],
             page: { number: 1, totalPages: 1, totalResults: 1 },
           }
-        : {
-            screenings: [{
-              id: "screening-1",
-              filmId: "film-1",
-              filmTitle: "Fight Club",
-              filmRating: "R16",
-              runtimeMinutes: 139,
-              cinemaId: "cinema-1",
-              cinemaName: "Academy Cinemas",
-              startTime: "2026-08-15T08:00:00.000Z",
-              formats: ["2D"],
-              soldOut: false,
-              distanceKilometres: 1.2,
-              bookingUrl: "https://academycinemas.co.nz/film/fight-club",
-            }],
-            source: "open-cinema",
-            sourceState: "ready",
-            coverageState: "covered",
-            checkedAt: "2026-08-12T02:00:00.000Z",
-          };
+        : feed([showing("Fight Club"), showing("Local Only")]);
       return Promise.resolve(Response.json(payload));
     }));
 
     renderPage();
 
     expect(await screen.findByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
-    expect(screen.getByText("Auckland session not verified")).toBeVisible();
+    expect(await screen.findByText("Showing in Auckland")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Cinemas, times & prices/ })).toHaveAttribute("href", "/movies/550");
+
+    fireEvent.click(screen.getByRole("button", { name: "Find this film" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/movie-previews?language=en&q=Local+Only&page=1",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ));
+    expect(screen.getByLabelText("Movie, cinema, or suburb")).toHaveValue("Local Only");
   });
 
   it("keeps a verified preview when Chinese localization changes every visible title", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const url = String(input);
       if (url.startsWith("/api/movies")) {
-        return Promise.resolve(Response.json({
-          screenings: [{
-            id: "screening-conan",
-            filmId: "film-conan",
-            filmTitle: "Detective Conan: Fallen Angel of the Highway",
-            filmRating: null,
-            runtimeMinutes: 109,
-            cinemaId: "cinema-1",
-            cinemaName: "Academy Cinemas",
-            startTime: "2026-08-15T08:00:00.000Z",
-            formats: ["2D"],
-            soldOut: false,
-            distanceKilometres: 1.2,
-            bookingUrl: "https://academycinemas.co.nz/film/conan",
-          }],
-          source: "open-cinema",
-          sourceState: "ready",
-          coverageState: "covered",
-          checkedAt: "2026-08-12T02:00:00.000Z",
-        }));
+        return Promise.resolve(Response.json(feed([showing("Detective Conan: Fallen Angel of the Highway")])));
       }
       const chinese = url.includes("language=zh");
       return Promise.resolve(Response.json({
@@ -177,11 +152,12 @@ describe("movies page", () => {
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(await screen.findByRole("link", { name: "查看 名侦探柯南：高速公路的堕天使 预览" })).toBeVisible();
+    expect(await screen.findByText("奥克兰有场次")).toBeVisible();
   });
 
   it("submits a normalized search, changes date, and can clear the query", async () => {
     renderPage();
-    await screen.findByText("No open-feed sessions found");
+    await screen.findByText("No sessions found for this date");
     fireEvent.change(screen.getByLabelText("Movie, cinema, or suburb"), { target: { value: "  Whina  " } });
     fireEvent.submit(screen.getByRole("search", { name: "Find a movie or cinema" }));
 
@@ -209,7 +185,7 @@ describe("movies page", () => {
 
   it("switches to Chinese and refreshes only localized movie metadata", async () => {
     renderPage();
-    await screen.findByText("No open-feed sessions found");
+    await screen.findByText("No sessions found for this date");
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "查找电影并核对奥克兰场次" })).toBeVisible();

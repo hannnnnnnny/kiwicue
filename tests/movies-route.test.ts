@@ -1,60 +1,53 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleMoviesRequest } from "../app/api/movies/route";
-import { OpenCinemaClientError } from "../lib/open-cinema";
+import { CinemaSourceError } from "../lib/cinemas/source-fetch";
+import type { KiwiCueScreening } from "../lib/movies";
+
+const NOW = new Date("2026-08-12T02:00:00.000Z");
+
+function screening(overrides: Partial<KiwiCueScreening>): KiwiCueScreening {
+  return {
+    id: "hoyts-1002-1", filmId: "hoyts-HO1", filmTitle: "Whina", filmRating: "M", runtimeMinutes: 112,
+    cinemaId: "hoyts-1002", cinemaName: "HOYTS Sylvia Park", chain: "HOYTS", startTime: "2026-08-12T06:00:00.000Z",
+    screenType: "Standard", formats: [], soldOut: false, discounted: false,
+    bookingUrl: "https://www.hoyts.co.nz/orders/tickets?cinemaId=1002&sessionId=1", price: null,
+    ...overrides,
+  };
+}
 
 describe("GET /api/movies", () => {
-  it("keeps user search terms inside KiwiCue and returns coverage evidence", async () => {
-    const loadScreenings = vi.fn().mockResolvedValue([{
-      id: "screening-1",
-      filmTitle: "Whina Film",
-      cinemaName: "Academy Cinemas",
-    }]);
-    const loadCoverage = vi.fn().mockResolvedValue("covered");
-    const response = await handleMoviesRequest(
-      new Request("http://localhost/api/movies?q=%20Whina%20%20Film%20&date=weekend"),
-      loadScreenings,
-      new Date("2026-08-12T02:00:00.000Z"),
-      loadCoverage,
-    );
+  it("groups sessions into films and filters by film or cinema name", async () => {
+    const loadSessions = vi.fn().mockResolvedValue({
+      screenings: [
+        screening({}),
+        screening({ id: "event-9", cinemaId: "event-502", cinemaName: "EVENT Cinemas Queen Street", chain: "EVENT Cinemas", screenType: "Gold Class", startTime: "2026-08-12T08:00:00.000Z" }),
+        screening({ id: "hoyts-1002-2", filmTitle: "Another Film" }),
+      ],
+      unavailableChains: [],
+    });
+    const response = await handleMoviesRequest(new Request("http://localhost/api/movies?q=%20Whina%20&date=weekend"), loadSessions, NOW);
 
-    expect(loadScreenings).toHaveBeenCalledWith({ query: null, date: "weekend" });
-    expect(loadCoverage).toHaveBeenCalledOnce();
-    expect(response.status).toBe(200);
+    expect(loadSessions).toHaveBeenCalledWith({ date: "weekend" });
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
-      screenings: [{ id: "screening-1", filmTitle: "Whina Film", cinemaName: "Academy Cinemas" }],
-      source: "open-cinema",
+      films: [{
+        id: "whina", title: "Whina", rating: "M", runtimeMinutes: 112, cinemaCount: 2, sessionCount: 2,
+        nextStartTime: "2026-08-12T06:00:00.000Z", nextCinemaName: "HOYTS Sylvia Park", screenTypes: ["Gold Class", "Standard"],
+      }],
       sourceState: "ready",
-      coverageState: "covered",
-      checkedAt: "2026-08-12T02:00:00.000Z",
+      unavailableChains: [],
+      checkedAt: NOW.toISOString(),
     });
   });
 
-  it("labels a successful empty feed", async () => {
+  it("labels an empty day and passes through a chain that could not be checked", async () => {
     const response = await handleMoviesRequest(
       new Request("http://localhost/api/movies"),
-      vi.fn().mockResolvedValue([]),
-      new Date("2026-08-12T02:00:00.000Z"),
-      vi.fn().mockResolvedValue("covered"),
+      vi.fn().mockResolvedValue({ screenings: [], unavailableChains: ["EVENT Cinemas"] }),
+      NOW,
     );
     expect(await response.json()).toEqual({
-      screenings: [], source: "open-cinema", sourceState: "empty",
-      coverageState: "covered", checkedAt: "2026-08-12T02:00:00.000Z",
-    });
-  });
-
-  it("does not imply an empty schedule when the provider has no Auckland coverage", async () => {
-    const loadScreenings = vi.fn();
-    const response = await handleMoviesRequest(
-      new Request("http://localhost/api/movies"),
-      loadScreenings,
-      new Date("2026-08-12T02:00:00.000Z"),
-      vi.fn().mockResolvedValue("not-covered"),
-    );
-    expect(loadScreenings).not.toHaveBeenCalled();
-    expect(await response.json()).toEqual({
-      screenings: [], source: "open-cinema", sourceState: "not-covered",
-      coverageState: "not-covered", checkedAt: "2026-08-12T02:00:00.000Z",
+      films: [], sourceState: "empty", unavailableChains: ["EVENT Cinemas"], checkedAt: NOW.toISOString(),
     });
   });
 
@@ -65,33 +58,22 @@ describe("GET /api/movies", () => {
     `q=${"x".repeat(101)}`,
     "q=one%0Atwo",
   ])("rejects invalid or duplicate public input: %s", async (query) => {
-    const loadScreenings = vi.fn();
-    const response = await handleMoviesRequest(
-      new Request(`http://localhost/api/movies?${query}`),
-      loadScreenings,
-      new Date("2026-08-12T02:00:00.000Z"),
-      vi.fn().mockResolvedValue("covered"),
-    );
+    const loadSessions = vi.fn();
+    const response = await handleMoviesRequest(new Request(`http://localhost/api/movies?${query}`), loadSessions, NOW);
     expect(response.status).toBe(400);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(loadScreenings).not.toHaveBeenCalled();
+    expect(loadSessions).not.toHaveBeenCalled();
   });
 
-  it("degrades upstream failures to an available directory response", async () => {
-    const loadScreenings = vi.fn().mockRejectedValue(new OpenCinemaClientError("UPSTREAM_BUSY"));
+  it("degrades to an unavailable state when every cinema chain fails", async () => {
     const response = await handleMoviesRequest(
       new Request("http://localhost/api/movies?date=today"),
-      loadScreenings,
-      new Date("2026-08-12T02:00:00.000Z"),
-      vi.fn().mockResolvedValue("covered"),
+      vi.fn().mockRejectedValue(new CinemaSourceError("UPSTREAM_BUSY")),
+      NOW,
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      screenings: [],
-      source: "open-cinema",
-      sourceState: "unavailable",
-      coverageState: "unavailable",
-      checkedAt: "2026-08-12T02:00:00.000Z",
+      films: [], sourceState: "unavailable", unavailableChains: [], checkedAt: NOW.toISOString(),
     });
   });
 });

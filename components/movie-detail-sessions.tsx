@@ -1,80 +1,160 @@
 "use client";
 
 import { useState } from "react";
-import type { KiwiCueScreening } from "../lib/movies";
+import type { CinemaChain, KiwiCueScreening } from "../lib/movies";
 import { isTrustedOfficialBookingUrl } from "../lib/official-booking";
 import type { MovieSessionStatus } from "../lib/movie-previews";
 import type { Language } from "./language-provider";
 
 const copy = {
   en: {
-    title: "Source-matched Auckland sessions", cinema: "Cinema", date: "Date", all: "All",
-    confirmed: "Source title and runtime matched. Confirm final availability on the cinema's official site.",
-    checked: (value: string) => `Checked ${value}; confirm with the cinema.`,
-    book: "Book on official site", soldOut: "Sold out", unavailable: "Official booking link unavailable",
-    empty: "No source-title matches found", emptyHelp: "This does not confirm that the film is not showing. Check the general cinema directory below.",
-    filteredEmpty: "No sessions match these filters", clear: "Clear session filters",
-    notCovered: "Auckland live-data coverage is not available. This does not mean the film is not showing.",
-    failed: "Session matching is temporarily unavailable", failedHelp: "Use the general cinema directory below to check official sites.",
+    title: "Where to watch in Auckland",
+    summary: (cinemas: number, sessions: number) => `${cinemas} ${cinemas === 1 ? "cinema" : "cinemas"} · ${sessions} ${sessions === 1 ? "session" : "sessions"} this week`,
+    checked: (value: string) => `Updated ${value}`,
+    dates: "Choose a date", today: "Today", tomorrow: "Tomorrow",
+    livePrice: (range: string) => `${range} per ticket`,
+    fee: (range: string) => `+ ${range} booking fee`,
+    atBooking: "Price shown when you book",
+    tuesday: "Half-price adult tickets on Tuesdays for Cinebuzz members",
+    halfPrice: "Half price", soldOut: "Sold out",
+    book: (time: string, cinema: string) => `Book ${time} at ${cinema} on the official site`,
+    note: "Tap a time to book on the cinema's official site. HOYTS prices are live from HOYTS for public tickets (adult, child, senior, student, premium seats) and exclude member-only offers. EVENT Cinemas shows its prices during booking.",
+    partial: (chains: string) => `${chains} sessions could not be checked right now, so other cinemas may also be showing this film.`,
+    empty: "Not showing at HOYTS or EVENT Cinemas this week",
+    emptyHelp: "It may still be on at an independent cinema. Check the cinema list below.",
+    failed: "Live sessions are temporarily unavailable",
+    failedHelp: "Use the official cinema sites below to check sessions.",
   },
   zh: {
-    title: "来源标题匹配的奥克兰场次", cinema: "影院", date: "日期", all: "全部",
-    confirmed: "已匹配来源片名和片长；最终余票与时间请以影院官网为准。",
-    checked: (value: string) => `检查时间：${value}；请向影院确认。`,
-    book: "前往官网订票", soldOut: "已售罄", unavailable: "暂未提供官方订票链接",
-    empty: "未找到来源标题匹配的场次", emptyHelp: "这不代表电影没有上映，请在下方通用影院目录查看官网。",
-    filteredEmpty: "没有符合这些筛选条件的场次", clear: "清除场次筛选",
-    notCovered: "奥克兰实时数据暂未覆盖；这不代表电影没有上映。",
-    failed: "暂时无法匹配场次", failedHelp: "请使用下方通用影院目录查看各影院官网。",
+    title: "在奥克兰哪里看",
+    summary: (cinemas: number, sessions: number) => `本周 ${cinemas} 家影院 · ${sessions} 场`,
+    checked: (value: string) => `更新于 ${value}`,
+    dates: "选择日期", today: "今天", tomorrow: "明天",
+    livePrice: (range: string) => `每张 ${range}`,
+    fee: (range: string) => `另加订票手续费 ${range}`,
+    atBooking: "票价在订票时显示",
+    tuesday: "Cinebuzz 会员每周二成人票半价",
+    halfPrice: "半价", soldOut: "已售罄",
+    book: (time: string, cinema: string) => `前往官网预订 ${cinema} ${time} 场次`,
+    note: "点击场次时间即可前往影院官网订票。HOYTS 票价实时来自 HOYTS，包含成人、儿童、长者、学生及高级座位等公开票种，不含会员专享优惠；EVENT Cinemas 的票价在订票流程中显示。",
+    partial: (chains: string) => `${chains} 的场次暂时无法核对，其他影院也可能在放映这部电影。`,
+    empty: "本周 HOYTS 和 EVENT Cinemas 暂无场次",
+    emptyHelp: "独立影院可能仍在放映，请查看下方影院列表。",
+    failed: "实时场次暂时不可用",
+    failedHelp: "请使用下方影院官网查看场次。",
   },
 } as const;
 
-function dateKey(value: string): string {
+type CinemaGroup = { id: string; name: string; chain: CinemaChain; sessions: KiwiCueScreening[] };
+
+function locale(language: Language): string {
+  return language === "zh" ? "zh-CN" : "en-NZ";
+}
+
+function dateKey(value: string | Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Auckland", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
 }
 
+function dateLabel(key: string, language: Language): string {
+  const today = dateKey(new Date());
+  const tomorrow = dateKey(new Date(Date.now() + 86_400_000));
+  if (key === today) return copy[language].today;
+  if (key === tomorrow) return copy[language].tomorrow;
+  return new Intl.DateTimeFormat(locale(language), { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(`${key}T12:00:00Z`));
+}
+
 function formatTime(value: string, language: Language): string {
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-NZ", { timeZone: "Pacific/Auckland", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale(language), { timeZone: "Pacific/Auckland", hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }
 
-function SessionAction({ session, language }: { session: KiwiCueScreening; language: Language }) {
+function dollars(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function range(values: number[]): string | null {
+  if (values.length === 0) return null;
+  const [low, high] = [Math.min(...values), Math.max(...values)];
+  return low === high ? dollars(low) : `${dollars(low)} – ${dollars(high)}`;
+}
+
+function groupByCinema(sessions: KiwiCueScreening[]): CinemaGroup[] {
+  const groups = new Map<string, CinemaGroup>();
+  for (const session of sessions) {
+    const group = groups.get(session.cinemaId) ?? { id: session.cinemaId, name: session.cinemaName, chain: session.chain, sessions: [] };
+    group.sessions.push(session);
+    groups.set(session.cinemaId, group);
+  }
+  return [...groups.values()];
+}
+
+function CinemaPrice({ sessions, chain, language }: { sessions: KiwiCueScreening[]; chain: CinemaChain; language: Language }) {
   const content = copy[language];
-  if (session.soldOut) return <strong>{content.soldOut}</strong>;
-  if (!isTrustedOfficialBookingUrl(session.bookingUrl)) return <span>{content.unavailable}</span>;
-  return <a href={session.bookingUrl} target="_blank" rel="noreferrer noopener">{content.book}<span aria-hidden="true"> ↗</span></a>;
+  const priced = sessions.flatMap((session) => session.price ? [session.price] : []);
+  const tickets = range(priced.flatMap((price) => [price.minCents, price.maxCents]));
+  const fees = range(priced.flatMap((price) => price.bookingFeeCents === null ? [] : [price.bookingFeeCents]));
+  return <p className="cinema-showtimes-price">
+    {tickets ? <strong>{content.livePrice(tickets)}</strong> : <strong>{content.atBooking}</strong>}
+    {tickets && fees ? <span>{content.fee(fees)}</span> : null}
+    {chain === "EVENT Cinemas" ? <span>{content.tuesday}</span> : null}
+  </p>;
 }
 
-function SessionList({ sessions, language }: { sessions: KiwiCueScreening[]; language: Language }) {
-  return <ol className="movie-detail-session-list">{sessions.map((session) => <li key={session.id}>
-    <time dateTime={session.startTime}>{formatTime(session.startTime, language)}</time>
-    <div><strong>{session.cinemaName}</strong><span>{session.formats.join(" · ")}</span></div>
-    <SessionAction session={session} language={language} />
-  </li>)}</ol>;
-}
-
-function FilteredEmpty({ language, onClear }: { language: Language; onClear: () => void }) {
+function SessionTime({ session, cinemaName, language }: { session: KiwiCueScreening; cinemaName: string; language: Language }) {
   const content = copy[language];
-  return <div className="movie-detail-sessions-empty" role="status">
-    <strong>{content.filteredEmpty}</strong><button type="button" onClick={onClear}>{content.clear}</button>
-  </div>;
+  const time = formatTime(session.startTime, language);
+  const tags = [session.screenType === "Standard" ? null : session.screenType, session.discounted ? content.halfPrice : null, ...session.formats]
+    .filter((tag): tag is string => Boolean(tag));
+  const body = <><time dateTime={session.startTime}>{time}</time>{tags.map((tag) => <small key={tag}>{tag}</small>)}</>;
+  if (session.soldOut || !isTrustedOfficialBookingUrl(session.bookingUrl)) {
+    return <li><span className="cinema-showtime" data-disabled="true">{body}{session.soldOut ? <small>{content.soldOut}</small> : null}</span></li>;
+  }
+  return <li><a className="cinema-showtime" href={session.bookingUrl} target="_blank" rel="noreferrer noopener" aria-label={content.book(time, cinemaName)}>{body}</a></li>;
 }
 
-export function MovieDetailSessions({ screenings, sessionStatus, checkedAt, language }: {
-  screenings: KiwiCueScreening[]; sessionStatus: MovieSessionStatus; checkedAt: string | null; language: Language;
+function CinemaCard({ group, allSessions, language }: { group: CinemaGroup; allSessions: KiwiCueScreening[]; language: Language }) {
+  return <li className="cinema-showtimes-card">
+    <header><h3>{group.name}</h3><span data-chain={group.chain === "HOYTS" ? "hoyts" : "event"}>{group.chain}</span></header>
+    <CinemaPrice sessions={allSessions.filter((session) => session.cinemaId === group.id)} chain={group.chain} language={language} />
+    <ul className="cinema-showtime-list">{group.sessions.map((session) => <SessionTime key={session.id} session={session} cinemaName={group.name} language={language} />)}</ul>
+  </li>;
+}
+
+function Showtimes({ screenings, checkedAt, unavailableChains, language }: {
+  screenings: KiwiCueScreening[]; checkedAt: string | null; unavailableChains: CinemaChain[]; language: Language;
 }) {
   const content = copy[language];
-  const [cinema, setCinema] = useState<string>("");
-  const [date, setDate] = useState<string>("");
-  const cinemas = [...new Set(screenings.map((session) => session.cinemaName))];
   const dates = [...new Set(screenings.map((session) => dateKey(session.startTime)))];
-  const visible = screenings.filter((session) => (!cinema || session.cinemaName === cinema) && (!date || dateKey(session.startTime) === date));
-  const message = sessionStatus === "not-covered" ? content.notCovered : sessionStatus === "unavailable" ? content.failed : content.empty;
+  const [selected, setSelected] = useState(dates[0]);
+  const active = dates.includes(selected) ? selected : dates[0];
+  const groups = groupByCinema(screenings.filter((session) => dateKey(session.startTime) === active));
+  return <>
+    <p className="movie-detail-sessions-checked">
+      {content.summary(new Set(screenings.map((session) => session.cinemaId)).size, screenings.length)}
+      {checkedAt ? ` · ${content.checked(formatTime(checkedAt, language))}` : null}
+    </p>
+    {unavailableChains.length > 0 ? <p role="status">{content.partial(unavailableChains.join(" / "))}</p> : null}
+    <div className="cinema-date-tabs" role="group" aria-label={content.dates}>
+      {dates.map((key) => <button key={key} type="button" aria-pressed={key === active} onClick={() => setSelected(key)}>{dateLabel(key, language)}</button>)}
+    </div>
+    <ol className="cinema-showtimes">{groups.map((group) => <CinemaCard key={group.id} group={group} allSessions={screenings} language={language} />)}</ol>
+    <p className="cinema-showtimes-note">{content.note}</p>
+  </>;
+}
+
+export function MovieDetailSessions({ screenings, sessionStatus, checkedAt, unavailableChains = [], language }: {
+  screenings: KiwiCueScreening[]; sessionStatus: MovieSessionStatus; checkedAt: string | null;
+  unavailableChains?: CinemaChain[]; language: Language;
+}) {
+  const content = copy[language];
+  const showing = sessionStatus === "verified" && screenings.length > 0;
   return <section className="movie-detail-sessions" aria-labelledby="movie-detail-sessions-title">
     <h2 id="movie-detail-sessions-title">{content.title}</h2>
-    {sessionStatus === "verified" ? <><p>{content.confirmed}</p>{checkedAt ? <p className="movie-detail-sessions-checked">{content.checked(checkedAt)}</p> : null}
-      {cinemas.length > 1 || dates.length > 1 ? <div className="movie-detail-session-filters">
-        {cinemas.length > 1 ? <label>{content.cinema}<select value={cinema} onChange={(event) => setCinema(event.target.value)}><option value="">{content.all}</option>{cinemas.map((value) => <option key={value}>{value}</option>)}</select></label> : null}
-        {dates.length > 1 ? <label>{content.date}<select value={date} onChange={(event) => setDate(event.target.value)}><option value="">{content.all}</option>{dates.map((value) => <option key={value} value={value}>{value}</option>)}</select></label> : null}
-      </div> : null}{visible.length > 0 ? <SessionList sessions={visible} language={language} /> : <FilteredEmpty language={language} onClear={() => { setCinema(""); setDate(""); }} />}</> : <div role="status"><strong>{message}</strong><p>{sessionStatus === "unverified" ? content.emptyHelp : sessionStatus === "unavailable" ? content.failedHelp : null}</p></div>}
+    {showing
+      ? <Showtimes screenings={screenings} checkedAt={checkedAt} unavailableChains={unavailableChains} language={language} />
+      : <div role="status">
+        <strong>{sessionStatus === "unavailable" ? content.failed : content.empty}</strong>
+        <p>{sessionStatus === "unavailable" ? content.failedHelp : content.emptyHelp}</p>
+        {sessionStatus !== "unavailable" && unavailableChains.length > 0 ? <p>{content.partial(unavailableChains.join(" / "))}</p> : null}
+      </div>}
   </section>;
 }

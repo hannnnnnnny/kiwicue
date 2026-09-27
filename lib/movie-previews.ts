@@ -1,5 +1,5 @@
 export type MoviePreviewLanguage = "en" | "zh";
-export type MovieSessionStatus = "verified" | "unverified" | "not-covered" | "unavailable";
+export type MovieSessionStatus = "verified" | "unverified" | "unavailable";
 
 export interface MoviePreview {
   id: number;
@@ -24,6 +24,7 @@ export interface MoviePreviewDetailResponse {
   movie: MoviePreviewDetail;
   sessionStatus: MovieSessionStatus;
   screenings?: KiwiCueScreening[];
+  unavailableChains?: CinemaChain[];
   checkedAt?: string | null;
 }
 
@@ -57,4 +58,4 @@ export function parseMovieId(value: unknown): number | null {
   const movieId = Number(value);
   return Number.isSafeInteger(movieId) ? movieId : null;
 }
-import type { KiwiCueScreening } from "./movies";
+import type { CinemaChain, KiwiCueScreening } from "./movies";

@@ -21,7 +21,6 @@ describe("Next.js application shell", () => {
     expect(envExample.trimEnd().split(/\r?\n/)).toEqual([
       "TICKETMASTER_API_KEY=",
       "TMDB_READ_ACCESS_TOKEN=",
-      "OPEN_CINEMA_API_KEY=",
       "NEXT_PUBLIC_SUPABASE_URL=",
       "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=",
       "SUPABASE_SERVICE_ROLE_KEY=",
