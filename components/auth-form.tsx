@@ -29,6 +29,8 @@ const labels = {
     completing: "Email confirmed. Signing you in…",
     expired: "Verification wait expired. If you confirmed the email, log in normally; otherwise start again.",
     retry: "Start again",
+    linkExpired: "That email link has expired or was already used. Enter your email to get a new one.",
+    authFailed: "That sign-in link could not be used. Log in with your password, or reset it below.",
     stuck: ["No email after a few minutes? Check your spam folder. If you've signed up with this email before, ", "log in", " or ", "reset your password", "."],
   },
   zh: {
@@ -45,11 +47,22 @@ const labels = {
     completing: "邮箱已确认，正在自动登录…",
     expired: "验证等待已结束。如果已确认邮箱，请直接登录；否则可以重新开始。",
     retry: "重新开始",
+    linkExpired: "邮件链接已过期或已被使用。请输入邮箱，重新获取一封。",
+    authFailed: "这个登录链接无法使用。请用密码登录，或在下方重设密码。",
     stuck: ["几分钟后还没收到？请先检查垃圾邮件。如果这个邮箱以前注册过，可以直接", "登录", "或", "重设密码", "。"],
   },
 } as const;
 
-export function AuthForm({ mode }: { mode: Mode }) {
+/** Email-link routes bounce back with ?error=link|auth when a token is expired or already used. */
+export type AuthLinkError = "link" | "auth";
+
+function linkErrorMessage(mode: Mode, linkError: AuthLinkError | undefined, copy: (typeof labels)["en" | "zh"]): string {
+  if (mode === "forgot" && linkError === "link") return copy.linkExpired;
+  if (mode === "login" && linkError === "auth") return copy.authFailed;
+  return "";
+}
+
+export function AuthForm({ mode, linkError }: { mode: Mode; linkError?: AuthLinkError }) {
   const router = useRouter();
   const { language } = useLanguage();
   const copy = labels[language];
@@ -57,7 +70,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => linkErrorMessage(mode, linkError, copy));
   const [signupPhase, setSignupPhase] = useState<SignupPhase>("editing");
   const signupCredentials = useRef<{ email: string; password: string } | null>(null);
   const signupStartedAt = useRef(0);
