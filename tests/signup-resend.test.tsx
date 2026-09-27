@@ -91,3 +91,17 @@ describe("signup confirmation resend", () => {
     expect(replace).toHaveBeenCalledWith("/account");
   });
 });
+
+describe("email link failures", () => {
+  afterEach(cleanup);
+
+  it("explains an expired reset link on the forgot-password page", () => {
+    render(<AuthForm mode="forgot" linkError="link" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("expired or was already used");
+  });
+
+  it("explains a failed sign-in link on the login page", () => {
+    render(<AuthForm mode="login" linkError="auth" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("could not be used");
+  });
+});
