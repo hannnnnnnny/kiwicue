@@ -5,6 +5,7 @@ import { buildEventDiscovery, groupEventsByAucklandDate, sortDiscoveryEvents } f
 import { eventSearchHref } from "../lib/event-search-url";
 import type { EventSort } from "../lib/event-search-params";
 import type { KiwiCueEvent } from "../lib/events";
+import { groupEventSeries } from "../lib/event-series";
 import type { EventWindow } from "../lib/event-window";
 import type { Language } from "./language-provider";
 
@@ -54,11 +55,12 @@ const categoryLabels: Record<Language, Record<EventCategory, string>> = {
   zh: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动", sports: "体育赛事" },
 };
 
-function DateGroup({ date, events, language, offset = 0 }: {
+function DateGroup({ date, events, language, offset = 0, sessionsById }: {
   date: string;
   events: KiwiCueEvent[];
   language: Language;
   offset?: number;
+  sessionsById?: ReadonlyMap<string, KiwiCueEvent[]>;
 }) {
   const value = new Date(`${date}T12:00:00+12:00`);
   const locale = language === "zh" ? "zh-CN" : "en-NZ";
@@ -71,7 +73,7 @@ function DateGroup({ date, events, language, offset = 0 }: {
       </div>
       <ol className="event-date-list">
         {events.map((event, index) => (
-          <li key={event.id}><EventCard event={event} index={offset + index} language={language} variant="row" /></li>
+          <li key={event.id}><EventCard event={event} sessions={sessionsById?.get(event.id)} index={offset + index} language={language} variant="row" /></li>
         ))}
       </ol>
     </section>
@@ -143,14 +145,16 @@ export function EventDiscoveryView({ events, language, now = new Date() }: { eve
 }
 
 export function EventResultsView({ events, language, state }: { events: KiwiCueEvent[]; language: Language; state: SearchState }) {
-  const ordered = sortDiscoveryEvents(events, state.sort);
-  const groups = groupEventsByAucklandDate(ordered);
+  // Repeat sessions of one show collapse into a card under the date of its next session.
+  const series = groupEventSeries(sortDiscoveryEvents(events, state.sort));
+  const sessionsById = new Map(series.map(({ lead, events: sessions }) => [lead.id, sessions]));
+  const groups = groupEventsByAucklandDate(series.map(({ lead }) => lead));
   const groupsWithOffsets = addGroupOffsets(groups);
   return (
     <div className="event-results-view">
       <header className="event-results-heading"><p className="eyebrow">SEARCH / AUCKLAND</p><h2>{copy[language].result(state.keyword)}</h2></header>
       {groupsWithOffsets.map(({ group, offset }) => (
-        <DateGroup key={group.date} {...group} language={language} offset={offset} />
+        <DateGroup key={group.date} {...group} language={language} offset={offset} sessionsById={sessionsById} />
       ))}
     </div>
   );
