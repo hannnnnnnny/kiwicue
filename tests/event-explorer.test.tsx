@@ -257,6 +257,7 @@ describe("Auckland event explorer", () => {
 
     render(<EventExplorer requestEvents={requestEvents} />);
     fireEvent.click(await screen.findByRole("button", { name: "Check for more events" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Show all 81$/ }));
 
     expect(await findEventHeading("Event 81")).toBeInTheDocument();
     expect(document.querySelectorAll(".portal-event-card h2")).toHaveLength(81);

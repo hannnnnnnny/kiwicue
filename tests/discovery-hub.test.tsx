@@ -16,7 +16,7 @@ function mount() { return render(<BookmarkProvider><DiscoveryHub events={events}
 describe("mobile discovery interactions", () => {
   it("expands a real stack and returns without losing available events", () => {
     mount();
-    fireEvent.click(screen.getByRole("button", { name: "Tonight · 3 loaded events" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tonight · 3 events" }));
     expect(screen.getByRole("heading", { name: /^Tonight$/ })).toBeVisible();
     expect(document.querySelectorAll(".discovery-feed article")).toHaveLength(3);
     fireEvent.click(screen.getByRole("button", { name: "Back to discovery" }));

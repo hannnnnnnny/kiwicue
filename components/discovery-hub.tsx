@@ -7,6 +7,7 @@ import { selectCollectionEvents, type DiscoveryCollection } from "../lib/discove
 import { isValidCoordinates, distanceKm, formatDistanceKm } from "../lib/distance";
 import { eventDisplayName, formatEventCategory, formatEventDate, formatEventTime } from "../lib/event-display";
 import type { EventCoordinates, KiwiCueEvent } from "../lib/events";
+import { groupEventSeries, groupSeriesBySection, type EventSectionId, type EventSeries } from "../lib/event-series";
 import { BookmarkButton } from "./bookmark-button";
 import { DiscoveryIcon } from "./discovery-icon";
 import { EventImage } from "./event-image";
@@ -33,6 +34,39 @@ const labels = {
   zh: { all: "继续发现", tonight: "今晚", weekend: "本周末", free: "免费", music: "现场音乐", nearby: "奥克兰地图", surprise: "给我惊喜", back: "返回发现", empty: "已加载活动中暂时没有匹配内容。可以换个合集，或在下方加载更多。", scope: "合集来自当前已加载的活动，下方还可以继续加载。", location: "按离我距离排序", privacy: "位置只在当前设备使用，距离为直线估算。", unavailable: "暂时无法定位，仍可浏览奥克兰场馆。", checking: "正在定位…" },
 };
 
+const SECTION_PREVIEW = 6;
+const sectionLabels: Record<Language, Record<EventSectionId, string>> = {
+  en: { music: "Music", theatre: "Arts & theatre", family: "Family & kids", sports: "Sports", other: "Tours, experiences & more" },
+  zh: { music: "音乐现场", theatre: "戏剧艺术", family: "亲子家庭", sports: "体育赛事", other: "导览体验及其他" },
+};
+
+function SeriesFeed({ series, language, offset = 0, position }: { series: EventSeries[]; language: Language; offset?: number; position?: EventCoordinates }) {
+  return <ol className="discovery-feed">{series.map(({ key, lead, events }, index) => <li key={key}>
+    <EventCard event={lead} sessions={events} index={offset + index} language={language} variant="row" />
+    {position && lead.venue?.coordinates && <p className="discovery-distance">{formatDistanceKm(distanceKm(position, lead.venue.coordinates), language)}</p>}
+  </li>)}</ol>;
+}
+
+/** The default feed, split by type so one busy category cannot crowd out the rest. */
+function SectionedFeed({ series, language }: { series: EventSeries[]; language: Language }) {
+  const [expanded, setExpanded] = useState<ReadonlySet<EventSectionId>>(new Set());
+  const sections = groupSeriesBySection(series).map(({ id, series: all }) => ({
+    id, all, visible: expanded.has(id) ? all : all.slice(0, SECTION_PREVIEW),
+  }));
+  // Card numbers keep counting across sections, so each card id stays unique on the page.
+  const offsets = sections.map((_, index) => sections.slice(0, index).reduce((total, section) => total + section.visible.length, 0));
+  return <>{sections.map(({ id, all: sectionSeries, visible }, index) => {
+    const start = offsets[index];
+    return <section key={id} className="discovery-category-section" aria-labelledby={`discovery-section-${id}`}>
+      <header><h3 id={`discovery-section-${id}`}>{sectionLabels[language][id]}</h3><span>{sectionSeries.length}</span></header>
+      <SeriesFeed series={visible} language={language} offset={start} />
+      {visible.length < sectionSeries.length && <button type="button" className="discovery-section-more" onClick={() => setExpanded(new Set([...expanded, id]))}>
+        {language === "zh" ? `显示全部 ${sectionSeries.length} 个` : `Show all ${sectionSeries.length}`}
+      </button>}
+    </section>;
+  })}</>;
+}
+
 function FeaturedEvent({ event, language }: { event: KiwiCueEvent; language: Language }) {
   const name = eventDisplayName(event, language);
   return <article className="discovery-feature">
@@ -53,6 +87,7 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
   const content = labels[language];
   const available = selectCollectionEvents(events, "all", now);
   const selected = selectCollectionEvents(events, collection, now, position);
+  const series = groupEventSeries(selected);
   const feature = available.find(event => event.id === surpriseId) ?? available.find(event => event.imageUrl || event.editorialPreview?.image) ?? available[0];
 
   useEffect(() => {
@@ -75,7 +110,7 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
     }, () => setLocationState("error"), { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
   }
   function surprise() {
-    const candidates = available.filter(event => event.id !== feature?.id).slice(0, 20);
+    const candidates = groupEventSeries(available).map(({ lead }) => lead).filter(event => event.id !== feature?.id).slice(0, 20);
     if (!candidates.length) return;
     setSurpriseId(candidates[Math.floor(Math.random() * candidates.length)].id);
     navigateDiscovery("all");
@@ -98,7 +133,9 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
       <h2 ref={resultHeading} tabIndex={-1}>{content[collection]}</h2>
       {collection === "nearby" && <div className="discovery-nearby"><button onClick={locate} disabled={locationState === "loading"}>{locationState === "loading" ? content.checking : content.location}</button><p>{content.privacy}</p>{locationState === "error" && <p role="status">{content.unavailable}</p>}<NearbyMap events={selected} language={language} /></div>}
       {!selected.length && <p className="discovery-empty" role="status">{content.empty}</p>}
-      <ol className="discovery-feed">{selected.map((event, index) => <li key={event.id}><EventCard event={event} index={index} language={language} variant="row" />{position && collection === "nearby" && event.venue?.coordinates && <p className="discovery-distance">{formatDistanceKm(distanceKm(position, event.venue.coordinates), language)}</p>}</li>)}</ol>
+      {collection === "all"
+        ? <SectionedFeed series={series} language={language} />
+        : <SeriesFeed series={series} language={language} position={collection === "nearby" ? position : undefined} />}
     </section>
   </div>;
 }
