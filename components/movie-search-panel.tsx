@@ -58,9 +58,9 @@ export function MovieSearchPanel(props: {
         <button className="movie-search-submit" type="submit" disabled={props.loading}>
           {content.search}
         </button>
-        <button className="movie-search-clear" type="button" onClick={props.onClear} disabled={!props.query}>
+        {props.query.trim() && <button className="movie-search-clear" type="button" onClick={props.onClear}>
           {content.clear}
-        </button>
+        </button>}
       </form>
       {props.showDateFilters !== false ? <fieldset className="movie-date-filter">
         <legend>{content.dates}</legend>
