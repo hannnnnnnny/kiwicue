@@ -120,6 +120,8 @@ TMDB_READ_ACCESS_TOKEN=your_tmdb_read_access_token
 
 6. **语音问答（可选）** —— 执行 `supabase/migrations/202610010001_ask_usage.sql`，再把 `TYPESAFE_AI_API_KEY`、`DEEPSEEK_API_KEY` 和 `ASK_HASH_SALT`（16 位以上的随机字符串）设为 Sensitive 环境变量并重新部署。三者都设置后才会显示麦克风按钮。次数额度（未登录每天 5 次、登录 20 次）和每天 NZ$0.50、每月 NZ$8 的预算保存在 `ask_limits` 和 `ask_settings` 表里，修改不需要重新部署。
 
+7. **Kiwi 对话** —— 再执行 `supabase/migrations/202610010002_ask_chat.sql`。圆形语音向导 Kiwi 会先问最多六个简短问题，用户确认后才去搜索。聊天不占免费搜索次数，另有每日上限（`ask_limits.chat_per_day`，默认 60 轮），并计入同一个预算。
+
 **注册流程：** 注册后，原来的页面会等待（最多 15 分钟），你在任意设备上确认邮件后，它会自动登录。用已注册的邮箱再次注册时，按设计不会发送邮件（避免暴露哪些邮箱有账号），页面会提供登录和重置密码的入口。
 
 **隐私：** 个人资料和合集默认私密。活动记录默认关闭，关闭时会删除已有记录。搜索内容、登录凭据和精确位置永远不会被保存。
