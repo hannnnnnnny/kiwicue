@@ -177,7 +177,7 @@ describe("Auckland event explorer", () => {
     const requestEvents = vi.fn().mockResolvedValue(eventResult);
     const view = render(<EventExplorer requestEvents={requestEvents} />);
     expect(await screen.findByRole("navigation", { name: "Quick discovery" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "More to discover" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Events in Auckland" })).toBeVisible();
     expect(screen.queryByText(/popular|trending/i)).not.toBeInTheDocument();
 
     view.rerender(<EventExplorer keyword="Harbour" requestEvents={requestEvents} />);
@@ -222,7 +222,7 @@ describe("Auckland event explorer", () => {
 
     render(<EventExplorer requestEvents={requestEvents} />);
 
-    expect(await findEventHeading("Event 1")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Explore featured event: Event 1" })).toBeInTheDocument();
     expect(screen.getByText("50 eligible Ticketmaster events shown · 50 source records checked")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Check for more events" })).toBeInTheDocument();
     expect(requestEvents).toHaveBeenCalledWith({});
@@ -261,6 +261,7 @@ describe("Auckland event explorer", () => {
 
     expect(await findEventHeading("Event 81")).toBeInTheDocument();
     expect(document.querySelectorAll(".portal-event-card h2")).toHaveLength(81);
+    expect(screen.getByRole("link", { name: "Explore featured event: Event 1" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { name: "Event 50" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Check for more events" })).not.toBeInTheDocument();
     expect(screen.getByText("All eligible Ticketmaster events are shown")).toBeInTheDocument();

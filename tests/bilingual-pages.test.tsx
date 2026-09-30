@@ -55,7 +55,8 @@ describe("bilingual route content", () => {
     );
 
     expect(screen.getByRole("heading", { name: "What do you feel like?" })).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Search & filters"));
+    expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeVisible();
+    fireEvent.click(screen.getByText("More filters & sorting"));
     expect(screen.getByRole("heading", { name: "What are you into?" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event categories" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Event time range" })).toBeInTheDocument();
@@ -107,7 +108,8 @@ describe("bilingual route content", () => {
     const sortedPage = await EventsPage({ searchParams: Promise.resolve({ sort: "date" }) });
     const view = render(<LanguageProvider>{sortedPage}</LanguageProvider>);
 
-    expect(view.container.querySelector(".discovery-search")).toHaveAttribute("open");
+    expect(view.container.querySelector(".discovery-search")).toBeInTheDocument();
+    expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeVisible();
     expect(view.container.querySelector(".portal-command")).toHaveAttribute("data-filtered", "true");
     expect(screen.getByText("All future · Soonest first")).toBeInTheDocument();
   });

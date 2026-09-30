@@ -13,9 +13,9 @@ const tokens = {
   "portal-ink": "#191b20",
   "portal-muted": "#626772",
   "portal-line": "#e1e4e8",
-  "portal-brand": "#0071e3",
-  "portal-brand-hover": "#005bb5",
-  "portal-focus": "#0071e3",
+  "portal-brand": "#087f72",
+  "portal-brand-hover": "#0b675f",
+  "portal-focus": "#087f72",
   "portal-danger": "#b3261e",
 } as const;
 

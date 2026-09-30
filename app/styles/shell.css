@@ -206,7 +206,10 @@
   border-radius: var(--radius-panel);
   background: var(--portal-raised);
   box-shadow: var(--shadow-raised);
+  pointer-events: none;
 }
+
+.event-suggestion-option { pointer-events: auto; }
 
 .event-suggestion-list {
   display: grid;

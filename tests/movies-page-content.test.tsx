@@ -60,7 +60,7 @@ afterEach(() => {
 describe("movies page", () => {
   it("puts search first and keeps the cinema directory useful when the feed is empty", async () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: "Find films and check Auckland sessions" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Movies playing in Auckland" })).toBeVisible();
     expect(screen.getByRole("search", { name: "Find a movie or cinema" })).toBeVisible();
     const previews = await screen.findByRole("heading", { name: "Explore recent New Zealand releases" });
     expect(screen.getByRole("link", { name: "Preview Fight Club" })).toHaveAttribute("href", "/movies/550");
@@ -83,7 +83,8 @@ describe("movies page", () => {
     renderPage();
 
     const directory = await screen.findByRole("heading", { name: "Auckland cinema directory" });
-    expect(screen.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Find an Auckland cinema" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Clear search" })).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Choose a date" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Now showing in Auckland" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
@@ -188,7 +189,7 @@ describe("movies page", () => {
     await screen.findByText("No sessions found for this date");
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
-    expect(screen.getByRole("heading", { name: "查找电影并核对奥克兰场次" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "奥克兰正在上映的电影" })).toBeVisible();
     expect(document.title).toBe("奥克兰电影 — KiwiCue");
     expect(screen.getByRole("heading", { name: "奥克兰影院目录" })).toBeVisible();
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(

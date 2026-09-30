@@ -30,8 +30,8 @@ function NearbyMap({ events, language }: { events: KiwiCueEvent[]; language: Lan
 }
 
 const labels = {
-  en: { all: "More to discover", tonight: "Tonight", weekend: "This weekend", free: "Free", music: "Live music", nearby: "Around Auckland", surprise: "Surprise me", back: "Back to discovery", empty: "No matching events in the loaded selection. Try another collection or load more below.", scope: "Collections use the events loaded so far. More may be available below.", location: "Sort by my distance", privacy: "Location stays on this device. Distances are straight-line estimates.", unavailable: "Location unavailable. You can still explore Auckland venues.", checking: "Finding your location…" },
-  zh: { all: "继续发现", tonight: "今晚", weekend: "本周末", free: "免费", music: "现场音乐", nearby: "奥克兰地图", surprise: "给我惊喜", back: "返回发现", empty: "已加载活动中暂时没有匹配内容。可以换个合集，或在下方加载更多。", scope: "合集来自当前已加载的活动，下方还可以继续加载。", location: "按离我距离排序", privacy: "位置只在当前设备使用，距离为直线估算。", unavailable: "暂时无法定位，仍可浏览奥克兰场馆。", checking: "正在定位…" },
+  en: { all: "Events in Auckland", tonight: "Tonight", weekend: "This weekend", free: "Free", music: "Live music", nearby: "Around Auckland", surprise: "Surprise me", back: "Back to discovery", empty: "No matching events in the loaded selection. Try another collection or load more below.", scope: "Collections use the events loaded so far. More may be available below.", location: "Sort by my distance", privacy: "Location stays on this device. Distances are straight-line estimates.", unavailable: "Location unavailable. You can still explore Auckland venues.", checking: "Finding your location…" },
+  zh: { all: "奥克兰活动", tonight: "今晚", weekend: "本周末", free: "免费", music: "现场音乐", nearby: "奥克兰地图", surprise: "给我惊喜", back: "返回发现", empty: "已加载活动中暂时没有匹配内容。可以换个合集，或在下方加载更多。", scope: "合集来自当前已加载的活动，下方还可以继续加载。", location: "按离我距离排序", privacy: "位置只在当前设备使用，距离为直线估算。", unavailable: "暂时无法定位，仍可浏览奥克兰场馆。", checking: "正在定位…" },
 };
 
 const SECTION_PREVIEW = 6;
@@ -124,11 +124,7 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
       {chips.map(chip => <button key={chip.id} data-tone={chip.id} aria-pressed={collection === chip.id} onClick={() => open(chip.id)}><DiscoveryIcon name={chip.icon} />{chip.id === "nearby" ? language === "zh" ? "地图" : "Map" : content[chip.id]}</button>)}
       <button data-tone="surprise" onClick={surprise} disabled={available.length < 2}><DiscoveryIcon name="dice" />{content.surprise}</button>
     </nav>
-    {collection === "all" ? <>
-      <div className="discovery-feature-layout">{feature && <FeaturedEvent key={feature.id} event={feature} language={language} />}</div>
-      <div className="discovery-stacks">{(["tonight", "weekend", "free", "music"] as const).map(id => <EventStack key={id} title={content[id]} events={selectCollectionEvents(events, id, now)} language={language} onOpen={() => open(id)} />)}</div>
-      <p className="discovery-scope">{content.scope} <Link href="/recommendations">{language === "zh" ? "浏览本地精选" : "Browse local picks"}</Link></p>
-    </> : <button className="discovery-back" onClick={() => open("all")}><span aria-hidden="true">← </span>{content.back}</button>}
+    {collection !== "all" && <button className="discovery-back" onClick={() => open("all")}><span aria-hidden="true">← </span>{content.back}</button>}
     <section className="discovery-list-section" id="map">
       <h2 ref={resultHeading} tabIndex={-1}>{content[collection]}</h2>
       {collection === "nearby" && <div className="discovery-nearby"><button onClick={locate} disabled={locationState === "loading"}>{locationState === "loading" ? content.checking : content.location}</button><p>{content.privacy}</p>{locationState === "error" && <p role="status">{content.unavailable}</p>}<NearbyMap events={selected} language={language} /></div>}
@@ -136,6 +132,11 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
       {collection === "all"
         ? <SectionedFeed series={series} language={language} />
         : <SeriesFeed series={series} language={language} position={collection === "nearby" ? position : undefined} />}
+      {collection === "all" && <div className="discovery-feature-layout">{feature && <FeaturedEvent key={feature.id} event={feature} language={language} />}</div>}
     </section>
+    {collection === "all" && <>
+      {available.length > 1 && <div className="discovery-stacks">{(["tonight", "weekend", "free", "music"] as const).map(id => <EventStack key={id} title={content[id]} events={selectCollectionEvents(events, id, now)} language={language} onOpen={() => open(id)} />)}</div>}
+      <p className="discovery-scope">{content.scope} <Link href="/recommendations">{language === "zh" ? "浏览本地精选" : "Browse local picks"}</Link></p>
+    </>}
   </div>;
 }

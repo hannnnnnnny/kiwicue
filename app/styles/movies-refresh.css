@@ -1,0 +1,59 @@
+.movies-page .movies-command {
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.movies-page .movies-command h1 {
+  max-width: 22ch;
+  margin: 8px 0;
+}
+
+.movies-page .movies-intro {
+  max-width: 52ch;
+  line-height: 1.45;
+}
+
+.movies-page .movie-search-panel {
+  margin-top: 16px;
+  box-shadow: none;
+}
+
+.movies-page .movies-layout {
+  padding-top: 4px;
+}
+
+@media (max-width: 639px) {
+  .movies-page .movies-command {
+    padding-top: 18px;
+  }
+
+  .movies-page .movies-command h1 {
+    font-size: 2rem;
+  }
+
+  .movies-page .movies-intro {
+    font-size: .94rem;
+  }
+
+  .movies-page .movie-search-panel {
+    padding: 12px;
+  }
+
+  .movies-page .movie-date-filter {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .movies-page .movie-date-filter > div {
+    margin-top: 8px;
+  }
+
+  .movies-page .cinema-tools {
+    margin: 16px 0;
+    padding: 12px 0;
+  }
+
+  .movies-page .cinema-directory-list {
+    margin-top: 12px;
+  }
+}
