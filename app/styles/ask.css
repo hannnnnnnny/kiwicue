@@ -118,3 +118,72 @@
   .ask-list > li, .ask-mic[data-listening], .ask-skeleton span { animation: none; }
   .ask-launcher { transition: none; }
 }
+
+/* Kiwi: round face; eyes blink, mouth talks, rings pulse while listening, dots orbit while thinking. */
+.ask-bot {
+  --bot-size: 72px;
+  position: relative;
+  flex: none;
+  width: var(--bot-size);
+  height: var(--bot-size);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--portal-brand) 55%, var(--portal-white)), var(--portal-brand));
+  box-shadow: var(--shadow-raised);
+  animation: ask-bot-float 4s ease-in-out infinite;
+}
+.ask-bot[data-size="small"] { --bot-size: 40px; box-shadow: none; animation: none; }
+.ask-bot-face { display: grid; justify-items: center; gap: calc(var(--bot-size) * .09); transition: transform var(--motion-fast); }
+.ask-bot-eyes { display: flex; gap: calc(var(--bot-size) * .2); }
+.ask-bot-eye {
+  width: calc(var(--bot-size) * .12);
+  height: calc(var(--bot-size) * .17);
+  border-radius: var(--radius-pill);
+  background: var(--portal-white);
+  animation: ask-bot-blink 5s infinite;
+}
+.ask-bot-mouth {
+  width: calc(var(--bot-size) * .22);
+  height: calc(var(--bot-size) * .06);
+  border-radius: var(--radius-pill);
+  background: var(--portal-white);
+  opacity: .9;
+}
+.ask-bot-dots { position: absolute; inset: 0; display: none; }
+.ask-bot-dots i {
+  position: absolute;
+  top: -4px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--portal-brand);
+  transform-origin: 4px calc(var(--bot-size) / 2 + 4px);
+  animation: ask-bot-orbit 1.4s linear infinite;
+}
+.ask-bot-dots i:nth-child(2) { animation-delay: -.47s; opacity: .7; }
+.ask-bot-dots i:nth-child(3) { animation-delay: -.93s; opacity: .45; }
+
+.ask-bot[data-state="listening"]::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 3px solid var(--portal-brand);
+  border-radius: var(--radius-pill);
+  animation: ask-bot-ring 1.3s ease-out infinite;
+}
+.ask-bot[data-state="listening"] .ask-bot-mouth { width: calc(var(--bot-size) * .12); height: calc(var(--bot-size) * .12); }
+.ask-bot[data-state="thinking"] .ask-bot-face { transform: translate(-3px, -3px); }
+.ask-bot[data-state="thinking"] .ask-bot-dots { display: block; }
+.ask-bot[data-state="speaking"] .ask-bot-mouth { animation: ask-bot-talk .32s ease-in-out infinite alternate; }
+
+@keyframes ask-bot-float { 50% { transform: translateY(-4px); } }
+@keyframes ask-bot-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes ask-bot-talk { from { height: calc(var(--bot-size) * .05); } to { height: calc(var(--bot-size) * .16); } }
+@keyframes ask-bot-ring { from { opacity: .8; transform: scale(.95); } to { opacity: 0; transform: scale(1.35); } }
+@keyframes ask-bot-orbit { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-bot, .ask-bot-eye, .ask-bot-dots i, .ask-bot[data-state="listening"]::before, .ask-bot[data-state="speaking"] .ask-bot-mouth { animation: none; }
+}
