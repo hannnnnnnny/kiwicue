@@ -25,6 +25,9 @@ describe("Next.js application shell", () => {
       "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=",
       "SUPABASE_SERVICE_ROLE_KEY=",
       "SUPABASE_SECRET_KEY=",
+      "TYPESAFE_AI_API_KEY=",
+      "DEEPSEEK_API_KEY=",
+      "ASK_HASH_SALT=",
     ]);
     expect(envExample).not.toContain("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY");
     expect(envExample).not.toContain("NEXT_PUBLIC_SUPABASE_SECRET_KEY");
