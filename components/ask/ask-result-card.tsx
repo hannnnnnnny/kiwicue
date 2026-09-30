@@ -21,7 +21,7 @@ export function AskResultCard({ card, best, language }: { card: AskCard; best: b
   return (
     <article className="ask-card" data-best={best || undefined} aria-label={best ? `${content.best}: ${card.title}` : card.title}>
       <Link href={card.href} className="ask-card-link">
-        {best ? <span className="ask-card-media"><EventImage src={card.imageUrl} alt="" fallback={null} /></span> : null}
+        {best ? <span className="ask-card-media"><EventImage src={card.imageUrl} alt="" fallback={null} loading="eager" /></span> : null}
         <span className="ask-card-body">
           <span className="ask-card-eyebrow">{best ? content.best : content.kind[card.kind]}</span>
           <strong className="ask-card-title">{card.title}</strong>
