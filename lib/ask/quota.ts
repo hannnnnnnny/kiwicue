@@ -8,8 +8,10 @@ import type { AskTier } from "./schema";
 export type QuotaDecision =
   | { allowed: true; usageId: string; remaining: number; degrade: boolean; tier: AskTier }
   | { allowed: false; reason: "rate_limited" | "quota_exhausted" | "budget_exhausted" | "unavailable"; remaining: number; tier: AskTier };
+/** Searches use the free quota; chat turns have their own daily cap. Both share the budget. */
+export type QuotaKind = "search" | "chat";
 export type QuotaStore = {
-  reserve(subject: string, tier: AskTier, userId: string | null): Promise<QuotaDecision>;
+  reserve(subject: string, tier: AskTier, userId: string | null, kind?: QuotaKind): Promise<QuotaDecision>;
   recordCost(usageId: string, costMicroUsd: number, degraded: boolean): Promise<void>;
 };
 
@@ -40,8 +42,8 @@ export function createSupabaseQuotaStore(env: Record<string, string | undefined>
   if (!config || !secret) return null;
   const client = createClient(config.url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
   return {
-    async reserve(subject, tier, userId) {
-      const { data, error } = await client.rpc("ask_reserve", { p_subject: subject, p_tier: tier, p_user: userId });
+    async reserve(subject, tier, userId, kind = "search") {
+      const { data, error } = await client.rpc("ask_reserve", { p_subject: subject, p_tier: tier, p_user: userId, p_kind: kind });
       if (error) { logAskFailure("quota", error); return toDecision(undefined, tier); }
       return toDecision((data as ReserveRow[] | null)?.[0], tier);
     },
