@@ -3,7 +3,7 @@ import { askStreamEventSchema, type AskStreamEvent } from "./schema";
 const encoder = new TextEncoder();
 const MAX_LINE_LENGTH = 16_384;
 
-export function encodeEvent(event: AskStreamEvent): Uint8Array {
+export function encodeEvent(event: AskStreamEvent): Uint8Array<ArrayBuffer> {
   return encoder.encode(`${JSON.stringify(event)}\n`);
 }
 
