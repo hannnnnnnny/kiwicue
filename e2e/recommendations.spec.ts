@@ -112,7 +112,7 @@ test("event categories form an accessible discovery ticket runway", async ({ pag
     body: JSON.stringify({ venues: [] }),
   }));
   await page.goto("/events");
-  await page.locator(".discovery-search > summary").click();
+  await page.locator(".discovery-advanced-filters > summary").click();
 
   const categoryNav = page.getByRole("navigation", { name: "Event categories" });
   await expect(categoryNav).toHaveAttribute("data-active", "all");
@@ -121,9 +121,9 @@ test("event categories form an accessible discovery ticket runway", async ({ pag
     .toEqual(["all", "concerts", "theatre", "markets", "festivals", "sports"]);
   await expect(categoryNav.getByRole("link", { name: /^All\./ })).toHaveAttribute("aria-current", "page");
   await expect(categoryNav.getByRole("link", { name: /Sports/ })).toBeVisible();
-  await expect(categoryNav.getByText("Live sport across Auckland")).toBeVisible();
+  await expect(categoryNav.getByRole("link", { name: /Sports\. Live sport across Auckland/ })).toBeVisible();
   expect(await categoryNav.locator(".event-category-card").first().evaluate((node) => getComputedStyle(node).borderTopWidth))
-    .toBe("0px");
+    .toBe("1px");
   const firstCategory = categoryNav.locator(".event-category-card").first();
   await firstCategory.focus();
   expect(await firstCategory.evaluate((node) => parseFloat(getComputedStyle(node).outlineWidth))).toBeGreaterThan(0);

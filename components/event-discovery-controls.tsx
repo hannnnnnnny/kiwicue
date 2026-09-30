@@ -10,7 +10,14 @@ const copy = {
   zh: { active: "当前筛选", clear: "清除全部筛选", recommended: "推荐排序", date: "日期排序", sort: "结果排序", venue: "所选场馆", categories: { concerts: "演唱会", theatre: "话剧演出", markets: "市集", festivals: "节日活动", sports: "体育赛事" }, windows: { "7d": "未来 7 天", weekend: "本周末", "30d": "未来 30 天" }, remove: (label: string) => `移除${label}筛选` },
 } as const;
 
-export function EventDiscoveryControls({ state }: { state: Required<EventSearchState> }) {
+export function EventDiscoveryControls({ state, searchOnly = false }: { state: Required<EventSearchState>; searchOnly?: boolean }) {
+  return <div className="event-discovery-controls">
+    <EventSearchPanel {...state} />
+    {!searchOnly && <EventFilterMeta state={state} />}
+  </div>;
+}
+
+export function EventFilterMeta({ state }: { state: Required<EventSearchState> }) {
   const { language } = useLanguage();
   const content = copy[language];
   const chips = [
@@ -21,9 +28,7 @@ export function EventDiscoveryControls({ state }: { state: Required<EventSearchS
   ].filter((chip): chip is NonNullable<typeof chip> => chip !== null);
   const hasFilters = chips.length > 0 || state.sort !== "recommended";
   return (
-    <div className="event-discovery-controls">
-      <EventSearchPanel {...state} />
-      <div className="event-control-meta">
+    <div className="event-control-meta">
         {chips.length > 0 && <nav className="event-active-filters" aria-label={content.active}>
           {chips.map((chip) => <Link key={chip.id} href={eventSearchHref(chip.next)} aria-label={content.remove(chip.label)}>{chip.label}<span aria-hidden="true"> ×</span></Link>)}
         </nav>}
@@ -32,7 +37,6 @@ export function EventDiscoveryControls({ state }: { state: Required<EventSearchS
           <Link href={eventSearchHref({ ...state, sort: "date" })} aria-label={language === "en" ? "Sort by date" : "按日期排序"} aria-current={state.sort === "date" ? "page" : undefined}>{content.date}</Link>
         </nav>
         {hasFilters && <Link className="event-clear-all" href="/events">{content.clear}</Link>}
-      </div>
     </div>
   );
 }

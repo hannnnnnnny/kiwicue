@@ -15,7 +15,7 @@ body { background: var(--portal-bg); }
 .discovery-search .portal-navigation-shell { border: 0; margin-top: 16px; padding: 0; background: none; box-shadow: none; }
 .discovery-search .portal-filter-intro { display: none; }
 .portal-status-strip { font-size: .75rem; margin: 12px 0; padding: 12px 0; }
-.events-page:has(.discovery-search:not([open])) .portal-status-strip { display: none; }
+.events-page:has(.discovery-advanced-filters:not([open])) .portal-status-strip { display: none; }
 .event-feed { padding-top: 12px; }
 .event-feed:has(.discovery-hub) > .event-feed-toolbar { margin-top: 24px; }
 .discovery-refine { margin: 12px 0; }

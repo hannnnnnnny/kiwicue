@@ -7,7 +7,7 @@ import type { EventSort } from "../lib/event-search-params";
 import type { EventWindow } from "../lib/event-window";
 import { EventCategoryNav } from "./event-category-nav";
 import { CuratedMarketDiscovery } from "./curated-market-discovery";
-import { EventDiscoveryControls } from "./event-discovery-controls";
+import { EventDiscoveryControls, EventFilterMeta } from "./event-discovery-controls";
 import { EventWindowNav } from "./event-window-nav";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
@@ -86,15 +86,19 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
       </section>
 
       <div className="discovery-search" aria-label={language === "zh" ? "搜索与筛选" : "Search and filters"}>
-        <EventDiscoveryControls state={searchState} />
-        <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
-          <div className="portal-filter-intro">
-            <h2 id="discovery-filter-title">{content.filterTitle}</h2>
-            <p>{content.filterBody}</p>
-          </div>
-          <EventCategoryNav {...searchState} />
-          <EventWindowNav {...searchState} />
-        </section>
+        <EventDiscoveryControls state={searchState} searchOnly />
+        <details className="discovery-advanced-filters" open={isFiltered || undefined}>
+          <summary>{language === "zh" ? "更多筛选与排序" : "More filters & sorting"}</summary>
+          <EventFilterMeta state={searchState} />
+          <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
+            <div className="portal-filter-intro">
+              <h2 id="discovery-filter-title">{content.filterTitle}</h2>
+              <p>{content.filterBody}</p>
+            </div>
+            <EventCategoryNav {...searchState} />
+            <EventWindowNav {...searchState} />
+          </section>
+        </details>
       </div>
 
       <div className="portal-status-strip" aria-label={content.statusLabel}>

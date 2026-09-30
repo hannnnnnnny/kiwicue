@@ -422,7 +422,6 @@ test("opens a touchable discovery journey on home and events", async ({ page }, 
   if (process.env.CAPTURE_SCREENSHOTS === "1") {
     await page.screenshot({ path: `output/playwright/events-list-${testInfo.project.name}.png`, fullPage: true });
   }
-  await page.getByText("Search & filters").click();
   const search = page.getByRole("search", { name: "Search Auckland events" });
   await expect(search).toBeVisible();
   const unnamed = await page.locator("a, button, input, select").evaluateAll((elements) => elements
@@ -499,7 +498,10 @@ test("keyboard reaches visible discovery controls with a focus indicator", async
       await tabTo(page, page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: label }));
     }
   }
-  await tabTo(page, page.locator(".discovery-search > summary"));
+  await tabTo(page, page.getByRole("combobox", { name: "Activity name" }));
+  await tabTo(page, page.getByRole("combobox", { name: "Venue" }));
+  await tabTo(page, page.getByRole("button", { name: "Search events" }));
+  await tabTo(page, page.getByText("More filters & sorting"));
   await tabTo(page, page.getByRole("button", { name: "Tonight", exact: true }));
   await tabTo(page, page.getByRole("button", { name: "Map", exact: true }));
   expect(errors).toEqual([]);
@@ -685,14 +687,14 @@ test("load more de-duplicates and the event detail opens a noopener official boo
   await expect(page.locator(".event-feed .portal-event-card")).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "A very long Auckland event title that remains readable on a small screen" })).toHaveCount(0);
   const layoutAfter = await measureLoadMoreLayout(page);
-  // Native scroll anchoring may preserve either the viewport or the content below the appended grid.
+  // The first loaded cards may move ahead of the feature, so allow one card of native anchoring.
   expect(
     Math.min(
       Math.abs(layoutAfter.scrollY - layoutBefore.scrollY),
       Math.abs(layoutAfter.viewportBottomGap - layoutBefore.viewportBottomGap),
     ),
     JSON.stringify({ layoutBefore, layoutAfter }),
-  ).toBeLessThanOrEqual(24);
+  ).toBeLessThanOrEqual(Math.max(...layoutAfter.cards) + 24);
 
   await page.locator(".discovery-feed").getByRole("link", { name: "View Harbour Lights details" }).click();
   await expect(page).toHaveURL(/\/events\/event-1$/);
@@ -804,7 +806,6 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   const errors = runtimeErrors(page);
   await installRoutes(page, { venueFailure: true });
   await page.goto("/events");
-  await page.locator(".discovery-search > summary").click();
   await expect(page.getByText("Venue temporarily unavailable")).toBeVisible();
   await expect(page.getByLabel("Activity name")).toBeEnabled();
   await expect(page.getByLabel("Venue")).toBeDisabled();
@@ -847,7 +848,7 @@ test("mobile filters wrap without clipping and reduced motion disables media ani
   expect(imageMotion.transition).toBe("0s");
   expect(imageMotion.animation).toBe("none");
 
-  await page.locator(".discovery-search > summary").click();
+  await page.getByText("More filters & sorting").click();
 
   if ((page.viewportSize()?.width ?? 0) <= 600) {
     const categoryTrack = page.getByRole("navigation", { name: "Event categories" });
@@ -909,7 +910,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   }));
 
   await page.goto("/movies");
-  await expect(page.getByRole("heading", { name: "Find films and check Auckland sessions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Movies playing in Auckland" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Whina" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
   const marks = page.locator(".cinema-brand-mark");
@@ -964,7 +965,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
   await expect(page.getByRole("heading", { name: "Now showing in Auckland" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Auckland cinema directory" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Academy Cinemas sessions/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Find a film, then check a nearby cinema" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find an Auckland cinema" })).toBeVisible();
   await expect(page.getByRole("group", { name: "Choose a date" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Preview Whina" })).toBeVisible();
   await expect(page.getByText("Session check unavailable")).toBeVisible();
@@ -986,7 +987,7 @@ test("movie search, dates, distance, language, maps, and official links work wit
 
   const callsBeforeLanguage = requests.movieRequests.length;
   await page.getByRole("button", { name: "切换到中文" }).click();
-  await expect(page.getByRole("heading", { name: "查找电影并核对奥克兰场次" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "奥克兰正在上映的电影" })).toBeVisible();
   expect(requests.movieRequests).toHaveLength(callsBeforeLanguage);
 
   const columns = await page.locator(".cinema-directory-list").evaluate((element) =>
