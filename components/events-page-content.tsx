@@ -85,8 +85,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
         </div>
       </section>
 
-      <details className="discovery-search" open={isFiltered || undefined}>
-        <summary>{language === "zh" ? "搜索与筛选" : "Search & filters"}<span aria-hidden="true">⌕</span></summary>
+      <div className="discovery-search" aria-label={language === "zh" ? "搜索与筛选" : "Search and filters"}>
         <EventDiscoveryControls state={searchState} />
         <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
           <div className="portal-filter-intro">
@@ -96,7 +95,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
           <EventCategoryNav {...searchState} />
           <EventWindowNav {...searchState} />
         </section>
-      </details>
+      </div>
 
       <div className="portal-status-strip" aria-label={content.statusLabel}>
         <span>{content.location}</span>
