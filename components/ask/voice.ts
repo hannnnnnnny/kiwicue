@@ -10,6 +10,9 @@ type SynthLike = { getVoices(): readonly VoiceInfo[]; speak(utterance: Utterance
 export type Voice = { available: boolean; speak(text: string, language: Language): Promise<void>; cancel(): void };
 
 const NATURAL = /natural|neural|premium|enhanced|google|siri/iu;
+// Some browsers never fire "end" (e.g. with no installed voice); give up after a generous estimate.
+const MS_PER_CHARACTER = 90;
+const END_GRACE_MS = 4_000;
 const LOCALE: Record<Language, string> = { en: "en-NZ", zh: "zh-CN" };
 
 function score(voice: VoiceInfo, language: Language): number {
@@ -41,7 +44,9 @@ export function createBrowserVoice(synth: SynthLike | undefined = browserSynth()
     cancel: () => synth.cancel(),
     speak(text, language) {
       synth.cancel();
-      return new Promise<void>((resolve) => {
+      return new Promise<void>((settle) => {
+        const timeout = setTimeout(() => settle(), text.length * MS_PER_CHARACTER + END_GRACE_MS);
+        const resolve = () => { clearTimeout(timeout); settle(); };
         const utterance = new Utterance(text);
         utterance.lang = LOCALE[language];
         utterance.voice = pickVoice(synth.getVoices(), language);

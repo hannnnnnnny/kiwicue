@@ -39,6 +39,18 @@ describe("createBrowserVoice", () => {
     expect(synth.cancel).toHaveBeenCalled();
   });
 
+  it("gives up waiting if the browser never reports the end of speech", async () => {
+    vi.useFakeTimers();
+    const synth = { getVoices: () => voices, cancel: vi.fn(), speak: vi.fn() };
+    let resolved = false;
+    void createBrowserVoice(synth, FakeUtterance).speak("Hi there", "en").then(() => { resolved = true; });
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(resolved).toBe(false);
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(resolved).toBe(true);
+    vi.useRealTimers();
+  });
+
   it("resolves on errors and is unavailable without speech synthesis", async () => {
     const synth = { getVoices: () => [], cancel: vi.fn(), speak: vi.fn((utterance: FakeUtterance) => utterance.onerror?.()) };
     await expect(createBrowserVoice(synth, FakeUtterance).speak("hi", "en")).resolves.toBeUndefined();
