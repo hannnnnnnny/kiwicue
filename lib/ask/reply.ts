@@ -3,14 +3,17 @@ import { deepSeek } from "@ai-sdk/deepseek";
 import { streamText } from "ai";
 import { logAskFailure } from "./log";
 import type { AskCard } from "./schema";
-import { DEEPSEEK_MODEL, type TokenUsage } from "./understand-deepseek";
+import { DEEPSEEK_MODEL, DEEPSEEK_NO_THINKING, type TokenUsage } from "./understand-deepseek";
 
 const DEFAULT_TIMEOUT_MS = 6_000;
 const NO_USAGE: TokenUsage = { inputTokens: 0, outputTokens: 0 };
 export type StreamReply = (input: { system: string; prompt: string; abortSignal: AbortSignal }) => { textStream: AsyncIterable<string>; usage: PromiseLike<TokenUsage> };
 
 export const deepseekStreamReply: StreamReply = ({ system, prompt, abortSignal }) => {
-  const result = streamText({ model: deepSeek(DEEPSEEK_MODEL), system, prompt, abortSignal, maxRetries: 0, maxOutputTokens: 120 });
+  const result = streamText({
+    model: deepSeek(DEEPSEEK_MODEL), system, prompt, abortSignal, maxRetries: 0, maxOutputTokens: 120,
+    providerOptions: DEEPSEEK_NO_THINKING,
+  });
   return {
     textStream: result.textStream,
     usage: Promise.resolve(result.usage).then((usage) => ({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })),
@@ -32,8 +35,15 @@ export async function* replyDeltas(input: { text: string; language: "en" | "zh";
       system: system(input.language), prompt: JSON.stringify({ question: input.text, options }),
       abortSignal: AbortSignal.timeout(input.timeoutMs ?? DEFAULT_TIMEOUT_MS),
     });
-    for await (const delta of result.textStream) yield delta;
-    return await result.usage;
+    let wrote = false;
+    for await (const delta of result.textStream) {
+      wrote ||= delta.length > 0;
+      yield delta;
+    }
+    const usage = await result.usage;
+    // An empty reply is not an error to the AI SDK, so record it or it goes unnoticed.
+    if (!wrote) logAskFailure("reply", { code: "empty_reply" });
+    return usage;
   } catch (error) {
     logAskFailure("reply", error);
     return NO_USAGE;

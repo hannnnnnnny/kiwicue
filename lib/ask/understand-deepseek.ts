@@ -6,6 +6,9 @@ import { logAskFailure } from "./log";
 import type { AskFilters } from "./schema";
 
 export const DEEPSEEK_MODEL = "deepseek-flash";
+// Thinking is on by default and would spend the output budget before any answer text; these
+// are short extraction and one-sentence tasks, so it is switched off for speed and cost.
+export const DEEPSEEK_NO_THINKING = { deepseek: { thinking: { type: "disabled" as const } } };
 const DEFAULT_TIMEOUT_MS = 2_500;
 
 const slotsSchema = z.object({
@@ -21,6 +24,7 @@ export type GenerateSlots = (input: { system: string; prompt: string; abortSigna
 export const deepseekGenerateSlots: GenerateSlots = async ({ system, prompt, abortSignal }) => {
   const result = await generateText({
     model: deepSeek(DEEPSEEK_MODEL), system, prompt, abortSignal, maxRetries: 0,
+    providerOptions: DEEPSEEK_NO_THINKING,
     output: Output.object({ schema: slotsSchema }),
   });
   return { output: result.output, usage: { inputTokens: result.usage.inputTokens ?? 0, outputTokens: result.usage.outputTokens ?? 0 } };
