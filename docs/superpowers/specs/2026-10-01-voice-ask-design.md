@@ -22,7 +22,7 @@ new data sources, notifications, saving conversations server-side.
 | Spoken reply | Browser `speechSynthesis`, off by default, toggle remembered in `localStorage`. |
 | Entry point | Global floating mic button on every page (bottom-right on desktop, centre of the mobile tab bar) opening a full-screen overlay. |
 | Scope | Events (Ticketmaster), movies (HOYTS / EVENT Cinemas sessions) and curated markets. |
-| Secrets | `TYPESAFE_AI_API_KEY`, `DEEPSEEK_API_KEY`, `ASK_HASH_SALT` — server-only env vars (plus the non-secret `ASK_DAILY_BUDGET_USD`), set by the owner locally and as Sensitive in Vercel. Never `NEXT_PUBLIC_`, never logged. |
+| Secrets | `TYPESAFE_AI_API_KEY`, `DEEPSEEK_API_KEY`, `ASK_HASH_SALT` — server-only env vars, set by the owner locally and as Sensitive in Vercel. Never `NEXT_PUBLIC_`, never logged. |
 
 ## Architecture
 
@@ -96,23 +96,28 @@ Client (`components/ask/`): `ask-button.tsx`, `ask-overlay.tsx`, `use-speech-inp
 
 Limits live in one config table so they can change without a deploy.
 
-**Global daily budget:** `ASK_DAILY_BUDGET_USD` (default 3, about NZ$5). Each request's cost is
-computed from the token usage the two APIs report, using peak prices as an upper bound:
-Jev $0.04 / 1M input tokens, output free; DeepSeek `deepseek-flash` $0.30 / 1M input (cache miss)
-and $1.20 / 1M output. At 80 % of the budget the route skips DeepSeek (Jev-only, no spoken reply,
+**Global budget:** **NZ$0.50 per Auckland day and NZ$8 per Auckland calendar month**, whichever
+runs out first. Both caps and the USD→NZD rate (default 1.75, deliberately pessimistic) live in an
+`ask_settings` row so they can change without a deploy. Each request's cost is computed from the
+token usage the two APIs report, using peak prices as an upper bound: Jev $0.04 / 1M input
+tokens, output free; DeepSeek `deepseek-flash` $0.30 / 1M input (cache miss) and $1.20 / 1M
+output. When either budget passes 80 % the route skips DeepSeek (Jev-only, no spoken reply,
 `notice: ai_degraded`); at 100 % it returns `budget_exhausted` and the overlay offers the normal
-search instead. Rough cost per ask: well under US$0.001.
+search instead. Rough cost per ask is well under US$0.001, so the daily cap covers roughly
+300 asks.
 
 **Supabase migration `…_ask_usage.sql`:**
 
 - `ask_limits(tier text primary key, per_day int, per_minute int)` seeded with the table above.
+- `ask_settings(id int primary key check (id = 1), daily_budget_nzd_cents int default 50, monthly_budget_nzd_cents int default 800, usd_to_nzd numeric default 1.75, degrade_ratio numeric default 0.8)`.
 - `ask_usage(id uuid, subject text, tier text, user_id uuid null, created_at timestamptz, cost_micro_usd int default 0, degraded bool)`,
   RLS enabled with no policies (only the server's secret key can touch it), index on `(subject, created_at)`.
 - `ask_reserve(p_subject text, p_tier text, p_user uuid)` — `security definer`; in one statement
-  checks the minute and day counts plus the global day spend and inserts a row; returns
+  checks the minute and day counts plus the global day and month spend and inserts a row; returns
   `{allowed, reason, usage_id, remaining, degrade}`.
 - `ask_record_cost(p_usage_id uuid, p_cost int)` — updates the row after the stream finishes.
-- Rows older than 30 days are deleted by the same RPC opportunistically; IPs are never stored raw.
+- Rows older than 40 days are deleted by the same RPC opportunistically (the month total only
+  needs the current month); IPs are never stored raw.
 
 When Supabase is not configured (local dev without accounts), the route refuses with `internal`
 rather than running unmetered.
