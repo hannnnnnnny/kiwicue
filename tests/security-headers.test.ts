@@ -10,6 +10,9 @@ describe("application security headers", () => {
     expect(headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
     expect(headers.get("permissions-policy")).toContain("geolocation=(self)");
     expect(headers.get("permissions-policy")).toContain("camera=()");
+    // Voice ask needs the microphone on KiwiCue's own pages only; embedded frames still get none.
+    expect(headers.get("permissions-policy")).toContain("microphone=(self)");
+    expect(headers.get("permissions-policy")).not.toContain("microphone=()");
     expect(headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
     expect(headers.get("content-security-policy")).toContain("object-src 'none'");
     expect(headers.get("content-security-policy")).toContain("https://www.youtube-nocookie.com");
