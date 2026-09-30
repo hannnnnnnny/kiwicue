@@ -945,7 +945,8 @@ test("movie search, dates, distance, language, maps, and official links work wit
     const box = await targets.nth(index).boundingBox();
     if (!box) continue;
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+    // Chromium can report a CSS 44px target a fraction of a pixel short after scaling.
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(43.95);
   }
 
   const input = page.getByLabel("Movie, cinema, or suburb");
