@@ -46,8 +46,7 @@ function writeMuted(value: boolean): void {
   }
 }
 
-function trapFocus(event: KeyboardEvent<HTMLDivElement>, onClose: () => void) {
-  if (event.key === "Escape") { onClose(); return; }
+function trapFocus(event: KeyboardEvent<HTMLDivElement>) {
   if (event.key !== "Tab") return;
   const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input")];
   if (focusable.length === 0) return;
@@ -194,9 +193,16 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const busy = chat.pending || search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
   const remaining = search.state.remaining ?? chat.remaining;
+  // Buttons such as "Search" disappear once used, which drops focus outside the dialog, so Escape
+  // is handled for the whole document while the overlay is open.
+  useEffect(() => {
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
   function toggleMute() { setMuted(!muted); writeMuted(!muted); }
   return (
-    <div className="ask-overlay" role="dialog" aria-modal="true" aria-labelledby="ask-title" onKeyDown={(event) => trapFocus(event, onClose)}>
+    <div className="ask-overlay" role="dialog" aria-modal="true" aria-labelledby="ask-title" onKeyDown={trapFocus}>
       <div className="ask-panel">
         <header className="ask-header">
           <AskBot state={state} />
