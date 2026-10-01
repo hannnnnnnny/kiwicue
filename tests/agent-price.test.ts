@@ -21,3 +21,5 @@ it("party 5 at 0 with total ceiling 0", () => { const result = priceEvidence({ m
 it("party 30 at 10 with total ceiling 299", () => { const result = priceEvidence({ min: 10, max: 10, free: false }, { ...EMPTY_FILTERS, partySize: 30, totalBudget: 299 }); expect(result.keep).toBe(false); expect(result.budgetStatus).toBe("estimate"); });
 
 it("party 30 at 10 with total ceiling 300", () => { const result = priceEvidence({ min: 10, max: 10, free: false }, { ...EMPTY_FILTERS, partySize: 30, totalBudget: 300 }); expect(result.keep).toBe(true); expect(result.budgetStatus).toBe("estimate"); });
+
+it("per-ticket lower bound 30 against 30", () => { expect(priceEvidence({ min: 30, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 30 }).keep).toBe(true); });
