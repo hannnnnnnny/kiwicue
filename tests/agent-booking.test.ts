@@ -12,3 +12,5 @@ it("admit official booking https://ticketmaster.com/event/a", () => { expect(tru
 it("admit official booking https://academycinemas.co.nz/", () => { expect(trustedBookingUrl("https://academycinemas.co.nz/")).toBe("https://academycinemas.co.nz/"); });
 
 it("admit official booking https://bridgeway.co.nz/", () => { expect(trustedBookingUrl("https://bridgeway.co.nz/")).toBe("https://bridgeway.co.nz/"); });
+
+it("admit official booking https://lido.co.nz/", () => { expect(trustedBookingUrl("https://lido.co.nz/")).toBe("https://lido.co.nz/"); });
