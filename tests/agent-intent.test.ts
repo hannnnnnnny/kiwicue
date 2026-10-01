@@ -67,3 +67,5 @@ it("interpret budget: NZD 120 combined", () => { expect(budgetIntent("NZD 120 co
 it("interpret budget: $45 per ticket", () => { expect(budgetIntent("$45 per ticket")).toMatchObject({"maxPrice": 45, "totalBudget": null}); });
 
 it("interpret budget: \u6bcf\u4eba30\u5143", () => { expect(budgetIntent("\u6bcf\u4eba30\u5143")).toMatchObject({"maxPrice": 30}); });
+
+it("interpret budget: $25 each", () => { expect(budgetIntent("$25 each")).toMatchObject({"maxPrice": 25}); });
