@@ -7,7 +7,7 @@ export function partySizeFrom(text: string): number | undefined {
   const grouped = [...text.matchAll(/(\d+|one|two|three|four|five|six|[一二两三四五六七八九十])\s*(?:个|位)?\s*(adults?|children|kids?|大人|成人|孩子|小孩|大|小)(?![a-z])/giu)];
   let count = grouped.reduce((sum, match) => sum + number(match[1]), 0);
   if (count > 0 && !grouped.some((match) => /children|kids?|孩子|小孩|小$/iu.test(match[0])) && /\b(?:a|one|1|\d+)\s+\d+[- ]year[- ]old\b|一个\d+岁/u.test(text)) count += 1;
-  const total = text.match(/(?:for|party of|group of|all)\s+(\d+|one|two|three|four|five|six)\s*(?:people|persons|of us)?\b|(\d+|[一二两三四五六七八九十])\s*人/iu);
+  const total = text.match(/(?:for|party of|group of|all)\s+(\d+|one|two|three|four|five|six)\s*(?:people|persons|of us)?\b|(\d+|[一二两三四五六七八九十])\s*(?:个|位)?\s*人/iu);
   if (total) count = number(total[1] ?? total[2]);
   return Number.isInteger(count) && count >= 1 && count <= 30 ? count : undefined;
 }
