@@ -258,6 +258,7 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   const [voiceLanguage, setVoiceLanguage] = useState<SpokenLanguage>(() => readVoiceLanguage() ?? language);
   const chooseVoiceLanguage = (next: SpokenLanguage) => { setVoiceLanguage(next); writeVoiceLanguage(next); };
   const speech = useSpeechInput({ language: voiceLanguage, onFinal: (text) => chat.send(text, "voice") });
+  const stopListening = speech.stop;
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
   const { speaking, silence } = useAssistantVoice(line, muted || !active, assistant.voice, () => { if (active && chat.lastInput === "voice" && speech.supported) speech.start(); });
@@ -274,8 +275,8 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   }, [active, onClose]);
   useEffect(() => {
     if (active) document.querySelector<HTMLInputElement>(".ask-composer input")?.focus();
-    else speech.stop();
-  }, [active, speech.stop]);
+    else stopListening();
+  }, [active, stopListening]);
   function toggleMute() { setMuted(!muted); writeMuted(!muted); }
   function pick(id: AssistantId) {
     setPicking(false);

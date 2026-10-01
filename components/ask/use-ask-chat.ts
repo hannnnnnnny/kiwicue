@@ -100,7 +100,7 @@ export function useAskChat({ language, name, search, reset, searchState }: {
   const restart = useCallback(() => {
     dispatch({ type: "restart", text: copy[language].restart, quickReplies: [...copy[language].starters] });
     reset();
-  }, [language, reset, searchState]);
+  }, [language, reset]);
 
   /** A newly chosen assistant says hello, keeping the conversation and results so far. */
   const introduce = useCallback((nextName: string) =>
