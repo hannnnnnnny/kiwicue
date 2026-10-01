@@ -29,6 +29,11 @@ describe("followUpFor", () => {
     expect(followUpFor(evening, "en").options.map((option) => option.label)).toEqual(["Any time of day", "Start over"]);
   });
 
+  it("does not offer to loosen what the search already loosened", () => {
+    const state = done({ cards: [card], relaxed: ["area"], filters: { ...EMPTY_FILTERS, area: "central", free: true } });
+    expect(followUpFor(state, "en").options.map((option) => option.label)).toEqual(["In the evening", "Start over"]);
+  });
+
   it("is honest about loosened and empty searches", () => {
     expect(followUpFor(done({ cards: [card], relaxed: ["area"] }), "en").text).toBe("Nothing matched exactly, so these are the closest. Want to adjust?");
     expect(followUpFor(done({ cards: [] }), "zh").text).toBe("放宽条件后还是没找到，试试这些？");

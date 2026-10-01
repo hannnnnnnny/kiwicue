@@ -1,3 +1,4 @@
+import { clearChip } from "../../lib/ask/chips";
 import { EMPTY_FILTERS, type AskFilters } from "../../lib/ask/schema";
 import type { AskViewState } from "./use-ask-stream";
 
@@ -41,6 +42,8 @@ function refinements(filters: AskFilters, language: Language): string[] {
 export function followUpFor(search: AskViewState, language: Language): FollowUp {
   const text = copy[language];
   const question = search.cards.length === 0 ? text.none : search.relaxed.length > 0 ? text.relaxed : text.results;
-  const options: FollowUpOption[] = refinements(search.filters ?? EMPTY_FILTERS, language).map((label) => ({ label, kind: "refine" }));
+  // Filters the search already loosened are not offered again.
+  const effective = search.relaxed.reduce(clearChip, search.filters ?? EMPTY_FILTERS);
+  const options: FollowUpOption[] = refinements(effective, language).map((label) => ({ label, kind: "refine" }));
   return { text: question, options: [...options, { label: text.restart, kind: "restart" }] };
 }
