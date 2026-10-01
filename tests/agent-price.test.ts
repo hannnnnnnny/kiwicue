@@ -25,3 +25,5 @@ it("party 30 at 10 with total ceiling 300", () => { const result = priceEvidence
 it("per-ticket lower bound 30 against 30", () => { expect(priceEvidence({ min: 30, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 30 }).keep).toBe(true); });
 
 it("per-ticket lower bound 30.01 against 30", () => { expect(priceEvidence({ min: 30.01, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 30 }).keep).toBe(false); });
+
+it("per-ticket lower bound 29.99 against 30", () => { expect(priceEvidence({ min: 29.99, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 30 }).keep).toBe(true); });
