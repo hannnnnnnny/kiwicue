@@ -42,3 +42,5 @@ it("allow back to back known durations without false overlap", () => { expect(pl
 it("keep unknown duration distinct from a verified schedule", () => { expect(planWarnings([{ ...card, durationMinutes: null }])).toContain("duration"); });
 
 it("warn that moving venues needs transport verification", () => { expect(planWarnings([card, { ...card, id: "m2", venue: "Newmarket", when: "2026-10-03T11:00:00Z" }])).toContain("travel"); });
+
+it("sum all selected activities rather than checking each budget separately", () => { expect(planCosts({ ...plan, filters: { ...EMPTY_FILTERS, totalBudget: 60 }, cards: [{ ...card, minPartyCost: 40 }, { ...card, id: "m2", minPartyCost: 30 }] })).toMatchObject({ minimum: 70, exceeds: true, unknown: false }); });
