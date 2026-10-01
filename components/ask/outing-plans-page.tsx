@@ -6,6 +6,7 @@ import { planCalendar } from "../../lib/ask/calendar";
 import { planCosts, planWarnings, type OutingPlan } from "../../lib/ask/plans";
 import { useLanguage } from "../language-provider";
 import { AskResultCard } from "./ask-result-card";
+import { PortalHeader } from "../portal-header";
 import { useOutingPlans } from "./use-outing-plans";
 
 function downloadCalendar(plan: OutingPlan) {
@@ -49,9 +50,9 @@ export function OutingPlansPage() {
   const { language } = useLanguage();
   const { plans, save, remove } = useOutingPlans();
   const zh = language === "zh";
-  return <main className="outing-plans"><Link href="/">{zh ? "返回活动" : "Back to events"}</Link><h1>{zh ? "我的行程" : "My outing plans"}</h1>
+  return <main className="outing-plans"><PortalHeader currentPage="plans" skipTarget="outing-plan-content" /><div id="outing-plan-content"><Link href="/">{zh ? "返回活动" : "Back to events"}</Link><h1>{zh ? "我的行程" : "My outing plans"}</h1>
     <p>{zh ? "仅保存到当前浏览器，不会同步账号。日历导出不会预订或启用后台监控；提醒由日历应用设置。" : "Stored in this browser, without account sync. Calendar export does not book or enable background monitoring; set reminders in your calendar app."}</p>
     {plans.length === 0 ? <p role="status">{zh ? "还没有行程。打开助手搜索活动，选择结果并保存。" : "No plans yet. Search with the assistant, select results and save a plan."}</p> : null}
     {plans.map((plan) => <PlanEditor key={plan.id} plan={plan} language={language} save={save} remove={remove} />)}
-  </main>;
+  </div></main>;
 }

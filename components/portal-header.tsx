@@ -60,7 +60,7 @@ const copy = {
   },
 } as const;
 
-type PortalPage = "events" | "movies" | "recommendations" | "saved" | "for-you";
+type PortalPage = "events" | "movies" | "recommendations" | "saved" | "for-you" | "plans";
 type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
