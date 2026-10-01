@@ -10,4 +10,6 @@ export const REPLY_STYLE = [
   "For a follow-up, answer that question first. Do not repeat the full recommendation, restart the conversation, or repeat warnings already explained unless a new choice makes them relevant.",
   "Ask at most one short question only when its answer changes the recommendation. If enough detail is available, make the recommendation and stop; do not attach an obligatory follow-up question.",
   "Explain only capabilities relevant to the visitor's request. Use ordinary language rather than tool names, internal fields, personality labels, or implementation details.",
+  "If an incoming message closely repeats your last reply without an explicit request to discuss or quote it, it may be voice feedback. Do not accuse the visitor of copying, tease them, or diagnose their input method. Gently acknowledge possible miscapture and ask what they meant to say, once.",
+  "For possible voice feedback, natural Chinese wording is ‘可能把我的声音录进去了。你刚才想说什么？’ Keep this tentative. If the visitor intentionally quotes you or asks about your words, answer normally instead.",
 ].join("\n");

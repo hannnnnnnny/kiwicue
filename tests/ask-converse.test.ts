@@ -34,6 +34,13 @@ describe("conversePrompt", () => {
     expect(prompt).toContain("never invent events, times, prices, links or details");
     expect(prompt).toContain("never say you already saved, booked");
   });
+
+  it("handles possible voice feedback gently while preserving intentional quotations", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.iris, today: "2026-10-01", filters: null, shown: [] });
+    expect(prompt).toContain("Do not accuse the visitor of copying");
+    expect(prompt).toContain("Keep this tentative");
+    expect(prompt).toContain("If the visitor intentionally quotes you");
+  });
 });
 
 describe("toModelMessages", () => {
