@@ -23,6 +23,31 @@ describe("conversePrompt", () => {
     expect(prompt).toContain("No search yet.");
     expect(prompt).toContain("Nothing on screen yet.");
   });
+
+  it.each(Object.values(ASSISTANTS))("gives $name native-language guidance without diluting evidence rules", (assistant) => {
+    const prompt = conversePrompt({ assistant, today: "2026-10-01", filters: null, shown: [] });
+    expect(prompt).toContain(assistant.style.zh);
+    expect(prompt).toContain("中文用日常聊天的说法");
+    expect(prompt).toContain("For a follow-up, answer that question first");
+    expect(prompt).toContain("do not attach an obligatory follow-up question");
+    expect(prompt).not.toContain("Never open two replies the same way");
+    expect(prompt).toContain("never invent events, times, prices, links or details");
+    expect(prompt).toContain("never say you already saved, booked");
+  });
+
+  it("handles possible voice feedback gently while preserving intentional quotations", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.iris, today: "2026-10-01", filters: null, shown: [] });
+    expect(prompt).toContain("Do not accuse the visitor of copying");
+    expect(prompt).toContain("Keep this tentative");
+    expect(prompt).toContain("If the visitor intentionally quotes you");
+  });
+
+  it("keeps friendly practical advice grounded in source evidence", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [] });
+    expect(prompt).toContain("payment methods, reservations, accessibility, ticket types or age suitability require listing evidence");
+    expect(prompt).toContain("do not invent a friendly tip");
+    expect(prompt).toContain("缺少信息就说‘还没查到’或‘这里没写’");
+  });
 });
 
 describe("toModelMessages", () => {
