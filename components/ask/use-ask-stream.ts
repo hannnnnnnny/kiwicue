@@ -54,6 +54,7 @@ export function useAskStream(fetchImpl: typeof fetch = fetch, assistant: Assista
   useEffect(() => { speaker.current = assistant; }, [assistant]);
   useEffect(() => { latest.current = state; }, [state]);
   const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => controller.current?.abort(), []);
 
   const send = useCallback(async (body: { text: string; language: Language; previous: AskFilters | null; refineOnly: boolean } & AskContext) => {
     controller.current?.abort();
@@ -66,9 +67,15 @@ export function useAskStream(fetchImpl: typeof fetch = fetch, assistant: Assista
         body: JSON.stringify({ ...body, assistant: speaker.current }),
       });
       if (!response.body) throw new TypeError("Empty response");
-      for await (const event of readEvents(response.body)) dispatch({ type: "event", event });
+      for await (const event of readEvents(response.body)) {
+        if (abort.signal.aborted || controller.current !== abort) return;
+        dispatch({ type: "event", event });
+      }
+      if (!abort.signal.aborted && controller.current === abort && latest.current.status !== "done" && latest.current.status !== "error") {
+        dispatch({ type: "fail", message: NETWORK_MESSAGE[body.language] });
+      }
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return; // Superseded by a newer message.
+      if (abort.signal.aborted || controller.current !== abort || (error instanceof DOMException && error.name === "AbortError")) return;
       dispatch({ type: "fail", message: NETWORK_MESSAGE[body.language] });
     }
   }, [fetchImpl]);
