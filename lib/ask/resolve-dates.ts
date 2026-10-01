@@ -27,6 +27,14 @@ export function sanitizeDates(dates: readonly string[], now: Date): string[] {
   return [...new Set(dates)].filter((date) => isRealDate(date) && date >= today && date <= last).sort().slice(0, 14);
 }
 
+const WIDEN_DAYS = 3;
+
+/** Each date plus the three days either side, for suggesting nearby days when nothing matched. */
+export function widenDates(dates: readonly string[], now: Date): string[] {
+  const near = dates.flatMap((date) => Array.from({ length: WIDEN_DAYS * 2 + 1 }, (_, index) => addDays(date, index - WIDEN_DAYS)));
+  return [...new Set(sanitizeDates(near, now))].sort();
+}
+
 function startOfAucklandDay(date: string): Date {
   const instant = Temporal.PlainDate.from(date).toZonedDateTime({ timeZone: "Pacific/Auckland" }).toInstant();
   return new Date(instant.epochMilliseconds);

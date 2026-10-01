@@ -21,12 +21,14 @@ export const askFiltersSchema = z.object({
   free: z.boolean(),
   names: z.array(z.string().trim().min(1).max(80)).max(5),
   place: z.string().trim().min(1).max(80).nullable(),
+  /** Highest acceptable lowest ticket price in NZD. Defaults so filters from older clients still validate. */
+  maxPrice: z.number().int().min(1).max(1000).nullable().default(null),
 }).strict();
 export type AskFilters = z.infer<typeof askFiltersSchema>;
 
 export const EMPTY_FILTERS: AskFilters = {
   domain: "any", dates: [], timeOfDay: "any", area: "any", category: "any",
-  kids: false, free: false, names: [], place: null,
+  kids: false, free: false, names: [], place: null, maxPrice: null,
 };
 
 export const askRequestSchema = z.object({
@@ -54,7 +56,7 @@ export const askCardSchema = z.object({
 export type AskCard = z.infer<typeof askCardSchema>;
 
 const chipSchema = z.object({
-  key: z.string().regex(/^(domain|dates|timeOfDay|area|category|kids|free|place|name:[0-4])$/u),
+  key: z.string().regex(/^(domain|dates|timeOfDay|area|category|kids|free|place|maxPrice|name:[0-4])$/u),
   label: z.string().max(80),
 });
 export type AskChip = z.infer<typeof chipSchema>;

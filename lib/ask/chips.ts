@@ -7,14 +7,14 @@ const labels = {
     timeOfDay: { day: "Daytime", evening: "Evening" },
     area: { north: "North", central: "Central", east: "East", south: "South", west: "West" },
     category: { music: "Music", theatre: "Arts & theatre", family: "Family", sports: "Sports", other: "Tours & more" },
-    kids: "With kids", free: "Free",
+    kids: "With kids", free: "Free", maxPrice: (price: number) => `≤ $${price}`,
   },
   zh: {
     domain: { events: "活动", movies: "电影", markets: "市集" },
     timeOfDay: { day: "白天", evening: "晚上" },
     area: { north: "北区", central: "市中心", east: "东区", south: "南区", west: "西区" },
     category: { music: "音乐", theatre: "戏剧艺术", family: "亲子家庭", sports: "体育", other: "导览及其他" },
-    kids: "亲子", free: "免费",
+    kids: "亲子", free: "免费", maxPrice: (price: number) => `${price} 元以内`,
   },
 } as const;
 
@@ -44,6 +44,7 @@ export function chipsFor(filters: AskFilters, language: Language): AskChip[] {
   if (filters.category !== "any") chips.push({ key: "category", label: text.category[filters.category] });
   if (filters.kids) chips.push({ key: "kids", label: text.kids });
   if (filters.free) chips.push({ key: "free", label: text.free });
+  if (filters.maxPrice !== null) chips.push({ key: "maxPrice", label: text.maxPrice(filters.maxPrice) });
   if (filters.place) chips.push({ key: "place", label: filters.place });
   filters.names.forEach((name, index) => chips.push({ key: `name:${index}`, label: name }));
   return chips;
@@ -60,6 +61,7 @@ export function clearChip(filters: AskFilters, key: string): AskFilters {
     case "kids": return { ...filters, kids: false };
     case "free": return { ...filters, free: false };
     case "place": return { ...filters, place: null };
+    case "maxPrice": return { ...filters, maxPrice: null };
     default: return filters;
   }
 }
