@@ -44,3 +44,5 @@ it("keep unknown duration distinct from a verified schedule", () => { expect(pla
 it("warn that moving venues needs transport verification", () => { expect(planWarnings([card, { ...card, id: "m2", venue: "Newmarket", when: "2026-10-03T11:00:00Z" }])).toContain("travel"); });
 
 it("sum all selected activities rather than checking each budget separately", () => { expect(planCosts({ ...plan, filters: { ...EMPTY_FILTERS, totalBudget: 60 }, cards: [{ ...card, minPartyCost: 40 }, { ...card, id: "m2", minPartyCost: 30 }] })).toMatchObject({ minimum: 70, exceeds: true, unknown: false }); });
+
+it("retain uncertainty when one selected activity has no price", () => { expect(planCosts({ ...plan, cards: [card, { ...card, id: "m2", minPartyCost: 30 }] })).toMatchObject({ minimum: 30, unknown: true }); });
