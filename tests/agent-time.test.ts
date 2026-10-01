@@ -103,3 +103,5 @@ it("parse local clock 12:60", () => { expect(localMinute("12:60")).toBe(null); }
 it("parse local clock unknown", () => { expect(localMinute("unknown")).toBe(null); });
 
 it("Auckland timezone conversion 2026-10-01T06:00:00Z", () => { expect(aucklandMinute("2026-10-01T06:00:00Z")).toBe(1140); });
+
+it("Auckland timezone conversion 2026-06-01T06:00:00Z", () => { expect(aucklandMinute("2026-06-01T06:00:00Z")).toBe(1080); });
