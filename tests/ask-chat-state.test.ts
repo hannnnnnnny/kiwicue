@@ -33,8 +33,8 @@ describe("conversation and onScreen", () => {
   it("lists what's on screen, best match first, from the latest results that have cards", () => {
     const later: ChatEntry[] = [...entries.slice(0, 2), { id: "r", role: "results", snapshot: finished }, { id: "2", role: "user", text: "thanks" }, { id: "r2", role: "results", snapshot: null }];
     expect(onScreen(later, INITIAL_ASK_STATE)).toEqual([
-      { kind: "event", title: "Indie", when: "Sat, 3 Oct, 7:00 pm", venue: "Aotea", price: "Free" },
-      { kind: "event", title: "Jazz", when: "Sat, 3 Oct, 7:00 pm", venue: "Aotea", price: "Free" },
+      { kind: "event", title: "Indie", href: "/events/b", when: "Sat, 3 Oct, 7:00 pm", venue: "Aotea", price: "Free" },
+      { kind: "event", title: "Jazz", href: "/events/a", when: "Sat, 3 Oct, 7:00 pm", venue: "Aotea", price: "Free" },
     ]);
     expect(onScreen(entries.slice(0, 2), INITIAL_ASK_STATE)).toEqual([]);
   });
