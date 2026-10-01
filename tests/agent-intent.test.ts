@@ -99,3 +99,8 @@ it("retains both explicit English time boundaries", () => {
 it("retains both explicit Chinese time boundaries", () => {
   expect(timeIntent("下午1点之后下午3点之前")).toMatchObject({ startMinute: 780, endMinute: 900 });
 });
+
+it("counts singular children in family totals", () => {
+  expect(partySizeFrom("2 adults and 1 child")).toBe(3);
+  expect(partySizeFrom("two adults and one child")).toBe(3);
+});
