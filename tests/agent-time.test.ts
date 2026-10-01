@@ -49,3 +49,5 @@ it("day start boundary at minute 0", () => { expect(matchesTimeWindow(0, { ...EM
 it("day start boundary at minute 719", () => { expect(matchesTimeWindow(719, { ...EMPTY_FILTERS, timeOfDay: "day" })).toBe(true); });
 
 it("day start boundary at minute 720", () => { expect(matchesTimeWindow(720, { ...EMPTY_FILTERS, timeOfDay: "day" })).toBe(true); });
+
+it("day start boundary at minute 1019", () => { expect(matchesTimeWindow(1019, { ...EMPTY_FILTERS, timeOfDay: "day" })).toBe(true); });
