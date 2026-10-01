@@ -77,3 +77,5 @@ it("3 pm exclusive ceiling at minute 899", () => { expect(matchesTimeWindow(899,
 it("3 pm exclusive ceiling at minute 900", () => { expect(matchesTimeWindow(900, { ...EMPTY_FILTERS, endMinute: 900 })).toBe(false); });
 
 it("3 pm exclusive ceiling at minute 901", () => { expect(matchesTimeWindow(901, { ...EMPTY_FILTERS, endMinute: 900 })).toBe(false); });
+
+it("reject unknown or invalid constrained minute null", () => { expect(matchesTimeWindow(null, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(false); });
