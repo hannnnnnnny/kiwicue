@@ -1,4 +1,4 @@
-export type AskFailureStep = "jev" | "deepseek" | "reply" | "quota" | "source" | "stream";
+export type AskFailureStep = "jev" | "deepseek" | "reply" | "quota" | "source" | "stream" | "media";
 
 function field(error: unknown, key: string): unknown {
   return error && typeof error === "object" && key in error ? (error as Record<string, unknown>)[key] : undefined;
