@@ -61,7 +61,7 @@ function keepEvent(event: KiwiCueEvent, filters: AskFilters): boolean {
 
 /** Never silently substitute a different place when nothing matches. */
 function applyPlace(events: KiwiCueEvent[], place: string | null): KiwiCueEvent[] {
-  if (!place) return events;
+  if (!place || /^(central auckland|auckland central|cbd|north shore|奥克兰市中心|市中心)$/iu.test(place.trim())) return events;
   const needle = place.toLocaleLowerCase("en-NZ");
   const near = events.filter((event) => [event.venue?.name, event.venue?.address]
     .some((value) => value?.toLocaleLowerCase("en-NZ").includes(needle)));
@@ -95,6 +95,7 @@ function keepScreening(screening: KiwiCueScreening, filters: AskFilters): boolea
     max: screening.price ? screening.price.maxCents / 100 : null, free: false }, filters);
   const place = filters.place?.toLocaleLowerCase("en-NZ");
   return !screening.soldOut && price.keep
+    && (filters.names.length === 0 || filters.names.some((name) => normalizedMovieTitle(screening.filmTitle).includes(normalizedMovieTitle(name))))
     && (!place || screening.cinemaName.toLocaleLowerCase("en-NZ").includes(place))
     && (filters.dates.length === 0 || filters.dates.includes(aucklandDate(new Date(screening.startTime))))
     && matchesTimeWindow(aucklandMinute(screening.startTime), filters)
