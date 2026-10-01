@@ -27,3 +27,5 @@ it("per-ticket lower bound 30 against 30", () => { expect(priceEvidence({ min: 3
 it("per-ticket lower bound 30.01 against 30", () => { expect(priceEvidence({ min: 30.01, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 30 }).keep).toBe(false); });
 
 it("per-ticket lower bound 29.99 against 30", () => { expect(priceEvidence({ min: 29.99, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 30 }).keep).toBe(true); });
+
+it("per-ticket lower bound 100 against 1", () => { expect(priceEvidence({ min: 100, max: 100, free: false }, { ...EMPTY_FILTERS, maxPrice: 1 }).keep).toBe(false); });
