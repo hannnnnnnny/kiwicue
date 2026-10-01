@@ -26,6 +26,18 @@ describe("pickVoice", () => {
 });
 
 describe("createBrowserVoice", () => {
+  it("settles cancelled speech even when the browser emits no end event", async () => {
+    vi.useFakeTimers();
+    try {
+      const voice = createBrowserVoice({ getVoices: () => [], cancel: vi.fn(), speak: vi.fn() }, FakeUtterance);
+      const settled = vi.fn();
+      void voice.speak("A long assistant response", "en").then(settled);
+      voice.cancel();
+      await Promise.resolve();
+      expect(settled).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
   it("speaks with the picked voice and resolves when speech ends", async () => {
     const spoken: FakeUtterance[] = [];
     const synth = { getVoices: () => voices, cancel: vi.fn(), speak: vi.fn((utterance: FakeUtterance) => { spoken.push(utterance); }) };
