@@ -37,3 +37,5 @@ it("mark unknown price null", () => { expect(priceEvidence({ min: null, max: nul
 it("mark unknown price Number.NaN", () => { expect(priceEvidence({ min: Number.NaN, max: null, free: false }, { ...EMPTY_FILTERS, totalBudget: 60 })).toMatchObject({ keep: true, budgetStatus: "unknown", minPartyCost: null }); });
 
 it("mark unknown price -1", () => { expect(priceEvidence({ min: -1, max: null, free: false }, { ...EMPTY_FILTERS, totalBudget: 60 })).toMatchObject({ keep: true, budgetStatus: "unknown", minPartyCost: null }); });
+
+it("mark unknown price Number.POSITIVE_INFINITY", () => { expect(priceEvidence({ min: Number.POSITIVE_INFINITY, max: null, free: false }, { ...EMPTY_FILTERS, totalBudget: 60 })).toMatchObject({ keep: true, budgetStatus: "unknown", minPartyCost: null }); });
