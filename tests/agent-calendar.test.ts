@@ -14,3 +14,5 @@ it("escape calendar text 'a\\nb'", () => { expect(calendarText("a\nb")).toBe("a\
 it("escape calendar text 'a\\r\\nb'", () => { expect(calendarText("a\r\nb")).toBe("a\\nb"); });
 
 it("escape calendar text 'a\\\\b'", () => { expect(calendarText("a\\b")).toBe("a\\\\b"); });
+
+it("fold UTF8 calendar line ASCII", () => { const folded = foldCalendarLine("SUMMARY:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); expect(folded.split("\r\n").every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true); expect(folded.replace(/\r\n /gu, "")).toBe("SUMMARY:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); });
