@@ -107,3 +107,5 @@ it("Auckland timezone conversion 2026-10-01T06:00:00Z", () => { expect(aucklandM
 it("Auckland timezone conversion 2026-06-01T06:00:00Z", () => { expect(aucklandMinute("2026-06-01T06:00:00Z")).toBe(1080); });
 
 it("Auckland timezone conversion 2026-10-01T11:00:00Z", () => { expect(aucklandMinute("2026-10-01T11:00:00Z")).toBe(0); });
+
+it("Auckland timezone conversion not a date", () => { expect(aucklandMinute("not a date")).toBe(null); });
