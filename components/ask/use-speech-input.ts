@@ -39,7 +39,7 @@ export function useSpeechInput({ language, onFinal }: { language: "en" | "zh"; o
   const silence = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalHandler = useRef(onFinal);
   useEffect(() => { finalHandler.current = onFinal; }, [onFinal]);
-  useEffect(() => () => { recognition.current?.abort(); if (silence.current) clearTimeout(silence.current); }, []);
+
 
   // Hands the utterance over exactly once, however the session ends (silence, tap or browser).
   const deliver = useCallback(() => {
@@ -52,28 +52,57 @@ export function useSpeechInput({ language, onFinal }: { language: "en" | "zh"; o
     recognition.current?.stop();
   }, []);
 
+  const cancel = useCallback(() => {
+    delivered.current = true;
+    heard.current = "";
+    if (silence.current) clearTimeout(silence.current);
+    const previous = recognition.current;
+    recognition.current = null;
+    previous?.abort();
+    setListening(false);
+    setInterim("");
+  }, []);
   const start = useCallback(() => {
     const Constructor = speechRecognitionConstructor();
     if (!Constructor) return;
+    cancel();
     const instance = new Constructor();
     instance.lang = language === "zh" ? "zh-CN" : "en-NZ";
     instance.interimResults = true;
     instance.continuous = true;
+    const current = () => recognition.current === instance && !delivered.current;
     instance.onresult = (event) => {
+      if (!current()) return;
       heard.current = transcriptOf(event.results);
       setInterim(heard.current);
       if (silence.current) clearTimeout(silence.current);
       silence.current = setTimeout(deliver, SILENCE_MS);
     };
-    instance.onerror = (event) => setError(event.error === "not-allowed" || event.error === "service-not-allowed" ? "denied" : "failed");
-    instance.onend = deliver;
+    instance.onerror = (event) => {
+      if (!current()) return;
+      cancel();
+      setError(event.error === "not-allowed" || event.error === "service-not-allowed" ? "denied" : "failed");
+    };
+    instance.onend = () => { if (current()) deliver(); };
     recognition.current = instance;
     heard.current = "";
     delivered.current = false;
     setError(null);
     setListening(true);
-    instance.start();
-  }, [deliver, language]);
+    try { instance.start(); }
+    catch (failure) {
+      cancel();
+      setError(failure instanceof DOMException && failure.name === "NotAllowedError" ? "denied" : "failed");
+    }
+  }, [cancel, deliver, language]);
 
-  return { supported, listening, interim, error, start, stop: deliver };
+  useEffect(() => () => {
+    delivered.current = true;
+    if (silence.current) clearTimeout(silence.current);
+    const previous = recognition.current;
+    recognition.current = null;
+    previous?.abort();
+  }, []);
+
+  return { supported, listening, interim, error, start, stop: deliver, cancel };
 }

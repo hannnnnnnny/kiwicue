@@ -3,6 +3,7 @@
 import { useCallback, useReducer } from "react";
 import { MAX_HISTORY, MAX_SHOWN, type AskCard, type AskChatTurn, type AskShown } from "../../lib/ask/schema";
 import type { AskContext, AskViewState } from "./use-ask-stream";
+import { trustedBookingUrl } from "../../lib/ask/booking";
 
 type Language = "en" | "zh";
 export type InputMode = "voice" | "text";
@@ -12,6 +13,7 @@ export type ChatEntry =
   | { id: string; role: "results"; snapshot: AskViewState | null };
 type ChatState = { entries: ChatEntry[]; lastInput: InputMode };
 type Action =
+  | { type: "restart"; text: string; quickReplies: string[] }
   | { type: "user"; text: string; via: InputMode; snapshot: AskViewState }
   | { type: "say"; text: string; quickReplies: string[]; snapshot: AskViewState };
 
@@ -41,6 +43,7 @@ function freezeResults(entries: ChatEntry[], snapshot: AskViewState): ChatEntry[
 }
 
 function reducer(state: ChatState, action: Action): ChatState {
+  if (action.type === "restart") return { lastInput: "text", entries: [{ id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
   if (action.type === "user") {
     return {
       lastInput: action.via,
@@ -73,7 +76,8 @@ export function onScreen(entries: ChatEntry[], live: AskViewState): AskShown[] {
   if (!latest) return [];
   const best = latest.cards.find((card) => card.id === latest.bestId);
   const ordered = best ? [best, ...latest.cards.filter((card) => card !== best)] : latest.cards;
-  return ordered.slice(0, MAX_SHOWN).map((card) => ({ kind: card.kind, title: card.title, when: shownWhen(card), venue: card.venue, price: card.priceText }));
+  return ordered.slice(0, MAX_SHOWN).map((card) => ({ kind: card.kind, title: card.title, when: shownWhen(card), venue: card.venue, price: card.priceText,
+    ...(card.bookingUrl ? { bookingUrl: trustedBookingUrl(card.bookingUrl) } : {}), href: card.href }));
 }
 
 /** The assistant's thread: every message goes to the assistant with the conversation so far. */
@@ -94,9 +98,9 @@ export function useAskChat({ language, name, search, reset, searchState }: {
   }, [search, searchState, state.entries]);
 
   const restart = useCallback(() => {
-    dispatch({ type: "say", text: copy[language].restart, quickReplies: [...copy[language].starters], snapshot: searchState });
+    dispatch({ type: "restart", text: copy[language].restart, quickReplies: [...copy[language].starters] });
     reset();
-  }, [language, reset, searchState]);
+  }, [language, reset]);
 
   /** A newly chosen assistant says hello, keeping the conversation and results so far. */
   const introduce = useCallback((nextName: string) =>

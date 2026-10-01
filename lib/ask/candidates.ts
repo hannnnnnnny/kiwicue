@@ -10,8 +10,11 @@ import { fetchAucklandEvents } from "../ticketmaster";
 import { normalizedMovieTitle } from "../verified-movie-sessions";
 import { byStartTime } from "./card-order";
 import { logAskFailure } from "./log";
-import { dateRange, widenDates } from "./resolve-dates";
+import { dateRange } from "./resolve-dates";
 import type { AskArea, AskCard, AskFilters } from "./schema";
+import { aucklandMinute, localMinute, matchesTimeWindow } from "./time-window";
+import { priceEvidence } from "./price-evidence";
+import { movieResultHref, trustedBookingUrl } from "./booking";
 
 export { byStartTime };
 export const MAX_CANDIDATES = 40;
@@ -39,15 +42,6 @@ const CINEMA_AREAS: Record<string, AskArea> = {
 };
 const KIDS_RATINGS = new Set(["G", "PG"]);
 const MARKET_PREFIX = "kc-market-";
-const EVENING_HOUR = 17;
-
-function aucklandHour(instant: string): number {
-  return Number(new Intl.DateTimeFormat("en-NZ", { timeZone: "Pacific/Auckland", hour: "2-digit", hourCycle: "h23" }).format(new Date(instant)));
-}
-
-function matchesTime(hour: number, filters: AskFilters): boolean {
-  return filters.timeOfDay === "any" || (filters.timeOfDay === "evening" ? hour >= EVENING_HOUR : hour < EVENING_HOUR);
-}
 
 function eventStart(event: KiwiCueEvent): string {
   return event.start.dateTime ?? `${event.start.localDate}T${event.start.localTime ?? "00:00:00"}`;
@@ -55,24 +49,23 @@ function eventStart(event: KiwiCueEvent): string {
 
 function keepEvent(event: KiwiCueEvent, filters: AskFilters): boolean {
   const section = eventSectionId(event);
-  const hour = event.start.localTime ? Number(event.start.localTime.slice(0, 2)) : 12;
-  return (filters.dates.length === 0 || filters.dates.includes(event.start.localDate))
-    && matchesTime(hour, filters)
+  const unavailable = /^(cancelled|canceled|postponed|rescheduled|offsale|soldout|sold_out)$/iu.test(event.status);
+  const price = priceEvidence({ min: event.admission?.kind === "range" ? event.admission.min : null,
+    max: event.admission?.kind === "range" ? event.admission.max : null, free: event.admission?.kind === "free" }, filters);
+  return !unavailable && price.keep && (filters.dates.length === 0 || filters.dates.includes(event.start.localDate))
+    && matchesTimeWindow(localMinute(event.start.localTime), filters)
     && (filters.area === "any" || deriveEventArea(event) === filters.area)
     && (filters.category === "any" || section === filters.category)
-    // Beside a category, "with kids" is left to ranking: kids' music is still music.
-    && (!filters.kids || filters.category !== "any" || section === "family")
-    && (!filters.free || event.admission?.kind === "free")
-    && (filters.maxPrice === null || event.admission?.kind !== "range" || event.admission.min <= filters.maxPrice);
+    && (!filters.kids || section === "family");
 }
 
-/** Place is a soft filter: applied only when at least one event is at a matching venue. */
+/** Never silently substitute a different place when nothing matches. */
 function applyPlace(events: KiwiCueEvent[], place: string | null): KiwiCueEvent[] {
-  if (!place) return events;
+  if (!place || /^(central auckland|auckland central|cbd|north shore|奥克兰市中心|市中心)$/iu.test(place.trim())) return events;
   const needle = place.toLocaleLowerCase("en-NZ");
   const near = events.filter((event) => [event.venue?.name, event.venue?.address]
     .some((value) => value?.toLocaleLowerCase("en-NZ").includes(needle)));
-  return near.length > 0 ? near : events;
+  return near;
 }
 
 function priceText(event: KiwiCueEvent, language: Language): string | null {
@@ -81,24 +74,37 @@ function priceText(event: KiwiCueEvent, language: Language): string | null {
   return null;
 }
 
-function eventCards(events: KiwiCueEvent[], language: Language): AskCard[] {
+function eventCards(events: KiwiCueEvent[], language: Language, filters: AskFilters): AskCard[] {
   return groupEventSeries(events).map(({ lead, events: sessions }) => ({
     kind: lead.id.startsWith(MARKET_PREFIX) ? "market" : "event",
     id: lead.id, title: lead.name, when: eventStart(lead), venue: lead.venue?.name ?? null,
     href: `/events/${encodeURIComponent(lead.id)}`,
     imageUrl: lead.imageUrl?.startsWith("https://") ? lead.imageUrl : null,
     priceText: priceText(lead, language), sessionCount: sessions.length, score: 0,
+    bookingUrl: trustedBookingUrl(lead.url),
+    budgetStatus: priceEvidence({ min: lead.admission?.kind === "range" ? lead.admission.min : null,
+      max: lead.admission?.kind === "range" ? lead.admission.max : null, free: lead.admission?.kind === "free" }, filters).budgetStatus,
+    minPartyCost: priceEvidence({ min: lead.admission?.kind === "range" ? lead.admission.min : null,
+      max: null, free: lead.admission?.kind === "free" }, filters).minPartyCost,
+    durationMinutes: null,
   }));
 }
 
 function keepScreening(screening: KiwiCueScreening, filters: AskFilters): boolean {
-  return (filters.dates.length === 0 || filters.dates.includes(aucklandDate(new Date(screening.startTime))))
-    && matchesTime(aucklandHour(screening.startTime), filters)
+  const price = priceEvidence({ min: screening.price ? screening.price.minCents / 100 : null,
+    max: screening.price ? screening.price.maxCents / 100 : null, free: false }, filters);
+  const place = filters.place?.toLocaleLowerCase("en-NZ");
+  const geographicArea = /^(central(?: auckland)?|auckland cbd|cbd)$/iu.test(place ?? "") ? "central" : /^north shore$/iu.test(place ?? "") ? "north" : null;
+  return !screening.soldOut && price.keep
+    && (filters.names.length === 0 || filters.names.some((name) => normalizedMovieTitle(screening.filmTitle).includes(normalizedMovieTitle(name))))
+    && (!place || (geographicArea ? CINEMA_AREAS[screening.cinemaId] === geographicArea : screening.cinemaName.toLocaleLowerCase("en-NZ").includes(place)))
+    && (filters.dates.length === 0 || filters.dates.includes(aucklandDate(new Date(screening.startTime))))
+    && matchesTimeWindow(aucklandMinute(screening.startTime), filters)
     && (filters.area === "any" || CINEMA_AREAS[screening.cinemaId] === filters.area)
     && (!filters.kids || KIDS_RATINGS.has(screening.filmRating ?? ""));
 }
 
-function movieCards(screenings: KiwiCueScreening[]): AskCard[] {
+function movieCards(screenings: KiwiCueScreening[], filters: AskFilters): AskCard[] {
   const films = new Map<string, KiwiCueScreening[]>();
   for (const screening of screenings) {
     const key = normalizedMovieTitle(screening.filmTitle);
@@ -108,7 +114,12 @@ function movieCards(screenings: KiwiCueScreening[]): AskCard[] {
     const next = [...sessions].sort((left, right) => left.startTime.localeCompare(right.startTime))[0];
     return {
       kind: "movie" as const, id: `movie:${key}`.slice(0, 200), title: next.filmTitle, when: next.startTime, venue: next.cinemaName,
-      href: `/movies?q=${encodeURIComponent(next.filmTitle)}`, imageUrl: null, priceText: null, sessionCount: sessions.length, score: 0,
+      href: movieResultHref(next.filmTitle, next.startTime, next.cinemaId), imageUrl: null,
+      priceText: next.price ? `From $${(next.price.minCents / 100).toFixed(2)}` : null, sessionCount: sessions.length, score: 0,
+      bookingUrl: trustedBookingUrl(next.bookingUrl),
+      budgetStatus: priceEvidence({ min: next.price ? next.price.minCents / 100 : null, max: null, free: false }, filters).budgetStatus,
+      minPartyCost: priceEvidence({ min: next.price ? next.price.minCents / 100 : null, max: null, free: false }, filters).minPartyCost,
+      durationMinutes: next.runtimeMinutes, indoor: true,
     };
   });
 }
@@ -131,33 +142,13 @@ async function settle<T>(source: "events" | "movies", load: () => Promise<T[]>, 
 
 type Raw = { events: KiwiCueEvent[]; screenings: KiwiCueScreening[] };
 
-/** Filters to loosen when nothing matches, least important first. Domain, names and place stay. */
-const RELAX_ORDER = ["maxPrice", "area", "timeOfDay", "kids", "category", "free"] as const;
-type Relaxable = (typeof RELAX_ORDER)[number];
-const LOOSE: Pick<AskFilters, Relaxable> = { maxPrice: null, area: "any", timeOfDay: "any", kids: false, category: "any", free: false };
-
 function cardsFor(raw: Raw, filters: AskFilters, language: Language, now: Date): AskCard[] {
   const upcoming = raw.events.filter((event) => !event.start.dateTime || Date.parse(event.start.dateTime) >= now.getTime());
   const cards = [
-    ...eventCards(applyPlace(upcoming.filter((event) => keepEvent(event, filters)), filters.place), language),
-    ...movieCards(raw.screenings.filter((screening) => Date.parse(screening.startTime) >= now.getTime() && keepScreening(screening, filters))),
+    ...eventCards(applyPlace(upcoming.filter((event) => keepEvent(event, filters)), filters.place), language, filters),
+    ...movieCards(raw.screenings.filter((screening) => Date.parse(screening.startTime) >= now.getTime() && keepScreening(screening, filters)), filters),
   ];
   return cards.sort(byStartTime).slice(0, MAX_CANDIDATES);
-}
-
-/** The exact match, or the first step of the ladder that finds something. */
-function relaxWithin(raw: Raw, filters: AskFilters, language: Language, now: Date): { cards: AskCard[]; relaxed: Relaxable[] } {
-  let current = filters;
-  const relaxed: Relaxable[] = [];
-  let cards = cardsFor(raw, current, language, now);
-  for (const key of RELAX_ORDER) {
-    if (cards.length > 0) break;
-    if (current[key] === LOOSE[key]) continue;
-    current = { ...current, [key]: LOOSE[key] };
-    relaxed.push(key);
-    cards = cardsFor(raw, current, language, now);
-  }
-  return cards.length > 0 ? { cards, relaxed } : { cards: [], relaxed: [] };
 }
 
 async function fetchRaw(filters: AskFilters, now: Date, sources: CandidateSources, unavailable: CandidateResult["unavailable"]): Promise<Raw> {
@@ -173,10 +164,6 @@ export async function loadCandidates(input: { filters: AskFilters; language: Lan
   const { filters, language, now } = input;
   const sources = input.sources ?? defaultSources;
   const unavailable: CandidateResult["unavailable"] = [];
-  const exactDays = relaxWithin(await fetchRaw(filters, now, sources, unavailable), filters, language, now);
-  if (exactDays.cards.length > 0 || filters.dates.length === 0) return { ...exactDays, unavailable };
-  // Nearby days need a fresh fetch: Ticketmaster is queried by date range.
-  const nearby = { ...filters, dates: widenDates(filters.dates, now) };
-  const nearbyDays = relaxWithin(await fetchRaw(nearby, now, sources, []), nearby, language, now);
-  return nearbyDays.cards.length > 0 ? { cards: nearbyDays.cards, relaxed: ["dates", ...nearbyDays.relaxed], unavailable } : { cards: [], relaxed: [], unavailable };
+  const cards = cardsFor(await fetchRaw(filters, now, sources, unavailable), filters, language, now);
+  return { cards, relaxed: [], unavailable };
 }

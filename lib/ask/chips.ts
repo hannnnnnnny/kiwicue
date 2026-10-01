@@ -4,14 +4,14 @@ type Language = "en" | "zh";
 const labels = {
   en: {
     domain: { events: "Events", movies: "Movies", markets: "Markets" },
-    timeOfDay: { day: "Daytime", evening: "Evening" },
+    timeOfDay: { day: "Daytime", morning: "Morning", afternoon: "Afternoon", evening: "Evening" },
     area: { north: "North", central: "Central", east: "East", south: "South", west: "West" },
     category: { music: "Music", theatre: "Arts & theatre", family: "Family", sports: "Sports", other: "Tours & more" },
     kids: "With kids", free: "Free", maxPrice: (price: number) => `≤ $${price}`,
   },
   zh: {
     domain: { events: "活动", movies: "电影", markets: "市集" },
-    timeOfDay: { day: "白天", evening: "晚上" },
+    timeOfDay: { day: "白天", morning: "上午", afternoon: "下午", evening: "晚上" },
     area: { north: "北区", central: "市中心", east: "东区", south: "南区", west: "西区" },
     category: { music: "音乐", theatre: "戏剧艺术", family: "亲子家庭", sports: "体育", other: "导览及其他" },
     kids: "亲子", free: "免费", maxPrice: (price: number) => `${price} 元以内`,
@@ -45,6 +45,11 @@ export function chipsFor(filters: AskFilters, language: Language): AskChip[] {
   if (filters.kids) chips.push({ key: "kids", label: text.kids });
   if (filters.free) chips.push({ key: "free", label: text.free });
   if (filters.maxPrice !== null) chips.push({ key: "maxPrice", label: text.maxPrice(filters.maxPrice) });
+  if (filters.totalBudget !== null) chips.push({ key: "totalBudget", label: language === "zh" ? `总预算 $${filters.totalBudget}` : `Total budget $${filters.totalBudget}` });
+  if (filters.partySize > 1) chips.push({ key: "partySize", label: language === "zh" ? `${filters.partySize} 人` : `${filters.partySize} people` });
+  const clock = (minute: number) => `${Math.floor(minute / 60).toString().padStart(2, "0")}:${(minute % 60).toString().padStart(2, "0")}`;
+  if (filters.startMinute !== null) chips.push({ key: "startMinute", label: `${language === "zh" ? "开始不早于" : "Starts from"} ${clock(filters.startMinute)}` });
+  if (filters.endMinute !== null) chips.push({ key: "endMinute", label: `${language === "zh" ? "开始早于" : "Starts before"} ${clock(filters.endMinute)}` });
   if (filters.place) chips.push({ key: "place", label: filters.place });
   filters.names.forEach((name, index) => chips.push({ key: `name:${index}`, label: name }));
   return chips;
@@ -55,13 +60,17 @@ export function clearChip(filters: AskFilters, key: string): AskFilters {
   switch (key) {
     case "domain": return { ...filters, domain: "any" };
     case "dates": return { ...filters, dates: [] };
-    case "timeOfDay": return { ...filters, timeOfDay: "any" };
+    case "timeOfDay": return { ...filters, timeOfDay: "any", startMinute: null, endMinute: null };
     case "area": return { ...filters, area: "any" };
     case "category": return { ...filters, category: "any" };
     case "kids": return { ...filters, kids: false };
     case "free": return { ...filters, free: false };
     case "place": return { ...filters, place: null };
     case "maxPrice": return { ...filters, maxPrice: null };
+    case "totalBudget": return { ...filters, totalBudget: null };
+    case "partySize": return { ...filters, partySize: 1 };
+    case "startMinute": return { ...filters, startMinute: null };
+    case "endMinute": return { ...filters, endMinute: null };
     default: return filters;
   }
 }

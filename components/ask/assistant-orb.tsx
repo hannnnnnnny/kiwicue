@@ -15,7 +15,7 @@ function wantsMotion(): boolean {
  * poster until it is ready, or instead of it when motion is reduced or WebGL fails. Decorative:
  * the overlay announces the same state in text.
  */
-export function AssistantOrb({ assistant, state, size = "large" }: { assistant: Assistant; state: BotState; size?: "large" | "small" }) {
+export function AssistantOrb({ assistant, state, size = "large", active = true }: { assistant: Assistant; state: BotState; size?: "large" | "small"; active?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const scene = useRef<OrbScene | null>(null);
   const [readyFor, setReadyFor] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function AssistantOrb({ assistant, state, size = "large" }: { assistant: 
 
   useEffect(() => {
     const target = canvas.current;
-    if (size !== "large" || !target || !wantsMotion()) return;
+    if (!active || size !== "large" || !target || !wantsMotion()) return;
     let cancelled = false;
     void import("./orb-scene")
       .then(({ mountOrb }) => mountOrb(target, assistant.model))
@@ -47,7 +47,7 @@ export function AssistantOrb({ assistant, state, size = "large" }: { assistant: 
       scene.current?.dispose();
       scene.current = null;
     };
-  }, [assistant.id, assistant.model, size]);
+  }, [active, assistant.id, assistant.model, size]);
 
   const ready = readyFor === assistant.id;
   return (

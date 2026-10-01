@@ -42,14 +42,17 @@ function browserUtterance(): UtteranceConstructor | undefined {
 
 export function createBrowserVoice(synth: SynthLike | undefined = browserSynth(), Utterance: UtteranceConstructor | undefined = browserUtterance()): Voice {
   if (!synth || !Utterance) return { available: false, speak: async () => undefined, cancel: () => undefined };
+  let pending: (() => void) | null = null;
+  const cancel = () => { synth.cancel(); pending?.(); pending = null; };
   return {
     available: true,
-    cancel: () => synth.cancel(),
+    cancel,
     speak(text, language, tone = DEFAULT_TONE) {
-      synth.cancel();
+      cancel();
       return new Promise<void>((settle) => {
         const timeout = setTimeout(() => settle(), text.length * MS_PER_CHARACTER + END_GRACE_MS);
-        const resolve = () => { clearTimeout(timeout); settle(); };
+        const resolve = () => { clearTimeout(timeout); if (pending === resolve) pending = null; settle(); };
+        pending = resolve;
         const utterance = new Utterance(text);
         utterance.lang = LOCALE[language];
         utterance.voice = pickVoice(synth.getVoices(), language);
