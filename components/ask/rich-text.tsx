@@ -20,10 +20,13 @@ function blocks(text: string): Block[] {
   return result.filter((block) => block.kind !== "p" || block.lines.length > 0);
 }
 
-/** Only complete **pairs** become bold, so half-streamed text shows as typed. Everything else is plain text. */
+/** Only complete **bold** and *italic* pairs are styled, so half-streamed text shows as typed. Everything else is plain text. */
 function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*\n]+\*\*)/u).map((part, index) =>
-    part.length > 4 && part.startsWith("**") && part.endsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : <Fragment key={index}>{part}</Fragment>);
+  return text.split(/(\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*)/u).map((part, index) => {
+    if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) return <em key={index}>{part.slice(1, -1)}</em>;
+    return <Fragment key={index}>{part}</Fragment>;
+  });
 }
 
 /** The assistant's reply: paragraphs, lists and bold only, built as React elements (never HTML). */
@@ -42,7 +45,7 @@ export function RichText({ text }: { text: string }) {
 /** The same reply as speech: formatting removed, list items read as sentences. */
 export function plainText(text: string): string {
   return text.split(/\r?\n/u)
-    .map((line) => line.replace(BULLET, "").replace(NUMBERED, "").replace(/\*\*/gu, "").trim())
+    .map((line) => line.replace(BULLET, "").replace(NUMBERED, "").replace(/\*/gu, "").trim())
     .filter(Boolean)
     .map((line, index, lines) => index < lines.length - 1 && !/[.!?。！？:：]$/u.test(line) ? `${line}.` : line)
     .join(" ")
