@@ -1,0 +1,36 @@
+/* Site colours follow the chosen assistant (lib/assistants.ts). Fern is the default. */
+:root[data-assistant="iris"] {
+  --portal-brand: #6a4bb0;
+  --portal-brand-hover: #553a93;
+  --portal-brand-soft: #efeafa;
+  --portal-accent: #6a4bb0;
+  --portal-focus: #6a4bb0;
+}
+:root[data-assistant="rua"] {
+  --portal-brand: #b2402c;
+  --portal-brand-hover: #94331f;
+  --portal-brand-soft: #fbe8e3;
+  --portal-accent: #b2402c;
+  --portal-focus: #b2402c;
+}
+:root[data-assistant="sunny"] {
+  --portal-brand: #83600f;
+  --portal-brand-hover: #6f4f08;
+  --portal-brand-soft: #fbf2d9;
+  --portal-accent: #83600f;
+  --portal-focus: #83600f;
+}
+:root[data-assistant="fern"] {
+  --portal-brand: #2a7457;
+  --portal-brand-hover: #215e46;
+  --portal-brand-soft: #e3f2eb;
+  --portal-accent: #2a7457;
+  --portal-focus: #2a7457;
+}
+:root[data-assistant="kai"] {
+  --portal-brand: #2a6aa3;
+  --portal-brand-hover: #215686;
+  --portal-brand-soft: #e4eef8;
+  --portal-accent: #2a6aa3;
+  --portal-focus: #2a6aa3;
+}
