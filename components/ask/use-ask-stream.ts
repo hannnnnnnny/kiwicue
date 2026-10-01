@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { clearChip } from "../../lib/ask/chips";
+import { DEFAULT_ASSISTANT, type AssistantId } from "../../lib/assistants";
 import { readEvents } from "../../lib/ask/ndjson";
 import type { AskCard, AskChip, AskErrorCode, AskFilters, AskStreamEvent } from "../../lib/ask/schema";
 
@@ -47,9 +48,11 @@ export function askReducer(state: AskViewState, action: Action): AskViewState {
   return applyEvent(state, action.event);
 }
 
-export function useAskStream(fetchImpl: typeof fetch = fetch) {
+export function useAskStream(fetchImpl: typeof fetch = fetch, assistant: AssistantId = DEFAULT_ASSISTANT) {
   const [state, dispatch] = useReducer(askReducer, INITIAL_ASK_STATE);
   const latest = useRef(state);
+  const speaker = useRef(assistant);
+  useEffect(() => { speaker.current = assistant; }, [assistant]);
   useEffect(() => { latest.current = state; }, [state]);
   const controller = useRef<AbortController | null>(null);
 
@@ -61,7 +64,7 @@ export function useAskStream(fetchImpl: typeof fetch = fetch) {
     try {
       const response = await fetchImpl("/api/ask", {
         method: "POST", signal: abort.signal, headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, language, previous, history, refineOnly }),
+        body: JSON.stringify({ text, language, previous, history, refineOnly, assistant: speaker.current }),
       });
       if (!response.body) throw new TypeError("Empty response");
       for await (const event of readEvents(response.body)) dispatch({ type: "event", event });

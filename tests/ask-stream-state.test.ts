@@ -47,7 +47,14 @@ describe("useAskStream", () => {
     await act(() => result.current.ask("with kids", "en"));
     await act(() => result.current.ask("in the evening", "en"));
     const body = JSON.parse(String(fetchImpl.mock.calls[1][1]?.body));
-    expect(body).toEqual({ text: "in the evening", language: "en", previous: { ...EMPTY_FILTERS, kids: true }, history: ["with kids"], refineOnly: false });
+    expect(body).toEqual({ text: "in the evening", language: "en", previous: { ...EMPTY_FILTERS, kids: true }, history: ["with kids"], refineOnly: false, assistant: "fern" });
+  });
+
+  it("tells the server which assistant is answering", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => ndjson([{ type: "done", remaining: 4, tier: "guest" }]));
+    const { result } = renderHook(() => useAskStream(fetchImpl, "sunny"));
+    await act(() => result.current.ask("hi", "en"));
+    expect(JSON.parse(String(fetchImpl.mock.calls[0][1]?.body)).assistant).toBe("sunny");
   });
 
   it("re-runs without understanding when a chip is removed", async () => {
