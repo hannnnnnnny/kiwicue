@@ -60,6 +60,21 @@ describe("POST /api/ask", () => {
     expect(d.quota!.recordCost).toHaveBeenCalledWith("u1", 211, false);
   });
 
+  it("says which filters it loosened, before the results, and tells the reply about them", async () => {
+    const evaluate = vi.fn<Evaluate>(async ({ questions }) => ({
+      inputTokens: 500,
+      answers: ("domain" in questions
+        ? { domain: { type: "choice", choice: "events", probabilities: { events: 0.9 } }, area: { type: "choice", choice: "west", probabilities: { west: 0.9 } } }
+        : { c0: { type: "score", score: 3 } }) as Record<string, JevAnswer>,
+    }));
+    const d = deps({ evaluate });
+    const received = await events(await handleAsk(post({ ...ask, language: "en" }), d));
+    expect(received.map((event) => event.type)).toEqual(["understood", "relaxed", "result", "best", "reply", "reply", "done"]);
+    expect(received[1]).toEqual({ type: "relaxed", keys: ["area"] });
+    const prompt = JSON.parse(vi.mocked(d.streamReply).mock.calls[0][0].prompt);
+    expect(prompt.loosened).toEqual(["West"]);
+  });
+
   it("skips DeepSeek when the budget is nearly spent", async () => {
     const d = deps({ quota: { reserve: vi.fn(async () => ({ allowed: true as const, usageId: "u1", remaining: 3, degrade: true, tier: "guest" as const })), recordCost: vi.fn(async () => undefined) } });
     const received = await events(await handleAsk(post(ask), d));
