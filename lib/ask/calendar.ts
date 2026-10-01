@@ -37,7 +37,8 @@ export function planCalendar(plan: OutingPlan): string {
     lines.push("BEGIN:VEVENT", `UID:${plan.id}-${index}@kiwicue.nz`, `DTSTAMP:${calendarInstant(plan.createdAt)}`,
       `DTSTART:${start}`, `SUMMARY:${calendarText(card.title)}`, `LOCATION:${calendarText(card.venue ?? "")}`);
     if (card.durationMinutes) {
-      const end = Temporal.Instant.from(start).add({ minutes: card.durationMinutes });
+      const extended = start.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/u, "$1-$2-$3T$4:$5:$6Z");
+      const end = Temporal.Instant.from(extended).add({ minutes: card.durationMinutes });
       lines.push(`DTEND:${calendarInstant(end.toString())}`);
     }
     lines.push(`DESCRIPTION:${calendarText(`${plan.notes}\nPrices and availability must be checked with the official source. Travel time is not included.`)}`);
