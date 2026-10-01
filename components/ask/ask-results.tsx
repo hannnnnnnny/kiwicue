@@ -12,12 +12,16 @@ const copy = {
     remove: (label: string) => `Remove ${label}`, signIn: "Sign in",
     loosened: (label: string) => `${label} (loosened)`, closest: "No exact match — here are the closest.",
     tmdb: "Movie pictures and trailers via TMDB.", looking: "Looking at", edit: "Edit", doneEditing: "Done",
+    empty: "No match in the covered listings. Your conditions were kept; change a filter to search more broadly.",
+    coverage: "Search covers Ticketmaster, curated markets, HOYTS and EVENT Cinemas. Other listings may exist; final prices and availability stay with the official source.",
   },
   zh: {
     thinking: "正在找最合适的…",
     remove: (label: string) => `移除 ${label}`, signIn: "登录",
     loosened: (label: string) => `${label}（已放宽）`, closest: "没有完全符合的，以下是最接近的。",
     tmdb: "电影图片和预告片来自 TMDB。", looking: "正在看", edit: "修改", doneEditing: "完成",
+    empty: "已覆盖的数据中没有符合条件的结果，原条件没有放宽。可修改筛选扩大搜索。",
+    coverage: "搜索覆盖 Ticketmaster、精选市集、HOYTS 和 EVENT Cinemas，其他来源可能还有活动；最终价格和余票以官方为准。",
   },
 } as const;
 
@@ -84,6 +88,8 @@ export function AskResults({ state, language, onRemoveChip, onSound }: AskResult
       {searching ? <div className="ask-skeleton" role="status" aria-label={content.thinking}><span /><span /><span /></div> : null}
       {state.relaxed.length > 0 && state.cards.length > 0 ? <p className="ask-closest">{content.closest}</p> : null}
       <AskCards cards={state.cards} bestId={state.bestId} layout={state.layout} language={language} onSound={onSound} />
+      {state.status === "done" && state.filters && state.cards.length === 0 ? <p role="status" className="ask-empty">{content.empty}</p> : null}
+      {state.filters ? <p className="ask-credit">{content.coverage}</p> : null}
       {state.cards.some((card) => card.kind === "movie" && (card.trailerKey || card.imageUrl)) ? <p className="ask-credit">{content.tmdb}</p> : null}
     </div>
   );
