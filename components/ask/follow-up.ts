@@ -15,6 +15,8 @@ const copy = {
     none: "I couldn't find anything, even after loosening it. Try one of these?",
     anywhere: "Anywhere in Auckland", anyDay: "Any day this week", anyKind: "Any kind of event",
     evening: "In the evening", anyTime: "Any time of day", free: "Only free ones", restart: "Start over",
+    askDay: "Which day suits you?", days: ["Tonight", "This weekend", "This week"],
+    askArea: "Any part of town you prefer?", areas: ["Central", "North Shore", "East Auckland", "West Auckland"],
   },
   zh: {
     results: "要不要再调整一下？",
@@ -22,6 +24,8 @@ const copy = {
     none: "放宽条件后还是没找到，试试这些？",
     anywhere: "奥克兰哪里都行", anyDay: "这周哪天都行", anyKind: "什么类型都行",
     evening: "晚上的", anyTime: "什么时间都行", free: "只要免费的", restart: "重新开始",
+    askDay: "哪天方便？", days: ["今晚", "这个周末", "这周内"],
+    askArea: "想在哪一片？", areas: ["市中心", "北岸", "东区", "西区"],
   },
 } as const;
 
@@ -38,12 +42,23 @@ function refinements(filters: AskFilters, language: Language): string[] {
   return candidates.filter((label): label is string => label !== null).slice(0, MAX_REFINEMENTS);
 }
 
-/** What Kiwi asks once a search has finished, so the conversation never stops at the results. */
+function ask(text: string, labels: readonly string[], language: Language): FollowUp {
+  const options: FollowUpOption[] = labels.map((label) => ({ label, kind: "refine" }));
+  return { text, options: [...options, { label: copy[language].restart, kind: "restart" }] };
+}
+
+/**
+ * What Kiwi asks once results are showing, so the conversation never stops at them: first the
+ * missing day, then the part of town, otherwise tweaks that fit the current filters.
+ */
 export function followUpFor(search: AskViewState, language: Language): FollowUp {
   const text = copy[language];
-  const question = search.cards.length === 0 ? text.none : search.relaxed.length > 0 ? text.relaxed : text.results;
+  const filters = search.filters ?? EMPTY_FILTERS;
   // Filters the search already loosened are not offered again.
-  const effective = search.relaxed.reduce(clearChip, search.filters ?? EMPTY_FILTERS);
-  const options: FollowUpOption[] = refinements(effective, language).map((label) => ({ label, kind: "refine" }));
-  return { text: question, options: [...options, { label: text.restart, kind: "restart" }] };
+  const tweaks = refinements(search.relaxed.reduce(clearChip, filters), language);
+  if (search.cards.length === 0) return ask(text.none, tweaks, language);
+  if (search.relaxed.length > 0) return ask(text.relaxed, tweaks, language);
+  if (filters.dates.length === 0) return ask(text.askDay, text.days, language);
+  if (filters.area === "any" && filters.domain !== "movies") return ask(text.askArea, text.areas, language);
+  return ask(text.results, tweaks, language);
 }

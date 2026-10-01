@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useLanguage } from "../language-provider";
 import { AskBot, type BotState } from "./ask-bot";
-import { AskError, AskResults } from "./ask-results";
+import { AskResults } from "./ask-results";
 import type { FollowUpOption } from "./follow-up";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
@@ -16,16 +16,16 @@ const copy = {
     title: "Kiwi", status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", speaking: "Speaking…" },
     mute: "Mute Kiwi", unmute: "Unmute Kiwi", close: "Close", message: "Message Kiwi", placeholder: "Type or tap the mic",
     send: "Send", talk: "Talk to Kiwi", stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
-    denied: "Microphone access was blocked. You can type instead.", plan: "I'll search for", search: "Search", change: "Change something",
-    searched: "Searched", changed: "Changed", left: (count: number) => `${count} free searches left today`,
+    denied: "Microphone access was blocked. You can type instead.", left: (count: number) => `${count} free searches left today`,
+    earlier: (count: number, labels: string) => `Earlier · ${count} ${count === 1 ? "result" : "results"}${labels ? ` · ${labels}` : ""}`,
     privacy: "Questions are processed by TypeSafe AI (US) and DeepSeek (China). No account details or location are sent.",
   },
   zh: {
     title: "Kiwi", status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", speaking: "正在说…" },
     mute: "Kiwi 静音", unmute: "取消静音", close: "关闭", message: "发给 Kiwi", placeholder: "打字，或点麦克风说话",
     send: "发送", talk: "和 Kiwi 说话", stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
-    denied: "麦克风权限被拒绝，可以改为打字。", plan: "我帮你找", search: "开始搜索", change: "还要改",
-    searched: "已搜索", changed: "已修改", left: (count: number) => `今天还剩 ${count} 次免费搜索`,
+    denied: "麦克风权限被拒绝，可以改为打字。", left: (count: number) => `今天还剩 ${count} 次免费搜索`,
+    earlier: (count: number, labels: string) => `之前 · ${count} 个结果${labels ? ` · ${labels}` : ""}`,
     privacy: "问题会由 TypeSafe AI（美国）和 DeepSeek（中国）处理，不会发送账号信息或位置。",
   },
 } as const;
@@ -118,46 +118,40 @@ function FollowUpMessage({ entry, active, onFollowUp }: { entry: Extract<ChatEnt
   );
 }
 
-function Proposal({ entry, language, onConfirm, onChange }: { entry: Extract<ChatEntry, { role: "proposal" }>; language: Language; onConfirm(): void; onChange(): void }) {
-  const content = copy[language];
+function Earlier({ snapshot, language, onSound }: { snapshot: AskViewState; language: Language; onSound(): void }) {
+  const labels = snapshot.chips.map((chip) => chip.label).join(" · ");
+  // Rendered only when opened, so a folded trailer never keeps playing out of sight.
+  const [open, setOpen] = useState(false);
   return (
-    <div className="ask-proposal" role="group" aria-label={content.plan} data-status={entry.status}>
-      <span className="ask-proposal-label">{content.plan}</span>
-      <strong>{entry.summary}</strong>
-      {entry.status === "pending" ? (
-        <div className="ask-proposal-actions">
-          <button type="button" className="ask-proposal-search" onClick={onConfirm}>{content.search}</button>
-          <button type="button" onClick={onChange}>{content.change}</button>
-        </div>
-      ) : <small>{entry.status === "confirmed" ? content.searched : content.changed}</small>}
-    </div>
+    <details className="ask-earlier" onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary>{copy[language].earlier(snapshot.cards.length, labels)}</summary>
+      {open ? <AskResults state={snapshot} language={language} onSound={onSound} /> : null}
+    </details>
   );
 }
 
 type ThreadProps = {
-  entries: ChatEntry[]; search: AskViewState; pending: boolean; language: Language;
-  onQuickReply(text: string): void; onConfirm(): void; onChange(): void; onRemoveChip(key: string): void; onFollowUp(option: FollowUpOption): void;
-  onSound(): void;
+  entries: ChatEntry[]; search: AskViewState; busy: boolean; language: Language;
+  onQuickReply(text: string): void; onRemoveChip(key: string): void; onFollowUp(option: FollowUpOption): void; onSound(): void;
 };
 
-function Thread({ entries, search, pending, language, onQuickReply, onConfirm, onChange, onRemoveChip, onFollowUp, onSound }: ThreadProps) {
+function Thread({ entries, search, busy, language, onQuickReply, onRemoveChip, onFollowUp, onSound }: ThreadProps) {
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { end.current?.scrollIntoView?.({ block: "end", behavior: "smooth" }); }, [entries.length, search.cards.length, search.reply, pending]);
+  useEffect(() => { end.current?.scrollIntoView?.({ block: "end", behavior: "smooth" }); }, [entries.length, search.cards.length, search.reply]);
   const latest = entries.length - 1;
   return (
     <div className="ask-thread" aria-live="polite">
       {entries.map((entry, index) => {
-        if (entry.role === "followup") return <FollowUpMessage key={entry.id} entry={entry} active={index === latest && !pending} onFollowUp={onFollowUp} />;
-        if (entry.role === "proposal") return <Proposal key={entry.id} entry={entry} language={language} onConfirm={onConfirm} onChange={onChange} />;
+        if (entry.role === "followup") return <FollowUpMessage key={entry.id} entry={entry} active={index === latest && !busy} onFollowUp={onFollowUp} />;
         if (entry.role === "results") {
-          const live = entry.snapshot === null;
           return <div key={entry.id} className="ask-msg" data-from="kiwi" data-kind="results">
-            <AskResults state={entry.snapshot ?? search} language={language} onRemoveChip={live ? onRemoveChip : undefined} onSound={onSound} />
+            {entry.snapshot
+              ? <Earlier snapshot={entry.snapshot} language={language} onSound={onSound} />
+              : <AskResults state={search} language={language} onRemoveChip={onRemoveChip} onSound={onSound} />}
           </div>;
         }
-        return <Message key={entry.id} entry={entry} quick={index === latest && !pending} language={language} onQuickReply={onQuickReply} />;
+        return <Message key={entry.id} entry={entry} quick={index === latest && !busy} language={language} onQuickReply={onQuickReply} />;
       })}
-      {pending ? <div className="ask-msg ask-typing" data-from="kiwi" aria-hidden="true"><span /><span /><span /></div> : null}
       <div ref={end} />
     </div>
   );
@@ -203,19 +197,15 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const { language } = useLanguage();
   const content = copy[language];
   const search = useAskStream(fetchImpl);
-  const chat = useAskChat({
-    language, fetchImpl, searchState: search.state,
-    search: (text, history) => void search.ask(text, language, { history, fresh: true }),
-    refine: (text) => void search.ask(text, language),
-  });
-  const speech = useSpeechInput({ language, onFinal: (text) => void chat.send(text, "voice") });
+  const chat = useAskChat({ language, searchState: search.state, search: (text) => void search.ask(text, language), reset: search.reset });
+  const speech = useSpeechInput({ language, onFinal: (text) => chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
   const { speaking, silence } = useKiwiVoice(line, muted, language, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
-  const busy = chat.pending || search.state.status === "thinking" || search.state.status === "streaming";
+  const busy = search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
-  const remaining = search.state.remaining ?? chat.remaining;
-  // Buttons such as "Search" disappear once used, which drops focus outside the dialog, so Escape
+  const { remaining } = search.state;
+  // Quick replies disappear once used, which drops focus outside the dialog, so Escape
   // is handled for the whole document while the overlay is open.
   useEffect(() => {
     const closeOnEscape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") onClose(); };
@@ -232,11 +222,10 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
           <button type="button" className="ask-mute" aria-pressed={muted} aria-label={muted ? content.unmute : content.mute} onClick={toggleMute}>{muted ? "🔇" : "🔊"}</button>
           <button type="button" className="ask-close" aria-label={content.close} onClick={onClose}>×</button>
         </header>
-        <Thread entries={chat.entries} search={search.state} pending={chat.pending} language={language}
-          onQuickReply={(text) => void chat.send(text, "text")} onConfirm={chat.confirm} onChange={chat.change}
-          onRemoveChip={(key) => void search.removeChip(key, language)} onFollowUp={chat.followUp} onSound={silence} />
-        {chat.error ? <AskError error={chat.error} language={language} /> : null}
-        <Composer language={language} speech={speech} onSend={(text) => void chat.send(text, "text")} />
+        <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
+          onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)}
+          onFollowUp={chat.followUp} onSound={silence} />
+        <Composer language={language} speech={speech} onSend={(text) => chat.send(text, "text")} />
         <footer className="ask-footer">
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}
           <small>{content.privacy}</small>
