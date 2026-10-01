@@ -34,3 +34,5 @@ it("reject too many saved plans instead of truncating silently", () => { expect(
 it("deduplicate explicitly selected cards", () => { expect(createPlan([card, card], EMPTY_FILTERS, "Weekend").cards).toHaveLength(1); });
 
 it("strip an untrusted booking URL when creating a plan", () => { expect(createPlan([{ ...card, bookingUrl: "https://evil.example" }], EMPTY_FILTERS, "Weekend").cards[0].bookingUrl).toBeNull(); });
+
+it("warn when known movie runtimes overlap", () => { expect(planWarnings([card, { ...card, id: "m2", when: "2026-10-03T09:00:00Z" }])).toContain("overlap"); });
