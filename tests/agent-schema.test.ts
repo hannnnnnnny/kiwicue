@@ -10,3 +10,5 @@ it("reject invalid constraint partySize=31", () => { expect(askFiltersSchema.saf
 it("reject invalid constraint partySize=1.5", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, partySize: 1.5 }).success).toBe(false); });
 
 it("reject invalid constraint totalBudget=-1", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, totalBudget: -1 }).success).toBe(false); });
+
+it("reject invalid constraint totalBudget=10001", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, totalBudget: 10001 }).success).toBe(false); });
