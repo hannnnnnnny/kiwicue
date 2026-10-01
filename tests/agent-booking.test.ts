@@ -44,3 +44,5 @@ it("block unsafe booking https://eventcinemas.co.nz/\nX", () => { expect(trusted
 it("block unsafe booking data:text/html,hello", () => { expect(trustedBookingUrl("data:text/html,hello")).toBeNull(); });
 
 it("block unsafe booking file:///C:/secret", () => { expect(trustedBookingUrl("file:///C:/secret")).toBeNull(); });
+
+it("block unsafe booking https://hoyts.co.nz/a b", () => { expect(trustedBookingUrl("https://hoyts.co.nz/a b")).toBeNull(); });
