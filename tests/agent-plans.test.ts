@@ -32,3 +32,5 @@ it("bound stored plan payload before decoding", () => { expect(readPlans(" ".rep
 it("reject too many saved plans instead of truncating silently", () => { expect(readPlans(JSON.stringify(Array(21).fill(plan)))).toEqual([]); });
 
 it("deduplicate explicitly selected cards", () => { expect(createPlan([card, card], EMPTY_FILTERS, "Weekend").cards).toHaveLength(1); });
+
+it("strip an untrusted booking URL when creating a plan", () => { expect(createPlan([{ ...card, bookingUrl: "https://evil.example" }], EMPTY_FILTERS, "Weekend").cards[0].bookingUrl).toBeNull(); });
