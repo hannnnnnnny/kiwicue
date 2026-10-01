@@ -83,3 +83,5 @@ it("reject unknown or invalid constrained minute null", () => { expect(matchesTi
 it("reject unknown or invalid constrained minute -1", () => { expect(matchesTimeWindow(-1, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(false); });
 
 it("reject unknown or invalid constrained minute 1440", () => { expect(matchesTimeWindow(1440, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(false); });
+
+it("reject unknown or invalid constrained minute 3.5", () => { expect(matchesTimeWindow(3.5, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(false); });
