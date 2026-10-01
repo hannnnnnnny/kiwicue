@@ -3,6 +3,7 @@
 import { useCallback, useReducer } from "react";
 import { MAX_HISTORY, MAX_SHOWN, type AskCard, type AskChatTurn, type AskShown } from "../../lib/ask/schema";
 import type { AskContext, AskViewState } from "./use-ask-stream";
+import { trustedBookingUrl } from "../../lib/ask/booking";
 
 type Language = "en" | "zh";
 export type InputMode = "voice" | "text";
@@ -73,7 +74,8 @@ export function onScreen(entries: ChatEntry[], live: AskViewState): AskShown[] {
   if (!latest) return [];
   const best = latest.cards.find((card) => card.id === latest.bestId);
   const ordered = best ? [best, ...latest.cards.filter((card) => card !== best)] : latest.cards;
-  return ordered.slice(0, MAX_SHOWN).map((card) => ({ kind: card.kind, title: card.title, when: shownWhen(card), venue: card.venue, price: card.priceText }));
+  return ordered.slice(0, MAX_SHOWN).map((card) => ({ kind: card.kind, title: card.title, when: shownWhen(card), venue: card.venue, price: card.priceText,
+    ...(card.bookingUrl ? { bookingUrl: trustedBookingUrl(card.bookingUrl) } : {}), href: card.href }));
 }
 
 /** The assistant's thread: every message goes to the assistant with the conversation so far. */
