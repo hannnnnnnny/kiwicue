@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ASSISTANT_IDS, DEFAULT_ASSISTANT } from "../assistants";
+import { trustedBookingUrl } from "./booking";
 
 export const ASK_DOMAINS = ["any", "events", "movies", "markets"] as const;
 export const ASK_TIMES = ["any", "day", "morning", "afternoon", "evening"] as const;
@@ -48,8 +49,8 @@ export type AskChatTurn = z.infer<typeof chatTurnSchema>;
 const shownSchema = z.object({
   kind: z.enum(["event", "movie", "market"]), title: z.string().max(300), when: z.string().max(40),
   venue: z.string().max(200).nullable(), price: z.string().max(60).nullable(),
-  bookingUrl: z.string().max(2048).nullable().optional(),
-  href: z.string().max(400).optional(),
+  bookingUrl: z.string().max(2048).refine((value) => trustedBookingUrl(value) !== null).nullable().optional(),
+  href: z.string().regex(/^\/(?!\/)/u).max(400).refine((value) => !/[\\\u0000-\u0020\u007f]/u.test(value)).optional(),
 }).strict();
 export type AskShown = z.infer<typeof shownSchema>;
 
@@ -73,13 +74,13 @@ export const askCardSchema = z.object({
   title: z.string().min(1).max(300),
   when: z.string().min(1).max(40),
   venue: z.string().max(200).nullable(),
-  href: z.string().regex(/^\/(?!\/)/u).max(400),
+  href: z.string().regex(/^\/(?!\/)/u).max(400).refine((value) => !/[\\\u0000-\u0020\u007f]/u.test(value)),
   imageUrl: z.url({ protocol: /^https$/u }).max(2048).nullable(),
   priceText: z.string().max(60).nullable(),
   sessionCount: z.number().int().min(1),
   score: z.number().min(0).max(1),
   trailerKey: z.string().regex(/^[A-Za-z0-9_-]{11}$/u).nullable().optional(),
-  bookingUrl: z.string().max(2048).nullable().optional(),
+  bookingUrl: z.string().max(2048).refine((value) => trustedBookingUrl(value) !== null).nullable().optional(),
   budgetStatus: z.enum(["free", "estimate", "unknown"]).optional(),
   minPartyCost: z.number().min(0).nullable().optional(),
   durationMinutes: z.number().int().min(1).max(1440).nullable().optional(),
