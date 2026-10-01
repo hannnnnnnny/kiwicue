@@ -130,7 +130,7 @@
 }
 .ask-closest { margin: 0; color: var(--portal-muted); font-size: .85rem; font-weight: 700; }
 .ask-reply { margin: 0; font-size: 1.05rem; line-height: 1.5; }
-.ask-notice, .ask-empty { margin: 0; color: var(--portal-muted); font-size: .85rem; }
+.ask-notice { margin: 0; color: var(--portal-muted); font-size: .85rem; }
 .ask-error { padding: 16px; border-radius: var(--radius-panel); background: var(--portal-raised); }
 .ask-error p { margin: 0 0 8px; }
 

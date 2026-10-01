@@ -27,13 +27,14 @@ const copy = {
 /** Phrases the understanding step maps cleanly, so tapping one refines the current search. */
 function refinements(filters: AskFilters, language: Language): string[] {
   const text = copy[language];
-  return [
+  const candidates: Array<string | null> = [
     filters.area !== "any" ? text.anywhere : null,
     filters.dates.length > 0 && filters.dates.length < WEEK ? text.anyDay : null,
     filters.category !== "any" ? text.anyKind : null,
     filters.timeOfDay === "any" ? text.evening : text.anyTime,
     filters.free ? null : text.free,
-  ].filter((label): label is string => label !== null).slice(0, MAX_REFINEMENTS);
+  ];
+  return candidates.filter((label): label is string => label !== null).slice(0, MAX_REFINEMENTS);
 }
 
 /** What Kiwi asks once a search has finished, so the conversation never stops at the results. */

@@ -7,12 +7,12 @@ import type { AskViewState } from "./use-ask-stream";
 type Language = "en" | "zh";
 const copy = {
   en: {
-    thinking: "Finding the best options…", empty: "Nothing matched. Try removing a filter or asking more broadly.",
+    thinking: "Finding the best options…",
     remove: (label: string) => `Remove ${label}`, signIn: "Sign in",
     loosened: (label: string) => `${label} (loosened)`, closest: "No exact match — here are the closest.",
   },
   zh: {
-    thinking: "正在找最合适的…", empty: "没有找到匹配的结果，试试去掉一个条件或换个问法。",
+    thinking: "正在找最合适的…",
     remove: (label: string) => `移除 ${label}`, signIn: "登录",
     loosened: (label: string) => `${label}（已放宽）`, closest: "没有完全符合的，以下是最接近的。",
   },
@@ -57,7 +57,6 @@ export function AskResults({ state, language, onRemoveChip }: { state: AskViewSt
       {others.length > 0 ? <ol className="ask-list">{others.map((card, index) => (
         <li key={card.id} style={{ animationDelay: `${Math.min(index, 12) * 80}ms` }}><AskResultCard card={card} best={false} language={language} /></li>
       ))}</ol> : null}
-      {state.status === "done" && state.cards.length === 0 ? <p className="ask-empty">{content.empty}</p> : null}
     </div>
   );
 }

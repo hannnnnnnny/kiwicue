@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { askChatResponseSchema, type AskChatMessage, type AskChatResponse } from "../../lib/ask/chat-schema";
 import { ASK_ERROR_CODES, type AskErrorCode } from "../../lib/ask/schema";
+import { followUpFor, type FollowUp, type FollowUpOption } from "./follow-up";
 import type { AskViewState } from "./use-ask-stream";
 
 type Language = "en" | "zh";
@@ -11,7 +12,8 @@ export type ChatEntry =
   | { id: string; role: "assistant"; text: string; quickReplies: string[] }
   | { id: string; role: "user"; text: string }
   | { id: string; role: "proposal"; summary: string; searchText: string; status: "pending" | "confirmed" | "changed" }
-  | { id: string; role: "results"; snapshot: AskViewState | null };
+  | { id: string; role: "results"; snapshot: AskViewState | null }
+  | { id: string; role: "followup"; text: string; options: FollowUpOption[] };
 type ChatError = { code: AskErrorCode; message: string };
 type ChatState = { entries: ChatEntry[]; pending: boolean; error: ChatError | null; remaining: number | null; lastInput: InputMode };
 type Action =
@@ -19,18 +21,23 @@ type Action =
   | { type: "turn"; turn: AskChatResponse }
   | { type: "fail"; error: ChatError }
   | { type: "confirm"; snapshot: AskViewState | null }
-  | { type: "change"; text: string };
+  | { type: "change"; text: string }
+  | { type: "followUp"; followUp: FollowUp }
+  | { type: "refine"; text: string; snapshot: AskViewState | null }
+  | { type: "restart"; text: string; quickReplies: string[] };
 
 const copy = {
   en: {
     greeting: "Hi, I'm Kiwi! What are you in the mood for in Auckland?",
     starters: ["Something this weekend", "Fun with the kids", "A movie tonight", "Free things to do"],
     change: "Sure — what would you like to change?", offline: "I couldn't reach KiwiCue. Check your connection and try again.",
+    restart: "Sure — what are you after this time?",
   },
   zh: {
     greeting: "嗨，我是 Kiwi！想在奥克兰找点什么好玩的？",
     starters: ["这个周末去哪玩", "带孩子出去玩", "今晚看场电影", "免费的活动"],
     change: "好的，你想改哪一点？", offline: "连接不上 KiwiCue，请检查网络后再试。",
+    restart: "好的，这次想找点什么？",
   },
 } as const;
 
@@ -56,17 +63,29 @@ function settleProposal(entries: ChatEntry[], status: "confirmed" | "changed"): 
   return entries.map((entry) => entry.role === "proposal" && entry.status === "pending" ? { ...entry, status } : entry);
 }
 
+/** Earlier result messages keep what they showed; only the newest one follows the live search. */
+function freezeResults(entries: ChatEntry[], snapshot: AskViewState | null): ChatEntry[] {
+  return entries.map((entry) => entry.role === "results" && !entry.snapshot ? { ...entry, snapshot } : entry);
+}
+
 function reducer(state: ChatState, action: Action): ChatState {
   switch (action.type) {
     case "user": return { ...state, pending: true, error: null, lastInput: action.via, entries: [...settleProposal(state.entries, "changed"), { id: id(), role: "user", text: action.text }] };
     case "turn": return withTurn(state, action.turn);
     case "fail": return { ...state, pending: false, error: action.error };
     case "change": return { ...state, entries: [...settleProposal(state.entries, "changed"), { id: id(), role: "assistant", text: action.text, quickReplies: [] }] };
-    case "confirm": {
-      // Earlier result messages keep what they showed; only the newest one follows the live search.
-      const frozen = state.entries.map((entry) => entry.role === "results" && !entry.snapshot ? { ...entry, snapshot: action.snapshot } : entry);
-      return { ...state, error: null, entries: [...settleProposal(frozen, "confirmed"), { id: id(), role: "results", snapshot: null }] };
+    case "confirm":
+      return { ...state, error: null, entries: [...settleProposal(freezeResults(state.entries, action.snapshot), "confirmed"), { id: id(), role: "results", snapshot: null }] };
+    case "followUp": {
+      // Only a live, just-finished search gets a follow-up, and only once.
+      const last = state.entries.at(-1);
+      if (last?.role !== "results" || last.snapshot) return state;
+      return { ...state, entries: [...state.entries, { id: id(), role: "followup", text: action.followUp.text, options: action.followUp.options }] };
     }
+    case "refine":
+      return { ...state, error: null, lastInput: "text", entries: [...freezeResults(state.entries, action.snapshot), { id: id(), role: "user", text: action.text }, { id: id(), role: "results", snapshot: null }] };
+    case "restart":
+      return { ...state, entries: [...freezeResults(state.entries, null), { id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
   }
 }
 
@@ -82,8 +101,9 @@ async function requestTurn(fetchImpl: typeof fetch, language: Language, messages
   return { code, message: typeof error?.message === "string" ? error.message : copy[language].offline };
 }
 
-export function useAskChat({ language, fetchImpl = fetch, search, searchState = null }: {
-  language: Language; fetchImpl?: typeof fetch; search(text: string, history: string[]): void; searchState?: AskViewState | null;
+export function useAskChat({ language, fetchImpl = fetch, search, refine = () => undefined, searchState = null }: {
+  language: Language; fetchImpl?: typeof fetch; search(text: string, history: string[]): void; refine?(text: string): void;
+  searchState?: AskViewState | null;
 }) {
   const [state, dispatch] = useReducer(reducer, language, (initial): ChatState => ({
     entries: [{ id: id(), role: "assistant", text: copy[initial].greeting, quickReplies: [...copy[initial].starters] }],
@@ -115,5 +135,17 @@ export function useAskChat({ language, fetchImpl = fetch, search, searchState = 
   }, [search, searchState]);
 
   const change = useCallback(() => dispatch({ type: "change", text: copy[language].change }), [language]);
-  return { ...state, send, confirm, change };
+
+  const finished = searchState?.status === "done" ? searchState : null;
+  useEffect(() => { if (finished) dispatch({ type: "followUp", followUp: followUpFor(finished, language) }); }, [finished, language]);
+
+  const followUp = useCallback((option: FollowUpOption) => {
+    if (option.kind === "restart") {
+      dispatch({ type: "restart", text: copy[language].restart, quickReplies: [...copy[language].starters] });
+      return;
+    }
+    dispatch({ type: "refine", text: option.label, snapshot: searchState });
+    refine(option.label);
+  }, [language, refine, searchState]);
+  return { ...state, send, confirm, change, followUp };
 }
