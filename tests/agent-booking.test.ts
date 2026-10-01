@@ -14,3 +14,5 @@ it("admit official booking https://academycinemas.co.nz/", () => { expect(truste
 it("admit official booking https://bridgeway.co.nz/", () => { expect(trustedBookingUrl("https://bridgeway.co.nz/")).toBe("https://bridgeway.co.nz/"); });
 
 it("admit official booking https://lido.co.nz/", () => { expect(trustedBookingUrl("https://lido.co.nz/")).toBe("https://lido.co.nz/"); });
+
+it("admit official booking https://readingcinemas.co.nz/", () => { expect(trustedBookingUrl("https://readingcinemas.co.nz/")).toBe("https://readingcinemas.co.nz/"); });
