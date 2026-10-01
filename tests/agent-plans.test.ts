@@ -10,3 +10,5 @@ it("round trip a validated local plan", () => { expect(readPlans(JSON.stringify(
 it("safely read empty or invalid storage null", () => { expect(readPlans(null)).toEqual([]); });
 
 it("safely read empty or invalid storage \"not json\"", () => { expect(readPlans("not json")).toEqual([]); });
+
+it("safely read empty or invalid storage \"{}\"", () => { expect(readPlans("{}")).toEqual([]); });
