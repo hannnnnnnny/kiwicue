@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ASSISTANT_IDS, DEFAULT_ASSISTANT } from "../assistants";
 
 export const ASK_DOMAINS = ["any", "events", "movies", "markets"] as const;
 export const ASK_TIMES = ["any", "day", "evening"] as const;
@@ -38,6 +39,8 @@ export const askRequestSchema = z.object({
   history: z.array(z.string().trim().min(1).max(300)).max(5),
   /** Re-run with `previous` exactly as given, e.g. after a chip was removed. */
   refineOnly: z.boolean().default(false),
+  /** Which assistant is answering; it only changes the reply's tone. */
+  assistant: z.enum(ASSISTANT_IDS).default(DEFAULT_ASSISTANT),
 }).strict();
 export type AskRequest = z.infer<typeof askRequestSchema>;
 

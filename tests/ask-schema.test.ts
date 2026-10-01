@@ -10,7 +10,9 @@ function body(chunks: string[]): ReadableStream<Uint8Array> {
 describe("ask request schema", () => {
   it("accepts a first question and trims it", () => {
     const parsed = askRequestSchema.parse({ text: "  周六带孩子去哪  ", language: "zh", previous: null, history: [] });
-    expect(parsed).toEqual({ text: "周六带孩子去哪", language: "zh", previous: null, history: [], refineOnly: false });
+    expect(parsed).toEqual({ text: "周六带孩子去哪", language: "zh", previous: null, history: [], refineOnly: false, assistant: "fern" });
+    expect(askRequestSchema.parse({ text: "hi", language: "en", previous: null, history: [], assistant: "sunny" }).assistant).toBe("sunny");
+    expect(askRequestSchema.safeParse({ text: "hi", language: "en", previous: null, history: [], assistant: "hal" }).success).toBe(false);
   });
 
   it("rejects empty, oversized and unknown input", () => {
