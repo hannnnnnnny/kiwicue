@@ -17,7 +17,7 @@ function formatWhen(value: string, language: Language): string {
   }).format(date);
 }
 
-const KIND_ICON = { event: "🎟", movie: "🎬", market: "🧺" } as const;
+const KIND_ICON = { event: "🎫", movie: "🎬", market: "🧺" } as const;
 
 export function AskResultCard({ card, best, language, onSound }: { card: AskCard; best: boolean; language: Language; onSound?(): void }) {
   const content = copy[language];

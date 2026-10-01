@@ -56,7 +56,7 @@
 .ask-msg[data-from="you"] { justify-self: end; }
 .ask-msg[data-from="you"] p { background: var(--portal-brand); color: var(--portal-white); border-bottom-right-radius: var(--radius-tag); }
 .ask-msg[data-kind="results"] { max-width: 100%; width: 100%; }
-.ask-msg[data-kind="results"] .ask-reply { padding: 0; border: 0; background: none; }
+.ask-msg[data-kind="results"] :is(.ask-reply, .ask-closest, .ask-credit, .ask-notice) { padding: 0; border: 0; background: none; }
 .ask-quick { display: flex; flex-wrap: wrap; gap: 8px; }
 .ask-quick button {
   min-height: 40px;
@@ -156,6 +156,10 @@
 .ask-card-hero[data-kind="movie"] img { object-fit: contain; }
 /* A picture that failed to load leaves nothing to show. */
 .ask-card-hero:not(:has(img, iframe)) { display: none; }
+/* On wide screens the lead sits beside the details instead of filling the viewport. */
+@media (min-width: 761px) {
+  .ask-card[data-best]:has(.ask-card-hero :is(img, iframe)) { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: center; }
+}
 .ask-card-play { position: absolute; inset: 0; padding: 0; border: 0; background: var(--portal-ink); cursor: pointer; }
 .ask-card-play > span {
   position: absolute;
