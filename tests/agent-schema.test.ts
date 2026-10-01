@@ -4,3 +4,5 @@ const card = { kind: "movie" as const, id: "m1", title: "A film", when: "2026-10
 
 
 it("reject invalid constraint partySize=0", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, partySize: 0 }).success).toBe(false); });
+
+it("reject invalid constraint partySize=31", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, partySize: 31 }).success).toBe(false); });
