@@ -6,7 +6,11 @@ type Language = "en" | "zh";
 export type VoiceInfo = { name: string; lang: string; voiceURI?: string };
 type UtteranceLike = { lang: string; voice: unknown; rate: number; pitch: number; onend: (() => void) | null; onerror: (() => void) | null };
 type UtteranceConstructor = new (text: string) => UtteranceLike;
-type SynthLike = { getVoices(): readonly VoiceInfo[]; speak(utterance: UtteranceLike): void; cancel(): void };
+type SynthLike = {
+  getVoices(): readonly VoiceInfo[]; speak(utterance: UtteranceLike): void; cancel(): void;
+  addEventListener?(type: "voiceschanged", listener: () => void): void;
+  removeEventListener?(type: "voiceschanged", listener: () => void): void;
+};
 
 /** How an assistant sounds; see lib/assistants.ts. */
 export type Tone = { pitch: number; rate: number; profile?: AssistantId };
@@ -45,6 +49,37 @@ function browserUtterance(): UtteranceConstructor | undefined {
   return typeof window === "undefined" || !("SpeechSynthesisUtterance" in window) ? undefined : window.SpeechSynthesisUtterance as unknown as UtteranceConstructor;
 }
 
+/** Chrome can populate its voice catalog after the first interaction. */
+function whenVoicesReady(synth: SynthLike, speak: () => void): () => void {
+  if (synth.getVoices().length || !synth.addEventListener || !synth.removeEventListener) {
+    speak();
+    return () => undefined;
+  }
+  let complete = false;
+  const cleanup = () => { clearTimeout(timeout); synth.removeEventListener?.("voiceschanged", onChange); };
+  const finish = () => { if (complete) return; complete = true; cleanup(); speak(); };
+  const onChange = () => { if (synth.getVoices().length) finish(); };
+  const timeout = setTimeout(finish, 1_000);
+  synth.addEventListener("voiceschanged", onChange);
+  onChange();
+  return () => { complete = true; cleanup(); };
+}
+
+function speakUtterance(synth: SynthLike, Utterance: UtteranceConstructor, text: string, language: Language, tone: Tone, settle: () => void): () => void {
+  const timeout = setTimeout(resolve, text.length * MS_PER_CHARACTER + END_GRACE_MS);
+  function resolve() { clearTimeout(timeout); settle(); }
+  const utterance = new Utterance(text);
+  const selected = pickVoice(synth.getVoices(), language, tone.profile);
+  utterance.lang = selected?.lang.replace("_", "-") ?? LOCALE[language];
+  utterance.voice = selected;
+  utterance.rate = tone.rate;
+  utterance.pitch = tone.pitch;
+  utterance.onend = resolve;
+  utterance.onerror = resolve;
+  synth.speak(utterance);
+  return resolve;
+}
+
 export function createBrowserVoice(synth: SynthLike | undefined = browserSynth(), Utterance: UtteranceConstructor | undefined = browserUtterance()): Voice {
   if (!synth || !Utterance) return { available: false, speak: async () => undefined, cancel: () => undefined };
   let pending: (() => void) | null = null;
@@ -55,20 +90,12 @@ export function createBrowserVoice(synth: SynthLike | undefined = browserSynth()
     speak(text, language, tone = DEFAULT_TONE) {
       cancel();
       return new Promise<void>((settle) => {
-        const timeout = setTimeout(() => settle(), text.length * MS_PER_CHARACTER + END_GRACE_MS);
-        const resolve = () => { clearTimeout(timeout); if (pending === resolve) pending = null; settle(); };
-        pending = resolve;
-        const utterance = new Utterance(text);
-        utterance.lang = LOCALE[language];
-        const selected = pickVoice(synth.getVoices(), language, tone.profile);
-        utterance.voice = selected;
-        if (selected) utterance.lang = selected.lang.replace("_", "-");
-        utterance.rate = tone.rate;
-        utterance.pitch = tone.pitch;
-        // Errors (including a cancel) end the line quietly; the text is still on screen.
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
-        synth.speak(utterance);
+        let playback: (() => void) | undefined;
+        const waiting = { cancel: () => undefined as void };
+        const interrupt = () => { waiting.cancel(); playback?.(); settle(); };
+        pending = interrupt;
+        const finish = () => { if (pending === interrupt) pending = null; settle(); };
+        waiting.cancel = whenVoicesReady(synth, () => { playback = speakUtterance(synth, Utterance, text, language, tone, finish); });
       });
     },
   };
