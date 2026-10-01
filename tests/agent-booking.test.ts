@@ -16,3 +16,5 @@ it("admit official booking https://bridgeway.co.nz/", () => { expect(trustedBook
 it("admit official booking https://lido.co.nz/", () => { expect(trustedBookingUrl("https://lido.co.nz/")).toBe("https://lido.co.nz/"); });
 
 it("admit official booking https://readingcinemas.co.nz/", () => { expect(trustedBookingUrl("https://readingcinemas.co.nz/")).toBe("https://readingcinemas.co.nz/"); });
+
+it("admit official booking https://silkyotter.co.nz/", () => { expect(trustedBookingUrl("https://silkyotter.co.nz/")).toBe("https://silkyotter.co.nz/"); });
