@@ -101,3 +101,23 @@ test("picking an assistant re-themes the whole site and survives a reload", asyn
   expect(await brand()).toBe("#83600f");
   await expect(page.getByRole("button", { name: "Ask KiwiCue" }).locator("img")).toHaveAttribute("src", "/assistants/sunny.webp");
 });
+
+test("a shelf of mixed results scrolls inside its row, never the chat", async ({ page }) => {
+  const item = (id: string, kind: string, title: string) => JSON.stringify({ type: "result", card: { kind, id, title, when: "2026-10-04T14:00:00+13:00", venue: "Aotea Centre", href: `/events/${id}`, imageUrl: null, priceText: null, sessionCount: 1, score: 0.6 } });
+  const shelf = [
+    JSON.stringify({ type: "understood", filters: { domain: "any", dates: [], timeOfDay: "any", area: "any", category: "any", kids: false, free: false, names: [], place: null }, chips: [] }),
+    item("a", "event", "Jazz Brunch"), item("b", "event", "Comedy Hour"), item("c", "event", "Indie Night"),
+    item("m", "movie", "Zootopia 2"), item("n", "movie", "Paw Patrol"),
+    JSON.stringify({ type: "layout", layout: "shelf" }),
+    JSON.stringify({ type: "reply", delta: "A mixed bag for Sunday." }),
+    JSON.stringify({ type: "done", remaining: 4, tier: "guest" }),
+  ].join("\n");
+  await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/x-ndjson", body: shelf }));
+  await page.goto("/events");
+  await page.getByRole("button", { name: "Ask KiwiCue" }).click();
+  await page.getByRole("textbox", { name: "Message Fern" }).fill("anything on Sunday");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("region", { name: "Movies" })).toBeVisible();
+  expect(await page.locator(".ask-thread").evaluate((thread) => thread.scrollWidth <= thread.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});

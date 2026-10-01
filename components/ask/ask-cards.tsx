@@ -49,7 +49,8 @@ export function AskCards({ cards, bestId, layout, language, onSound }: CardsProp
   const best = cards.find((card) => card.id === bestId) ?? null;
   const others = cards.filter((card) => card !== best);
   if (layout === "timeline") return <div className="ask-cards" data-layout="timeline"><Timeline cards={cards} language={language} /></div>;
-  if (layout === "shelf" && cards.length > 3) return <div className="ask-cards" data-layout="shelf"><Shelf cards={cards} language={language} /></div>;
+  // Rows by kind only help when there is more than one kind to browse.
+  if (layout === "shelf" && new Set(cards.map((card) => card.kind)).size > 1) return <div className="ask-cards" data-layout="shelf"><Shelf cards={cards} language={language} /></div>;
   const spotlight = layout === "spotlight" && best !== null;
   return (
     <div className="ask-cards" data-layout={spotlight ? "spotlight" : "grid"}>

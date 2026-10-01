@@ -48,8 +48,8 @@
   cursor: pointer;
 }
 
-.ask-thread { min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 12px; padding: 4px 2px 8px; overscroll-behavior: contain; }
-.ask-msg { max-width: 85%; display: grid; gap: 8px; }
+.ask-thread { min-height: 0; overflow-x: hidden; overflow-y: auto; display: grid; align-content: start; gap: 12px; padding: 4px 2px 8px; overscroll-behavior: contain; }
+.ask-msg { max-width: 85%; min-width: 0; display: grid; gap: 8px; }
 .ask-msg p { margin: 0; padding: 10px 14px; border-radius: var(--radius-panel); line-height: 1.45; }
 .ask-msg[data-from="kiwi"] { justify-self: start; }
 .ask-msg[data-from="kiwi"] p { background: var(--portal-raised); border: 1px solid var(--portal-line); border-bottom-left-radius: var(--radius-tag); }
@@ -99,6 +99,7 @@
 .ask-timeline { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .ask-timeline li { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 12px; }
 .ask-timeline time { color: var(--portal-brand); font-size: .9rem; font-weight: 800; text-align: right; }
+.ask-shelf, .ask-shelf section, .ask-cards { min-width: 0; }
 .ask-shelf { display: grid; gap: 14px; }
 .ask-shelf h3 { margin: 0 0 6px; font-size: .9rem; }
 .ask-shelf ul { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 72%); gap: 10px; margin: 0; padding: 0 0 6px; list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; }

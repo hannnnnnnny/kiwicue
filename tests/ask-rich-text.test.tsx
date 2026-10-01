@@ -20,6 +20,13 @@ describe("RichText", () => {
     expect(container).toHaveTextContent('<img src=x onerror="alert(1)"> <b>hi</b>');
   });
 
+  it("renders single-asterisk italics without leaving the stars", () => {
+    const { container } = render(<RichText text="EP release for *Water For Dogs* — **Wet Denim**" />);
+    expect(container.querySelector("em")).toHaveTextContent("Water For Dogs");
+    expect(container.querySelector("strong")).toHaveTextContent("Wet Denim");
+    expect(container).not.toHaveTextContent("*");
+  });
+
   it("copes with half-streamed bold", () => {
     const { container } = render(<RichText text="Try **Jazz" />);
     expect(container).toHaveTextContent("Try **Jazz");
@@ -28,6 +35,6 @@ describe("RichText", () => {
 
 describe("plainText", () => {
   it("strips formatting for speech", () => {
-    expect(plainText("Two:\n- **Jazz Night** at 7\n1. Indie")).toBe("Two: Jazz Night at 7. Indie.");
+    expect(plainText("Two:\n- **Jazz Night** at 7\n1. *Indie*")).toBe("Two: Jazz Night at 7. Indie.");
   });
 });
