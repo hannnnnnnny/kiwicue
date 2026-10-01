@@ -5,12 +5,13 @@ import { chipsFor } from "./chips";
 import { addUsage, costMicroUsd, ZERO_USAGE, type AskUsage } from "./cost";
 import type { Evaluate } from "./jev";
 import { logAskFailure } from "./log";
+import type { MediaLookup } from "./media";
 import { mergeFilters } from "./merge-filters";
 import { encodeEvent } from "./ndjson";
 import type { QuotaStore } from "./quota";
 import { BEST_MIN_SCORE, rankCards } from "./rank";
 import { replyDeltas, type StreamReply } from "./reply";
-import { askRequestSchema, type AskCard, type AskErrorCode, type AskFilters, type AskRequest, type AskStreamEvent, type AskTier } from "./schema";
+import { askRequestSchema, askStreamEventSchema, type AskCard, type AskErrorCode, type AskFilters, type AskRequest, type AskStreamEvent, type AskTier } from "./schema";
 import { understandWithDeepSeek, type GenerateSlots } from "./understand-deepseek";
 import { understandWithJev } from "./understand-jev";
 
@@ -22,6 +23,7 @@ export type AskDeps = {
   generateSlots: GenerateSlots;
   streamReply: StreamReply;
   sources: CandidateSources;
+  media: MediaLookup;
   now(): Date;
 };
 type Emit = (event: AskStreamEvent) => void;
@@ -29,6 +31,7 @@ type Language = "en" | "zh";
 type Context = { degrade: boolean; now: Date; deps: AskDeps };
 
 const MAX_BODY_BYTES = 8_192;
+const MEDIA_TIMEOUT_MS = 4_000;
 const NDJSON = { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" };
 export const ASK_MESSAGES: Record<Language, Record<AskErrorCode | "ai_degraded" | "source_unavailable", string>> = {
   en: {
@@ -87,6 +90,23 @@ async function emitReply(input: AskRequest, top: AskCard[], loosened: string[], 
   return { deepseekInputTokens: step.value.inputTokens, deepseekOutputTokens: step.value.outputTokens };
 }
 
+/** Pictures are a bonus: they stream in when ready and never fail or hold up the answer. */
+async function emitMedia(cards: AskCard[], bestId: string | null, language: Language, deps: AskDeps, emit: Emit): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<[]>((resolve) => { timer = setTimeout(() => resolve([]), MEDIA_TIMEOUT_MS); });
+  try {
+    const found = await Promise.race([deps.media({ cards, bestId, language }), timeout]);
+    for (const media of found) {
+      const event = askStreamEventSchema.safeParse({ type: "media", ...media });
+      if (event.success) emit(event.data);
+    }
+  } catch (error) {
+    logAskFailure("media", error);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Runs one ask and emits its events in order. Returns the token usage to bill. */
 export async function runAsk(input: AskRequest, ctx: Context, emit: Emit): Promise<AskUsage> {
   const understood = await understand(input, ctx);
@@ -103,9 +123,13 @@ export async function runAsk(input: AskRequest, ctx: Context, emit: Emit): Promi
   usage = addUsage(usage, { jevInputTokens: ranked.inputTokens });
   ranked.ranked.forEach((card) => emit({ type: "result", card }));
   const best = ranked.ranked[0];
-  if (best && best.score >= BEST_MIN_SCORE) emit({ type: "best", id: best.id });
+  const bestId = best && best.score >= BEST_MIN_SCORE ? best.id : null;
+  if (bestId) emit({ type: "best", id: bestId });
 
-  return ctx.degrade ? usage : addUsage(usage, await emitReply(input, ranked.ranked, loosened, ctx.deps, emit));
+  const media = emitMedia(ranked.ranked, bestId, input.language, ctx.deps, emit);
+  const total = ctx.degrade ? usage : addUsage(usage, await emitReply(input, ranked.ranked, loosened, ctx.deps, emit));
+  await media;
+  return total;
 }
 
 async function readRequest(request: Request): Promise<{ ok: true; data: AskRequest } | { ok: false; status: number }> {

@@ -25,6 +25,10 @@ function applyEvent(state: AskViewState, event: AskStreamEvent): AskViewState {
     case "result": return { ...state, cards: [...state.cards, event.card] };
     case "best": return { ...state, bestId: event.id };
     case "relaxed": return { ...state, relaxed: event.keys };
+    case "media": return {
+      ...state,
+      cards: state.cards.map((item) => item.id === event.id ? { ...item, imageUrl: event.imageUrl ?? item.imageUrl, trailerKey: event.trailerKey } : item),
+    };
     case "reply": return { ...state, reply: state.reply + event.delta };
     case "notice": return { ...state, notices: [...new Set([...state.notices, event.message])] };
     case "done": {

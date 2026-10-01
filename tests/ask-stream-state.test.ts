@@ -23,6 +23,13 @@ describe("askReducer", () => {
 });
 
 describe("askReducer relaxation", () => {
+  it("fills in a card's picture and trailer when they arrive", () => {
+    const withCard = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "result", card } });
+    const state = askReducer(withCard, { type: "event", event: { type: "media", id: "a", imageUrl: "https://image.tmdb.org/t/p/w500/a.jpg", trailerKey: "dQw4w9WgXcQ" } });
+    expect(state.cards[0]).toMatchObject({ imageUrl: "https://image.tmdb.org/t/p/w500/a.jpg", trailerKey: "dQw4w9WgXcQ" });
+    expect(askReducer(withCard, { type: "event", event: { type: "media", id: "zzz", imageUrl: null, trailerKey: null } }).cards).toEqual([card]);
+  });
+
   it("remembers which chips were loosened and clears them on the next question", () => {
     const relaxed = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "relaxed", keys: ["area", "dates"] } });
     expect(relaxed.relaxed).toEqual(["area", "dates"]);

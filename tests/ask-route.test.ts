@@ -27,6 +27,7 @@ function deps(overrides: Partial<AskDeps> = {}): AskDeps {
     generateSlots: vi.fn(async () => ({ output: { names: [], place: null, dates: ["2026-10-03"], mode: "new" as const }, usage: { inputTokens: 300, outputTokens: 20 } })),
     streamReply: vi.fn(() => ({ textStream: (async function* () { yield "Bundle Baby "; yield "is perfect."; })(), usage: Promise.resolve({ inputTokens: 150, outputTokens: 10 }) })),
     sources: { events: vi.fn(async () => [show]), markets: vi.fn(() => []), movies: vi.fn(async () => []) },
+    media: vi.fn(async () => []),
     now: () => NOW,
     ...overrides,
   };
@@ -73,6 +74,25 @@ describe("POST /api/ask", () => {
     expect(received[1]).toEqual({ type: "relaxed", keys: ["area"] });
     const prompt = JSON.parse(vi.mocked(d.streamReply).mock.calls[0][0].prompt);
     expect(prompt.loosened).toEqual(["West"]);
+  });
+
+  it("streams pictures and trailers after the results without holding them up", async () => {
+    const media = vi.fn(async () => [{ id: "a", imageUrl: "https://image.tmdb.org/t/p/w500/a.jpg", trailerKey: "dQw4w9WgXcQ" }]);
+    const d = deps({ media });
+    const received = await events(await handleAsk(post(ask), d));
+    const types = received.map((event) => event.type);
+    expect(types.indexOf("media")).toBeGreaterThan(types.indexOf("best"));
+    expect(types.at(-1)).toBe("done");
+    expect(media).toHaveBeenCalledWith({ cards: [expect.objectContaining({ id: "a" })], bestId: "a", language: "zh" });
+    expect(received.find((event) => event.type === "media")).toEqual({ type: "media", id: "a", imageUrl: "https://image.tmdb.org/t/p/w500/a.jpg", trailerKey: "dQw4w9WgXcQ" });
+  });
+
+  it("drops media that fails validation or takes too long", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const bad = deps({ media: vi.fn(async () => [{ id: "a", imageUrl: "https://evil.example/a.jpg", trailerKey: null }]) });
+    expect((await events(await handleAsk(post(ask), bad))).map((event) => event.type)).not.toContain("media");
+    const failing = deps({ media: vi.fn(async () => { throw new Error("tmdb"); }) });
+    expect((await events(await handleAsk(post(ask), failing))).at(-1)).toMatchObject({ type: "done" });
   });
 
   it("skips DeepSeek when the budget is nearly spent", async () => {

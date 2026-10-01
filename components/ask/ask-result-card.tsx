@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AskCard } from "../../lib/ask/schema";
 import { EventImage } from "../event-image";
+import { AskCardHero } from "./ask-card-hero";
 
 type Language = "en" | "zh";
 const copy = {
@@ -16,12 +17,19 @@ function formatWhen(value: string, language: Language): string {
   }).format(date);
 }
 
-export function AskResultCard({ card, best, language }: { card: AskCard; best: boolean; language: Language }) {
+const KIND_ICON = { event: "🎫", movie: "🎬", market: "🧺" } as const;
+
+export function AskResultCard({ card, best, language, onSound }: { card: AskCard; best: boolean; language: Language; onSound?(): void }) {
   const content = copy[language];
   return (
     <article className="ask-card" data-best={best || undefined} aria-label={best ? `${content.best}: ${card.title}` : card.title}>
+      {best ? <AskCardHero card={card} language={language} onSound={onSound} /> : null}
       <Link href={card.href} className="ask-card-link">
-        {best ? <span className="ask-card-media"><EventImage src={card.imageUrl} alt="" fallback={null} loading="eager" /></span> : null}
+        {best ? null : (
+          <span className="ask-card-thumb">
+            <EventImage src={card.imageUrl} alt="" fallback={<span className="ask-card-thumb-empty" aria-hidden="true">{KIND_ICON[card.kind]}</span>} />
+          </span>
+        )}
         <span className="ask-card-body">
           <span className="ask-card-eyebrow">{best ? content.best : content.kind[card.kind]}</span>
           <strong className="ask-card-title">{card.title}</strong>
