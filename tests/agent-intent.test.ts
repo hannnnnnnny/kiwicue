@@ -35,3 +35,5 @@ it("ignore invalid or unmentioned clock: before 25:00", () => { expect(timeInten
 it("ignore invalid or unmentioned clock: after 8:99 pm", () => { expect(timeIntent("after 8:99 pm").startMinute).toBeUndefined(); expect(timeIntent("after 8:99 pm").endMinute).toBeUndefined(); });
 
 it("ignore invalid or unmentioned clock: after 19 pm", () => { expect(timeIntent("after 19 pm").startMinute).toBeUndefined(); expect(timeIntent("after 19 pm").endMinute).toBeUndefined(); });
+
+it("ignore invalid or unmentioned clock: thanks", () => { expect(timeIntent("thanks").startMinute).toBeUndefined(); expect(timeIntent("thanks").endMinute).toBeUndefined(); });
