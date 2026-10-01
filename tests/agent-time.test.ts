@@ -93,3 +93,5 @@ it("parse local clock 00:00", () => { expect(localMinute("00:00")).toBe(0); });
 it("parse local clock 12:00", () => { expect(localMinute("12:00")).toBe(720); });
 
 it("parse local clock 19:30:00", () => { expect(localMinute("19:30:00")).toBe(1170); });
+
+it("parse local clock 23:59", () => { expect(localMinute("23:59")).toBe(1439); });
