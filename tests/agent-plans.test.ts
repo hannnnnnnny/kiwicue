@@ -18,3 +18,5 @@ it("safely read empty or invalid storage \"[]\"", () => { expect(readPlans("[]")
 it("safely read empty or invalid storage \"[null]\"", () => { expect(readPlans("[null]")).toEqual([]); });
 
 it("reject persisted invalid plan name", () => { expect(readPlans(JSON.stringify([{ ...plan, name: "" }]))).toEqual([]); });
+
+it("reject persisted invalid plan createdAt", () => { expect(readPlans(JSON.stringify([{ ...plan, createdAt: "not a date" }]))).toEqual([]); });
