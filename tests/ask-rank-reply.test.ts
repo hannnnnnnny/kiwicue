@@ -52,6 +52,13 @@ describe("replyDeltas", () => {
     expect(call.system).toMatch(/loosened/u);
   });
 
+  it("speaks in the chosen assistant's style", async () => {
+    const stream = vi.fn<StreamReply>(() => ({ textStream: (async function* () { yield "ok"; })(), usage: Promise.resolve({ inputTokens: 1, outputTokens: 1 }) }));
+    const generator = replyDeltas({ text: "x", language: "en", top: [cards[0]], style: "Playful and a little witty, still clear.", stream });
+    while (!(await generator.next()).done) { /* drain */ }
+    expect(stream.mock.calls[0][0].system).toContain("Playful and a little witty, still clear.");
+  });
+
   it("ends quietly when there is nothing to recommend or DeepSeek fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const failing: StreamReply = () => ({ textStream: (async function* () { throw new Error("down"); })(), usage: Promise.resolve({ inputTokens: 0, outputTokens: 0 }) });

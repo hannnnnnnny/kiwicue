@@ -74,6 +74,8 @@ describe("POST /api/ask", () => {
     expect(received[1]).toEqual({ type: "relaxed", keys: ["area"] });
     const prompt = JSON.parse(vi.mocked(d.streamReply).mock.calls[0][0].prompt);
     expect(prompt.loosened).toEqual(["West"]);
+    // Fern is the default assistant.
+    expect(vi.mocked(d.streamReply).mock.calls[0][0].system).toContain("Warm and reassuring");
   });
 
   it("streams pictures and trailers after the results without holding them up", async () => {

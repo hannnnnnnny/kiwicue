@@ -15,19 +15,22 @@ type ChatState = { entries: ChatEntry[]; lastInput: InputMode };
 type Action =
   | { type: "user"; text: string; via: InputMode; snapshot: AskViewState | null }
   | { type: "followUp"; followUp: FollowUp }
-  | { type: "restart"; text: string; quickReplies: string[]; snapshot: AskViewState | null };
+  | { type: "restart"; text: string; quickReplies: string[]; snapshot: AskViewState | null }
+  | { type: "introduce"; text: string };
 
 const MAX_TEXT = 300;
 const copy = {
   en: {
-    greeting: "Hi, I'm Kiwi! What are you in the mood for in Auckland?",
+    greeting: (name: string) => `Hi, I'm ${name}! What are you in the mood for in Auckland?`,
     starters: ["Something this weekend", "Fun with the kids", "A movie tonight", "Free things to do"],
     restart: "Sure — what are you after this time?",
+    introduce: (name: string) => `Hi, I'm ${name} — I'll take it from here!`,
   },
   zh: {
-    greeting: "嗨，我是 Kiwi！想在奥克兰找点什么好玩的？",
+    greeting: (name: string) => `嗨，我是 ${name}！想在奥克兰找点什么好玩的？`,
     starters: ["这个周末去哪玩", "带孩子出去玩", "今晚看场电影", "免费的活动"],
     restart: "好的，这次想找点什么？",
+    introduce: (name: string) => `嗨，我是 ${name}，接下来交给我吧！`,
   },
 } as const;
 
@@ -54,15 +57,17 @@ function reducer(state: ChatState, action: Action): ChatState {
     }
     case "restart":
       return { ...state, entries: [...freezeResults(state.entries, action.snapshot), { id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
+    case "introduce":
+      return { ...state, entries: [...state.entries, { id: id(), role: "assistant", text: action.text, quickReplies: [] }] };
   }
 }
 
 /** Kiwi's thread: every message searches at once and refines the last results; Kiwi then asks what's missing. */
-export function useAskChat({ language, search, reset, searchState }: {
-  language: Language; search(text: string): void; reset(): void; searchState: AskViewState;
+export function useAskChat({ language, name, search, reset, searchState }: {
+  language: Language; name: string; search(text: string): void; reset(): void; searchState: AskViewState;
 }) {
   const [state, dispatch] = useReducer(reducer, language, (initial): ChatState => ({
-    entries: [{ id: id(), role: "assistant", text: copy[initial].greeting, quickReplies: [...copy[initial].starters] }],
+    entries: [{ id: id(), role: "assistant", text: copy[initial].greeting(name), quickReplies: [...copy[initial].starters] }],
     lastInput: "text",
   }));
 
@@ -82,5 +87,7 @@ export function useAskChat({ language, search, reset, searchState }: {
     reset();
   }, [language, reset, searchState, send]);
 
-  return { ...state, send, followUp };
+  /** A newly chosen assistant says hello, keeping the conversation and results so far. */
+  const introduce = useCallback((nextName: string) => dispatch({ type: "introduce", text: copy[language].introduce(nextName) }), [language]);
+  return { ...state, send, followUp, introduce };
 }

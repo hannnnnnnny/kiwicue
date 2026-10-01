@@ -2,12 +2,15 @@
 
 type Language = "en" | "zh";
 type VoiceInfo = { name: string; lang: string };
-type UtteranceLike = { lang: string; voice: unknown; rate: number; onend: (() => void) | null; onerror: (() => void) | null };
+type UtteranceLike = { lang: string; voice: unknown; rate: number; pitch: number; onend: (() => void) | null; onerror: (() => void) | null };
 type UtteranceConstructor = new (text: string) => UtteranceLike;
 type SynthLike = { getVoices(): readonly VoiceInfo[]; speak(utterance: UtteranceLike): void; cancel(): void };
 
-/** Kiwi's voice. The browser implementation can later be swapped for a cloud TTS behind this type. */
-export type Voice = { available: boolean; speak(text: string, language: Language): Promise<void>; cancel(): void };
+/** How an assistant sounds; see lib/assistants.ts. */
+export type Tone = { pitch: number; rate: number };
+/** The assistant's voice. The browser implementation can later be swapped for a cloud TTS behind this type. */
+export type Voice = { available: boolean; speak(text: string, language: Language, tone?: Tone): Promise<void>; cancel(): void };
+const DEFAULT_TONE: Tone = { pitch: 1, rate: 1.05 };
 
 const NATURAL = /natural|neural|premium|enhanced|google|siri/iu;
 // Some browsers never fire "end" (e.g. with no installed voice); give up after a generous estimate.
@@ -42,7 +45,7 @@ export function createBrowserVoice(synth: SynthLike | undefined = browserSynth()
   return {
     available: true,
     cancel: () => synth.cancel(),
-    speak(text, language) {
+    speak(text, language, tone = DEFAULT_TONE) {
       synth.cancel();
       return new Promise<void>((settle) => {
         const timeout = setTimeout(() => settle(), text.length * MS_PER_CHARACTER + END_GRACE_MS);
@@ -50,7 +53,8 @@ export function createBrowserVoice(synth: SynthLike | undefined = browserSynth()
         const utterance = new Utterance(text);
         utterance.lang = LOCALE[language];
         utterance.voice = pickVoice(synth.getVoices(), language);
-        utterance.rate = 1.05;
+        utterance.rate = tone.rate;
+        utterance.pitch = tone.pitch;
         // Errors (including a cancel) end the line quietly; the text is still on screen.
         utterance.onend = () => resolve();
         utterance.onerror = () => resolve();

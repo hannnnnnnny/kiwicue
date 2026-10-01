@@ -20,9 +20,9 @@ function renderOverlay(fetchImpl: typeof fetch, onClose = vi.fn()) {
   return render(<LanguageProvider><AskOverlay onClose={onClose} fetchImpl={fetchImpl} /></LanguageProvider>);
 }
 
-function say(text: string) {
-  fireEvent.change(screen.getByRole("textbox", { name: "Message Kiwi" }), { target: { value: text } });
-  fireEvent.submit(screen.getByRole("form", { name: "Message Kiwi" }));
+function say(text: string, to = "Fern") {
+  fireEvent.change(screen.getByRole("textbox", { name: `Message ${to}` }), { target: { value: text } });
+  fireEvent.submit(screen.getByRole("form", { name: `Message ${to}` }));
 }
 
 const searchBodies = (fetchImpl: ReturnType<typeof server>) => fetchImpl.mock.calls.map(([, init]) => JSON.parse(String(init?.body)));
@@ -30,14 +30,14 @@ const searchBodies = (fetchImpl: ReturnType<typeof server>) => fetchImpl.mock.ca
 // Streamed answers pass through several async steps; allow for a busy test runner.
 const SLOW = { timeout: 3000 };
 
-afterEach(() => { cleanup(); localStorage.clear(); });
+afterEach(() => { cleanup(); localStorage.clear(); delete document.documentElement.dataset.assistant; });
 
 describe("AskOverlay", () => {
   it("shows results for the very first message, then asks what's missing", async () => {
     const fetchImpl = server();
     renderOverlay(fetchImpl);
-    expect(screen.getByRole("dialog", { name: "Kiwi" })).toBeVisible();
-    expect(screen.getByText("Hi, I'm Kiwi! What are you in the mood for in Auckland?")).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Fern" })).toBeVisible();
+    expect(screen.getByText("Hi, I'm Fern! What are you in the mood for in Auckland?")).toBeVisible();
 
     say("Something with the kids");
     expect(await screen.findByRole("article", { name: /Best match: Bundle Baby/ }, SLOW)).toBeVisible();
@@ -91,6 +91,20 @@ describe("AskOverlay", () => {
     expect(await screen.findByText("Nothing matched exactly, so these are the closest. Want to adjust?", {}, SLOW)).toBeVisible();
   });
 
+  it("switches assistant: the page re-themes, the new one introduces itself, and searches use its tone", async () => {
+    const fetchImpl = server();
+    renderOverlay(fetchImpl);
+    fireEvent.click(screen.getByRole("button", { name: "Change assistant" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Sunny.*Inventor/ }));
+    expect(document.documentElement.dataset.assistant).toBe("sunny");
+    expect(screen.getByRole("dialog", { name: "Sunny" })).toBeVisible();
+    expect(screen.getByText("Hi, I'm Sunny — I'll take it from here!")).toBeVisible();
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    say("Something fun", "Sunny");
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalled(), SLOW);
+    expect(searchBodies(fetchImpl)[0]).toMatchObject({ assistant: "sunny" });
+  });
+
   it("offers sign-in when searches run out", async () => {
     renderOverlay(server([[{ type: "error", code: "quota_exhausted", message: "You've used today's free questions." }]], 429));
     say("Saturday with the kids");
@@ -101,7 +115,7 @@ describe("AskOverlay", () => {
   it("offers typing only when speech is unsupported, and closes on Escape", async () => {
     const onClose = vi.fn();
     renderOverlay(server(), onClose);
-    expect(screen.queryByRole("button", { name: "Talk to Kiwi" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Talk to Fern" })).not.toBeInTheDocument();
     expect(screen.getByText("Voice isn't supported in this browser. Type instead.")).toBeVisible();
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -109,15 +123,15 @@ describe("AskOverlay", () => {
 
   it("can be muted and remembers it", () => {
     renderOverlay(server());
-    fireEvent.click(screen.getByRole("button", { name: "Mute Kiwi" }));
-    expect(screen.getByRole("button", { name: "Unmute Kiwi" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Mute Fern" }));
+    expect(screen.getByRole("button", { name: "Unmute Fern" })).toHaveAttribute("aria-pressed", "true");
     expect(localStorage.getItem("kiwicue.ask.muted")).toBe("1");
   });
 
   it("speaks Chinese", () => {
     localStorage.setItem("kiwicue-language", "zh");
     renderOverlay(server());
-    expect(screen.getByText("嗨，我是 Kiwi！想在奥克兰找点什么好玩的？")).toBeVisible();
+    expect(screen.getByText("嗨，我是 Fern！想在奥克兰找点什么好玩的？")).toBeVisible();
     expect(screen.getByRole("button", { name: "这个周末去哪玩" })).toBeVisible();
   });
 });

@@ -4,6 +4,7 @@ import { loadCandidates, type CandidateSources } from "./candidates";
 import { chipsFor } from "./chips";
 import { addUsage, costMicroUsd, ZERO_USAGE, type AskUsage } from "./cost";
 import type { Evaluate } from "./jev";
+import { ASSISTANTS } from "../assistants";
 import { logAskFailure } from "./log";
 import type { MediaLookup } from "./media";
 import { mergeFilters } from "./merge-filters";
@@ -81,7 +82,8 @@ async function understand(input: AskRequest, ctx: Context): Promise<{ filters: A
 }
 
 async function emitReply(input: AskRequest, top: AskCard[], loosened: string[], deps: AskDeps, emit: Emit): Promise<Partial<AskUsage>> {
-  const reply = replyDeltas({ text: input.text, language: input.language, top, loosened, stream: deps.streamReply });
+  const style = ASSISTANTS[input.assistant].style[input.language];
+  const reply = replyDeltas({ text: input.text, language: input.language, top, loosened, style, stream: deps.streamReply });
   let step = await reply.next();
   while (!step.done) {
     emit({ type: "reply", delta: step.value });

@@ -6,6 +6,7 @@ import { AuthProvider } from "../components/auth-provider";
 import { LanguageProvider } from "../components/language-provider";
 import { DiscoveryMotion } from "../components/discovery-motion";
 import { isAskConfigured } from "../lib/ask/config";
+import { DEFAULT_ASSISTANT, themeInitScript } from "../lib/assistants";
 import "@fontsource-variable/inter";
 import "./globals.css";
 
@@ -17,7 +18,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    // The inline script swaps data-assistant for the saved choice before paint, so React must
+    // not treat that attribute as a hydration mismatch.
+    <html lang="en" data-scroll-behavior="smooth" data-assistant={DEFAULT_ASSISTANT} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <LanguageProvider>
           <AuthProvider><BookmarkProvider>{children}</BookmarkProvider></AuthProvider>
