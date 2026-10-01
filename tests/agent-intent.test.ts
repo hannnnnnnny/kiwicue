@@ -79,3 +79,5 @@ it("interpret budget: total $0", () => { expect(budgetIntent("total $0")).toMatc
 it("interpret budget: total $60.50", () => { expect(budgetIntent("total $60.50")).toMatchObject({"totalBudget": 60.5}); });
 
 it("interpret budget: two adults and a 6-year-old, total budget under NZ$60", () => { expect(budgetIntent("two adults and a 6-year-old, total budget under NZ$60")).toMatchObject({"partySize": 3, "totalBudget": 60}); });
+
+it("interpret budget: \u4e24\u5927\u4e00\u5c0f\u603b\u517160\u5143", () => { expect(budgetIntent("\u4e24\u5927\u4e00\u5c0f\u603b\u517160\u5143")).toMatchObject({"partySize": 3, "totalBudget": 60}); });
