@@ -36,7 +36,11 @@ describe("ask quota", () => {
     rpc.mockResolvedValueOnce({ data: [{ allowed: true, reason: null, usage_id: "u-1", remaining: 4, degrade: false }], error: null });
     const store = createSupabaseQuotaStore(env)!;
     expect(await store.reserve("ip:abc", "guest", null)).toEqual({ allowed: true, usageId: "u-1", remaining: 4, degrade: false, tier: "guest" });
-    expect(rpc).toHaveBeenCalledWith("ask_reserve", { p_subject: "ip:abc", p_tier: "guest", p_user: null });
+    expect(rpc).toHaveBeenCalledWith("ask_reserve", { p_subject: "ip:abc", p_tier: "guest", p_user: null, p_kind: "search" });
+
+    rpc.mockResolvedValueOnce({ data: [{ allowed: true, reason: null, usage_id: "u-2", remaining: 4, degrade: false }], error: null });
+    await store.reserve("ip:abc", "guest", null, "chat");
+    expect(rpc).toHaveBeenLastCalledWith("ask_reserve", { p_subject: "ip:abc", p_tier: "guest", p_user: null, p_kind: "chat" });
 
     rpc.mockResolvedValueOnce({ data: [{ allowed: false, reason: "quota_exhausted", usage_id: null, remaining: 0, degrade: false }], error: null });
     expect(await store.reserve("user:1", "free", "1")).toEqual({ allowed: false, reason: "quota_exhausted", remaining: 0, tier: "free" });

@@ -1,10 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { speechRecognitionConstructor, useSpeechInput } from "../components/ask/use-speech-input";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SILENCE_MS, speechRecognitionConstructor, useSpeechInput } from "../components/ask/use-speech-input";
 
 class FakeRecognition {
   static last: FakeRecognition | null = null;
-  lang = ""; interimResults = false; continuous = true;
+  lang = ""; interimResults = false; continuous = false;
   onresult: ((event: unknown) => void) | null = null;
   onerror: ((event: { error: string }) => void) | null = null;
   onend: (() => void) | null = null;
@@ -12,35 +12,48 @@ class FakeRecognition {
   constructor() { FakeRecognition.last = this; }
 }
 
-function result(transcript: string, isFinal: boolean) {
-  return { resultIndex: 0, results: [Object.assign([{ transcript }], { isFinal })] };
+// A continuous session reports every segment so far; each segment is final or still interim.
+function results(...segments: Array<[string, boolean]>) {
+  return { resultIndex: 0, results: segments.map(([transcript, isFinal]) => Object.assign([{ transcript }], { isFinal })) };
 }
 
 describe("speech input", () => {
-  afterEach(() => { delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition; });
+  beforeEach(() => { (window as unknown as Record<string, unknown>).webkitSpeechRecognition = FakeRecognition; });
+  afterEach(() => { delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition; vi.useRealTimers(); });
 
   it("detects support", () => {
     expect(speechRecognitionConstructor({})).toBeNull();
     expect(speechRecognitionConstructor({ webkitSpeechRecognition: FakeRecognition })).toBe(FakeRecognition);
   });
 
-  it("streams interim text and hands over the final transcript in the site language", () => {
-    (window as unknown as Record<string, unknown>).webkitSpeechRecognition = FakeRecognition;
+  it("keeps listening across pauses and sends the whole utterance once after silence", () => {
+    vi.useFakeTimers();
     const onFinal = vi.fn();
     const { result: hook } = renderHook(() => useSpeechInput({ language: "zh", onFinal }));
-    expect(hook.current.supported).toBe(true);
     act(() => hook.current.start());
-    expect(FakeRecognition.last?.lang).toBe("zh-CN");
-    act(() => FakeRecognition.last?.onresult?.(result("周六带", false)));
-    expect(hook.current.interim).toBe("周六带");
-    act(() => FakeRecognition.last?.onresult?.(result("周六带孩子", true)));
-    expect(onFinal).toHaveBeenCalledWith("周六带孩子");
-    act(() => FakeRecognition.last?.onend?.());
+    expect(FakeRecognition.last).toMatchObject({ lang: "zh-CN", continuous: true, interimResults: true });
+    act(() => FakeRecognition.last?.onresult?.(results(["这周六", true], ["带孩子", false])));
+    expect(hook.current.interim).toBe("这周六带孩子");
+    act(() => { vi.advanceTimersByTime(SILENCE_MS - 500); });
+    act(() => FakeRecognition.last?.onresult?.(results(["这周六", true], ["带孩子去东区", true])));
+    expect(onFinal).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(SILENCE_MS); });
+    expect(onFinal).toHaveBeenCalledTimes(1);
+    expect(onFinal).toHaveBeenCalledWith("这周六带孩子去东区");
     expect(hook.current.listening).toBe(false);
   });
 
+  it("sends what it heard straight away when the mic is tapped again", () => {
+    const onFinal = vi.fn();
+    const { result: hook } = renderHook(() => useSpeechInput({ language: "en", onFinal }));
+    act(() => hook.current.start());
+    act(() => FakeRecognition.last?.onresult?.(results(["something fun this weekend", false])));
+    act(() => hook.current.stop());
+    expect(onFinal).toHaveBeenCalledTimes(1);
+    expect(onFinal).toHaveBeenCalledWith("something fun this weekend");
+  });
+
   it("reports a denied microphone", () => {
-    (window as unknown as Record<string, unknown>).webkitSpeechRecognition = FakeRecognition;
     const { result: hook } = renderHook(() => useSpeechInput({ language: "en", onFinal: vi.fn() }));
     act(() => hook.current.start());
     act(() => FakeRecognition.last?.onerror?.({ error: "not-allowed" }));

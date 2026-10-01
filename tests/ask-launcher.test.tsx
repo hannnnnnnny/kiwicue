@@ -22,7 +22,7 @@ describe("AskLauncher", () => {
     render(launcher());
     const button = screen.getByRole("button", { name: "Ask KiwiCue" });
     fireEvent.click(button);
-    expect(screen.getByRole("dialog", { name: "Ask KiwiCue" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Kiwi" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(button).toHaveFocus();

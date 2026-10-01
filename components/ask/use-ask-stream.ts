@@ -48,11 +48,10 @@ export function useAskStream(fetchImpl: typeof fetch = fetch) {
   useEffect(() => { latest.current = state; }, [state]);
   const controller = useRef<AbortController | null>(null);
 
-  const send = useCallback(async (text: string, language: Language, previous: AskFilters | null, refineOnly: boolean) => {
+  const send = useCallback(async (text: string, language: Language, previous: AskFilters | null, refineOnly: boolean, history = latest.current.history) => {
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
-    const history = latest.current.history;
     dispatch({ type: "start", text });
     try {
       const response = await fetchImpl("/api/ask", {
@@ -67,7 +66,12 @@ export function useAskStream(fetchImpl: typeof fetch = fetch) {
     }
   }, [fetchImpl]);
 
-  const ask = useCallback((text: string, language: Language) => send(text, language, latest.current.filters, false), [send]);
+  /**
+   * A plain ask refines the previous search. Kiwi's confirmed searches pass the conversation as
+   * history and start from no filters, because the confirmed text already carries every detail.
+   */
+  const ask = useCallback((text: string, language: Language, options?: { history: string[]; fresh: boolean }) =>
+    send(text, language, options?.fresh ? null : latest.current.filters, false, options?.history), [send]);
   const removeChip = useCallback((key: string, language: Language) => {
     const { filters, text } = latest.current;
     return filters ? send(text, language, clearChip(filters, key), true) : Promise.resolve();

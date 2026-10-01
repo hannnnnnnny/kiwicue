@@ -30,7 +30,7 @@ type Context = { degrade: boolean; now: Date; deps: AskDeps };
 
 const MAX_BODY_BYTES = 8_192;
 const NDJSON = { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" };
-const messages: Record<Language, Record<AskErrorCode | "ai_degraded" | "source_unavailable", string>> = {
+export const ASK_MESSAGES: Record<Language, Record<AskErrorCode | "ai_degraded" | "source_unavailable", string>> = {
   en: {
     rate_limited: "Too many questions at once. Try again in a minute.",
     quota_exhausted: "You've used today's free questions. Sign in for more, or come back tomorrow.",
@@ -54,10 +54,10 @@ const messages: Record<Language, Record<AskErrorCode | "ai_degraded" | "source_u
 };
 
 function errorResponse(code: AskErrorCode, status: number, language: Language): Response {
-  return new Response(encodeEvent({ type: "error", code, message: messages[language][code] }), { status, headers: NDJSON });
+  return new Response(encodeEvent({ type: "error", code, message: ASK_MESSAGES[language][code] }), { status, headers: NDJSON });
 }
 
-function todayLabel(now: Date): string {
+export function todayLabel(now: Date): string {
   const weekday = new Intl.DateTimeFormat("en-NZ", { timeZone: "Pacific/Auckland", weekday: "long" }).format(now);
   return `${aucklandDate(now)} (${weekday})`;
 }
@@ -92,10 +92,10 @@ export async function runAsk(input: AskRequest, ctx: Context, emit: Emit): Promi
   const understood = await understand(input, ctx);
   let usage = addUsage(ZERO_USAGE, understood.usage);
   emit({ type: "understood", filters: understood.filters, chips: chipsFor(understood.filters, input.language) });
-  if (ctx.degrade || understood.degraded) emit({ type: "notice", code: "ai_degraded", message: messages[input.language].ai_degraded });
+  if (ctx.degrade || understood.degraded) emit({ type: "notice", code: "ai_degraded", message: ASK_MESSAGES[input.language].ai_degraded });
 
   const candidates = await loadCandidates({ filters: understood.filters, language: input.language, now: ctx.now, sources: ctx.deps.sources });
-  if (candidates.unavailable.length > 0) emit({ type: "notice", code: "source_unavailable", message: messages[input.language].source_unavailable });
+  if (candidates.unavailable.length > 0) emit({ type: "notice", code: "source_unavailable", message: ASK_MESSAGES[input.language].source_unavailable });
   const ranked = await rankCards({ text: input.text, filters: understood.filters, cards: candidates.cards, evaluate: ctx.deps.evaluate });
   usage = addUsage(usage, { jevInputTokens: ranked.inputTokens });
   ranked.ranked.forEach((card) => emit({ type: "result", card }));
@@ -127,7 +127,7 @@ function stream(input: AskRequest, decision: { usageId: string; remaining: numbe
         emit({ type: "done", remaining: decision.remaining, tier: decision.tier });
       } catch (error) {
         logAskFailure("stream", error);
-        emit({ type: "error", code: "internal", message: messages[input.language].internal });
+        emit({ type: "error", code: "internal", message: ASK_MESSAGES[input.language].internal });
       } finally {
         await deps.quota?.recordCost(decision.usageId, costMicroUsd(usage), decision.degrade);
         controller.close();
