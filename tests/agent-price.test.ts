@@ -9,3 +9,5 @@ it("party 2 at 20 with total ceiling 40", () => { const result = priceEvidence({
 it("party 3 at 20 with total ceiling 60", () => { const result = priceEvidence({ min: 20, max: 20, free: false }, { ...EMPTY_FILTERS, partySize: 3, totalBudget: 60 }); expect(result.keep).toBe(true); expect(result.budgetStatus).toBe("estimate"); });
 
 it("party 3 at 20.01 with total ceiling 60", () => { const result = priceEvidence({ min: 20.01, max: 20.01, free: false }, { ...EMPTY_FILTERS, partySize: 3, totalBudget: 60 }); expect(result.keep).toBe(false); expect(result.budgetStatus).toBe("estimate"); });
+
+it("party 3 at 19.99 with total ceiling 60", () => { const result = priceEvidence({ min: 19.99, max: 19.99, free: false }, { ...EMPTY_FILTERS, partySize: 3, totalBudget: 60 }); expect(result.keep).toBe(true); expect(result.budgetStatus).toBe("estimate"); });
