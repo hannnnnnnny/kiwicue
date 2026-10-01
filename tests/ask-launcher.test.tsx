@@ -37,3 +37,13 @@ describe("AskLauncher", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
+
+  it("retains typed conversation when closed and reopened", () => {
+    render(launcher());
+    fireEvent.click(screen.getByRole("button", { name: "Ask KiwiCue" }));
+    const input = screen.getByRole("textbox", { name: "Message Fern" });
+    fireEvent.change(input, { target: { value: "Saturday afternoon" } });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask KiwiCue" }));
+    expect(screen.getByRole("textbox", { name: "Message Fern" })).toHaveValue("Saturday afternoon");
+  });
