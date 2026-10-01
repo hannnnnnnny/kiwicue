@@ -67,3 +67,5 @@ it("any start boundary at minute 1439", () => { expect(matchesTimeWindow(1439, {
 it("7 pm lower bound at minute 1139", () => { expect(matchesTimeWindow(1139, { ...EMPTY_FILTERS, startMinute: 1140 })).toBe(false); });
 
 it("7 pm lower bound at minute 1140", () => { expect(matchesTimeWindow(1140, { ...EMPTY_FILTERS, startMinute: 1140 })).toBe(true); });
+
+it("7 pm lower bound at minute 1141", () => { expect(matchesTimeWindow(1141, { ...EMPTY_FILTERS, startMinute: 1140 })).toBe(true); });
