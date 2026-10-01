@@ -29,3 +29,5 @@ it("interpret time: after 12 pm", () => { expect(timeIntent("after 12 pm")).toMa
 it("interpret time: any time", () => { expect(timeIntent("any time")).toMatchObject({"timeOfDay": "any", "startMinute": null, "endMinute": null}); });
 
 it("interpret time: \u4e0d\u9650\u65f6\u95f4", () => { expect(timeIntent("\u4e0d\u9650\u65f6\u95f4")).toMatchObject({"timeOfDay": "any", "startMinute": null, "endMinute": null}); });
+
+it("ignore invalid or unmentioned clock: before 25:00", () => { expect(timeIntent("before 25:00").startMinute).toBeUndefined(); expect(timeIntent("before 25:00").endMinute).toBeUndefined(); });
