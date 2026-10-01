@@ -19,3 +19,5 @@ it("afternoon start boundary at minute 0", () => { expect(matchesTimeWindow(0, {
 it("afternoon start boundary at minute 719", () => { expect(matchesTimeWindow(719, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(false); });
 
 it("afternoon start boundary at minute 720", () => { expect(matchesTimeWindow(720, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(true); });
+
+it("afternoon start boundary at minute 721", () => { expect(matchesTimeWindow(721, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(true); });
