@@ -13,6 +13,7 @@ export type ChatEntry =
   | { id: string; role: "results"; snapshot: AskViewState | null };
 type ChatState = { entries: ChatEntry[]; lastInput: InputMode };
 type Action =
+  | { type: "restart"; text: string; quickReplies: string[] }
   | { type: "user"; text: string; via: InputMode; snapshot: AskViewState }
   | { type: "say"; text: string; quickReplies: string[]; snapshot: AskViewState };
 
@@ -42,6 +43,7 @@ function freezeResults(entries: ChatEntry[], snapshot: AskViewState): ChatEntry[
 }
 
 function reducer(state: ChatState, action: Action): ChatState {
+  if (action.type === "restart") return { lastInput: "text", entries: [{ id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
   if (action.type === "user") {
     return {
       lastInput: action.via,
@@ -96,7 +98,7 @@ export function useAskChat({ language, name, search, reset, searchState }: {
   }, [search, searchState, state.entries]);
 
   const restart = useCallback(() => {
-    dispatch({ type: "say", text: copy[language].restart, quickReplies: [...copy[language].starters], snapshot: searchState });
+    dispatch({ type: "restart", text: copy[language].restart, quickReplies: [...copy[language].starters] });
     reset();
   }, [language, reset, searchState]);
 
