@@ -56,3 +56,30 @@ test("loosens a search that found nothing exact and keeps the conversation going
   await expect(page.getByText("Sure — what are you after this time?")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test("leads a movie best match with a muted autoplaying trailer and thumbnails the rest", async ({ page }) => {
+  const movieSearch = [
+    { type: "understood", filters: { domain: "movies", dates: [], timeOfDay: "any", area: "any", category: "any", kids: true, free: false, names: [], place: null, maxPrice: null }, chips: [{ key: "domain", label: "Movies" }] },
+    { type: "result", card: { kind: "movie", id: "movie:zootopia 2", title: "Zootopia 2", when: "2026-10-03T02:00:00.000Z", venue: "HOYTS Sylvia Park", href: "/movies?q=Zootopia%202", imageUrl: null, priceText: null, sessionCount: 6, score: 1 } },
+    { type: "result", card: { kind: "movie", id: "movie:paw patrol", title: "Paw Patrol", when: "2026-10-03T03:00:00.000Z", venue: "Event Queen St", href: "/movies?q=Paw%20Patrol", imageUrl: null, priceText: null, sessionCount: 2, score: 0.6 } },
+    { type: "best", id: "movie:zootopia 2" },
+    { type: "media", id: "movie:zootopia 2", imageUrl: "https://image.tmdb.org/t/p/w500/zootopia.jpg", trailerKey: "dQw4w9WgXcQ" },
+    { type: "reply", delta: "Zootopia 2 is a fun one for the kids." },
+    { type: "done", remaining: 4, tier: "guest" },
+  ].map((line) => JSON.stringify(line)).join("\n");
+  await page.route("**/api/ask/chat", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(turns[1]) }));
+  await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/x-ndjson", body: movieSearch }));
+  await page.route("https://www.youtube-nocookie.com/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<html></html>" }));
+  await page.goto("/events");
+  await page.getByRole("button", { name: "Ask KiwiCue" }).click();
+  await page.getByRole("textbox", { name: "Message Kiwi" }).fill("A movie with the kids");
+  await page.getByRole("button", { name: "Send" }).click();
+  await page.getByRole("group", { name: "I'll search for" }).getByRole("button", { name: "Search" }).click();
+
+  const trailer = page.getByTitle("Zootopia 2 trailer");
+  await expect(trailer).toHaveAttribute("src", /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?.*autoplay=1.*mute=1/u);
+  await page.getByRole("button", { name: "Sound on" }).click();
+  await expect(trailer).toHaveAttribute("src", /mute=0/u);
+  await expect(page.locator(".ask-card-thumb").first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
