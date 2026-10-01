@@ -75,5 +75,19 @@ export function useSpeechInput({ language, onFinal }: { language: "en" | "zh"; o
     instance.start();
   }, [deliver, language]);
 
-  return { supported, listening, interim, error, start, stop: deliver };
+  const cancel = useCallback(() => {
+    delivered.current = true;
+    heard.current = "";
+    if (silence.current) clearTimeout(silence.current);
+    recognition.current?.abort();
+    setListening(false);
+    setInterim("");
+  }, []);
+  useEffect(() => () => {
+    delivered.current = true;
+    if (silence.current) clearTimeout(silence.current);
+    recognition.current?.abort();
+  }, []);
+
+  return { supported, listening, interim, error, start, stop: deliver, cancel };
 }
