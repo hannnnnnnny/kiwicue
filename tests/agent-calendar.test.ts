@@ -34,3 +34,5 @@ it("export known movie end time from runtime", () => { expect(planCalendar(plan)
 it("omit unverified event end time", () => { expect(planCalendar({ ...plan, cards: [{ ...card, durationMinutes: null }] })).not.toContain("DTEND"); });
 
 it("omit calendar entries without valid start times", () => { expect(planCalendar({ ...plan, cards: [{ ...card, when: "unknown" }] })).not.toContain("BEGIN:VEVENT"); });
+
+it("prevent note text from injecting a calendar alarm", () => { const result = planCalendar({ ...plan, notes: "hello\r\nBEGIN:VALARM\r\nACTION:EMAIL" }); expect(result).not.toContain("\r\nBEGIN:VALARM"); });
