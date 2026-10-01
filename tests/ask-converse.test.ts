@@ -29,6 +29,8 @@ describe("conversePrompt", () => {
     expect(prompt).toContain(assistant.style.zh);
     expect(prompt).toContain("中文用日常聊天的说法");
     expect(prompt).toContain("For a follow-up, answer that question first");
+    expect(prompt).toContain("已经知道的时间、人数和预算不要重新问");
+    expect(prompt).toContain("不能假装自己去过或亲身体验过");
     expect(prompt).toContain("do not attach an obligatory follow-up question");
     expect(prompt).not.toContain("Never open two replies the same way");
     expect(prompt).toContain("never invent events, times, prices, links or details");

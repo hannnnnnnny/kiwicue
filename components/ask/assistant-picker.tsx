@@ -11,6 +11,7 @@ export function AssistantPicker({ current, language, onPick }: { current: Assist
   return (
     <fieldset className="ask-picker" role="radiogroup" aria-label={LABEL[language]}>
       <p className="ask-picker-scope">{language === "zh" ? "五位助手共用同一套搜索工具，区别是建议风格。" : "All five assistants share the same search tools, with different advice styles."}</p>
+      <p className="ask-picker-scope">{language === "zh" ? "音色会随助手切换。可用音色取决于设备，不足五种时会有重复。" : "Voices change with your assistant. Available voices depend on your device; fewer than five means some are shared."}</p>
       {ASSISTANT_IDS.map((id) => {
         const assistant = ASSISTANTS[id];
         return (
