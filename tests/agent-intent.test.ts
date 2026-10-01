@@ -55,3 +55,5 @@ it("count party: 2\u59272\u5c0f", () => { expect(partySizeFrom("2\u59272\u5c0f")
 it("count party: four adults", () => { expect(partySizeFrom("four adults")).toBe(4); });
 
 it("count party: for 30 people", () => { expect(partySizeFrom("for 30 people")).toBe(30); });
+
+it("count party: for 31 people", () => { expect(partySizeFrom("for 31 people")).toBe(undefined); });
