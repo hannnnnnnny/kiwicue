@@ -219,16 +219,17 @@ function Composer({ language, name, speech, voiceLanguage, onVoiceLanguage, onSe
 }
 
 type HeaderProps = {
+  active: boolean;
   assistant: Assistant; state: BotState; language: Language; muted: boolean; picking: boolean;
   onPickToggle(): void; onMute(): void; onRestart(): void; onClose(): void;
 };
 
-function AssistantHeader({ assistant, state, language, muted, picking, onPickToggle, onMute, onRestart, onClose }: HeaderProps) {
+function AssistantHeader({ assistant, state, language, muted, picking, onPickToggle, onMute, onRestart, onClose, active }: HeaderProps) {
   const content = copy[language];
   return (
     <header className="ask-header">
       <button type="button" className="ask-orb-button" aria-label={content.change} aria-expanded={picking} onClick={onPickToggle}>
-        <AssistantOrb assistant={assistant} state={state} />
+        <AssistantOrb key={active ? "visible" : "hidden"} assistant={assistant} state={state} active={active} />
       </button>
       <div className="ask-header-text">
         <h2 id="ask-title">{assistant.name}</h2>
@@ -288,9 +289,9 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
     <div className="ask-overlay" role="dialog" aria-modal="true" aria-labelledby="ask-title" onKeyDown={trapFocus}>
       <div className="ask-panel">
         <div className="ask-top">
-          <AssistantHeader assistant={assistant} state={state} language={language} muted={muted} picking={picking}
+          <AssistantHeader active={active} assistant={assistant} state={state} language={language} muted={muted} picking={picking}
             onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={chat.restart} onClose={onClose} />
-          {picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
+          {active && picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
         </div>
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
           onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)} onSound={silence} />
