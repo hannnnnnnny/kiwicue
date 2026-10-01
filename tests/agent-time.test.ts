@@ -73,3 +73,5 @@ it("7 pm lower bound at minute 1141", () => { expect(matchesTimeWindow(1141, { .
 it("7 pm lower bound at minute 1439", () => { expect(matchesTimeWindow(1439, { ...EMPTY_FILTERS, startMinute: 1140 })).toBe(true); });
 
 it("3 pm exclusive ceiling at minute 899", () => { expect(matchesTimeWindow(899, { ...EMPTY_FILTERS, endMinute: 900 })).toBe(true); });
+
+it("3 pm exclusive ceiling at minute 900", () => { expect(matchesTimeWindow(900, { ...EMPTY_FILTERS, endMinute: 900 })).toBe(false); });
