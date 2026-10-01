@@ -28,3 +28,5 @@ it("reject persisted invalid plan cards", () => { expect(readPlans(JSON.stringif
 it("reject persisted invalid plan notes", () => { expect(readPlans(JSON.stringify([{ ...plan, notes: "x".repeat(1001) }]))).toEqual([]); });
 
 it("bound stored plan payload before decoding", () => { expect(readPlans(" ".repeat(250001))).toEqual([]); });
+
+it("reject too many saved plans instead of truncating silently", () => { expect(readPlans(JSON.stringify(Array(21).fill(plan)))).toEqual([]); });
