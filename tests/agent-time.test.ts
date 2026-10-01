@@ -89,3 +89,5 @@ it("reject unknown or invalid constrained minute 3.5", () => { expect(matchesTim
 it("reject unknown or invalid constrained minute Number.NaN", () => { expect(matchesTimeWindow(Number.NaN, { ...EMPTY_FILTERS, timeOfDay: "afternoon" })).toBe(false); });
 
 it("parse local clock 00:00", () => { expect(localMinute("00:00")).toBe(0); });
+
+it("parse local clock 12:00", () => { expect(localMinute("12:00")).toBe(720); });
