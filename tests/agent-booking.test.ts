@@ -22,3 +22,5 @@ it("admit official booking https://silkyotter.co.nz/", () => { expect(trustedBoo
 it("block unsafe booking http://hoyts.co.nz/", () => { expect(trustedBookingUrl("http://hoyts.co.nz/")).toBeNull(); });
 
 it("block unsafe booking javascript:alert(1)", () => { expect(trustedBookingUrl("javascript:alert(1)")).toBeNull(); });
+
+it("block unsafe booking https://hoyts.co.nz.evil.example/", () => { expect(trustedBookingUrl("https://hoyts.co.nz.evil.example/")).toBeNull(); });
