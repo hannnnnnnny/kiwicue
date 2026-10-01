@@ -24,3 +24,5 @@ it("block unsafe booking http://hoyts.co.nz/", () => { expect(trustedBookingUrl(
 it("block unsafe booking javascript:alert(1)", () => { expect(trustedBookingUrl("javascript:alert(1)")).toBeNull(); });
 
 it("block unsafe booking https://hoyts.co.nz.evil.example/", () => { expect(trustedBookingUrl("https://hoyts.co.nz.evil.example/")).toBeNull(); });
+
+it("block unsafe booking https://evil-hoyts.co.nz/", () => { expect(trustedBookingUrl("https://evil-hoyts.co.nz/")).toBeNull(); });
