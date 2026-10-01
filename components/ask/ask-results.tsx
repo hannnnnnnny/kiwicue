@@ -9,10 +9,12 @@ const copy = {
   en: {
     thinking: "Finding the best options…", empty: "Nothing matched. Try removing a filter or asking more broadly.",
     remove: (label: string) => `Remove ${label}`, signIn: "Sign in",
+    loosened: (label: string) => `${label} (loosened)`, closest: "No exact match — here are the closest.",
   },
   zh: {
     thinking: "正在找最合适的…", empty: "没有找到匹配的结果，试试去掉一个条件或换个问法。",
     remove: (label: string) => `移除 ${label}`, signIn: "登录",
+    loosened: (label: string) => `${label}（已放宽）`, closest: "没有完全符合的，以下是最接近的。",
   },
 } as const;
 
@@ -29,7 +31,9 @@ function AskChips({ state, language, onRemove }: { state: AskViewState; language
   if (state.chips.length === 0) return null;
   return <ul className="ask-chips">{state.chips.map((chip) => (
     <li key={chip.key}>
-      {onRemove
+      {state.relaxed.includes(chip.key)
+        ? <span data-relaxed=""><span aria-hidden="true">{chip.label}</span><span className="ask-sr">{copy[language].loosened(chip.label)}</span></span>
+        : onRemove
         ? <button type="button" aria-label={copy[language].remove(chip.label)} onClick={() => onRemove(chip.key)}>{chip.label}<span aria-hidden="true"> ×</span></button>
         : <span>{chip.label}</span>}
     </li>
@@ -45,6 +49,7 @@ export function AskResults({ state, language, onRemoveChip }: { state: AskViewSt
   return (
     <div className="ask-results">
       <AskChips state={state} language={language} onRemove={onRemoveChip} />
+      {state.relaxed.length > 0 && state.cards.length > 0 ? <p className="ask-closest">{content.closest}</p> : null}
       {state.reply ? <p className="ask-reply">{state.reply}</p> : null}
       {state.notices.map((notice) => <p key={notice} className="ask-notice" role="status">{notice}</p>)}
       {state.status === "thinking" ? <div className="ask-skeleton" role="status" aria-label={content.thinking}><span /><span /><span /></div> : null}
