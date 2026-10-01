@@ -85,3 +85,5 @@ it("interpret budget: \u4e24\u5927\u4e00\u5c0f\u603b\u517160\u5143", () => { exp
 it("reject unsupported budget: total $10001", () => { expect(budgetIntent("total $10001").totalBudget).toBeUndefined(); expect(budgetIntent("total $10001").maxPrice).toBeUndefined(); });
 
 it("reject unsupported budget: $1001 per ticket", () => { expect(budgetIntent("$1001 per ticket").totalBudget).toBeUndefined(); expect(budgetIntent("$1001 per ticket").maxPrice).toBeUndefined(); });
+
+it("reject unsupported budget: a movie please", () => { expect(budgetIntent("a movie please").totalBudget).toBeUndefined(); expect(budgetIntent("a movie please").maxPrice).toBeUndefined(); });
