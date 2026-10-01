@@ -10,3 +10,5 @@ it("admit official booking https://www.ticketmaster.co.nz/event/a", () => { expe
 it("admit official booking https://ticketmaster.com/event/a", () => { expect(trustedBookingUrl("https://ticketmaster.com/event/a")).toBe("https://ticketmaster.com/event/a"); });
 
 it("admit official booking https://academycinemas.co.nz/", () => { expect(trustedBookingUrl("https://academycinemas.co.nz/")).toBe("https://academycinemas.co.nz/"); });
+
+it("admit official booking https://bridgeway.co.nz/", () => { expect(trustedBookingUrl("https://bridgeway.co.nz/")).toBe("https://bridgeway.co.nz/"); });
