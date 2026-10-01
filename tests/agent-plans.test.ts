@@ -22,3 +22,5 @@ it("reject persisted invalid plan name", () => { expect(readPlans(JSON.stringify
 it("reject persisted invalid plan createdAt", () => { expect(readPlans(JSON.stringify([{ ...plan, createdAt: "not a date" }]))).toEqual([]); });
 
 it("reject persisted invalid plan id", () => { expect(readPlans(JSON.stringify([{ ...plan, id: "../unsafe" }]))).toEqual([]); });
+
+it("reject persisted invalid plan cards", () => { expect(readPlans(JSON.stringify([{ ...plan, cards: [] }]))).toEqual([]); });
