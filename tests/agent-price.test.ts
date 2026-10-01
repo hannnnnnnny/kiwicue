@@ -43,3 +43,5 @@ it("mark unknown price Number.POSITIVE_INFINITY", () => { expect(priceEvidence({
 it("free entry has zero ticket total for a family", () => { expect(priceEvidence({ min: null, max: null, free: true }, { ...EMPTY_FILTERS, partySize: 3, totalBudget: 0 })).toMatchObject({ keep: true, budgetStatus: "free", minPartyCost: 0 }); });
 
 it("unknown ticket prices cannot satisfy free-only search", () => { expect(priceEvidence({ min: null, max: null, free: false }, { ...EMPTY_FILTERS, free: true }).keep).toBe(false); });
+
+it("lowest advertised ticket never becomes verified total affordability", () => { expect(priceEvidence({ min: 10, max: 100, free: false }, { ...EMPTY_FILTERS, partySize: 3, totalBudget: 60 }).budgetStatus).toBe("estimate"); });
