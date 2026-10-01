@@ -77,8 +77,8 @@ async function understand(input: AskRequest, ctx: Context): Promise<{ filters: A
   };
 }
 
-async function emitReply(input: AskRequest, top: AskCard[], deps: AskDeps, emit: Emit): Promise<Partial<AskUsage>> {
-  const reply = replyDeltas({ text: input.text, language: input.language, top, stream: deps.streamReply });
+async function emitReply(input: AskRequest, top: AskCard[], loosened: string[], deps: AskDeps, emit: Emit): Promise<Partial<AskUsage>> {
+  const reply = replyDeltas({ text: input.text, language: input.language, top, loosened, stream: deps.streamReply });
   let step = await reply.next();
   while (!step.done) {
     emit({ type: "reply", delta: step.value });
@@ -91,18 +91,21 @@ async function emitReply(input: AskRequest, top: AskCard[], deps: AskDeps, emit:
 export async function runAsk(input: AskRequest, ctx: Context, emit: Emit): Promise<AskUsage> {
   const understood = await understand(input, ctx);
   let usage = addUsage(ZERO_USAGE, understood.usage);
-  emit({ type: "understood", filters: understood.filters, chips: chipsFor(understood.filters, input.language) });
+  const chips = chipsFor(understood.filters, input.language);
+  emit({ type: "understood", filters: understood.filters, chips });
   if (ctx.degrade || understood.degraded) emit({ type: "notice", code: "ai_degraded", message: ASK_MESSAGES[input.language].ai_degraded });
 
   const candidates = await loadCandidates({ filters: understood.filters, language: input.language, now: ctx.now, sources: ctx.deps.sources });
   if (candidates.unavailable.length > 0) emit({ type: "notice", code: "source_unavailable", message: ASK_MESSAGES[input.language].source_unavailable });
+  if (candidates.relaxed.length > 0) emit({ type: "relaxed", keys: candidates.relaxed });
+  const loosened = candidates.relaxed.flatMap((key) => chips.filter((chip) => chip.key === key).map((chip) => chip.label));
   const ranked = await rankCards({ text: input.text, filters: understood.filters, cards: candidates.cards, evaluate: ctx.deps.evaluate });
   usage = addUsage(usage, { jevInputTokens: ranked.inputTokens });
   ranked.ranked.forEach((card) => emit({ type: "result", card }));
   const best = ranked.ranked[0];
   if (best && best.score >= BEST_MIN_SCORE) emit({ type: "best", id: best.id });
 
-  return ctx.degrade ? usage : addUsage(usage, await emitReply(input, ranked.ranked, ctx.deps, emit));
+  return ctx.degrade ? usage : addUsage(usage, await emitReply(input, ranked.ranked, loosened, ctx.deps, emit));
 }
 
 async function readRequest(request: Request): Promise<{ ok: true; data: AskRequest } | { ok: false; status: number }> {

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEven
 import { useLanguage } from "../language-provider";
 import { AskBot, type BotState } from "./ask-bot";
 import { AskError, AskResults } from "./ask-results";
+import type { FollowUpOption } from "./follow-up";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
 import { useSpeechInput } from "./use-speech-input";
@@ -61,10 +62,11 @@ function MicIcon() {
 
 type Line = { key: string; text: string } | null;
 
-/** The line Kiwi should say now: its newest message, or a finished search's one-sentence reply. */
+/** The line Kiwi should say now: its newest message, or a finished search's reply and follow-up question. */
 function currentLine(entries: ChatEntry[], search: AskViewState): Line {
   const latest = entries[entries.length - 1];
   if (latest?.role === "assistant") return { key: latest.id, text: latest.text };
+  if (latest?.role === "followup") return { key: latest.id, text: search.reply ? `${search.reply} ${latest.text}` : latest.text };
   if (latest?.role === "results" && search.status === "done" && search.reply) return { key: latest.id, text: search.reply };
   return null;
 }
@@ -102,6 +104,19 @@ function Message({ entry, quick, language, onQuickReply }: { entry: Extract<Chat
   );
 }
 
+function FollowUpMessage({ entry, active, onFollowUp }: { entry: Extract<ChatEntry, { role: "followup" }>; active: boolean; onFollowUp(option: FollowUpOption): void }) {
+  return (
+    <div className="ask-msg" data-from="kiwi">
+      <p>{entry.text}</p>
+      {active ? (
+        <div className="ask-quick">{entry.options.map((option) => (
+          <button key={option.label} type="button" data-kind={option.kind} onClick={() => onFollowUp(option)}>{option.label}</button>
+        ))}</div>
+      ) : null}
+    </div>
+  );
+}
+
 function Proposal({ entry, language, onConfirm, onChange }: { entry: Extract<ChatEntry, { role: "proposal" }>; language: Language; onConfirm(): void; onChange(): void }) {
   const content = copy[language];
   return (
@@ -120,16 +135,17 @@ function Proposal({ entry, language, onConfirm, onChange }: { entry: Extract<Cha
 
 type ThreadProps = {
   entries: ChatEntry[]; search: AskViewState; pending: boolean; language: Language;
-  onQuickReply(text: string): void; onConfirm(): void; onChange(): void; onRemoveChip(key: string): void;
+  onQuickReply(text: string): void; onConfirm(): void; onChange(): void; onRemoveChip(key: string): void; onFollowUp(option: FollowUpOption): void;
 };
 
-function Thread({ entries, search, pending, language, onQuickReply, onConfirm, onChange, onRemoveChip }: ThreadProps) {
+function Thread({ entries, search, pending, language, onQuickReply, onConfirm, onChange, onRemoveChip, onFollowUp }: ThreadProps) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView?.({ block: "end", behavior: "smooth" }); }, [entries.length, search.cards.length, search.reply, pending]);
   const latest = entries.length - 1;
   return (
     <div className="ask-thread" aria-live="polite">
       {entries.map((entry, index) => {
+        if (entry.role === "followup") return <FollowUpMessage key={entry.id} entry={entry} active={index === latest && !pending} onFollowUp={onFollowUp} />;
         if (entry.role === "proposal") return <Proposal key={entry.id} entry={entry} language={language} onConfirm={onConfirm} onChange={onChange} />;
         if (entry.role === "results") {
           const live = entry.snapshot === null;
@@ -185,7 +201,11 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const { language } = useLanguage();
   const content = copy[language];
   const search = useAskStream(fetchImpl);
-  const chat = useAskChat({ language, fetchImpl, searchState: search.state, search: (text, history) => void search.ask(text, language, { history, fresh: true }) });
+  const chat = useAskChat({
+    language, fetchImpl, searchState: search.state,
+    search: (text, history) => void search.ask(text, language, { history, fresh: true }),
+    refine: (text) => void search.ask(text, language),
+  });
   const speech = useSpeechInput({ language, onFinal: (text) => void chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
@@ -212,7 +232,7 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
         </header>
         <Thread entries={chat.entries} search={search.state} pending={chat.pending} language={language}
           onQuickReply={(text) => void chat.send(text, "text")} onConfirm={chat.confirm} onChange={chat.change}
-          onRemoveChip={(key) => void search.removeChip(key, language)} />
+          onRemoveChip={(key) => void search.removeChip(key, language)} onFollowUp={chat.followUp} />
         {chat.error ? <AskError error={chat.error} language={language} /> : null}
         <Composer language={language} speech={speech} onSend={(text) => void chat.send(text, "text")} />
         <footer className="ask-footer">

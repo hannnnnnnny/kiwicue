@@ -103,6 +103,7 @@
 
 .ask-results { display: grid; gap: 12px; }
 .ask-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ask-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .ask-chips button {
   min-height: 36px;
   padding: 0 12px;
@@ -115,8 +116,21 @@
   font-weight: 700;
   cursor: pointer;
 }
+.ask-chips [data-relaxed] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px dashed var(--portal-line);
+  border-radius: var(--radius-pill);
+  color: var(--portal-muted);
+  font-size: .8rem;
+  font-weight: 700;
+  text-decoration: line-through;
+}
+.ask-closest { margin: 0; color: var(--portal-muted); font-size: .85rem; font-weight: 700; }
 .ask-reply { margin: 0; font-size: 1.05rem; line-height: 1.5; }
-.ask-notice, .ask-empty { margin: 0; color: var(--portal-muted); font-size: .85rem; }
+.ask-notice { margin: 0; color: var(--portal-muted); font-size: .85rem; }
 .ask-error { padding: 16px; border-radius: var(--radius-panel); background: var(--portal-raised); }
 .ask-error p { margin: 0 0 8px; }
 

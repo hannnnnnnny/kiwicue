@@ -22,6 +22,14 @@ describe("askReducer", () => {
   });
 });
 
+describe("askReducer relaxation", () => {
+  it("remembers which chips were loosened and clears them on the next question", () => {
+    const relaxed = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "relaxed", keys: ["area", "dates"] } });
+    expect(relaxed.relaxed).toEqual(["area", "dates"]);
+    expect(askReducer(relaxed, { type: "start", text: "again" }).relaxed).toEqual([]);
+  });
+});
+
 describe("useAskStream", () => {
   it("sends previous filters and history on a follow-up", async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => ndjson([

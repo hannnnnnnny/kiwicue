@@ -12,10 +12,10 @@ const NETWORK_MESSAGE: Record<Language, string> = { en: "Couldn't reach KiwiCue.
 export type AskViewState = {
   status: "idle" | "thinking" | "streaming" | "done" | "error";
   text: string; filters: AskFilters | null; chips: AskChip[]; cards: AskCard[]; bestId: string | null;
-  reply: string; notices: string[]; error: { code: AskErrorCode; message: string } | null; remaining: number | null; history: string[];
+  reply: string; notices: string[]; relaxed: string[]; error: { code: AskErrorCode; message: string } | null; remaining: number | null; history: string[];
 };
 export const INITIAL_ASK_STATE: AskViewState = {
-  status: "idle", text: "", filters: null, chips: [], cards: [], bestId: null, reply: "", notices: [], error: null, remaining: null, history: [],
+  status: "idle", text: "", filters: null, chips: [], cards: [], bestId: null, reply: "", notices: [], relaxed: [], error: null, remaining: null, history: [],
 };
 type Action = { type: "start"; text: string } | { type: "event"; event: AskStreamEvent } | { type: "fail"; message: string } | { type: "reset" };
 
@@ -24,6 +24,7 @@ function applyEvent(state: AskViewState, event: AskStreamEvent): AskViewState {
     case "understood": return { ...state, status: "streaming", filters: event.filters, chips: event.chips };
     case "result": return { ...state, cards: [...state.cards, event.card] };
     case "best": return { ...state, bestId: event.id };
+    case "relaxed": return { ...state, relaxed: event.keys };
     case "reply": return { ...state, reply: state.reply + event.delta };
     case "notice": return { ...state, notices: [...new Set([...state.notices, event.message])] };
     case "done": {
@@ -38,7 +39,7 @@ function applyEvent(state: AskViewState, event: AskStreamEvent): AskViewState {
 export function askReducer(state: AskViewState, action: Action): AskViewState {
   if (action.type === "reset") return INITIAL_ASK_STATE;
   if (action.type === "fail") return { ...state, status: "error", error: { code: "internal", message: action.message } };
-  if (action.type === "start") return { ...state, status: "thinking", text: action.text, cards: [], bestId: null, reply: "", notices: [], error: null };
+  if (action.type === "start") return { ...state, status: "thinking", text: action.text, cards: [], bestId: null, reply: "", notices: [], relaxed: [], error: null };
   return applyEvent(state, action.event);
 }
 

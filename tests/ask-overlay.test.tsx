@@ -56,6 +56,44 @@ describe("AskOverlay chat", () => {
     expect(screen.getByText("4 free searches left today")).toBeVisible();
   });
 
+  it("keeps the conversation going after results: a refinement re-runs the search", async () => {
+    const fetchImpl = server([proposing]);
+    renderOverlay(fetchImpl);
+    say("Saturday with the kids");
+    fireEvent.click(await screen.findByRole("button", { name: "Search" }, SLOW));
+    expect(await screen.findByText("Want me to tweak anything?", {}, SLOW)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "In the evening" }));
+    await waitFor(() => expect(fetchImpl.mock.calls.filter(([url]) => url === "/api/ask")).toHaveLength(2), SLOW);
+    const refine = JSON.parse(String(fetchImpl.mock.calls.filter(([url]) => url === "/api/ask")[1][1]?.body));
+    expect(refine).toMatchObject({ text: "In the evening", previous: { kids: true } });
+    expect(screen.getByText("In the evening", { selector: ".ask-msg p" })).toBeVisible();
+    await waitFor(() => expect(screen.getAllByText("Want me to tweak anything?")).toHaveLength(2), SLOW);
+  });
+
+  it("starts over from the follow-up", async () => {
+    renderOverlay(server([proposing]));
+    say("Saturday with the kids");
+    fireEvent.click(await screen.findByRole("button", { name: "Search" }, SLOW));
+    fireEvent.click(await screen.findByRole("button", { name: "Start over" }, SLOW));
+    expect(screen.getByText("Sure — what are you after this time?")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Something this weekend" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "In the evening" })).not.toBeInTheDocument();
+  });
+
+  it("shows loosened chips struck through and labels the closest alternatives", async () => {
+    const relaxedSearch: AskStreamEvent[] = [
+      { type: "understood", filters: { ...EMPTY_FILTERS, kids: true, area: "central" }, chips: [{ key: "area", label: "Central" }, { key: "kids", label: "With kids" }] },
+      { type: "relaxed", keys: ["area"] }, ...searchEvents.slice(1),
+    ];
+    renderOverlay(server([proposing], relaxedSearch));
+    say("Saturday with the kids");
+    fireEvent.click(await screen.findByRole("button", { name: "Search" }, SLOW));
+    expect(await screen.findByText("No exact match — here are the closest.", {}, SLOW)).toBeVisible();
+    expect(screen.getByText("Central (loosened)").closest("[data-relaxed]")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove Central" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove With kids" })).toBeVisible();
+  });
+
   it("goes back to chatting when the visitor wants to change the plan", async () => {
     renderOverlay(server([proposing]));
     say("Saturday with the kids");

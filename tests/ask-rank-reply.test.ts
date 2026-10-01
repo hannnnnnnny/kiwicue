@@ -43,6 +43,15 @@ describe("replyDeltas", () => {
     expect(step.value).toEqual({ inputTokens: 200, outputTokens: 12 });
   });
 
+  it("asks for an honest 'nothing exact' sentence when filters were loosened", async () => {
+    const stream = vi.fn<StreamReply>(() => ({ textStream: (async function* () { yield "ok"; })(), usage: Promise.resolve({ inputTokens: 1, outputTokens: 1 }) }));
+    const generator = replyDeltas({ text: "x", language: "en", top: [cards[0]], loosened: ["Wed 7 Oct", "Central"], stream });
+    while (!(await generator.next()).done) { /* drain */ }
+    const call = stream.mock.calls[0][0];
+    expect(JSON.parse(call.prompt).loosened).toEqual(["Wed 7 Oct", "Central"]);
+    expect(call.system).toMatch(/loosened/u);
+  });
+
   it("ends quietly when there is nothing to recommend or DeepSeek fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const failing: StreamReply = () => ({ textStream: (async function* () { throw new Error("down"); })(), usage: Promise.resolve({ inputTokens: 0, outputTokens: 0 }) });

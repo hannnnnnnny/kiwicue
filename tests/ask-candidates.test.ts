@@ -79,6 +79,43 @@ describe("loadCandidates", () => {
     expect(result.cards.length).toBeGreaterThan(0);
   });
 
+  it("treats kids as a ranking hint beside a category, so music with kids still finds music", async () => {
+    const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", kids: true }, language: "en", now: NOW, sources: sources() });
+    expect(result.cards.map((card) => card.title)).toEqual(["Rock Night"]);
+    expect(result.relaxed).toEqual([]);
+  });
+
+  it("drops events whose cheapest ticket is over budget but keeps free and unknown prices", async () => {
+    const unknown = event("d", "Mystery Gig", "2026-10-03", { admission: { kind: "unknown" } });
+    const events = vi.fn(async () => [event("a", "Bundle Baby", "2026-10-03"), rockNight, unknown]);
+    const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", maxPrice: 30 }, language: "en", now: NOW, sources: sources({ events }) });
+    expect(result.cards.map((card) => card.title).sort()).toEqual(["Bundle Baby", "Mystery Gig"]);
+  });
+
+  it("loosens one filter at a time, in order, until something matches", async () => {
+    const budget = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", maxPrice: 30 }, language: "en", now: NOW, sources: sources() });
+    expect(budget.cards.map((card) => card.title)).toEqual(["Rock Night"]);
+    expect(budget.relaxed).toEqual(["maxPrice"]);
+
+    const daytime = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", timeOfDay: "day", maxPrice: 30 }, language: "en", now: NOW, sources: sources() });
+    expect(daytime.cards.map((card) => card.title)).toEqual(["Rock Night"]);
+    expect(daytime.relaxed).toEqual(["maxPrice", "timeOfDay"]);
+  });
+
+  it("looks at nearby days, keeping the other filters, when the chosen day has nothing", async () => {
+    const all = sources();
+    const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", dates: ["2026-10-06"] }, language: "en", now: NOW, sources: all });
+    expect(result.cards.map((card) => card.title)).toEqual(["Rock Night"]);
+    expect(result.relaxed).toEqual(["dates"]);
+    expect(all.events).toHaveBeenCalledTimes(2);
+    expect(all.events).toHaveBeenLastCalledWith({ start: new Date("2026-10-02T11:00:00Z"), end: new Date("2026-10-09T11:00:00Z") }, null);
+  });
+
+  it("returns nothing, with nothing relaxed, when there is truly nothing", async () => {
+    const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", area: "west" }, language: "en", now: NOW, sources: sources({ events: vi.fn(async () => []) }) });
+    expect(result).toEqual({ cards: [], relaxed: [], unavailable: [] });
+  });
+
   it("uses a place only when something is actually there", async () => {
     const near = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", place: "herald" }, language: "en", now: NOW, sources: sources() });
     expect(near.cards.map((card) => card.title)).toEqual(["Bundle Baby"]);

@@ -22,17 +22,19 @@ export const deepseekStreamReply: StreamReply = ({ system, prompt, abortSignal }
 
 function system(language: "en" | "zh"): string {
   return language === "zh"
-    ? "你是 KiwiCue 的奥克兰活动向导。用一句简短、口语化的中文回答，点名最推荐的那个选项并说明原因。只使用列出的选项，不要编造信息，不要用 Markdown。"
-    : "You are KiwiCue's Auckland outing guide. Answer in one short, spoken-style English sentence naming the best option and why. Use only the listed options. No Markdown.";
+    ? "你是 KiwiCue 的奥克兰活动向导。用一句简短、口语化的中文回答，点名最推荐的那个选项并说明原因。如果 loosened 不为空，说明没有完全符合的，先简短提到放宽了哪些条件（loosened），再推荐最接近的。只使用列出的选项，不要编造信息，不要用 Markdown。"
+    : "You are KiwiCue's Auckland outing guide. Answer in one short, spoken-style English sentence naming the best option and why. If loosened is not empty, nothing matched exactly: briefly say which conditions you loosened, then name the closest option. Use only the listed options. No Markdown.";
 }
 
 /** Streams the one-sentence reply. Any failure just ends the stream; the cards already answer the question. */
-export async function* replyDeltas(input: { text: string; language: "en" | "zh"; top: AskCard[]; stream?: StreamReply; timeoutMs?: number }): AsyncGenerator<string, TokenUsage> {
+export async function* replyDeltas(input: {
+  text: string; language: "en" | "zh"; top: AskCard[]; loosened?: string[]; stream?: StreamReply; timeoutMs?: number;
+}): AsyncGenerator<string, TokenUsage> {
   if (input.top.length === 0) return NO_USAGE;
   const options = input.top.slice(0, 3).map(({ title, when, venue, priceText, kind }) => ({ kind, title, when, venue, price: priceText }));
   try {
     const result = (input.stream ?? deepseekStreamReply)({
-      system: system(input.language), prompt: JSON.stringify({ question: input.text, options }),
+      system: system(input.language), prompt: JSON.stringify({ question: input.text, options, loosened: input.loosened ?? [] }),
       abortSignal: AbortSignal.timeout(input.timeoutMs ?? DEFAULT_TIMEOUT_MS),
     });
     let wrote = false;

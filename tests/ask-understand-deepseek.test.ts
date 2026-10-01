@@ -6,11 +6,11 @@ describe("understandWithDeepSeek", () => {
 
   it("returns validated slots and token usage", async () => {
     const generate = vi.fn<GenerateSlots>().mockResolvedValue({
-      output: { names: ["Bundle Baby"], place: "Botany", dates: ["2026-10-03"], mode: "new" },
+      output: { names: ["Bundle Baby"], place: "Botany", dates: ["2026-10-03"], mode: "new", maxPrice: 30 },
       usage: { inputTokens: 400, outputTokens: 40 },
     });
     const result = await understandWithDeepSeek({ text: "Bundle Baby near Botany on Saturday", history: [], previous: null, today: "2026-10-01 (Thursday)", generate });
-    expect(result).toEqual({ understanding: { names: ["Bundle Baby"], place: "Botany", dates: ["2026-10-03"], mode: "new" }, usage: { inputTokens: 400, outputTokens: 40 } });
+    expect(result).toEqual({ understanding: { names: ["Bundle Baby"], place: "Botany", dates: ["2026-10-03"], mode: "new", maxPrice: 30 }, usage: { inputTokens: 400, outputTokens: 40 } });
     expect(generate.mock.calls[0][0].prompt).toContain("Bundle Baby near Botany on Saturday");
     expect(generate.mock.calls[0][0].system).toContain("2026-10-01");
   });
