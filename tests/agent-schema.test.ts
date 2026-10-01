@@ -26,3 +26,5 @@ it("reject unsafe internal result '//evil.example'", () => { expect(askCardSchem
 it("reject unsafe internal result '/\\\\evil.example'", () => { expect(askCardSchema.safeParse({ ...card, href: "/\\evil.example" }).success).toBe(false); });
 
 it("reject unsafe internal result '/movies\\nunsafe'", () => { expect(askCardSchema.safeParse({ ...card, href: "/movies\nunsafe" }).success).toBe(false); });
+
+it("reject unsafe internal result 'javascript:alert(1)'", () => { expect(askCardSchema.safeParse({ ...card, href: "javascript:alert(1)" }).success).toBe(false); });
