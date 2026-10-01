@@ -10,3 +10,5 @@ it("escape calendar text 'a,b'", () => { expect(calendarText("a,b")).toBe("a\\,b
 it("escape calendar text 'a;b'", () => { expect(calendarText("a;b")).toBe("a\\;b"); });
 
 it("escape calendar text 'a\\nb'", () => { expect(calendarText("a\nb")).toBe("a\\nb"); });
+
+it("escape calendar text 'a\\r\\nb'", () => { expect(calendarText("a\r\nb")).toBe("a\\nb"); });
