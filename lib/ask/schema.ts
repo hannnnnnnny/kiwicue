@@ -52,6 +52,7 @@ export const askCardSchema = z.object({
   priceText: z.string().max(60).nullable(),
   sessionCount: z.number().int().min(1),
   score: z.number().min(0).max(1),
+  trailerKey: z.string().regex(/^[A-Za-z0-9_-]{11}$/u).nullable().optional(),
 }).strict();
 export type AskCard = z.infer<typeof askCardSchema>;
 
@@ -69,6 +70,11 @@ export const askStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("understood"), filters: askFiltersSchema, chips: z.array(chipSchema).max(12) }),
   z.object({ type: z.literal("result"), card: askCardSchema }),
   z.object({ type: z.literal("best"), id: z.string().max(200) }),
+  z.object({
+    type: z.literal("media"), id: z.string().max(200),
+    imageUrl: z.url({ protocol: /^https$/u }).max(2048).startsWith("https://image.tmdb.org/").nullable(),
+    trailerKey: z.string().regex(/^[A-Za-z0-9_-]{11}$/u).nullable(),
+  }),
   z.object({ type: z.literal("relaxed"), keys: z.array(chipSchema.shape.key).max(8) }),
   z.object({ type: z.literal("reply"), delta: z.string().max(400) }),
   z.object({ type: z.literal("notice"), code: z.enum(["ai_degraded", "source_unavailable"]), message: z.string().max(200) }),

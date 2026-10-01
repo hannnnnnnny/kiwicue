@@ -2,6 +2,7 @@ import { defaultSources } from "../../../lib/ask/candidates";
 import { isAskConfigured } from "../../../lib/ask/config";
 import { identifyAsker } from "../../../lib/ask/identify";
 import { jevEvaluate } from "../../../lib/ask/jev";
+import { tmdbMediaLookup } from "../../../lib/ask/media";
 import { handleAsk } from "../../../lib/ask/pipeline";
 import { createSupabaseQuotaStore } from "../../../lib/ask/quota";
 import { deepseekStreamReply } from "../../../lib/ask/reply";
@@ -19,6 +20,7 @@ export async function POST(request: Request): Promise<Response> {
     generateSlots: deepseekGenerateSlots,
     streamReply: deepseekStreamReply,
     sources: defaultSources,
+    media: tmdbMediaLookup,
     now: () => new Date(),
   });
 }
