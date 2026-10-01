@@ -26,7 +26,8 @@ const LOCALE: Record<Language, string> = { en: "en-NZ", zh: "zh-CN" };
 
 function score(voice: VoiceInfo, language: Language): number {
   const lang = voice.lang.replace("_", "-").toLowerCase();
-  const matches = language === "zh" ? lang.startsWith("zh") : lang.startsWith("en");
+  const mandarin = /^zh(?:$|-(?:cn|tw|sg|hans|hant)(?:-|$))/u.test(lang) && !/-(?:hk|mo|yue)(?:-|$)/u.test(lang);
+  const matches = language === "zh" ? mandarin : lang.startsWith("en");
   if (!matches) return -1;
   const preferredRegion = language === "zh" ? lang === "zh-cn" : ["en-nz", "en-au", "en-gb"].includes(lang);
   return (NATURAL.test(voice.name) ? 4 : 0) + (preferredRegion ? 2 : 0) + (language === "zh" && lang !== "zh-cn" ? -1 : 0);

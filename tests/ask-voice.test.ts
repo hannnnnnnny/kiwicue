@@ -32,6 +32,12 @@ describe("pickVoice", () => {
     for (const id of ASSISTANT_IDS) expect(pickVoice(catalog, "zh", id)).toEqual(chinese);
     expect(pickVoice([chinese], "en", "kai")).toBeNull();
   });
+
+  it("keeps Mandarin replies in Mandarin when Cantonese voices are also installed", () => {
+    const mandarin = { name: "Mandarin", lang: "zh-CN" };
+    const catalog = [mandarin, { name: "Natural Cantonese", lang: "zh-HK" }, { name: "Cantonese Hant", lang: "zh-Hant-HK" }];
+    for (const id of ASSISTANT_IDS) expect(pickVoice(catalog, "zh", id)).toBe(mandarin);
+  });
   it("prefers natural-sounding voices in the right language", () => {
     expect(pickVoice(voices, "zh")?.name).toContain("Xiaoxiao");
     expect(pickVoice(voices, "en")?.name).toBe("Google US English");
