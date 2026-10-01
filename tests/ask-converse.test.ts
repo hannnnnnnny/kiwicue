@@ -41,6 +41,13 @@ describe("conversePrompt", () => {
     expect(prompt).toContain("Keep this tentative");
     expect(prompt).toContain("If the visitor intentionally quotes you");
   });
+
+  it("keeps friendly practical advice grounded in source evidence", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [] });
+    expect(prompt).toContain("payment methods, reservations, accessibility, ticket types or age suitability require listing evidence");
+    expect(prompt).toContain("do not invent a friendly tip");
+    expect(prompt).toContain("缺少信息就说‘还没查到’或‘这里没写’");
+  });
 });
 
 describe("toModelMessages", () => {
