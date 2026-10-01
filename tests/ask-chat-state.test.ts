@@ -1,69 +1,54 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { chatWindow, useAskChat, type ChatEntry } from "../components/ask/use-ask-chat";
+import { useAskChat } from "../components/ask/use-ask-chat";
+import { INITIAL_ASK_STATE, type AskViewState } from "../components/ask/use-ask-stream";
+import { EMPTY_FILTERS } from "../lib/ask/schema";
 
-function turn(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+const card = { kind: "event" as const, id: "a", title: "Bundle Baby", when: "2026-10-03T10:00", venue: "Aotea", href: "/events/a", imageUrl: null, priceText: null, sessionCount: 1, score: 1 };
+const finished: AskViewState = { ...INITIAL_ASK_STATE, status: "done", text: "music", filters: EMPTY_FILTERS, cards: [card] };
+
+function setup() {
+  const search = vi.fn();
+  const reset = vi.fn();
+  const hook = renderHook(({ searchState }) => useAskChat({ language: "en", search, reset, searchState }), { initialProps: { searchState: INITIAL_ASK_STATE } });
+  return { ...hook, search, reset };
 }
 
-const asking = { reply: "Who's coming?", quickReplies: ["Kids", "Friends"], ready: false, summary: null, searchText: null, remaining: 5 };
-const proposing = { reply: "Got it!", quickReplies: [], ready: true, summary: "Sat · kids · East", searchText: "Saturday with kids in east Auckland", remaining: 5 };
-
-describe("chatWindow", () => {
-  it("only sends the conversation since the last search", () => {
-    const entries: ChatEntry[] = [
-      { id: "g", role: "assistant", text: "Hi, I'm Kiwi!", quickReplies: [] },
-      { id: "1", role: "user", text: "weekend" },
-      { id: "r", role: "results", snapshot: null },
-      { id: "2", role: "user", text: "cheaper please" },
-    ];
-    expect(chatWindow(entries)).toEqual([{ role: "user", text: "cheaper please" }]);
-    expect(chatWindow(entries.slice(0, 2))).toEqual([{ role: "assistant", text: "Hi, I'm Kiwi!" }, { role: "user", text: "weekend" }]);
-  });
-});
-
 describe("useAskChat", () => {
-  it("greets, sends the thread, shows Kiwi's question and then a proposal", async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(turn(asking)).mockResolvedValueOnce(turn(proposing));
-    const search = vi.fn();
-    const { result } = renderHook(() => useAskChat({ language: "en", fetchImpl, search }));
-    expect(result.current.entries[0]).toMatchObject({ role: "assistant", text: expect.stringContaining("Kiwi") });
-
-    await act(() => result.current.send("Something this weekend", "voice"));
-    const body = JSON.parse(String(fetchImpl.mock.calls[0][1]?.body));
-    expect(fetchImpl.mock.calls[0][0]).toBe("/api/ask/chat");
-    expect(body.messages.map((message: { role: string }) => message.role)).toEqual(["assistant", "user"]);
-    expect(result.current.entries.at(-1)).toMatchObject({ role: "assistant", text: "Who's coming?", quickReplies: ["Kids", "Friends"] });
+  it("greets with starters, then searches straight away on every message", () => {
+    const { result, search } = setup();
+    expect(result.current.entries).toEqual([expect.objectContaining({ role: "assistant", text: expect.stringContaining("Kiwi"), quickReplies: expect.arrayContaining(["Something this weekend"]) })]);
+    act(() => result.current.send("  live music  ", "voice"));
+    expect(search).toHaveBeenCalledWith("live music");
+    expect(result.current.entries.slice(1).map((entry) => entry.role)).toEqual(["user", "results"]);
     expect(result.current.lastInput).toBe("voice");
-
-    await act(() => result.current.send("Kids", "text"));
-    expect(result.current.entries.slice(-2).map((entry) => entry.role)).toEqual(["assistant", "proposal"]);
-    expect(result.current.remaining).toBe(5);
-
-    act(() => result.current.confirm());
-    expect(search).toHaveBeenCalledWith("Saturday with kids in east Auckland", ["Something this weekend", "Kids"]);
-    expect(result.current.entries.at(-1)).toMatchObject({ role: "results" });
-    expect(result.current.entries.find((entry) => entry.role === "proposal")).toMatchObject({ status: "confirmed" });
+    act(() => result.current.send("   ", "text"));
+    expect(search).toHaveBeenCalledTimes(1);
   });
 
-  it("lets the visitor change the proposal and keep chatting", async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(turn(proposing));
-    const { result } = renderHook(() => useAskChat({ language: "zh", fetchImpl, search: vi.fn() }));
-    await act(() => result.current.send("周六带孩子", "text"));
-    act(() => result.current.change());
-    expect(result.current.entries.find((entry) => entry.role === "proposal")).toMatchObject({ status: "changed" });
-    expect(result.current.entries.at(-1)).toMatchObject({ role: "assistant", text: expect.stringContaining("改") });
+  it("adds Kiwi's follow-up once results are in, and folds earlier results into a snapshot", () => {
+    const { result, rerender, search } = setup();
+    act(() => result.current.send("live music", "text"));
+    rerender({ searchState: finished });
+    expect(result.current.entries.at(-1)).toMatchObject({ role: "followup", text: "Which day suits you?" });
+    rerender({ searchState: { ...finished } });
+    expect(result.current.entries.filter((entry) => entry.role === "followup")).toHaveLength(1);
+
+    act(() => result.current.followUp({ label: "This weekend", kind: "refine" }));
+    expect(search).toHaveBeenLastCalledWith("This weekend");
+    const results = result.current.entries.filter((entry) => entry.role === "results");
+    expect(results).toHaveLength(2);
+    expect(results[0]).toMatchObject({ snapshot: finished });
+    expect(results[1]).toMatchObject({ snapshot: null });
   });
 
-  it("shows service errors and network failures as a Kiwi error", async () => {
-    const fetchImpl = vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(turn({ error: { code: "budget_exhausted", message: "Resting today." } }, 429))
-      .mockRejectedValueOnce(new TypeError("offline"));
-    const { result } = renderHook(() => useAskChat({ language: "en", fetchImpl, search: vi.fn() }));
-    await act(() => result.current.send("hi", "text"));
-    expect(result.current.error).toEqual({ code: "budget_exhausted", message: "Resting today." });
-    await act(() => result.current.send("hi again", "text"));
-    expect(result.current.error?.code).toBe("internal");
-    expect(result.current.pending).toBe(false);
+  it("starts over with a fresh search and a new greeting", () => {
+    const { result, rerender, reset } = setup();
+    act(() => result.current.send("live music", "text"));
+    rerender({ searchState: finished });
+    act(() => result.current.followUp({ label: "Start over", kind: "restart" }));
+    expect(reset).toHaveBeenCalled();
+    expect(result.current.entries.at(-1)).toMatchObject({ role: "assistant", text: "Sure — what are you after this time?" });
+    expect(result.current.entries.find((entry) => entry.role === "results")).toMatchObject({ snapshot: finished });
   });
 });
