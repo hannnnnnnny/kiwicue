@@ -245,7 +245,7 @@ function botState(listening: boolean, speaking: boolean, busy: boolean): BotStat
   return busy ? "thinking" : "idle";
 }
 
-export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?: typeof fetch }) {
+export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): void; fetchImpl?: typeof fetch; active?: boolean }) {
   const { language } = useLanguage();
   const content = copy[language];
   const { assistant, setAssistant } = useAssistant();
@@ -258,17 +258,22 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const speech = useSpeechInput({ language: voiceLanguage, onFinal: (text) => chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
-  const { speaking, silence } = useAssistantVoice(line, muted, assistant.voice, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
+  const { speaking, silence } = useAssistantVoice(line, muted || !active, assistant.voice, () => { if (active && chat.lastInput === "voice" && speech.supported) speech.start(); });
   const busy = search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
   const { remaining } = search.state;
   // Quick replies disappear once used, which drops focus outside the dialog, so Escape
   // is handled for the whole document while the overlay is open.
   useEffect(() => {
+    if (!active) return;
     const closeOnEscape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
+  }, [active, onClose]);
+  useEffect(() => {
+    if (active) document.querySelector<HTMLInputElement>(".ask-composer input")?.focus();
+    else speech.stop();
+  }, [active, speech.stop]);
   function toggleMute() { setMuted(!muted); writeMuted(!muted); }
   function pick(id: AssistantId) {
     setPicking(false);
