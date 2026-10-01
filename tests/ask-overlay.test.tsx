@@ -125,6 +125,27 @@ describe("AskOverlay", () => {
     expect(bodies(fetchImpl)[0]).toMatchObject({ assistant: "sunny" });
   });
 
+  it("talks Chinese on the English site: the mic follows the visitor and Chinese replies get a Chinese voice", async () => {
+    const heard: Array<{ lang: string }> = [];
+    const spoken: Array<{ text: string; lang: string }> = [];
+    class Recognition { lang = ""; interimResults = false; continuous = false; onresult = null; onerror = null; onend = null; start() { heard.push(this); } stop() {} abort() {} }
+    class Utterance { lang = ""; voice = null; rate = 1; pitch = 1; onend: (() => void) | null = null; onerror = null; constructor(public text: string) {} }
+    vi.stubGlobal("webkitSpeechRecognition", Recognition);
+    vi.stubGlobal("SpeechSynthesisUtterance", Utterance);
+    vi.stubGlobal("speechSynthesis", { getVoices: () => [], cancel: vi.fn(), speak: (utterance: Utterance) => { spoken.push(utterance); utterance.onend?.(); } });
+    renderOverlay(server([[{ type: "reply", delta: "好的！这个周末有几个适合小朋友的活动。" }, { type: "done", remaining: 13, tier: "guest" }]]));
+    expect(screen.getByRole("button", { name: "Voice input: English. Switch to Chinese" })).toHaveTextContent("EN");
+    say("周末带小朋友去哪玩");
+    expect(await screen.findByText("好的！这个周末有几个适合小朋友的活动。", {}, SLOW)).toBeVisible();
+    await waitFor(() => expect(spoken.at(-1)).toMatchObject({ lang: "zh-CN" }), SLOW);
+    expect(spoken[0]).toMatchObject({ lang: "en-NZ" });
+    expect(screen.getByRole("button", { name: "Voice input: Chinese. Switch to English" })).toHaveTextContent("中");
+    fireEvent.click(screen.getByRole("button", { name: "Talk to Fern" }));
+    expect(heard.at(-1)).toMatchObject({ lang: "zh-CN" });
+    expect(localStorage.getItem("kiwicue.ask.voiceLanguage")).toBe("zh");
+    vi.unstubAllGlobals();
+  });
+
   it("offers sign-in when searches run out", async () => {
     renderOverlay(server([[{ type: "error", code: "quota_exhausted", message: "You've used today's free questions." }]], 429));
     say("Saturday with the kids");

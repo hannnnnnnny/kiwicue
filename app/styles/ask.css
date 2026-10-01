@@ -114,6 +114,7 @@
   font: inherit;
   font-size: .85rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
 }
 .ask-quick { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -132,7 +133,7 @@
 .ask-quick button:hover { background: var(--portal-brand-soft); }
 .ask-composer {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   padding: 8px;
@@ -140,6 +141,20 @@
   border-radius: var(--radius-panel);
   background: var(--portal-raised);
 }
+.ask-voice-lang {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  background: var(--portal-raised);
+  color: var(--portal-brand);
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.ask-voice-lang:disabled { opacity: .5; cursor: default; }
 .ask-composer:not(:has(.ask-mic)) { grid-template-columns: minmax(0, 1fr) auto; }
 .ask-composer input { min-width: 0; min-height: 44px; border: 0; background: transparent; color: var(--portal-ink); font: inherit; font-size: 1rem; outline: none; }
 .ask-mic, .ask-send { min-width: 44px; min-height: 44px; border: 0; border-radius: var(--radius-pill); font: inherit; font-weight: 700; cursor: pointer; }

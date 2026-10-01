@@ -11,6 +11,7 @@ import { plainText, RichText } from "./rich-text";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
 import { useSpeechInput } from "./use-speech-input";
+import { languageOf, readVoiceLanguage, writeVoiceLanguage, type SpokenLanguage } from "./spoken-language";
 import { createBrowserVoice, type Tone } from "./voice";
 
 type Language = "en" | "zh";
@@ -20,6 +21,7 @@ const copy = {
     mute: (name: string) => `Mute ${name}`, unmute: (name: string) => `Unmute ${name}`, close: "Close",
     message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant", newChat: "New chat",
     send: "Send", talk: (name: string) => `Talk to ${name}`, stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
+    voiceLanguage: { en: "Voice input: English. Switch to Chinese", zh: "Voice input: Chinese. Switch to English" },
     denied: "Microphone access was blocked. You can type instead.", left: (count: number) => `${count} free searches left today`,
     earlier: (count: number, labels: string) => `Earlier · ${count} ${count === 1 ? "result" : "results"}${labels ? ` · ${labels}` : ""}`,
     privacy: "Questions are processed by TypeSafe AI (US) and DeepSeek (China). No account details or location are sent.",
@@ -29,6 +31,7 @@ const copy = {
     mute: (name: string) => `${name} 静音`, unmute: (name: string) => `${name} 取消静音`, close: "关闭",
     message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手", newChat: "新对话",
     send: "发送", talk: (name: string) => `和 ${name} 说话`, stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
+    voiceLanguage: { en: "语音输入：英文，点按切换到中文", zh: "语音输入：中文，点按切换到英文" },
     denied: "麦克风权限被拒绝，可以改为打字。", left: (count: number) => `今天还剩 ${count} 次免费搜索`,
     earlier: (count: number, labels: string) => `之前 · ${count} 个结果${labels ? ` · ${labels}` : ""}`,
     privacy: "问题会由 TypeSafe AI（美国）和 DeepSeek（中国）处理，不会发送账号信息或位置。",
@@ -76,7 +79,7 @@ function currentLine(entries: ChatEntry[], search: AskViewState): Line {
 }
 
 /** Speaks each new line once; when it finishes, `onSpoken` lets a voice conversation listen again. */
-function useAssistantVoice(line: Line, muted: boolean, language: Language, tone: Tone, onSpoken: () => void): { speaking: boolean; silence(): void } {
+function useAssistantVoice(line: Line, muted: boolean, tone: Tone, onSpoken: () => void): { speaking: boolean; silence(): void } {
   const voice = useMemo(() => createBrowserVoice(), []);
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
   const spoken = useRef(new Set<string>());
@@ -90,11 +93,12 @@ function useAssistantVoice(line: Line, muted: boolean, language: Language, tone:
     spoken.current.add(line.key);
     void (async () => {
       setSpeakingKey(line.key);
-      await voice.speak(line.text, language, currentTone.current);
+      // Speak each line in its own language: a Chinese reply on the English site still gets a Chinese voice.
+      await voice.speak(line.text, languageOf(line.text), currentTone.current);
       setSpeakingKey((current) => current === line.key ? null : current);
       afterSpeech.current();
     })();
-  }, [language, line, muted, voice]);
+  }, [line, muted, voice]);
   const silence = useCallback(() => voice.cancel(), [voice]);
   return { speaking: speakingKey !== null, silence };
 }
@@ -174,7 +178,11 @@ function Thread({ entries, search, busy, language, onQuickReply, onRemoveChip, o
 
 type Speech = ReturnType<typeof useSpeechInput>;
 
-function Composer({ language, name, speech, onSend }: { language: Language; name: string; speech: Speech; onSend(text: string): void }) {
+type ComposerProps = {
+  language: Language; name: string; speech: Speech; voiceLanguage: SpokenLanguage; onVoiceLanguage(next: SpokenLanguage): void; onSend(text: string): void;
+};
+
+function Composer({ language, name, speech, voiceLanguage, onVoiceLanguage, onSend }: ComposerProps) {
   const content = copy[language];
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -192,6 +200,12 @@ function Composer({ language, name, speech, onSend }: { language: Language; name
         <button type="button" className="ask-mic" data-listening={speech.listening || undefined}
           aria-label={speech.listening ? content.stopTalking : content.talk(name)} onClick={speech.listening ? speech.stop : speech.start}>
           <MicIcon />
+        </button>
+      ) : null}
+      {speech.supported ? (
+        <button type="button" className="ask-voice-lang" aria-label={content.voiceLanguage[voiceLanguage]}
+          onClick={() => onVoiceLanguage(voiceLanguage === "zh" ? "en" : "zh")} disabled={speech.listening}>
+          {voiceLanguage === "zh" ? "中" : "EN"}
         </button>
       ) : null}
       <input ref={input} aria-label={content.message(name)} placeholder={content.placeholder} maxLength={300}
@@ -238,10 +252,13 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const [picking, setPicking] = useState(false);
   const search = useAskStream(fetchImpl, assistant.id);
   const chat = useAskChat({ language, name: assistant.name, searchState: search.state, search: (text, context) => void search.ask(text, language, context), reset: search.reset });
-  const speech = useSpeechInput({ language, onFinal: (text) => chat.send(text, "voice") });
+  // The mic listens in the language the visitor talks in, which may differ from the site's.
+  const [voiceLanguage, setVoiceLanguage] = useState<SpokenLanguage>(() => readVoiceLanguage() ?? language);
+  const chooseVoiceLanguage = (next: SpokenLanguage) => { setVoiceLanguage(next); writeVoiceLanguage(next); };
+  const speech = useSpeechInput({ language: voiceLanguage, onFinal: (text) => chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
-  const { speaking, silence } = useAssistantVoice(line, muted, language, assistant.voice, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
+  const { speaking, silence } = useAssistantVoice(line, muted, assistant.voice, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
   const busy = search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
   const { remaining } = search.state;
@@ -269,7 +286,8 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
         </div>
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
           onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)} onSound={silence} />
-        <Composer language={language} name={assistant.name} speech={speech} onSend={(text) => chat.send(text, "text")} />
+        <Composer language={language} name={assistant.name} speech={speech} voiceLanguage={voiceLanguage} onVoiceLanguage={chooseVoiceLanguage}
+          onSend={(text) => { if (languageOf(text) !== voiceLanguage) chooseVoiceLanguage(languageOf(text)); chat.send(text, "text"); }} />
         <footer className="ask-footer">
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}
           <small>{content.privacy}</small>
