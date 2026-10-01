@@ -22,3 +22,5 @@ it("reject invalid constraint endMinute=0", () => { expect(askFiltersSchema.safe
 it("reject invalid constraint endMinute=1441", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, endMinute: 1441 }).success).toBe(false); });
 
 it("reject unsafe internal result '//evil.example'", () => { expect(askCardSchema.safeParse({ ...card, href: "//evil.example" }).success).toBe(false); });
+
+it("reject unsafe internal result '/\\\\evil.example'", () => { expect(askCardSchema.safeParse({ ...card, href: "/\\evil.example" }).success).toBe(false); });
