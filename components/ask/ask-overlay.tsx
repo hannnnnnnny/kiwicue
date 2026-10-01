@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useLanguage } from "../language-provider";
 import { AskBot, type BotState } from "./ask-bot";
 import { AskError, AskResults } from "./ask-results";
@@ -72,7 +72,7 @@ function currentLine(entries: ChatEntry[], search: AskViewState): Line {
 }
 
 /** Speaks each new line once; when it finishes, `onSpoken` lets a voice conversation listen again. */
-function useKiwiVoice(line: Line, muted: boolean, language: Language, onSpoken: () => void) {
+function useKiwiVoice(line: Line, muted: boolean, language: Language, onSpoken: () => void): { speaking: boolean; silence(): void } {
   const voice = useMemo(() => createBrowserVoice(), []);
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
   const spoken = useRef(new Set<string>());
@@ -90,7 +90,8 @@ function useKiwiVoice(line: Line, muted: boolean, language: Language, onSpoken: 
       afterSpeech.current();
     })();
   }, [language, line, muted, voice]);
-  return speakingKey !== null;
+  const silence = useCallback(() => voice.cancel(), [voice]);
+  return { speaking: speakingKey !== null, silence };
 }
 
 function Message({ entry, quick, language, onQuickReply }: { entry: Extract<ChatEntry, { role: "assistant" | "user" }>; quick: boolean; language: Language; onQuickReply(text: string): void }) {
@@ -136,9 +137,10 @@ function Proposal({ entry, language, onConfirm, onChange }: { entry: Extract<Cha
 type ThreadProps = {
   entries: ChatEntry[]; search: AskViewState; pending: boolean; language: Language;
   onQuickReply(text: string): void; onConfirm(): void; onChange(): void; onRemoveChip(key: string): void; onFollowUp(option: FollowUpOption): void;
+  onSound(): void;
 };
 
-function Thread({ entries, search, pending, language, onQuickReply, onConfirm, onChange, onRemoveChip, onFollowUp }: ThreadProps) {
+function Thread({ entries, search, pending, language, onQuickReply, onConfirm, onChange, onRemoveChip, onFollowUp, onSound }: ThreadProps) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView?.({ block: "end", behavior: "smooth" }); }, [entries.length, search.cards.length, search.reply, pending]);
   const latest = entries.length - 1;
@@ -150,7 +152,7 @@ function Thread({ entries, search, pending, language, onQuickReply, onConfirm, o
         if (entry.role === "results") {
           const live = entry.snapshot === null;
           return <div key={entry.id} className="ask-msg" data-from="kiwi" data-kind="results">
-            <AskResults state={entry.snapshot ?? search} language={language} onRemoveChip={live ? onRemoveChip : undefined} />
+            <AskResults state={entry.snapshot ?? search} language={language} onRemoveChip={live ? onRemoveChip : undefined} onSound={onSound} />
           </div>;
         }
         return <Message key={entry.id} entry={entry} quick={index === latest && !pending} language={language} onQuickReply={onQuickReply} />;
@@ -209,7 +211,7 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const speech = useSpeechInput({ language, onFinal: (text) => void chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
-  const speaking = useKiwiVoice(line, muted, language, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
+  const { speaking, silence } = useKiwiVoice(line, muted, language, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
   const busy = chat.pending || search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
   const remaining = search.state.remaining ?? chat.remaining;
@@ -232,7 +234,7 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
         </header>
         <Thread entries={chat.entries} search={search.state} pending={chat.pending} language={language}
           onQuickReply={(text) => void chat.send(text, "text")} onConfirm={chat.confirm} onChange={chat.change}
-          onRemoveChip={(key) => void search.removeChip(key, language)} onFollowUp={chat.followUp} />
+          onRemoveChip={(key) => void search.removeChip(key, language)} onFollowUp={chat.followUp} onSound={silence} />
         {chat.error ? <AskError error={chat.error} language={language} /> : null}
         <Composer language={language} speech={speech} onSend={(text) => void chat.send(text, "text")} />
         <footer className="ask-footer">
