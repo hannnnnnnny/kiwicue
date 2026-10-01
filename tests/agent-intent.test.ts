@@ -51,3 +51,5 @@ it("count party: for all three people", () => { expect(partySizeFrom("for all th
 it("count party: party of 5", () => { expect(partySizeFrom("party of 5")).toBe(5); });
 
 it("count party: 2\u59272\u5c0f", () => { expect(partySizeFrom("2\u59272\u5c0f")).toBe(4); });
+
+it("count party: four adults", () => { expect(partySizeFrom("four adults")).toBe(4); });
