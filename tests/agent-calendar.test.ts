@@ -24,3 +24,5 @@ it("fold UTF8 calendar line emoji", () => { const folded = foldCalendarLine("SUM
 it("normalize calendar instant 2026-10-03T08:00:00Z", () => { expect(calendarInstant("2026-10-03T08:00:00Z")).toBe("20261003T080000Z"); });
 
 it("normalize calendar instant 2026-10-03T21:00:00", () => { expect(calendarInstant("2026-10-03T21:00:00")).toBe("20261003T080000Z"); });
+
+it("normalize calendar instant 2026-06-03T21:00:00", () => { expect(calendarInstant("2026-06-03T21:00:00")).toBe("20260603T090000Z"); });
