@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AskCards } from "./ask-cards";
 import type { AskViewState } from "./use-ask-stream";
+import { PlanSelection } from "./plan-selection";
 
 type Language = "en" | "zh";
 const copy = {
@@ -88,6 +89,7 @@ export function AskResults({ state, language, onRemoveChip, onSound }: AskResult
       {searching ? <div className="ask-skeleton" role="status" aria-label={content.thinking}><span /><span /><span /></div> : null}
       {state.relaxed.length > 0 && state.cards.length > 0 ? <p className="ask-closest">{content.closest}</p> : null}
       <AskCards cards={state.cards} bestId={state.bestId} layout={state.layout} language={language} onSound={onSound} />
+      {state.status === "done" && state.filters && state.cards.length > 0 ? <PlanSelection key={state.text} cards={state.cards} filters={state.filters} language={language} /> : null}
       {state.status === "done" && state.filters && state.cards.length === 0 ? <p role="status" className="ask-empty">{content.empty}</p> : null}
       {state.filters ? <p className="ask-credit">{content.coverage}</p> : null}
       {state.cards.some((card) => card.kind === "movie" && (card.trailerKey || card.imageUrl)) ? <p className="ask-credit">{content.tmdb}</p> : null}

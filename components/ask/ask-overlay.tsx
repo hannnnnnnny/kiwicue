@@ -294,6 +294,7 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
         <Composer language={language} name={assistant.name} speech={speech} voiceLanguage={voiceLanguage} onVoiceLanguage={chooseVoiceLanguage}
           onSend={(text) => { if (languageOf(text) !== voiceLanguage) chooseVoiceLanguage(languageOf(text)); chat.send(text, "text"); }} />
         <footer className="ask-footer">
+          <Link href="/plans">{language === "zh" ? "我的行程" : "My plans"}</Link>
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}
           <small>{content.privacy}</small>
         </footer>
