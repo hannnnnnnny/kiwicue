@@ -254,6 +254,7 @@
 /* Without 3D the poster still gently talks. */
 .ask-orb[data-state="speaking"]:not([data-ready]) img { animation: ask-orb-talk .5s ease-in-out infinite alternate; }
 
+.ask-top { display: grid; gap: 12px; }
 .ask-orb-button {
   flex: none;
   padding: 0;

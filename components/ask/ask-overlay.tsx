@@ -252,9 +252,11 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   return (
     <div className="ask-overlay" role="dialog" aria-modal="true" aria-labelledby="ask-title" onKeyDown={trapFocus}>
       <div className="ask-panel">
-        <AssistantHeader assistant={assistant} state={state} language={language} muted={muted} picking={picking}
-          onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onClose={onClose} />
-        {picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
+        <div className="ask-top">
+          <AssistantHeader assistant={assistant} state={state} language={language} muted={muted} picking={picking}
+            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onClose={onClose} />
+          {picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
+        </div>
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
           onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)}
           onFollowUp={chat.followUp} onSound={silence} />
