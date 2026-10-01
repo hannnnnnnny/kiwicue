@@ -46,3 +46,5 @@ it("block unsafe booking data:text/html,hello", () => { expect(trustedBookingUrl
 it("block unsafe booking file:///C:/secret", () => { expect(trustedBookingUrl("file:///C:/secret")).toBeNull(); });
 
 it("block unsafe booking https://hoyts.co.nz/a b", () => { expect(trustedBookingUrl("https://hoyts.co.nz/a b")).toBeNull(); });
+
+it("encode film title without creating extra search parameters", () => { const href = movieResultHref("A&B?cinema=evil", "2026-10-03T08:00:00Z", "event-504"); const url = new URL(href, "https://kiwicue.nz"); expect(url.searchParams.get("q")).toBe("A&B?cinema=evil"); expect(url.searchParams.get("cinema")).toBe("event-504"); expect(url.searchParams.get("date")).toBe("all"); });
