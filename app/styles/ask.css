@@ -114,6 +114,7 @@
   font: inherit;
   font-size: .85rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
 }
 .ask-quick { display: flex; flex-wrap: wrap; gap: 8px; }
