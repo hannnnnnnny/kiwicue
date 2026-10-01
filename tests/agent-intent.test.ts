@@ -39,3 +39,5 @@ it("ignore invalid or unmentioned clock: after 19 pm", () => { expect(timeIntent
 it("ignore invalid or unmentioned clock: thanks", () => { expect(timeIntent("thanks").startMinute).toBeUndefined(); expect(timeIntent("thanks").endMinute).toBeUndefined(); });
 
 it("count party: two adults and a 6-year-old", () => { expect(partySizeFrom("two adults and a 6-year-old")).toBe(3); });
+
+it("count party: 2 adults and 2 children", () => { expect(partySizeFrom("2 adults and 2 children")).toBe(4); });
