@@ -20,3 +20,5 @@ it("admit official booking https://readingcinemas.co.nz/", () => { expect(truste
 it("admit official booking https://silkyotter.co.nz/", () => { expect(trustedBookingUrl("https://silkyotter.co.nz/")).toBe("https://silkyotter.co.nz/"); });
 
 it("block unsafe booking http://hoyts.co.nz/", () => { expect(trustedBookingUrl("http://hoyts.co.nz/")).toBeNull(); });
+
+it("block unsafe booking javascript:alert(1)", () => { expect(trustedBookingUrl("javascript:alert(1)")).toBeNull(); });
