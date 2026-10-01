@@ -12,6 +12,7 @@ import { AskResults } from "./ask-results";
 import { plainText, RichText } from "./rich-text";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
+import { useMicTurn } from "./use-mic-turn";
 import { useSpeechInput } from "./use-speech-input";
 import { languageOf, readVoiceLanguage, writeVoiceLanguage, type SpokenLanguage } from "./spoken-language";
 import { createBrowserVoice, type Tone } from "./voice";
@@ -80,25 +81,26 @@ function currentLine(entries: ChatEntry[], search: AskViewState): Line {
   return null;
 }
 
-/** Speaks each new line once; when it finishes, `onSpoken` lets a voice conversation listen again. */
-function useAssistantVoice(line: Line, muted: boolean, tone: Tone, onSpoken: () => void): { speaking: boolean; silence(): void } {
+/** Speaks each new line once; capture is cancelled before playback to prevent speaker feedback. */
+function useAssistantVoice(line: Line, muted: boolean, tone: Tone, beforeSpeak: () => void): { speaking: boolean; silence(): void } {
   const voice = useMemo(() => createBrowserVoice(), []);
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
   const spoken = useRef(new Set<string>());
-  const afterSpeech = useRef(onSpoken);
+  const beforeSpeech = useRef(beforeSpeak);
   const currentTone = useRef(tone);
-  useEffect(() => { afterSpeech.current = onSpoken; currentTone.current = tone; }, [onSpoken, tone]);
+  useEffect(() => { beforeSpeech.current = beforeSpeak; currentTone.current = tone; }, [beforeSpeak, tone]);
   useEffect(() => () => voice.cancel(), [voice]);
   useEffect(() => { if (muted) voice.cancel(); }, [muted, voice]);
   useEffect(() => {
     if (!line || muted || !voice.available || spoken.current.has(line.key)) return;
     spoken.current.add(line.key);
     void (async () => {
+      beforeSpeech.current();
       setSpeakingKey(line.key);
       // Speak each line in its own language: a Chinese reply on the English site still gets a Chinese voice.
       await voice.speak(line.text, languageOf(line.text), currentTone.current);
       setSpeakingKey((current) => current === line.key ? null : current);
-      afterSpeech.current();
+
     })();
   }, [line, muted, voice]);
   const silence = useCallback(() => voice.cancel(), [voice]);
@@ -262,7 +264,10 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   const stopListening = speech.cancel;
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
-  const { speaking, silence } = useAssistantVoice(line, muted || !active, assistant.voice, () => { if (active && chat.lastInput === "voice" && speech.supported) speech.start(); });
+  const cancelMic = useRef(stopListening);
+  const { speaking, silence } = useAssistantVoice(line, muted || !active, assistant.voice, () => cancelMic.current());
+  const microphone = useMicTurn(speech, silence, active);
+  useEffect(() => { cancelMic.current = microphone.cancel; }, [microphone.cancel]);
   const busy = search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
   const { remaining } = search.state;
@@ -282,6 +287,8 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   function pick(id: AssistantId) {
     setPicking(false);
     if (id === assistant.id) return;
+    microphone.cancel();
+    silence();
     setAssistant(id);
     chat.introduce(ASSISTANTS[id].name);
   }
@@ -290,13 +297,13 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
       <div className="ask-panel">
         <div className="ask-top">
           <AssistantHeader active={active} assistant={assistant} state={state} language={language} muted={muted} picking={picking}
-            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={chat.restart} onClose={onClose} />
+            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={() => { microphone.cancel(); silence(); chat.restart(); }} onClose={onClose} />
           {active && picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
         </div>
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
           onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)} onSound={silence} />
-        <Composer language={language} name={assistant.name} speech={speech} voiceLanguage={voiceLanguage} onVoiceLanguage={chooseVoiceLanguage}
-          onSend={(text) => { if (languageOf(text) !== voiceLanguage) chooseVoiceLanguage(languageOf(text)); chat.send(text, "text"); }} />
+        <Composer language={language} name={assistant.name} speech={microphone} voiceLanguage={voiceLanguage} onVoiceLanguage={chooseVoiceLanguage}
+          onSend={(text) => { if (languageOf(text) !== voiceLanguage) chooseVoiceLanguage(languageOf(text)); microphone.cancel(); silence(); chat.send(text, "text"); }} />
         <footer className="ask-footer">
           <Link href="/plans">{language === "zh" ? "我的行程" : "My plans"}</Link>
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}

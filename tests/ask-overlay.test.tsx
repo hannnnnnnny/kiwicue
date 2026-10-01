@@ -36,6 +36,35 @@ const SLOW = { timeout: 3000 };
 afterEach(() => { cleanup(); localStorage.clear(); delete document.documentElement.dataset.assistant; });
 
 describe("AskOverlay", () => {
+  it("never reopens the microphone when a voice reply finishes", async () => {
+    const started = vi.fn();
+    const utterances: Array<{ onend: (() => void) | null }> = [];
+    class Recognition {
+      static last: Recognition;
+      lang = ""; interimResults = false; continuous = false;
+      onresult: ((event: unknown) => void) | null = null; onerror = null; onend: (() => void) | null = null;
+      constructor() { Recognition.last = this; }
+      start = started; stop() { this.onend?.(); } abort() {}
+    }
+    class Utterance { lang = ""; voice = null; rate = 1; pitch = 1; onend = null; onerror = null; }
+    vi.stubGlobal("webkitSpeechRecognition", Recognition);
+    vi.stubGlobal("SpeechSynthesisUtterance", Utterance);
+    vi.stubGlobal("speechSynthesis", { getVoices: () => [], cancel: vi.fn(), speak: (value: Utterance) => utterances.push(value) });
+    try {
+      const fetchImpl = server([chatOnly]);
+      renderOverlay(fetchImpl);
+      fireEvent.click(screen.getByRole("button", { name: "Talk to Fern" }));
+      await waitFor(() => expect(started).toHaveBeenCalledOnce());
+      Recognition.last.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: "Is it free?" }], { isFinal: true })] });
+      fireEvent.click(screen.getByRole("button", { name: "Stop and send" }));
+      await screen.findByText("Yes — it's free, so no tickets needed.", {}, SLOW);
+      await waitFor(() => expect(utterances).toHaveLength(2));
+      utterances.at(-1)?.onend?.();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      expect(started).toHaveBeenCalledOnce();
+      expect(fetchImpl).toHaveBeenCalledOnce();
+    } finally { vi.unstubAllGlobals(); }
+  });
   it("answers the first message with cards and a natural reply", async () => {
     const fetchImpl = server();
     renderOverlay(fetchImpl);
@@ -141,7 +170,7 @@ describe("AskOverlay", () => {
     expect(spoken[0]).toMatchObject({ lang: "en-NZ" });
     expect(screen.getByRole("button", { name: "Voice input: Chinese. Switch to English" })).toHaveTextContent("中");
     fireEvent.click(screen.getByRole("button", { name: "Talk to Fern" }));
-    expect(heard.at(-1)).toMatchObject({ lang: "zh-CN" });
+    await waitFor(() => expect(heard.at(-1)).toMatchObject({ lang: "zh-CN" }), SLOW);
     expect(localStorage.getItem("kiwicue.ask.voiceLanguage")).toBe("zh");
     vi.unstubAllGlobals();
   });
