@@ -35,3 +35,5 @@ it("per-ticket lower bound 1 against 100", () => { expect(priceEvidence({ min: 1
 it("mark unknown price null", () => { expect(priceEvidence({ min: null, max: null, free: false }, { ...EMPTY_FILTERS, totalBudget: 60 })).toMatchObject({ keep: true, budgetStatus: "unknown", minPartyCost: null }); });
 
 it("mark unknown price Number.NaN", () => { expect(priceEvidence({ min: Number.NaN, max: null, free: false }, { ...EMPTY_FILTERS, totalBudget: 60 })).toMatchObject({ keep: true, budgetStatus: "unknown", minPartyCost: null }); });
+
+it("mark unknown price -1", () => { expect(priceEvidence({ min: -1, max: null, free: false }, { ...EMPTY_FILTERS, totalBudget: 60 })).toMatchObject({ keep: true, budgetStatus: "unknown", minPartyCost: null }); });
