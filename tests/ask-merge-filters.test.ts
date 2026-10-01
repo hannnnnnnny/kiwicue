@@ -32,6 +32,15 @@ describe("mergeFilters", () => {
       .toEqual({ ...EMPTY_FILTERS, domain: "movies" });
   });
 
+  it("takes a budget from DeepSeek, keeps it on refinements and ignores nonsense amounts", () => {
+    const slots = { names: [], place: null, dates: [], mode: "refine" as const };
+    expect(mergeFilters({ previous: null, now: NOW, jev: null, deepseek: { ...slots, maxPrice: 29.6 } }).maxPrice).toBe(30);
+    const previous = { ...EMPTY_FILTERS, maxPrice: 30 };
+    expect(mergeFilters({ previous, now: NOW, jev: { timeOfDay: "evening" }, deepseek: { ...slots, maxPrice: null } }).maxPrice).toBe(30);
+    expect(mergeFilters({ previous: null, now: NOW, jev: null, deepseek: { ...slots, maxPrice: 0 } }).maxPrice).toBeNull();
+    expect(mergeFilters({ previous: null, now: NOW, jev: null, deepseek: { ...slots, maxPrice: 50_000 } }).maxPrice).toBeNull();
+  });
+
   it("works when either source is missing", () => {
     const previous = { ...EMPTY_FILTERS, area: "west" as const };
     expect(mergeFilters({ previous, now: NOW, jev: null, deepseek: null })).toEqual(previous);

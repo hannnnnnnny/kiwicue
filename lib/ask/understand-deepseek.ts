@@ -16,6 +16,8 @@ const slotsSchema = z.object({
   place: z.string().trim().min(1).max(80).nullable(),
   dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/u)).max(14),
   mode: z.enum(["refine", "new"]),
+  // Bounds are applied when merging, so an odd amount loses only the budget, not every slot.
+  maxPrice: z.number().nullable().optional(),
 });
 export type DeepSeekUnderstanding = z.infer<typeof slotsSchema>;
 export type TokenUsage = { inputTokens: number; outputTokens: number };
@@ -37,6 +39,7 @@ function systemPrompt(today: string): string {
     "names: specific artists, shows, films, teams or venues they named, as written. Empty if none.",
     "place: a suburb or venue they want to be near, or null.",
     "dates: exact calendar dates (YYYY-MM-DD) only when they named specific days such as \"Saturday\" or \"3 October\"; otherwise empty.",
+    "maxPrice: the most they want to pay per ticket in NZ dollars when they give a budget (\"under 30\", \"30块以内\" → 30), otherwise null.",
     "mode: \"refine\" when the latest message adjusts the earlier request, \"new\" when it starts a different one.",
   ].join("\n");
 }

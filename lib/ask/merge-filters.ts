@@ -13,6 +13,14 @@ function mergeDates(base: AskFilters, jev: JevUnderstanding | null, deepseek: De
   return jev?.when === undefined ? base.dates : datesForWhen(jev.when, now);
 }
 
+const MAX_BUDGET = 1000;
+
+function budget(value: number | null | undefined, current: number | null): number | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return current;
+  const rounded = Math.round(value);
+  return rounded >= 1 && rounded <= MAX_BUDGET ? rounded : null;
+}
+
 /**
  * A follow-up only changes what it mentions: Jev answers "unmentioned" for everything else, so
  * those keys keep the previous value. A new question (DeepSeek mode "new") starts from scratch.
@@ -32,5 +40,6 @@ export function mergeFilters(input: {
     free: toggle(jev?.free, base.free),
     names: deepseek && deepseek.names.length > 0 ? deepseek.names : base.names,
     place: deepseek?.place ?? base.place,
+    maxPrice: budget(deepseek?.maxPrice, base.maxPrice),
   };
 }
