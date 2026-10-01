@@ -94,10 +94,10 @@ function keepScreening(screening: KiwiCueScreening, filters: AskFilters): boolea
   const price = priceEvidence({ min: screening.price ? screening.price.minCents / 100 : null,
     max: screening.price ? screening.price.maxCents / 100 : null, free: false }, filters);
   const place = filters.place?.toLocaleLowerCase("en-NZ");
-  const geographicPlace = /^(central(?: auckland)?|auckland cbd|cbd|north shore)$/iu.test(place ?? "");
+  const geographicArea = /^(central(?: auckland)?|auckland cbd|cbd)$/iu.test(place ?? "") ? "central" : /^north shore$/iu.test(place ?? "") ? "north" : null;
   return !screening.soldOut && price.keep
     && (filters.names.length === 0 || filters.names.some((name) => normalizedMovieTitle(screening.filmTitle).includes(normalizedMovieTitle(name))))
-    && (!place || geographicPlace || screening.cinemaName.toLocaleLowerCase("en-NZ").includes(place))
+    && (!place || (geographicArea ? CINEMA_AREAS[screening.cinemaId] === geographicArea : screening.cinemaName.toLocaleLowerCase("en-NZ").includes(place)))
     && (filters.dates.length === 0 || filters.dates.includes(aucklandDate(new Date(screening.startTime))))
     && matchesTimeWindow(aucklandMinute(screening.startTime), filters)
     && (filters.area === "any" || CINEMA_AREAS[screening.cinemaId] === filters.area)

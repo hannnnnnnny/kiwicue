@@ -40,6 +40,10 @@ function sources(overrides: Partial<CandidateSources> = {}): CandidateSources {
 }
 
 describe("loadCandidates", () => {
+  it("accepts a geographic movie place through its matching area", async () => {
+    const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "movies", area: "central", place: "central Auckland" }, language: "en", now: NOW, sources: sources() });
+    expect(result.cards.map((card) => card.title)).toEqual(["Resident Evil"]);
+  });
   afterEach(() => vi.restoreAllMocks());
 
   it("groups repeat sessions and films into cards across all domains", async () => {
