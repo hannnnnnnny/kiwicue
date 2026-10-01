@@ -1,6 +1,6 @@
 import {
   ACESFilmicToneMapping, AnimationMixer, Box3, Clock, DirectionalLight, Mesh, PerspectiveCamera, PMREMGenerator, Scene,
-  Sphere, WebGLRenderer, type Material, type Object3D,
+  Vector3, WebGLRenderer, type Material, type Object3D,
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -9,6 +9,8 @@ import type { BotState } from "./assistant-orb";
 export type OrbScene = { setState(state: BotState): void; dispose(): void };
 
 const FOV = 28;
+const ENVIRONMENT_INTENSITY = 0.3;
+const KEY_INTENSITY = 2.4;
 const FRAMING = 1.08;
 const EASE_PER_SECOND = 8;
 // Eye shape each state leans towards, layered on top of the designed Idle blinks.
@@ -41,12 +43,15 @@ export async function mountOrb(canvas: HTMLCanvasElement, modelUrl: string): Pro
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   renderer.toneMapping = ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.9;
   const scene = new Scene();
   const pmrem = new PMREMGenerator(renderer);
   const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environment = environment;
-  const key = new DirectionalLight(0xffffff, 1.4);
-  key.position.set(-2, 3, 4);
+  // Match the supplied renders: a soft key from the upper right, little fill, so the lower left falls into shade.
+  scene.environmentIntensity = ENVIRONMENT_INTENSITY;
+  const key = new DirectionalLight(0xffffff, KEY_INTENSITY);
+  key.position.set(4, 2, 2);
   scene.add(key);
 
   let gltf;
@@ -58,7 +63,10 @@ export async function mountOrb(canvas: HTMLCanvasElement, modelUrl: string): Pro
   }
   const model = gltf.scene;
   scene.add(model);
-  const bounds = new Box3().setFromObject(model).getBoundingSphere(new Sphere());
+  // Frame the orb itself: a box's bounding sphere is √3 too large for a round model.
+  const box = new Box3().setFromObject(model);
+  const size = box.getSize(new Vector3());
+  const bounds = { center: box.getCenter(new Vector3()), radius: Math.max(size.x, size.y) / 2 };
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 100);
   camera.position.set(bounds.center.x, bounds.center.y, bounds.center.z + (bounds.radius * FRAMING) / Math.sin((FOV * Math.PI) / 360));
   camera.lookAt(bounds.center);
