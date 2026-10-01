@@ -8,10 +8,12 @@ import type { KiwiCueEvent } from "../events";
 import type { KiwiCueScreening } from "../movies";
 import { fetchAucklandEvents } from "../ticketmaster";
 import { normalizedMovieTitle } from "../verified-movie-sessions";
+import { byStartTime } from "./card-order";
 import { logAskFailure } from "./log";
 import { dateRange, widenDates } from "./resolve-dates";
 import type { AskArea, AskCard, AskFilters } from "./schema";
 
+export { byStartTime };
 export const MAX_CANDIDATES = 40;
 export type CandidateSources = {
   events(range: { start: Date; end: Date }, keyword: string | null): Promise<KiwiCueEvent[]>;
@@ -45,12 +47,6 @@ function aucklandHour(instant: string): number {
 
 function matchesTime(hour: number, filters: AskFilters): boolean {
   return filters.timeOfDay === "any" || (filters.timeOfDay === "evening" ? hour >= EVENING_HOUR : hour < EVENING_HOUR);
-}
-
-/** Event times carry an offset and film times are UTC, so compare instants rather than strings. */
-export function byStartTime(left: Pick<AskCard, "when">, right: Pick<AskCard, "when">): number {
-  const instant = (value: string) => { const parsed = Date.parse(value); return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER; };
-  return instant(left.when) - instant(right.when);
 }
 
 function eventStart(event: KiwiCueEvent): string {
