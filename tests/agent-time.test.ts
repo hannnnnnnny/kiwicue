@@ -91,3 +91,5 @@ it("reject unknown or invalid constrained minute Number.NaN", () => { expect(mat
 it("parse local clock 00:00", () => { expect(localMinute("00:00")).toBe(0); });
 
 it("parse local clock 12:00", () => { expect(localMinute("12:00")).toBe(720); });
+
+it("parse local clock 19:30:00", () => { expect(localMinute("19:30:00")).toBe(1170); });
