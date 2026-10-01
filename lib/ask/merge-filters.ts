@@ -1,14 +1,16 @@
 import { datesForWhen, sanitizeDates } from "./resolve-dates";
 import { EMPTY_FILTERS, type AskFilters } from "./schema";
-import type { DeepSeekUnderstanding } from "./understand-deepseek";
 import type { JevUnderstanding, Toggle } from "./understand-jev";
+
+/** Open-ended details Jev cannot enumerate, supplied by the conversation model's search call. */
+export type Slots = { names: string[]; place: string | null; dates: string[]; mode: "refine" | "new"; maxPrice?: number | null };
 
 function toggle(value: Toggle | undefined, current: boolean): boolean {
   return value === undefined ? current : value === "on";
 }
 
-function mergeDates(base: AskFilters, jev: JevUnderstanding | null, deepseek: DeepSeekUnderstanding | null, now: Date): string[] {
-  const explicit = sanitizeDates(deepseek?.dates ?? [], now);
+function mergeDates(base: AskFilters, jev: JevUnderstanding | null, slots: Slots | null, now: Date): string[] {
+  const explicit = sanitizeDates(slots?.dates ?? [], now);
   if (explicit.length > 0) return explicit;
   return jev?.when === undefined ? base.dates : datesForWhen(jev.when, now);
 }
@@ -23,23 +25,23 @@ function budget(value: number | null | undefined, current: number | null): numbe
 
 /**
  * A follow-up only changes what it mentions: Jev answers "unmentioned" for everything else, so
- * those keys keep the previous value. A new question (DeepSeek mode "new") starts from scratch.
+ * those keys keep the previous value. A new request (mode "new") starts from scratch.
  */
 export function mergeFilters(input: {
-  previous: AskFilters | null; jev: JevUnderstanding | null; deepseek: DeepSeekUnderstanding | null; now: Date;
+  previous: AskFilters | null; jev: JevUnderstanding | null; slots: Slots | null; now: Date;
 }): AskFilters {
-  const { jev, deepseek } = input;
-  const base = !input.previous || deepseek?.mode === "new" ? EMPTY_FILTERS : input.previous;
+  const { jev, slots } = input;
+  const base = !input.previous || slots?.mode === "new" ? EMPTY_FILTERS : input.previous;
   return {
     domain: jev?.domain ?? base.domain,
-    dates: mergeDates(base, jev, deepseek, input.now),
+    dates: mergeDates(base, jev, slots, input.now),
     timeOfDay: jev?.timeOfDay ?? base.timeOfDay,
     area: jev?.area ?? base.area,
     category: jev?.category ?? base.category,
     kids: toggle(jev?.kids, base.kids),
     free: toggle(jev?.free, base.free),
-    names: deepseek && deepseek.names.length > 0 ? deepseek.names : base.names,
-    place: deepseek?.place ?? base.place,
-    maxPrice: budget(deepseek?.maxPrice, base.maxPrice),
+    names: slots && slots.names.length > 0 ? slots.names : base.names,
+    place: slots?.place ?? base.place,
+    maxPrice: budget(slots?.maxPrice, base.maxPrice),
   };
 }

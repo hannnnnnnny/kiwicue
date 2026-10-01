@@ -7,7 +7,7 @@ import { useAssistant } from "../use-assistant";
 import { AssistantOrb, type BotState } from "./assistant-orb";
 import { AssistantPicker } from "./assistant-picker";
 import { AskResults } from "./ask-results";
-import type { FollowUpOption } from "./follow-up";
+import { plainText, RichText } from "./rich-text";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
 import { useSpeechInput } from "./use-speech-input";
@@ -18,7 +18,7 @@ const copy = {
   en: {
     status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", speaking: "Speaking…" },
     mute: (name: string) => `Mute ${name}`, unmute: (name: string) => `Unmute ${name}`, close: "Close",
-    message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant",
+    message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant", newChat: "New chat",
     send: "Send", talk: (name: string) => `Talk to ${name}`, stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
     denied: "Microphone access was blocked. You can type instead.", left: (count: number) => `${count} free searches left today`,
     earlier: (count: number, labels: string) => `Earlier · ${count} ${count === 1 ? "result" : "results"}${labels ? ` · ${labels}` : ""}`,
@@ -27,7 +27,7 @@ const copy = {
   zh: {
     status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", speaking: "正在说…" },
     mute: (name: string) => `${name} 静音`, unmute: (name: string) => `${name} 取消静音`, close: "关闭",
-    message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手",
+    message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手", newChat: "新对话",
     send: "发送", talk: (name: string) => `和 ${name} 说话`, stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
     denied: "麦克风权限被拒绝，可以改为打字。", left: (count: number) => `今天还剩 ${count} 次免费搜索`,
     earlier: (count: number, labels: string) => `之前 · ${count} 个结果${labels ? ` · ${labels}` : ""}`,
@@ -67,12 +67,11 @@ function MicIcon() {
 
 type Line = { key: string; text: string } | null;
 
-/** The line the assistant should say now: its newest message, or a finished search's reply and follow-up question. */
+/** The line the assistant should say now: its newest message, or its finished reply, read without formatting. */
 function currentLine(entries: ChatEntry[], search: AskViewState): Line {
   const latest = entries[entries.length - 1];
   if (latest?.role === "assistant") return { key: latest.id, text: latest.text };
-  if (latest?.role === "followup") return { key: latest.id, text: search.reply ? `${search.reply} ${latest.text}` : latest.text };
-  if (latest?.role === "results" && search.status === "done" && search.reply) return { key: latest.id, text: search.reply };
+  if (latest?.role === "results" && search.status === "done" && search.reply.trim()) return { key: latest.id, text: plainText(search.reply) };
   return null;
 }
 
@@ -111,19 +110,6 @@ function Message({ entry, quick, language, onQuickReply }: { entry: Extract<Chat
   );
 }
 
-function FollowUpMessage({ entry, active, onFollowUp }: { entry: Extract<ChatEntry, { role: "followup" }>; active: boolean; onFollowUp(option: FollowUpOption): void }) {
-  return (
-    <div className="ask-msg" data-from="kiwi">
-      <p>{entry.text}</p>
-      {active ? (
-        <div className="ask-quick">{entry.options.map((option) => (
-          <button key={option.label} type="button" data-kind={option.kind} onClick={() => onFollowUp(option)}>{option.label}</button>
-        ))}</div>
-      ) : null}
-    </div>
-  );
-}
-
 function Earlier({ snapshot, language, onSound }: { snapshot: AskViewState; language: Language; onSound(): void }) {
   const labels = snapshot.chips.map((chip) => chip.label).join(" · ");
   // Rendered only when opened, so a folded trailer never keeps playing out of sight.
@@ -138,23 +124,46 @@ function Earlier({ snapshot, language, onSound }: { snapshot: AskViewState; lang
 
 type ThreadProps = {
   entries: ChatEntry[]; search: AskViewState; busy: boolean; language: Language;
-  onQuickReply(text: string): void; onRemoveChip(key: string): void; onFollowUp(option: FollowUpOption): void; onSound(): void;
+  onQuickReply(text: string): void; onRemoveChip(key: string): void; onSound(): void;
 };
 
-function Thread({ entries, search, busy, language, onQuickReply, onRemoveChip, onFollowUp, onSound }: ThreadProps) {
+function stateOf(entry: ChatEntry, live: AskViewState): AskViewState | null {
+  return entry.role === "results" ? entry.snapshot ?? live : null;
+}
+
+/** One answer: what it found (folded once newer cards replace it), then what the assistant said. */
+function Answer({ state, live, folded, language, onRemoveChip, onSound }: {
+  state: AskViewState; live: boolean; folded: boolean; language: Language; onRemoveChip(key: string): void; onSound(): void;
+}) {
+  const typing = live && !state.reply && !state.error && (state.status === "thinking" || (state.status === "streaming" && state.chips.length === 0));
+  return (
+    <>
+      {state.cards.length > 0 || state.chips.length > 0 || state.error || state.notices.length > 0 ? (
+        <div className="ask-msg" data-from="kiwi" data-kind="results">
+          {folded
+            ? <Earlier snapshot={state} language={language} onSound={onSound} />
+            : <AskResults state={state} language={language} onRemoveChip={live ? onRemoveChip : undefined} onSound={onSound} />}
+        </div>
+      ) : null}
+      {state.reply.trim() ? <div className="ask-msg" data-from="kiwi" data-kind="reply"><RichText text={state.reply} /></div> : null}
+      {typing ? <div className="ask-msg ask-typing" data-from="kiwi" aria-hidden="true"><span /><span /><span /></div> : null}
+    </>
+  );
+}
+
+function Thread({ entries, search, busy, language, onQuickReply, onRemoveChip, onSound }: ThreadProps) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView?.({ block: "end", behavior: "smooth" }); }, [entries.length, search.cards.length, search.reply]);
   const latest = entries.length - 1;
   return (
     <div className="ask-thread" aria-live="polite">
       {entries.map((entry, index) => {
-        if (entry.role === "followup") return <FollowUpMessage key={entry.id} entry={entry} active={index === latest && !busy} onFollowUp={onFollowUp} />;
         if (entry.role === "results") {
-          return <div key={entry.id} className="ask-msg" data-from="kiwi" data-kind="results">
-            {entry.snapshot
-              ? <Earlier snapshot={entry.snapshot} language={language} onSound={onSound} />
-              : <AskResults state={search} language={language} onRemoveChip={onRemoveChip} onSound={onSound} />}
-          </div>;
+          const state = entry.snapshot ?? search;
+          // Earlier cards fold away only once a later answer has cards of its own.
+          const folded = entries.slice(index + 1).some((later) => (stateOf(later, search)?.cards.length ?? 0) > 0);
+          return <Answer key={entry.id} state={state} live={!entry.snapshot} folded={folded}
+            language={language} onRemoveChip={onRemoveChip} onSound={onSound} />;
         }
         return <Message key={entry.id} entry={entry} quick={index === latest && !busy} language={language} onQuickReply={onQuickReply} />;
       })}
@@ -195,10 +204,10 @@ function Composer({ language, name, speech, onSend }: { language: Language; name
 
 type HeaderProps = {
   assistant: Assistant; state: BotState; language: Language; muted: boolean; picking: boolean;
-  onPickToggle(): void; onMute(): void; onClose(): void;
+  onPickToggle(): void; onMute(): void; onRestart(): void; onClose(): void;
 };
 
-function AssistantHeader({ assistant, state, language, muted, picking, onPickToggle, onMute, onClose }: HeaderProps) {
+function AssistantHeader({ assistant, state, language, muted, picking, onPickToggle, onMute, onRestart, onClose }: HeaderProps) {
   const content = copy[language];
   return (
     <header className="ask-header">
@@ -210,6 +219,7 @@ function AssistantHeader({ assistant, state, language, muted, picking, onPickTog
         <p role="status">{content.status[state]}</p>
       </div>
       <button type="button" className="ask-mute" aria-pressed={muted} aria-label={muted ? content.unmute(assistant.name) : content.mute(assistant.name)} onClick={onMute}>{muted ? "🔇" : "🔊"}</button>
+      <button type="button" className="ask-new" onClick={onRestart}>{content.newChat}</button>
       <button type="button" className="ask-close" aria-label={content.close} onClick={onClose}>×</button>
     </header>
   );
@@ -227,7 +237,7 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
   const { assistant, setAssistant } = useAssistant();
   const [picking, setPicking] = useState(false);
   const search = useAskStream(fetchImpl, assistant.id);
-  const chat = useAskChat({ language, name: assistant.name, searchState: search.state, search: (text) => void search.ask(text, language), reset: search.reset });
+  const chat = useAskChat({ language, name: assistant.name, searchState: search.state, search: (text, context) => void search.ask(text, language, context), reset: search.reset });
   const speech = useSpeechInput({ language, onFinal: (text) => chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
@@ -254,12 +264,11 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
       <div className="ask-panel">
         <div className="ask-top">
           <AssistantHeader assistant={assistant} state={state} language={language} muted={muted} picking={picking}
-            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onClose={onClose} />
+            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={chat.restart} onClose={onClose} />
           {picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
         </div>
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
-          onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)}
-          onFollowUp={chat.followUp} onSound={silence} />
+          onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)} onSound={silence} />
         <Composer language={language} name={assistant.name} speech={speech} onSend={(text) => chat.send(text, "text")} />
         <footer className="ask-footer">
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}

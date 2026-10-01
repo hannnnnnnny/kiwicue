@@ -1,24 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useReducer } from "react";
-import { followUpFor, type FollowUp, type FollowUpOption } from "./follow-up";
-import type { AskViewState } from "./use-ask-stream";
+import { useCallback, useReducer } from "react";
+import { MAX_HISTORY, MAX_SHOWN, type AskCard, type AskChatTurn, type AskShown } from "../../lib/ask/schema";
+import type { AskContext, AskViewState } from "./use-ask-stream";
 
 type Language = "en" | "zh";
 export type InputMode = "voice" | "text";
 export type ChatEntry =
   | { id: string; role: "assistant"; text: string; quickReplies: string[] }
   | { id: string; role: "user"; text: string }
-  | { id: string; role: "results"; snapshot: AskViewState | null }
-  | { id: string; role: "followup"; text: string; options: FollowUpOption[] };
+  | { id: string; role: "results"; snapshot: AskViewState | null };
 type ChatState = { entries: ChatEntry[]; lastInput: InputMode };
 type Action =
-  | { type: "user"; text: string; via: InputMode; snapshot: AskViewState | null }
-  | { type: "followUp"; followUp: FollowUp }
-  | { type: "restart"; text: string; quickReplies: string[]; snapshot: AskViewState | null }
-  | { type: "introduce"; text: string };
+  | { type: "user"; text: string; via: InputMode; snapshot: AskViewState }
+  | { type: "say"; text: string; quickReplies: string[]; snapshot: AskViewState };
 
 const MAX_TEXT = 300;
+const MAX_TURN = 1200;
 const copy = {
   en: {
     greeting: (name: string) => `Hi, I'm ${name}! What are you in the mood for in Auckland?`,
@@ -38,33 +36,49 @@ let nextId = 0;
 const id = () => `chat-${(nextId += 1)}`;
 
 /** Earlier result messages keep what they showed; only the newest one follows the live search. */
-function freezeResults(entries: ChatEntry[], snapshot: AskViewState | null): ChatEntry[] {
+function freezeResults(entries: ChatEntry[], snapshot: AskViewState): ChatEntry[] {
   return entries.map((entry) => entry.role === "results" && !entry.snapshot ? { ...entry, snapshot } : entry);
 }
 
 function reducer(state: ChatState, action: Action): ChatState {
-  switch (action.type) {
-    case "user":
-      return {
-        lastInput: action.via,
-        entries: [...freezeResults(state.entries, action.snapshot), { id: id(), role: "user", text: action.text }, { id: id(), role: "results", snapshot: null }],
-      };
-    case "followUp": {
-      // Only a live, just-finished search gets a follow-up, and only once.
-      const last = state.entries.at(-1);
-      if (last?.role !== "results" || last.snapshot) return state;
-      return { ...state, entries: [...state.entries, { id: id(), role: "followup", text: action.followUp.text, options: action.followUp.options }] };
-    }
-    case "restart":
-      return { ...state, entries: [...freezeResults(state.entries, action.snapshot), { id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
-    case "introduce":
-      return { ...state, entries: [...state.entries, { id: id(), role: "assistant", text: action.text, quickReplies: [] }] };
+  if (action.type === "user") {
+    return {
+      lastInput: action.via,
+      entries: [...freezeResults(state.entries, action.snapshot), { id: id(), role: "user", text: action.text }, { id: id(), role: "results", snapshot: null }],
+    };
   }
+  return { ...state, entries: [...freezeResults(state.entries, action.snapshot), { id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
 }
 
-/** Kiwi's thread: every message searches at once and refines the last results; Kiwi then asks what's missing. */
+/** The chat as the model should see it: what each side said, oldest first, newest kept. */
+export function conversation(entries: ChatEntry[], live: AskViewState): AskChatTurn[] {
+  const turns = entries.flatMap((entry): AskChatTurn[] => {
+    const text = entry.role === "results" ? (entry.snapshot ?? live).reply : entry.text;
+    const role = entry.role === "user" ? "user" : "assistant";
+    return text.trim() ? [{ role, text: text.trim().slice(0, MAX_TURN) }] : [];
+  });
+  return turns.slice(-MAX_HISTORY);
+}
+
+function shownWhen(card: AskCard): string {
+  const date = new Date(card.when);
+  if (!Number.isFinite(date.getTime())) return card.when.slice(0, 40);
+  return new Intl.DateTimeFormat("en-NZ", { timeZone: "Pacific/Auckland", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(date);
+}
+
+/** The cards on screen now, in the order shown, so "the second one" means something. */
+export function onScreen(entries: ChatEntry[], live: AskViewState): AskShown[] {
+  const states = entries.flatMap((entry) => entry.role === "results" ? [entry.snapshot ?? live] : []);
+  const latest = [...states].reverse().find((state) => state.cards.length > 0);
+  if (!latest) return [];
+  const best = latest.cards.find((card) => card.id === latest.bestId);
+  const ordered = best ? [best, ...latest.cards.filter((card) => card !== best)] : latest.cards;
+  return ordered.slice(0, MAX_SHOWN).map((card) => ({ kind: card.kind, title: card.title, when: shownWhen(card), venue: card.venue, price: card.priceText }));
+}
+
+/** The assistant's thread: every message goes to the assistant with the conversation so far. */
 export function useAskChat({ language, name, search, reset, searchState }: {
-  language: Language; name: string; search(text: string): void; reset(): void; searchState: AskViewState;
+  language: Language; name: string; search(text: string, context: AskContext): void; reset(): void; searchState: AskViewState;
 }) {
   const [state, dispatch] = useReducer(reducer, language, (initial): ChatState => ({
     entries: [{ id: id(), role: "assistant", text: copy[initial].greeting(name), quickReplies: [...copy[initial].starters] }],
@@ -74,20 +88,18 @@ export function useAskChat({ language, name, search, reset, searchState }: {
   const send = useCallback((text: string, via: InputMode) => {
     const trimmed = text.trim().slice(0, MAX_TEXT);
     if (!trimmed) return;
+    const context = { history: conversation(state.entries, searchState), shown: onScreen(state.entries, searchState) };
     dispatch({ type: "user", text: trimmed, via, snapshot: searchState });
-    search(trimmed);
-  }, [search, searchState]);
+    search(trimmed, context);
+  }, [search, searchState, state.entries]);
 
-  const finished = searchState.status === "done" ? searchState : null;
-  useEffect(() => { if (finished) dispatch({ type: "followUp", followUp: followUpFor(finished, language) }); }, [finished, language]);
-
-  const followUp = useCallback((option: FollowUpOption) => {
-    if (option.kind === "refine") { send(option.label, "text"); return; }
-    dispatch({ type: "restart", text: copy[language].restart, quickReplies: [...copy[language].starters], snapshot: searchState });
+  const restart = useCallback(() => {
+    dispatch({ type: "say", text: copy[language].restart, quickReplies: [...copy[language].starters], snapshot: searchState });
     reset();
-  }, [language, reset, searchState, send]);
+  }, [language, reset, searchState]);
 
   /** A newly chosen assistant says hello, keeping the conversation and results so far. */
-  const introduce = useCallback((nextName: string) => dispatch({ type: "introduce", text: copy[language].introduce(nextName) }), [language]);
-  return { ...state, send, followUp, introduce };
+  const introduce = useCallback((nextName: string) =>
+    dispatch({ type: "say", text: copy[language].introduce(nextName), quickReplies: [], snapshot: searchState }), [language, searchState]);
+  return { ...state, send, restart, introduce };
 }

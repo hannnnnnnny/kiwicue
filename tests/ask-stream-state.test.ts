@@ -18,7 +18,7 @@ describe("askReducer", () => {
     state = askReducer(state, { type: "event", event: { type: "reply", delta: "Try " } });
     state = askReducer(state, { type: "event", event: { type: "reply", delta: "this." } });
     state = askReducer(state, { type: "event", event: { type: "done", remaining: 3, tier: "guest" } });
-    expect(state).toMatchObject({ status: "done", text: "kids", cards: [card], bestId: "a", reply: "Try this.", remaining: 3, history: ["kids"], chips: [{ key: "kids" }] });
+    expect(state).toMatchObject({ status: "done", text: "kids", cards: [card], bestId: "a", reply: "Try this.", remaining: 3, chips: [{ key: "kids" }] });
   });
 });
 
@@ -30,6 +30,20 @@ describe("askReducer relaxation", () => {
     expect(askReducer(withCard, { type: "event", event: { type: "media", id: "zzz", imageUrl: null, trailerKey: null } }).cards).toEqual([card]);
   });
 
+  it("takes the assistant's layout, and lets a second search replace the first one's cards", () => {
+    let state = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "result", card } });
+    state = askReducer(state, { type: "event", event: { type: "layout", layout: "timeline" } });
+    expect(state.layout).toBe("timeline");
+    state = askReducer(state, { type: "event", event: { type: "understood", filters: EMPTY_FILTERS, chips: [] } });
+    expect(state).toMatchObject({ cards: [], layout: null, filters: EMPTY_FILTERS });
+  });
+
+  it("keeps the filters but clears the cards when the next message starts", () => {
+    const searched = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "understood", filters: { ...EMPTY_FILTERS, kids: true }, chips: [] } });
+    const next = askReducer(askReducer(searched, { type: "event", event: { type: "result", card } }), { type: "start", text: "thanks" });
+    expect(next).toMatchObject({ filters: { kids: true }, cards: [], reply: "" });
+  });
+
   it("remembers which chips were loosened and clears them on the next question", () => {
     const relaxed = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "relaxed", keys: ["area", "dates"] } });
     expect(relaxed.relaxed).toEqual(["area", "dates"]);
@@ -38,16 +52,20 @@ describe("askReducer relaxation", () => {
 });
 
 describe("useAskStream", () => {
-  it("sends previous filters and history on a follow-up", async () => {
+  it("sends previous filters, the conversation and what's on screen", async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => ndjson([
       { type: "understood", filters: { ...EMPTY_FILTERS, kids: true }, chips: [] },
       { type: "done", remaining: 4, tier: "guest" },
     ]));
     const { result } = renderHook(() => useAskStream(fetchImpl));
     await act(() => result.current.ask("with kids", "en"));
-    await act(() => result.current.ask("in the evening", "en"));
+    const shown = [{ kind: "event" as const, title: "Bundle Baby", when: "Sat 3 Oct", venue: null, price: null }];
+    await act(() => result.current.ask("in the evening", "en", { history: [{ role: "user", text: "with kids" }, { role: "assistant", text: "Sure!" }], shown }));
     const body = JSON.parse(String(fetchImpl.mock.calls[1][1]?.body));
-    expect(body).toEqual({ text: "in the evening", language: "en", previous: { ...EMPTY_FILTERS, kids: true }, history: ["with kids"], refineOnly: false, assistant: "fern" });
+    expect(body).toEqual({
+      text: "in the evening", language: "en", previous: { ...EMPTY_FILTERS, kids: true }, refineOnly: false, assistant: "fern",
+      history: [{ role: "user", text: "with kids" }, { role: "assistant", text: "Sure!" }], shown,
+    });
   });
 
   it("tells the server which assistant is answering", async () => {
