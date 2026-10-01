@@ -1,13 +1,15 @@
 "use client";
 
+import { ASSISTANT_IDS, type AssistantId } from "../../lib/assistants";
+
 type Language = "en" | "zh";
-type VoiceInfo = { name: string; lang: string };
+export type VoiceInfo = { name: string; lang: string; voiceURI?: string };
 type UtteranceLike = { lang: string; voice: unknown; rate: number; pitch: number; onend: (() => void) | null; onerror: (() => void) | null };
 type UtteranceConstructor = new (text: string) => UtteranceLike;
 type SynthLike = { getVoices(): readonly VoiceInfo[]; speak(utterance: UtteranceLike): void; cancel(): void };
 
 /** How an assistant sounds; see lib/assistants.ts. */
-export type Tone = { pitch: number; rate: number };
+export type Tone = { pitch: number; rate: number; profile?: AssistantId };
 /** The assistant's voice. The browser implementation can later be swapped for a cloud TTS behind this type. */
 export type Voice = { available: boolean; speak(text: string, language: Language, tone?: Tone): Promise<void>; cancel(): void };
 const DEFAULT_TONE: Tone = { pitch: 1, rate: 1.05 };
@@ -26,10 +28,13 @@ function score(voice: VoiceInfo, language: Language): number {
   return (NATURAL.test(voice.name) ? 4 : 0) + (preferredRegion ? 2 : 0) + (language === "zh" && lang !== "zh-cn" ? -1 : 0);
 }
 
-export function pickVoice<T extends VoiceInfo>(voices: readonly T[], language: Language): T | null {
-  const ranked = voices.map((voice) => ({ voice, score: score(voice, language) })).filter(({ score: value }) => value >= 0)
-    .sort((left, right) => right.score - left.score);
-  return ranked[0]?.voice ?? null;
+export function pickVoice<T extends VoiceInfo>(voices: readonly T[], language: Language, profile?: AssistantId): T | null {
+  const unique = [...new Map(voices.map((voice) => [`${voice.voiceURI ?? voice.name}:${voice.lang}`, voice])).values()];
+  const ranked = unique.map((voice) => ({ voice, score: score(voice, language) })).filter(({ score: value }) => value >= 0)
+    .sort((left, right) => right.score - left.score || left.voice.name.localeCompare(right.voice.name));
+  if (!ranked.length) return null;
+  const index = profile ? ASSISTANT_IDS.indexOf(profile) : 0;
+  return ranked[index % ranked.length]?.voice ?? ranked[0].voice;
 }
 
 function browserSynth(): SynthLike | undefined {
@@ -55,7 +60,9 @@ export function createBrowserVoice(synth: SynthLike | undefined = browserSynth()
         pending = resolve;
         const utterance = new Utterance(text);
         utterance.lang = LOCALE[language];
-        utterance.voice = pickVoice(synth.getVoices(), language);
+        const selected = pickVoice(synth.getVoices(), language, tone.profile);
+        utterance.voice = selected;
+        if (selected) utterance.lang = selected.lang.replace("_", "-");
         utterance.rate = tone.rate;
         utterance.pitch = tone.pitch;
         // Errors (including a cancel) end the line quietly; the text is still on screen.

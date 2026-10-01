@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createBrowserVoice, pickVoice } from "../components/ask/voice";
+import { ASSISTANT_IDS, ASSISTANTS } from "../lib/assistants";
 
 const voices = [
   { name: "Microsoft David - English (United States)", lang: "en-US" },
@@ -18,6 +19,19 @@ class FakeUtterance {
 }
 
 describe("pickVoice", () => {
+  it.each(["en", "zh"] as const)("assigns five real %s voices rather than only varying pitch", (language) => {
+    const catalog = ASSISTANT_IDS.map((id) => ({ name: `Natural ${id}`, lang: language === "zh" ? "zh-CN" : "en-NZ", voiceURI: id }));
+    const selected = ASSISTANT_IDS.map((id) => pickVoice(catalog, language, ASSISTANTS[id].voice.profile)?.voiceURI);
+    expect(new Set(selected).size).toBe(5);
+    expect(ASSISTANT_IDS.map((id) => pickVoice([...catalog].reverse(), language, id)?.voiceURI)).toEqual(selected);
+  });
+
+  it("deduplicates voices and never substitutes the wrong language to create variety", () => {
+    const chinese = { name: "Mandarin", lang: "zh-CN", voiceURI: "zh" };
+    const catalog = [chinese, { ...chinese }, { name: "English", lang: "en-NZ" }];
+    for (const id of ASSISTANT_IDS) expect(pickVoice(catalog, "zh", id)).toEqual(chinese);
+    expect(pickVoice([chinese], "en", "kai")).toBeNull();
+  });
   it("prefers natural-sounding voices in the right language", () => {
     expect(pickVoice(voices, "zh")?.name).toContain("Xiaoxiao");
     expect(pickVoice(voices, "en")?.name).toBe("Google US English");
