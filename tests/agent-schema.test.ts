@@ -24,3 +24,5 @@ it("reject invalid constraint endMinute=1441", () => { expect(askFiltersSchema.s
 it("reject unsafe internal result '//evil.example'", () => { expect(askCardSchema.safeParse({ ...card, href: "//evil.example" }).success).toBe(false); });
 
 it("reject unsafe internal result '/\\\\evil.example'", () => { expect(askCardSchema.safeParse({ ...card, href: "/\\evil.example" }).success).toBe(false); });
+
+it("reject unsafe internal result '/movies\\nunsafe'", () => { expect(askCardSchema.safeParse({ ...card, href: "/movies\nunsafe" }).success).toBe(false); });
