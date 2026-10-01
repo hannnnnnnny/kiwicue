@@ -10,6 +10,7 @@ const LABEL = { en: "Choose your assistant", zh: "选择你的助手" } as const
 export function AssistantPicker({ current, language, onPick }: { current: Assistant; language: Language; onPick(id: AssistantId): void }) {
   return (
     <fieldset className="ask-picker" role="radiogroup" aria-label={LABEL[language]}>
+      <p className="ask-picker-scope">{language === "zh" ? "五位助手共用同一套搜索工具，区别是建议风格。" : "All five assistants share the same search tools, with different advice styles."}</p>
       {ASSISTANT_IDS.map((id) => {
         const assistant = ASSISTANTS[id];
         return (

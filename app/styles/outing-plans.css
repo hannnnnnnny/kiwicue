@@ -20,4 +20,5 @@
 .outing-warning { background: var(--portal-bg); border-radius: var(--radius-control); padding: 12px; }
 .outing-plan :focus-visible, .ask-plan-selection :focus-visible, .ask-booking:focus-visible { outline: 2px solid var(--portal-focus); outline-offset: 3px; }
 .outing-plan h2, .outing-plan p, .ask-plan-selection label { overflow-wrap: anywhere; }
+.ask-picker-scope { grid-column: 1 / -1; color: var(--portal-muted); font-size: 13px; line-height: 1.5; }
 @media (min-width: 768px) { .outing-plans { padding: 40px 24px 100px; } .outing-plan { padding: 28px; } }
