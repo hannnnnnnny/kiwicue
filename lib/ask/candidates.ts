@@ -9,7 +9,7 @@ import type { KiwiCueScreening } from "../movies";
 import { fetchAucklandEvents } from "../ticketmaster";
 import { normalizedMovieTitle } from "../verified-movie-sessions";
 import { logAskFailure } from "./log";
-import { dateRange } from "./resolve-dates";
+import { dateRange, widenDates } from "./resolve-dates";
 import type { AskArea, AskCard, AskFilters } from "./schema";
 
 export const MAX_CANDIDATES = 40;
@@ -18,7 +18,8 @@ export type CandidateSources = {
   markets(now: Date): KiwiCueEvent[];
   movies(now: Date): Promise<KiwiCueScreening[]>;
 };
-export type CandidateResult = { cards: AskCard[]; unavailable: Array<"events" | "movies"> };
+/** `relaxed` lists the chip keys that had to be dropped to find anything; empty for exact matches. */
+export type CandidateResult = { cards: AskCard[]; relaxed: string[]; unavailable: Array<"events" | "movies"> };
 type Language = "en" | "zh";
 
 export const defaultSources: CandidateSources = {
@@ -63,8 +64,10 @@ function keepEvent(event: KiwiCueEvent, filters: AskFilters): boolean {
     && matchesTime(hour, filters)
     && (filters.area === "any" || deriveEventArea(event) === filters.area)
     && (filters.category === "any" || section === filters.category)
-    && (!filters.kids || section === "family")
-    && (!filters.free || event.admission?.kind === "free");
+    // Beside a category, "with kids" is left to ranking: kids' music is still music.
+    && (!filters.kids || filters.category !== "any" || section === "family")
+    && (!filters.free || event.admission?.kind === "free")
+    && (filters.maxPrice === null || event.admission?.kind !== "range" || event.admission.min <= filters.maxPrice);
 }
 
 /** Place is a soft filter: applied only when at least one event is at a matching venue. */
@@ -130,19 +133,54 @@ async function settle<T>(source: "events" | "movies", load: () => Promise<T[]>, 
   }
 }
 
-export async function loadCandidates(input: { filters: AskFilters; language: Language; now: Date; sources?: CandidateSources }): Promise<CandidateResult> {
-  const { filters, language, now } = input;
-  const sources = input.sources ?? defaultSources;
-  const unavailable: CandidateResult["unavailable"] = [];
+type Raw = { events: KiwiCueEvent[]; screenings: KiwiCueScreening[] };
+
+/** Filters to loosen when nothing matches, least important first. Domain, names and place stay. */
+const RELAX_ORDER = ["maxPrice", "area", "timeOfDay", "kids", "category", "free"] as const;
+type Relaxable = (typeof RELAX_ORDER)[number];
+const LOOSE: Pick<AskFilters, Relaxable> = { maxPrice: null, area: "any", timeOfDay: "any", kids: false, category: "any", free: false };
+
+function cardsFor(raw: Raw, filters: AskFilters, language: Language, now: Date): AskCard[] {
+  const upcoming = raw.events.filter((event) => !event.start.dateTime || Date.parse(event.start.dateTime) >= now.getTime());
+  const cards = [
+    ...eventCards(applyPlace(upcoming.filter((event) => keepEvent(event, filters)), filters.place), language),
+    ...movieCards(raw.screenings.filter((screening) => Date.parse(screening.startTime) >= now.getTime() && keepScreening(screening, filters))),
+  ];
+  return cards.sort(byStartTime).slice(0, MAX_CANDIDATES);
+}
+
+/** The exact match, or the first step of the ladder that finds something. */
+function relaxWithin(raw: Raw, filters: AskFilters, language: Language, now: Date): { cards: AskCard[]; relaxed: Relaxable[] } {
+  let current = filters;
+  const relaxed: Relaxable[] = [];
+  let cards = cardsFor(raw, current, language, now);
+  for (const key of RELAX_ORDER) {
+    if (cards.length > 0) break;
+    if (current[key] === LOOSE[key]) continue;
+    current = { ...current, [key]: LOOSE[key] };
+    relaxed.push(key);
+    cards = cardsFor(raw, current, language, now);
+  }
+  return cards.length > 0 ? { cards, relaxed } : { cards: [], relaxed: [] };
+}
+
+async function fetchRaw(filters: AskFilters, now: Date, sources: CandidateSources, unavailable: CandidateResult["unavailable"]): Promise<Raw> {
   const [events, screenings] = await Promise.all([
     wants(filters, "events") ? settle("events", () => sources.events(dateRange(filters.dates, now), filters.names[0] ?? null), unavailable) : [],
     wants(filters, "movies") ? settle("movies", () => sources.movies(now), unavailable) : [],
   ]);
   const markets = wants(filters, "markets") ? sources.markets(now) : [];
-  const upcoming = [...events, ...markets].filter((event) => !event.start.dateTime || Date.parse(event.start.dateTime) >= now.getTime());
-  const cards = [
-    ...eventCards(applyPlace(upcoming.filter((event) => keepEvent(event, filters)), filters.place), language),
-    ...movieCards(screenings.filter((screening) => Date.parse(screening.startTime) >= now.getTime() && keepScreening(screening, filters))),
-  ];
-  return { cards: cards.sort(byStartTime).slice(0, MAX_CANDIDATES), unavailable };
+  return { events: [...events, ...markets], screenings };
+}
+
+export async function loadCandidates(input: { filters: AskFilters; language: Language; now: Date; sources?: CandidateSources }): Promise<CandidateResult> {
+  const { filters, language, now } = input;
+  const sources = input.sources ?? defaultSources;
+  const unavailable: CandidateResult["unavailable"] = [];
+  const exactDays = relaxWithin(await fetchRaw(filters, now, sources, unavailable), filters, language, now);
+  if (exactDays.cards.length > 0 || filters.dates.length === 0) return { ...exactDays, unavailable };
+  // Nearby days need a fresh fetch: Ticketmaster is queried by date range.
+  const nearby = { ...filters, dates: widenDates(filters.dates, now) };
+  const nearbyDays = relaxWithin(await fetchRaw(nearby, now, sources, []), nearby, language, now);
+  return nearbyDays.cards.length > 0 ? { cards: nearbyDays.cards, relaxed: ["dates", ...nearbyDays.relaxed], unavailable } : { cards: [], relaxed: [], unavailable };
 }
