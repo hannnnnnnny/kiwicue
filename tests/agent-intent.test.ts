@@ -89,3 +89,13 @@ it("reject unsupported budget: $1001 per ticket", () => { expect(budgetIntent("$
 it("reject unsupported budget: a movie please", () => { expect(budgetIntent("a movie please").totalBudget).toBeUndefined(); expect(budgetIntent("a movie please").maxPrice).toBeUndefined(); });
 
 it("reject unsupported budget: total $-20", () => { expect(budgetIntent("total $-20").totalBudget).toBeUndefined(); expect(budgetIntent("total $-20").maxPrice).toBeUndefined(); });
+
+it("counts a family introduced by for without treating adult count as the party total", () => {
+  expect(partySizeFrom("for two adults and a 6-year-old, total $60")).toBe(3);
+});
+it("retains both explicit English time boundaries", () => {
+  expect(timeIntent("afternoon after 1 pm before 3 pm")).toMatchObject({ startMinute: 780, endMinute: 900 });
+});
+it("retains both explicit Chinese time boundaries", () => {
+  expect(timeIntent("下午1点之后下午3点之前")).toMatchObject({ startMinute: 780, endMinute: 900 });
+});
