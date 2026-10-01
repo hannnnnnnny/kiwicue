@@ -11,7 +11,7 @@ const voices = [
 ];
 
 class FakeUtterance {
-  lang = ""; voice: unknown = null; rate = 1;
+  lang = ""; voice: unknown = null; rate = 1; pitch = 1;
   onend: (() => void) | null = null;
   onerror: (() => void) | null = null;
   constructor(public text: string) {}
@@ -37,6 +37,15 @@ describe("createBrowserVoice", () => {
     spoken[0].onend?.();
     await expect(done).resolves.toBeUndefined();
     expect(synth.cancel).toHaveBeenCalled();
+  });
+
+  it("uses the assistant's pitch and rate", () => {
+    const spoken: FakeUtterance[] = [];
+    const voice = createBrowserVoice({ getVoices: () => voices, cancel: vi.fn(), speak: (utterance: FakeUtterance) => { spoken.push(utterance); } }, FakeUtterance);
+    void voice.speak("Hi", "en", { pitch: 1.2, rate: 1.08 });
+    expect(spoken[0]).toMatchObject({ pitch: 1.2, rate: 1.08 });
+    void voice.speak("Hi", "en");
+    expect(spoken[1]).toMatchObject({ pitch: 1, rate: 1.05 });
   });
 
   it("gives up waiting if the browser never reports the end of speech", async () => {
