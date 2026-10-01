@@ -1,11 +1,11 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useAskChat } from "../components/ask/use-ask-chat";
+import { conversation, onScreen, useAskChat, type ChatEntry } from "../components/ask/use-ask-chat";
 import { INITIAL_ASK_STATE, type AskViewState } from "../components/ask/use-ask-stream";
 import { EMPTY_FILTERS } from "../lib/ask/schema";
 
-const card = { kind: "event" as const, id: "a", title: "Bundle Baby", when: "2026-10-03T10:00", venue: "Aotea", href: "/events/a", imageUrl: null, priceText: null, sessionCount: 1, score: 1 };
-const finished: AskViewState = { ...INITIAL_ASK_STATE, status: "done", text: "music", filters: EMPTY_FILTERS, cards: [card] };
+const card = (id: string, title: string) => ({ kind: "event" as const, id, title, when: "2026-10-03T19:00:00+13:00", venue: "Aotea", href: `/events/${id}`, imageUrl: null, priceText: "Free", sessionCount: 1, score: 1 });
+const finished: AskViewState = { ...INITIAL_ASK_STATE, status: "done", text: "music", filters: EMPTY_FILTERS, cards: [card("a", "Jazz"), card("b", "Indie")], bestId: "b", reply: "Try **Indie**." };
 
 function setup() {
   const search = vi.fn();
@@ -14,47 +14,58 @@ function setup() {
   return { ...hook, search, reset };
 }
 
-describe("useAskChat", () => {
-  it("greets with starters, then searches straight away on every message", () => {
-    const { result, search } = setup();
-    expect(result.current.entries).toEqual([expect.objectContaining({ role: "assistant", text: "Hi, I'm Fern! What are you in the mood for in Auckland?", quickReplies: expect.arrayContaining(["Something this weekend"]) })]);
-    act(() => result.current.send("  live music  ", "voice"));
-    expect(search).toHaveBeenCalledWith("live music");
-    expect(result.current.entries.slice(1).map((entry) => entry.role)).toEqual(["user", "results"]);
-    expect(result.current.lastInput).toBe("voice");
-    act(() => result.current.send("   ", "text"));
-    expect(search).toHaveBeenCalledTimes(1);
+describe("conversation and onScreen", () => {
+  const entries: ChatEntry[] = [
+    { id: "g", role: "assistant", text: "Hi, I'm Fern!", quickReplies: [] },
+    { id: "1", role: "user", text: "music" },
+    { id: "r", role: "results", snapshot: null },
+  ];
+
+  it("gives the model both sides of the chat, including the assistant's replies", () => {
+    expect(conversation(entries, finished)).toEqual([
+      { role: "assistant", text: "Hi, I'm Fern!" }, { role: "user", text: "music" }, { role: "assistant", text: "Try **Indie**." },
+    ]);
+    const long: ChatEntry[] = Array.from({ length: 20 }, (_, index) => ({ id: `${index}`, role: "user", text: `m${index}` }));
+    expect(conversation(long, INITIAL_ASK_STATE)).toHaveLength(12);
+    expect(conversation(long, INITIAL_ASK_STATE).at(-1)?.text).toBe("m19");
   });
 
-  it("adds Kiwi's follow-up once results are in, and folds earlier results into a snapshot", () => {
-    const { result, rerender, search } = setup();
-    act(() => result.current.send("live music", "text"));
-    rerender({ searchState: finished });
-    expect(result.current.entries.at(-1)).toMatchObject({ role: "followup", text: "Which day suits you?" });
-    rerender({ searchState: { ...finished } });
-    expect(result.current.entries.filter((entry) => entry.role === "followup")).toHaveLength(1);
+  it("lists what's on screen, best match first, from the latest results that have cards", () => {
+    const later: ChatEntry[] = [...entries.slice(0, 2), { id: "r", role: "results", snapshot: finished }, { id: "2", role: "user", text: "thanks" }, { id: "r2", role: "results", snapshot: null }];
+    expect(onScreen(later, INITIAL_ASK_STATE)).toEqual([
+      { kind: "event", title: "Indie", when: "Sat, 3 Oct, 7:00 pm", venue: "Aotea", price: "Free" },
+      { kind: "event", title: "Jazz", when: "Sat, 3 Oct, 7:00 pm", venue: "Aotea", price: "Free" },
+    ]);
+    expect(onScreen(entries.slice(0, 2), INITIAL_ASK_STATE)).toEqual([]);
+  });
+});
 
-    act(() => result.current.followUp({ label: "This weekend", kind: "refine" }));
-    expect(search).toHaveBeenLastCalledWith("This weekend");
+describe("useAskChat", () => {
+  it("greets with starters, then sends every message with the conversation so far", () => {
+    const { result, rerender, search } = setup();
+    expect(result.current.entries).toEqual([expect.objectContaining({ role: "assistant", text: "Hi, I'm Fern! What are you in the mood for in Auckland?" })]);
+    act(() => result.current.send("  live music  ", "voice"));
+    expect(search).toHaveBeenCalledWith("live music", { history: [{ role: "assistant", text: "Hi, I'm Fern! What are you in the mood for in Auckland?" }], shown: [] });
+    expect(result.current.lastInput).toBe("voice");
+
+    rerender({ searchState: finished });
+    act(() => result.current.send("is the second one free?", "text"));
+    const [, context] = search.mock.calls[1];
+    expect(context.history.at(-1)).toEqual({ role: "assistant", text: "Try **Indie**." });
+    expect(context.shown.map((item: { title: string }) => item.title)).toEqual(["Indie", "Jazz"]);
     const results = result.current.entries.filter((entry) => entry.role === "results");
-    expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ snapshot: finished });
     expect(results[1]).toMatchObject({ snapshot: null });
+    act(() => result.current.send("   ", "text"));
+    expect(search).toHaveBeenCalledTimes(2);
   });
 
-  it("lets a newly chosen assistant introduce itself", () => {
-    const { result } = setup();
+  it("starts over and lets a new assistant introduce itself", () => {
+    const { result, reset } = setup();
     act(() => result.current.introduce("Sunny"));
     expect(result.current.entries.at(-1)).toMatchObject({ role: "assistant", text: "Hi, I'm Sunny — I'll take it from here!", quickReplies: [] });
-  });
-
-  it("starts over with a fresh search and a new greeting", () => {
-    const { result, rerender, reset } = setup();
-    act(() => result.current.send("live music", "text"));
-    rerender({ searchState: finished });
-    act(() => result.current.followUp({ label: "Start over", kind: "restart" }));
+    act(() => result.current.restart());
     expect(reset).toHaveBeenCalled();
-    expect(result.current.entries.at(-1)).toMatchObject({ role: "assistant", text: "Sure — what are you after this time?" });
-    expect(result.current.entries.find((entry) => entry.role === "results")).toMatchObject({ snapshot: finished });
+    expect(result.current.entries.at(-1)).toMatchObject({ text: "Sure — what are you after this time?", quickReplies: expect.arrayContaining(["A movie tonight"]) });
   });
 });
