@@ -41,3 +41,5 @@ it("ignore invalid or unmentioned clock: thanks", () => { expect(timeIntent("tha
 it("count party: two adults and a 6-year-old", () => { expect(partySizeFrom("two adults and a 6-year-old")).toBe(3); });
 
 it("count party: 2 adults and 2 children", () => { expect(partySizeFrom("2 adults and 2 children")).toBe(4); });
+
+it("count party: \u4e24\u5927\u4e00\u5c0f", () => { expect(partySizeFrom("\u4e24\u5927\u4e00\u5c0f")).toBe(3); });
