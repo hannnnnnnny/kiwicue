@@ -28,3 +28,5 @@ it("normalize calendar instant 2026-10-03T21:00:00", () => { expect(calendarInst
 it("normalize calendar instant 2026-06-03T21:00:00", () => { expect(calendarInstant("2026-06-03T21:00:00")).toBe("20260603T090000Z"); });
 
 it("normalize calendar instant bad", () => { expect(calendarInstant("bad")).toBe(null); });
+
+it("export known movie end time from runtime", () => { expect(planCalendar(plan)).toContain("DTEND:20261003T094000Z"); });
