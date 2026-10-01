@@ -23,6 +23,17 @@ describe("conversePrompt", () => {
     expect(prompt).toContain("No search yet.");
     expect(prompt).toContain("Nothing on screen yet.");
   });
+
+  it.each(Object.values(ASSISTANTS))("gives $name native-language guidance without diluting evidence rules", (assistant) => {
+    const prompt = conversePrompt({ assistant, today: "2026-10-01", filters: null, shown: [] });
+    expect(prompt).toContain(assistant.style.zh);
+    expect(prompt).toContain("中文用日常聊天的说法");
+    expect(prompt).toContain("For a follow-up, answer that question first");
+    expect(prompt).toContain("do not attach an obligatory follow-up question");
+    expect(prompt).not.toContain("Never open two replies the same way");
+    expect(prompt).toContain("never invent events, times, prices, links or details");
+    expect(prompt).toContain("never say you already saved, booked");
+  });
 });
 
 describe("toModelMessages", () => {
