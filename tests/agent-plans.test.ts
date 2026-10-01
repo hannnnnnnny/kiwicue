@@ -1,0 +1,8 @@
+import { expect, it } from "vitest";
+import { readPlans, createPlan, planCosts, planWarnings } from "../lib/ask/plans";
+import { EMPTY_FILTERS } from "../lib/ask/schema";
+const card = { kind: "movie" as const, id: "m1", title: "A film", when: "2026-10-03T08:00:00Z", venue: "Albany", href: "/movies?q=A", imageUrl: null, priceText: null, sessionCount: 1, score: 1, durationMinutes: 100, budgetStatus: "unknown" as const, minPartyCost: null };
+const plan = { id: "test-plan", name: "Saturday", createdAt: "2026-10-01T06:00:00Z", filters: EMPTY_FILTERS, cards: [card], notes: "" };
+
+
+it("round trip a validated local plan", () => { expect(readPlans(JSON.stringify([plan]))).toEqual([plan]); });
