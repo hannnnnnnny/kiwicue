@@ -8,3 +8,5 @@ const plan = { id: "test-plan", name: "Saturday", createdAt: "2026-10-01T06:00:0
 it("round trip a validated local plan", () => { expect(readPlans(JSON.stringify([plan]))).toEqual([plan]); });
 
 it("safely read empty or invalid storage null", () => { expect(readPlans(null)).toEqual([]); });
+
+it("safely read empty or invalid storage \"not json\"", () => { expect(readPlans("not json")).toEqual([]); });
