@@ -26,3 +26,5 @@ it("normalize calendar instant 2026-10-03T08:00:00Z", () => { expect(calendarIns
 it("normalize calendar instant 2026-10-03T21:00:00", () => { expect(calendarInstant("2026-10-03T21:00:00")).toBe("20261003T080000Z"); });
 
 it("normalize calendar instant 2026-06-03T21:00:00", () => { expect(calendarInstant("2026-06-03T21:00:00")).toBe("20260603T090000Z"); });
+
+it("normalize calendar instant bad", () => { expect(calendarInstant("bad")).toBe(null); });
