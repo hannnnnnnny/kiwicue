@@ -73,3 +73,5 @@ it("interpret budget: $25 each", () => { expect(budgetIntent("$25 each")).toMatc
 it("interpret budget: no budget limit", () => { expect(budgetIntent("no budget limit")).toMatchObject({"maxPrice": null, "totalBudget": null}); });
 
 it("interpret budget: \u9884\u7b97\u4e0d\u9650", () => { expect(budgetIntent("\u9884\u7b97\u4e0d\u9650")).toMatchObject({"maxPrice": null, "totalBudget": null}); });
+
+it("interpret budget: total $0", () => { expect(budgetIntent("total $0")).toMatchObject({"totalBudget": 0}); });
