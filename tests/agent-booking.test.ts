@@ -42,3 +42,5 @@ it("block unsafe booking https://ticketmaster.co.nz.evil.example/", () => { expe
 it("block unsafe booking https://eventcinemas.co.nz/\nX", () => { expect(trustedBookingUrl("https://eventcinemas.co.nz/\nX")).toBeNull(); });
 
 it("block unsafe booking data:text/html,hello", () => { expect(trustedBookingUrl("data:text/html,hello")).toBeNull(); });
+
+it("block unsafe booking file:///C:/secret", () => { expect(trustedBookingUrl("file:///C:/secret")).toBeNull(); });
