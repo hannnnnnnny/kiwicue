@@ -16,3 +16,5 @@ it("reject invalid constraint totalBudget=10001", () => { expect(askFiltersSchem
 it("reject invalid constraint startMinute=1440", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, startMinute: 1440 }).success).toBe(false); });
 
 it("reject invalid constraint startMinute=-1", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, startMinute: -1 }).success).toBe(false); });
+
+it("reject invalid constraint endMinute=0", () => { expect(askFiltersSchema.safeParse({ ...EMPTY_FILTERS, endMinute: 0 }).success).toBe(false); });
