@@ -1,29 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { ASSISTANTS, type Assistant, type AssistantId } from "../../lib/assistants";
 import { useLanguage } from "../language-provider";
-import { AskBot, type BotState } from "./ask-bot";
+import { useAssistant } from "../use-assistant";
+import { AssistantOrb, type BotState } from "./assistant-orb";
+import { AssistantPicker } from "./assistant-picker";
 import { AskResults } from "./ask-results";
 import type { FollowUpOption } from "./follow-up";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
 import { useSpeechInput } from "./use-speech-input";
-import { createBrowserVoice } from "./voice";
+import { createBrowserVoice, type Tone } from "./voice";
 
 type Language = "en" | "zh";
 const copy = {
   en: {
-    title: "Kiwi", status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", speaking: "Speaking…" },
-    mute: "Mute Kiwi", unmute: "Unmute Kiwi", close: "Close", message: "Message Kiwi", placeholder: "Type or tap the mic",
-    send: "Send", talk: "Talk to Kiwi", stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
+    status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", speaking: "Speaking…" },
+    mute: (name: string) => `Mute ${name}`, unmute: (name: string) => `Unmute ${name}`, close: "Close",
+    message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant",
+    send: "Send", talk: (name: string) => `Talk to ${name}`, stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
     denied: "Microphone access was blocked. You can type instead.", left: (count: number) => `${count} free searches left today`,
     earlier: (count: number, labels: string) => `Earlier · ${count} ${count === 1 ? "result" : "results"}${labels ? ` · ${labels}` : ""}`,
     privacy: "Questions are processed by TypeSafe AI (US) and DeepSeek (China). No account details or location are sent.",
   },
   zh: {
-    title: "Kiwi", status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", speaking: "正在说…" },
-    mute: "Kiwi 静音", unmute: "取消静音", close: "关闭", message: "发给 Kiwi", placeholder: "打字，或点麦克风说话",
-    send: "发送", talk: "和 Kiwi 说话", stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
+    status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", speaking: "正在说…" },
+    mute: (name: string) => `${name} 静音`, unmute: (name: string) => `${name} 取消静音`, close: "关闭",
+    message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手",
+    send: "发送", talk: (name: string) => `和 ${name} 说话`, stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
     denied: "麦克风权限被拒绝，可以改为打字。", left: (count: number) => `今天还剩 ${count} 次免费搜索`,
     earlier: (count: number, labels: string) => `之前 · ${count} 个结果${labels ? ` · ${labels}` : ""}`,
     privacy: "问题会由 TypeSafe AI（美国）和 DeepSeek（中国）处理，不会发送账号信息或位置。",
@@ -62,7 +67,7 @@ function MicIcon() {
 
 type Line = { key: string; text: string } | null;
 
-/** The line Kiwi should say now: its newest message, or a finished search's reply and follow-up question. */
+/** The line the assistant should say now: its newest message, or a finished search's reply and follow-up question. */
 function currentLine(entries: ChatEntry[], search: AskViewState): Line {
   const latest = entries[entries.length - 1];
   if (latest?.role === "assistant") return { key: latest.id, text: latest.text };
@@ -72,12 +77,13 @@ function currentLine(entries: ChatEntry[], search: AskViewState): Line {
 }
 
 /** Speaks each new line once; when it finishes, `onSpoken` lets a voice conversation listen again. */
-function useKiwiVoice(line: Line, muted: boolean, language: Language, onSpoken: () => void): { speaking: boolean; silence(): void } {
+function useAssistantVoice(line: Line, muted: boolean, language: Language, tone: Tone, onSpoken: () => void): { speaking: boolean; silence(): void } {
   const voice = useMemo(() => createBrowserVoice(), []);
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
   const spoken = useRef(new Set<string>());
   const afterSpeech = useRef(onSpoken);
-  useEffect(() => { afterSpeech.current = onSpoken; }, [onSpoken]);
+  const currentTone = useRef(tone);
+  useEffect(() => { afterSpeech.current = onSpoken; currentTone.current = tone; }, [onSpoken, tone]);
   useEffect(() => () => voice.cancel(), [voice]);
   useEffect(() => { if (muted) voice.cancel(); }, [muted, voice]);
   useEffect(() => {
@@ -85,7 +91,7 @@ function useKiwiVoice(line: Line, muted: boolean, language: Language, onSpoken: 
     spoken.current.add(line.key);
     void (async () => {
       setSpeakingKey(line.key);
-      await voice.speak(line.text, language);
+      await voice.speak(line.text, language, currentTone.current);
       setSpeakingKey((current) => current === line.key ? null : current);
       afterSpeech.current();
     })();
@@ -159,7 +165,7 @@ function Thread({ entries, search, busy, language, onQuickReply, onRemoveChip, o
 
 type Speech = ReturnType<typeof useSpeechInput>;
 
-function Composer({ language, speech, onSend }: { language: Language; speech: Speech; onSend(text: string): void }) {
+function Composer({ language, name, speech, onSend }: { language: Language; name: string; speech: Speech; onSend(text: string): void }) {
   const content = copy[language];
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -172,18 +178,40 @@ function Composer({ language, speech, onSend }: { language: Language; speech: Sp
   }
   const hint = speech.listening ? content.status.listening : !speech.supported ? content.noVoice : speech.error === "denied" ? content.denied : null;
   return (
-    <form className="ask-composer" aria-label={content.message} onSubmit={submit}>
+    <form className="ask-composer" aria-label={content.message(name)} onSubmit={submit}>
       {speech.supported ? (
         <button type="button" className="ask-mic" data-listening={speech.listening || undefined}
-          aria-label={speech.listening ? content.stopTalking : content.talk} onClick={speech.listening ? speech.stop : speech.start}>
+          aria-label={speech.listening ? content.stopTalking : content.talk(name)} onClick={speech.listening ? speech.stop : speech.start}>
           <MicIcon />
         </button>
       ) : null}
-      <input ref={input} aria-label={content.message} placeholder={content.placeholder} maxLength={300}
+      <input ref={input} aria-label={content.message(name)} placeholder={content.placeholder} maxLength={300}
         value={speech.listening && speech.interim ? speech.interim : text} onChange={(event) => setText(event.target.value)} />
       <button type="submit" className="ask-send">{content.send}</button>
       {hint ? <p className="ask-input-hint" aria-live="polite">{hint}</p> : null}
     </form>
+  );
+}
+
+type HeaderProps = {
+  assistant: Assistant; state: BotState; language: Language; muted: boolean; picking: boolean;
+  onPickToggle(): void; onMute(): void; onClose(): void;
+};
+
+function AssistantHeader({ assistant, state, language, muted, picking, onPickToggle, onMute, onClose }: HeaderProps) {
+  const content = copy[language];
+  return (
+    <header className="ask-header">
+      <button type="button" className="ask-orb-button" aria-label={content.change} aria-expanded={picking} onClick={onPickToggle}>
+        <AssistantOrb assistant={assistant} state={state} />
+      </button>
+      <div className="ask-header-text">
+        <h2 id="ask-title">{assistant.name}</h2>
+        <p role="status">{content.status[state]}</p>
+      </div>
+      <button type="button" className="ask-mute" aria-pressed={muted} aria-label={muted ? content.unmute(assistant.name) : content.mute(assistant.name)} onClick={onMute}>{muted ? "🔇" : "🔊"}</button>
+      <button type="button" className="ask-close" aria-label={content.close} onClick={onClose}>×</button>
+    </header>
   );
 }
 
@@ -196,12 +224,14 @@ function botState(listening: boolean, speaking: boolean, busy: boolean): BotStat
 export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?: typeof fetch }) {
   const { language } = useLanguage();
   const content = copy[language];
-  const search = useAskStream(fetchImpl);
-  const chat = useAskChat({ language, searchState: search.state, search: (text) => void search.ask(text, language), reset: search.reset });
+  const { assistant, setAssistant } = useAssistant();
+  const [picking, setPicking] = useState(false);
+  const search = useAskStream(fetchImpl, assistant.id);
+  const chat = useAskChat({ language, name: assistant.name, searchState: search.state, search: (text) => void search.ask(text, language), reset: search.reset });
   const speech = useSpeechInput({ language, onFinal: (text) => chat.send(text, "voice") });
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
-  const { speaking, silence } = useKiwiVoice(line, muted, language, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
+  const { speaking, silence } = useAssistantVoice(line, muted, language, assistant.voice, () => { if (chat.lastInput === "voice" && speech.supported) speech.start(); });
   const busy = search.state.status === "thinking" || search.state.status === "streaming";
   const state = botState(speech.listening, speaking, busy);
   const { remaining } = search.state;
@@ -213,19 +243,22 @@ export function AskOverlay({ onClose, fetchImpl }: { onClose(): void; fetchImpl?
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
   function toggleMute() { setMuted(!muted); writeMuted(!muted); }
+  function pick(id: AssistantId) {
+    setPicking(false);
+    if (id === assistant.id) return;
+    setAssistant(id);
+    chat.introduce(ASSISTANTS[id].name);
+  }
   return (
     <div className="ask-overlay" role="dialog" aria-modal="true" aria-labelledby="ask-title" onKeyDown={trapFocus}>
       <div className="ask-panel">
-        <header className="ask-header">
-          <AskBot state={state} />
-          <div className="ask-header-text"><h2 id="ask-title">{content.title}</h2><p role="status">{content.status[state]}</p></div>
-          <button type="button" className="ask-mute" aria-pressed={muted} aria-label={muted ? content.unmute : content.mute} onClick={toggleMute}>{muted ? "🔇" : "🔊"}</button>
-          <button type="button" className="ask-close" aria-label={content.close} onClick={onClose}>×</button>
-        </header>
+        <AssistantHeader assistant={assistant} state={state} language={language} muted={muted} picking={picking}
+          onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onClose={onClose} />
+        {picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
           onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)}
           onFollowUp={chat.followUp} onSound={silence} />
-        <Composer language={language} speech={speech} onSend={(text) => chat.send(text, "text")} />
+        <Composer language={language} name={assistant.name} speech={speech} onSend={(text) => chat.send(text, "text")} />
         <footer className="ask-footer">
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}
           <small>{content.privacy}</small>

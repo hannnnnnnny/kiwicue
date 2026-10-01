@@ -10,14 +10,14 @@ const finished: AskViewState = { ...INITIAL_ASK_STATE, status: "done", text: "mu
 function setup() {
   const search = vi.fn();
   const reset = vi.fn();
-  const hook = renderHook(({ searchState }) => useAskChat({ language: "en", search, reset, searchState }), { initialProps: { searchState: INITIAL_ASK_STATE } });
+  const hook = renderHook(({ searchState }) => useAskChat({ language: "en", name: "Fern", search, reset, searchState }), { initialProps: { searchState: INITIAL_ASK_STATE } });
   return { ...hook, search, reset };
 }
 
 describe("useAskChat", () => {
   it("greets with starters, then searches straight away on every message", () => {
     const { result, search } = setup();
-    expect(result.current.entries).toEqual([expect.objectContaining({ role: "assistant", text: expect.stringContaining("Kiwi"), quickReplies: expect.arrayContaining(["Something this weekend"]) })]);
+    expect(result.current.entries).toEqual([expect.objectContaining({ role: "assistant", text: "Hi, I'm Fern! What are you in the mood for in Auckland?", quickReplies: expect.arrayContaining(["Something this weekend"]) })]);
     act(() => result.current.send("  live music  ", "voice"));
     expect(search).toHaveBeenCalledWith("live music");
     expect(result.current.entries.slice(1).map((entry) => entry.role)).toEqual(["user", "results"]);
@@ -40,6 +40,12 @@ describe("useAskChat", () => {
     expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ snapshot: finished });
     expect(results[1]).toMatchObject({ snapshot: null });
+  });
+
+  it("lets a newly chosen assistant introduce itself", () => {
+    const { result } = setup();
+    act(() => result.current.introduce("Sunny"));
+    expect(result.current.entries.at(-1)).toMatchObject({ role: "assistant", text: "Hi, I'm Sunny — I'll take it from here!", quickReplies: [] });
   });
 
   it("starts over with a fresh search and a new greeting", () => {
