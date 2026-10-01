@@ -6,3 +6,5 @@ const plan = { id: "test-plan", name: "Saturday", createdAt: "2026-10-01T06:00:0
 
 
 it("escape calendar text 'a,b'", () => { expect(calendarText("a,b")).toBe("a\\,b"); });
+
+it("escape calendar text 'a;b'", () => { expect(calendarText("a;b")).toBe("a\\;b"); });
