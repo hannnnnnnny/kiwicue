@@ -59,3 +59,5 @@ it("count party: for 30 people", () => { expect(partySizeFrom("for 30 people")).
 it("count party: for 31 people", () => { expect(partySizeFrom("for 31 people")).toBe(undefined); });
 
 it("interpret budget: total budget under NZ$60", () => { expect(budgetIntent("total budget under NZ$60")).toMatchObject({"totalBudget": 60, "maxPrice": null}); });
+
+it("interpret budget: \u603b\u9884\u7b9760\u5143", () => { expect(budgetIntent("\u603b\u9884\u7b9760\u5143")).toMatchObject({"totalBudget": 60, "maxPrice": null}); });
