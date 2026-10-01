@@ -6,15 +6,21 @@ const search = [
   { type: "understood", filters: { domain: "any", dates: ["2026-10-03"], timeOfDay: "any", area: "any", category: "family", kids: true, free: false, names: [], place: null }, chips: [{ key: "kids", label: "With kids" }] },
   { type: "result", card: { kind: "event", id: "a", title: "Bundle Baby", when: "2026-10-03T10:00:00+13:00", venue: "Aotea Centre", href: "/events/a", imageUrl: null, priceText: "Free", sessionCount: 15, score: 1 } },
   { type: "best", id: "a" },
-  { type: "reply", delta: "Bundle Baby suits little ones." },
+  { type: "layout", layout: "spotlight" },
+  { type: "reply", delta: "**Bundle Baby** at the Aotea Centre is a sweet pick for little ones.\n\n" },
+  { type: "reply", delta: "How old are the kids?" },
   { type: "done", remaining: 4, tier: "guest" },
 ].map((line) => JSON.stringify(line)).join("\n");
+const chat = [
+  { type: "reply", delta: "Perfect for toddlers — it's free, so just turn up." },
+  { type: "done", remaining: 3, tier: "guest" },
+].map((line) => JSON.stringify(line)).join("\n");
 
-test("answers the first message with results, then refines them from a follow-up", async ({ page }) => {
-  const bodies: Array<{ text: string; previous: unknown }> = [];
+test("holds a conversation: results with a natural reply, then a follow-up answered in context", async ({ page }) => {
+  const bodies: Array<Record<string, unknown>> = [];
   await page.route("**/api/ask", (route) => {
     bodies.push(route.request().postDataJSON());
-    return route.fulfill({ status: 200, contentType: "application/x-ndjson", body: search });
+    return route.fulfill({ status: 200, contentType: "application/x-ndjson", body: bodies.length === 1 ? search : chat });
   });
   await page.goto("/events");
   const launcher = page.getByRole("button", { name: "Ask KiwiCue" });
@@ -25,11 +31,12 @@ test("answers the first message with results, then refines them from a follow-up
   await page.getByRole("textbox", { name: "Message Fern" }).fill("Something with the kids");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("article", { name: /Best match: Bundle Baby/ })).toBeVisible();
-  await expect(page.getByText("Bundle Baby suits little ones.")).toBeVisible();
-  await page.getByRole("button", { name: "Central" }).click();
-  await expect(page.getByText(/^Earlier · 1 result/u)).toBeVisible();
-  await expect.poll(() => bodies.length).toBe(2);
-  expect(bodies[1]).toMatchObject({ text: "Central", previous: { kids: true } });
+  await expect(page.getByText("How old are the kids?")).toBeVisible();
+  await page.getByRole("textbox", { name: "Message Fern" }).fill("Two toddlers");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Perfect for toddlers — it's free, so just turn up.")).toBeVisible();
+  await expect(page.getByRole("article", { name: /Best match: Bundle Baby/ })).toBeVisible();
+  expect(bodies[1]).toMatchObject({ text: "Two toddlers", previous: { kids: true }, shown: [{ title: "Bundle Baby" }] });
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.keyboard.press("Escape");
@@ -37,7 +44,7 @@ test("answers the first message with results, then refines them from a follow-up
   await expect(launcher).toBeFocused();
 });
 
-test("loosens a search that found nothing exact and keeps the conversation going", async ({ page }) => {
+test("shows loosened searches honestly and starts a new chat", async ({ page }) => {
   const relaxed = search.split("\n");
   relaxed.splice(1, 0, JSON.stringify({ type: "relaxed", keys: ["kids"] }));
   await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/x-ndjson", body: relaxed.join("\n") }));
@@ -47,8 +54,7 @@ test("loosens a search that found nothing exact and keeps the conversation going
   await page.getByRole("button", { name: "Send" }).click();
 
   await expect(page.getByText("No exact match — here are the closest.")).toBeVisible();
-  await expect(page.getByText("Nothing matched exactly, so these are the closest. Want to adjust?")).toBeVisible();
-  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByRole("button", { name: "New chat" }).click();
   await expect(page.getByText("Sure — what are you after this time?")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
