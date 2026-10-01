@@ -36,3 +36,5 @@ it("omit unverified event end time", () => { expect(planCalendar({ ...plan, card
 it("omit calendar entries without valid start times", () => { expect(planCalendar({ ...plan, cards: [{ ...card, when: "unknown" }] })).not.toContain("BEGIN:VEVENT"); });
 
 it("prevent note text from injecting a calendar alarm", () => { const result = planCalendar({ ...plan, notes: "hello\r\nBEGIN:VALARM\r\nACTION:EMAIL" }); expect(result).not.toContain("\r\nBEGIN:VALARM"); });
+
+it("omit malicious URLs from exported calendars", () => { expect(planCalendar({ ...plan, cards: [{ ...card, bookingUrl: "javascript:alert(1)" }] })).not.toContain("URL:"); });
