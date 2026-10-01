@@ -128,7 +128,7 @@ Browsing, search and guest saves work with just these keys. Accounts are optiona
 
 6. **Voice ask (optional)** — apply `supabase/migrations/202610010001_ask_usage.sql`, then set `TYPESAFE_AI_API_KEY`, `DEEPSEEK_API_KEY` and `ASK_HASH_SALT` (any random string of 16+ characters) as Sensitive variables and redeploy. The mic button appears only when all three are set. Quotas (guest 15, signed-in 50 searches a day) and the NZ$0.50/day, NZ$8/month budget live in the `ask_limits` and `ask_settings` tables, so they can change without a deploy.
 
-7. **Kiwi** — also apply `supabase/migrations/202610010002_ask_chat.sql` and `202610010003_ask_free_quota.sql`. Kiwi, the round voice guide, searches on every message: the first one starts a search, each later one refines the results on screen, and Kiwi then asks for whatever is missing (day, part of town) with tap-to-answer replies. Each message uses one search from the daily quota.
+7. **Kiwi** — also apply `supabase/migrations/202610010002_ask_chat.sql` and `202610010003_ask_free_quota.sql`. The assistant (five to choose from, each re-themes the site) holds a real conversation: DeepSeek reads the last 12 turns and what is on screen, calls the search tool only when the visitor wants something or changes what they want, and replies in its own voice. Each message uses one question from the daily quota.
 
 **How sign-up works:** after signing up, the original tab waits (up to 15 minutes) while you confirm the email — on any device — then signs in automatically. Signing up with an already-registered email sends no email by design (to avoid revealing which emails have accounts); the page offers log-in and password-reset links instead.
 

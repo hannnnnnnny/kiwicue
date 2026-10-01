@@ -120,7 +120,7 @@ TMDB_READ_ACCESS_TOKEN=your_tmdb_read_access_token
 
 6. **语音问答（可选）** —— 执行 `supabase/migrations/202610010001_ask_usage.sql`，再把 `TYPESAFE_AI_API_KEY`、`DEEPSEEK_API_KEY` 和 `ASK_HASH_SALT`（16 位以上的随机字符串）设为 Sensitive 环境变量并重新部署。三者都设置后才会显示麦克风按钮。次数额度（未登录每天 15 次、登录 50 次）和每天 NZ$0.50、每月 NZ$8 的预算保存在 `ask_limits` 和 `ask_settings` 表里，修改不需要重新部署。
 
-7. **Kiwi** —— 再执行 `supabase/migrations/202610010002_ask_chat.sql` 和 `202610010003_ask_free_quota.sql`。圆形语音向导 Kiwi 每条消息都会直接搜索：第一句开始搜索，之后每一句都在当前结果上继续调整，然后 Kiwi 会追问还缺的信息（哪天、哪一片），可以直接点选回答。每条消息占用一次每日搜索额度。
+7. **Kiwi** —— 再执行 `supabase/migrations/202610010002_ask_chat.sql` 和 `202610010003_ask_free_quota.sql`。助手（五个可选，换助手整站换色）能真正对话：DeepSeek 会读最近 12 轮对话和屏幕上的结果，只在用户想找东西或改条件时调用搜索，然后用自己的语气回复。每条消息占用一次每日额度。
 
 **注册流程：** 注册后，原来的页面会等待（最多 15 分钟），你在任意设备上确认邮件后，它会自动登录。用已注册的邮箱再次注册时，按设计不会发送邮件（避免暴露哪些邮箱有账号），页面会提供登录和重置密码的入口。
 
