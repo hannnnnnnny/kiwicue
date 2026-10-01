@@ -38,3 +38,21 @@ test("chats with Kiwi, confirms, and shows the results without overflow", async 
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(launcher).toBeFocused();
 });
+
+test("loosens a search that found nothing exact and keeps the conversation going", async ({ page }) => {
+  const relaxed = search.split("\n");
+  relaxed.splice(1, 0, JSON.stringify({ type: "relaxed", keys: ["kids"] }));
+  await page.route("**/api/ask/chat", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(turns[1]) }));
+  await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/x-ndjson", body: relaxed.join("\n") }));
+  await page.goto("/events");
+  await page.getByRole("button", { name: "Ask KiwiCue" }).click();
+  await page.getByRole("textbox", { name: "Message Kiwi" }).fill("Saturday with the kids");
+  await page.getByRole("button", { name: "Send" }).click();
+  await page.getByRole("group", { name: "I'll search for" }).getByRole("button", { name: "Search" }).click();
+
+  await expect(page.getByText("No exact match — here are the closest.")).toBeVisible();
+  await expect(page.getByText("Nothing matched exactly, so these are the closest. Want to adjust?")).toBeVisible();
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.getByText("Sure — what are you after this time?")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});

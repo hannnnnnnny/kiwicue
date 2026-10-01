@@ -25,7 +25,8 @@ describe("ask request schema", () => {
 
 describe("ask filters budget", () => {
   it("defaults a missing budget so older clients still validate, and bounds it", () => {
-    const { maxPrice: _omitted, ...legacy } = EMPTY_FILTERS;
+    const legacy: Partial<typeof EMPTY_FILTERS> = { ...EMPTY_FILTERS };
+    delete legacy.maxPrice;
     expect(askRequestSchema.parse({ text: "hi", language: "en", previous: legacy, history: [] }).previous?.maxPrice).toBeNull();
     expect(askRequestSchema.safeParse({ text: "hi", language: "en", previous: { ...EMPTY_FILTERS, maxPrice: 30 }, history: [] }).success).toBe(true);
     expect(askRequestSchema.safeParse({ text: "hi", language: "en", previous: { ...EMPTY_FILTERS, maxPrice: 0 }, history: [] }).success).toBe(false);
