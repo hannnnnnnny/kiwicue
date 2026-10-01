@@ -25,3 +25,5 @@ it("interpret time: \u4e0b\u53483\u70b9\u4e4b\u524d", () => { expect(timeIntent(
 it("interpret time: after 12 am", () => { expect(timeIntent("after 12 am")).toMatchObject({"startMinute": 0}); });
 
 it("interpret time: after 12 pm", () => { expect(timeIntent("after 12 pm")).toMatchObject({"startMinute": 720}); });
+
+it("interpret time: any time", () => { expect(timeIntent("any time")).toMatchObject({"timeOfDay": "any", "startMinute": null, "endMinute": null}); });
