@@ -38,3 +38,5 @@ it("strip an untrusted booking URL when creating a plan", () => { expect(createP
 it("warn when known movie runtimes overlap", () => { expect(planWarnings([card, { ...card, id: "m2", when: "2026-10-03T09:00:00Z" }])).toContain("overlap"); });
 
 it("allow back to back known durations without false overlap", () => { expect(planWarnings([card, { ...card, id: "m2", when: "2026-10-03T09:40:00Z" }])).not.toContain("overlap"); });
+
+it("keep unknown duration distinct from a verified schedule", () => { expect(planWarnings([{ ...card, durationMinutes: null }])).toContain("duration"); });
