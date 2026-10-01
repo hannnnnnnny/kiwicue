@@ -20,9 +20,9 @@ test("answers the first message with results, then refines them from a follow-up
   const launcher = page.getByRole("button", { name: "Ask KiwiCue" });
   expect((await launcher.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   await launcher.click();
-  await expect(page.getByText("Hi, I'm Kiwi!", { exact: false })).toBeVisible();
+  await expect(page.getByText("Hi, I'm Fern!", { exact: false })).toBeVisible();
 
-  await page.getByRole("textbox", { name: "Message Kiwi" }).fill("Something with the kids");
+  await page.getByRole("textbox", { name: "Message Fern" }).fill("Something with the kids");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("article", { name: /Best match: Bundle Baby/ })).toBeVisible();
   await expect(page.getByText("Bundle Baby suits little ones.")).toBeVisible();
@@ -43,7 +43,7 @@ test("loosens a search that found nothing exact and keeps the conversation going
   await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/x-ndjson", body: relaxed.join("\n") }));
   await page.goto("/events");
   await page.getByRole("button", { name: "Ask KiwiCue" }).click();
-  await page.getByRole("textbox", { name: "Message Kiwi" }).fill("Saturday with the kids");
+  await page.getByRole("textbox", { name: "Message Fern" }).fill("Saturday with the kids");
   await page.getByRole("button", { name: "Send" }).click();
 
   await expect(page.getByText("No exact match — here are the closest.")).toBeVisible();
@@ -67,7 +67,7 @@ test("leads a movie best match with a muted autoplaying trailer and thumbnails t
   await page.route("https://www.youtube-nocookie.com/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<html></html>" }));
   await page.goto("/events");
   await page.getByRole("button", { name: "Ask KiwiCue" }).click();
-  await page.getByRole("textbox", { name: "Message Kiwi" }).fill("A movie with the kids");
+  await page.getByRole("textbox", { name: "Message Fern" }).fill("A movie with the kids");
   await page.getByRole("button", { name: "Send" }).click();
 
   const trailer = page.getByTitle("Zootopia 2 trailer");
@@ -76,4 +76,22 @@ test("leads a movie best match with a muted autoplaying trailer and thumbnails t
   await expect(trailer).toHaveAttribute("src", /mute=0/u);
   await expect(page.locator(".ask-card-thumb").first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("picking an assistant re-themes the whole site and survives a reload", async ({ page }) => {
+  await page.goto("/events");
+  await page.getByRole("button", { name: "Ask KiwiCue" }).click();
+  await expect(page.getByRole("dialog", { name: "Fern" })).toBeVisible();
+  await page.getByRole("button", { name: "Change assistant" }).click();
+  await page.getByText("Sunny", { exact: true }).click();
+  await expect(page.getByText("Hi, I'm Sunny — I'll take it from here!")).toBeVisible();
+  const brand = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--portal-brand").trim());
+  expect(await page.evaluate(() => document.documentElement.dataset.assistant)).toBe("sunny");
+  expect(await brand()).toBe("#83600f");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.keyboard.press("Escape");
+  await page.reload();
+  expect(await brand()).toBe("#83600f");
+  await expect(page.getByRole("button", { name: "Ask KiwiCue" }).locator("img")).toHaveAttribute("src", "/assistants/sunny.webp");
 });
