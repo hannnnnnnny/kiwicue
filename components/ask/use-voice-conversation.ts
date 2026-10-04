@@ -7,7 +7,7 @@ export const RELISTEN_MS = 400;
 // Listening turns in a row with nothing said before voice chat pauses itself.
 export const MAX_QUIET_TURNS = 3;
 
-type Microphone = { listening: boolean; error: "denied" | "failed" | null; start(): void; cancel(): void };
+type Microphone = { listening: boolean; error: "denied" | "failed" | null; start(): void; cancel(): void; isWaiting(): boolean };
 export type VoiceEnd = "quiet" | "denied" | null;
 
 /**
@@ -22,7 +22,9 @@ export function useVoiceConversation(input: { microphone: Microphone; speaking: 
   const quiet = useRef(0);
   const heard = useRef(false);
   const wasListening = useRef(false);
-  const { start: listen, cancel: closeMic, listening, error } = microphone;
+  // The first turn opens straight away; later ones wait for the reply's last word to fade.
+  const starting = useRef(false);
+  const { start: listen, cancel: closeMic, isWaiting, listening, error } = microphone;
   // A blocked mic or a hidden panel stops the conversation; the visitor restarts it with a tap.
   const blocked = error === "denied";
   const on = wanted && active && !blocked;
@@ -37,10 +39,11 @@ export function useVoiceConversation(input: { microphone: Microphone; speaking: 
 
   const start = useCallback(() => {
     quiet.current = 0;
+    starting.current = true;
     setStopped(null);
     setWanted(true);
-    listen();
-  }, [listen]);
+    silence();
+  }, [silence]);
 
   // Called with every utterance the mic delivers, so a turn that heard something isn't counted as quiet.
   const noteHeard = useCallback(() => { heard.current = true; }, []);
@@ -56,9 +59,11 @@ export function useVoiceConversation(input: { microphone: Microphone; speaking: 
 
   useEffect(() => {
     if (!on || listening || speaking || busy) return;
-    const timer = setTimeout(listen, RELISTEN_MS);
+    // A mic start already under way would otherwise be restarted, losing the visitor's first words.
+    const timer = setTimeout(() => { if (!isWaiting()) listen(); }, starting.current ? 0 : RELISTEN_MS);
+    starting.current = false;
     return () => clearTimeout(timer);
-  }, [busy, listen, listening, on, speaking]);
+  }, [busy, isWaiting, listen, listening, on, speaking]);
 
   return { on, ended, start, end: () => end(), noteHeard };
 }

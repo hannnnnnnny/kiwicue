@@ -6,8 +6,8 @@ import type { useSpeechInput } from "./use-speech-input";
 export const MIC_COOLDOWN_MS = 300;
 type Speech = ReturnType<typeof useSpeechInput>;
 
-/** A deliberate tap starts a turn after residual speaker audio has faded. */
-export function useMicTurn(speech: Speech, silence: () => void, active: boolean): Speech {
+/** A deliberate tap starts a turn after residual speaker audio has faded. `isWaiting()` is true until capture begins. */
+export function useMicTurn(speech: Speech, silence: () => void, active: boolean): Speech & { isWaiting(): boolean } {
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelCapture = speech.cancel;
   const startCapture = speech.start;
@@ -29,5 +29,6 @@ export function useMicTurn(speech: Speech, silence: () => void, active: boolean)
       startCapture();
     }, MIC_COOLDOWN_MS);
   }, [active, cancel, silence, startCapture]);
-  return { ...speech, start, cancel };
+  const isWaiting = useCallback(() => pending.current !== null, []);
+  return { ...speech, start, cancel, isWaiting };
 }
