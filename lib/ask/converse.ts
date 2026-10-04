@@ -25,17 +25,18 @@ export function lastStepSpeaks({ stepNumber }: { stepNumber: number }): { toolCh
   return stepNumber >= MAX_STEPS - 1 ? { toolChoice: "none" } : undefined;
 }
 
+/** Yielded in place of text when what was said so far should be withdrawn. */
+export const REPLY_RESET = "\u0000reset";
+
 /**
- * The reply text across steps. Anything said before a search ("Let me look…") stays as its own
- * paragraph instead of running straight into the answer that follows the results.
+ * The reply text across steps. When the model talks and then searches anyway, what it said first
+ * is withdrawn: the answer after the results replaces it rather than repeating it.
  */
 export async function* replyText(parts: AsyncIterable<StreamPart>): AsyncGenerator<string> {
   let wrote = false;
-  let searchedAfterText = false;
   for await (const part of parts) {
-    if (part.type === "tool-call" && wrote) searchedAfterText = true;
+    if (part.type === "tool-call" && wrote) { yield REPLY_RESET; wrote = false; }
     if (part.type !== "text-delta" || !part.text) continue;
-    if (searchedAfterText) { yield "\n\n"; searchedAfterText = false; }
     wrote = true;
     yield part.text;
   }

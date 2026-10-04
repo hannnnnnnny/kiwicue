@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tool } from "ai";
 import { expect, it } from "vitest";
-import { conversePrompt, deepseekConverse, SEARCH_TOOL_DESCRIPTION, searchInputSchema, toModelMessages } from "../../lib/ask/converse";
+import { conversePrompt, deepseekConverse, REPLY_RESET, SEARCH_TOOL_DESCRIPTION, searchInputSchema, toModelMessages } from "../../lib/ask/converse";
 import { moodFilter } from "../../lib/ask/mood";
 import { languageOf } from "../../lib/text-language";
 import { ASSISTANTS } from "../../lib/assistants";
@@ -28,8 +28,13 @@ async function reply(scenario: Scenario, variant: Variant): Promise<Omit<Sample,
   const turn = deepseekConverse({ system, messages: toModelMessages(scenario.history, scenario.message), tools, abortSignal: AbortSignal.timeout(45_000) });
   let text = "";
   let mood: string | null = null;
-  const filter = moodFilter((delta) => { text += delta; }, (value) => { mood ??= value; });
-  for await (const delta of turn.textStream) filter.push(delta);
+  const newFilter = () => moodFilter((delta) => { text += delta; }, (value) => { mood ??= value; });
+  let filter = newFilter();
+  for await (const delta of turn.textStream) {
+    if (delta !== REPLY_RESET) { filter.push(delta); continue; }
+    text = "";
+    filter = newFilter();
+  }
   filter.flush();
   const usage = await turn.usage;
   return { reply: text.trim(), mood, searches, tokens: { input: usage.inputTokens, output: usage.outputTokens } };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conversePrompt, lastStepSpeaks, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
+import { conversePrompt, lastStepSpeaks, REPLY_RESET, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
 import { EMPTY_FILTERS } from "../lib/ask/schema";
 import { PERSONAS } from "../lib/ask/personas";
 import { ASSISTANTS } from "../lib/assistants";
@@ -89,11 +89,11 @@ describe("replyText", () => {
     return text;
   }
 
-  it("keeps a line said before a search as its own paragraph", async () => {
+  it("withdraws what was said before a search, so the answer isn't repeated", async () => {
     expect(await collect([
       { type: "start-step" }, { type: "text-delta", text: "Let me look." }, { type: "tool-call" }, { type: "finish-step" },
       { type: "start-step" }, { type: "text-delta", text: "Wonderverse " }, { type: "text-delta", text: "is lovely." },
-    ])).toBe("Let me look.\n\nWonderverse is lovely.");
+    ])).toBe(`Let me look.${REPLY_RESET}Wonderverse is lovely.`);
   });
 
   it("leaves a reply that searched first, or never searched, as it is", async () => {
