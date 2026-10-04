@@ -25,3 +25,6 @@
 # Editor and operating-system files
 .DS_Store
 Thumbs.db
+
+# Reply eval outputs (contain model replies; regenerate with npm run eval:replies)
+/evals/replies/out/
