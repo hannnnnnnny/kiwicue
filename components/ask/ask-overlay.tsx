@@ -16,6 +16,7 @@ import { useAskStream, type AskViewState } from "./use-ask-stream";
 import { useBotFace } from "./use-bot-face";
 import { useMicTurn } from "./use-mic-turn";
 import { useSpeechInput } from "./use-speech-input";
+import { useVoiceConversation, type VoiceEnd } from "./use-voice-conversation";
 import { languageOf, readVoiceLanguage, writeVoiceLanguage, type SpokenLanguage } from "./spoken-language";
 import { createBrowserVoice, type Tone } from "./voice";
 
@@ -25,7 +26,9 @@ const copy = {
     status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", searching: "Looking through listings…", speaking: "Speaking…", error: "Something went wrong", sleeping: "Dozing — say something to wake me" },
     mute: (name: string) => `Mute ${name}`, unmute: (name: string) => `Unmute ${name}`, close: "Close",
     message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant", newChat: "New chat",
-    send: "Send", talk: (name: string) => `Talk to ${name}`, stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
+    send: "Send", talk: (name: string) => `Start voice chat with ${name}`, noVoice: "Voice isn't supported in this browser. Type instead.",
+    voiceChat: "Voice chat", endVoice: "End voice chat", interrupt: "Interrupt", sendNow: "Done",
+    voiceHint: "Just talk — I'll listen again after each reply.", paused: "Voice chat paused after a quiet spell. Tap the mic to carry on.",
     voiceLanguage: { en: "Voice input: English. Switch to Chinese", zh: "Voice input: Chinese. Switch to English" },
     denied: "Microphone access was blocked. You can type instead.", left: (count: number) => `${count} free searches left today`,
     earlier: (count: number, labels: string) => `Earlier · ${count} ${count === 1 ? "result" : "results"}${labels ? ` · ${labels}` : ""}`,
@@ -35,7 +38,9 @@ const copy = {
     status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", searching: "正在翻找活动…", speaking: "正在说…", error: "出了点问题", sleeping: "打盹中，说句话叫醒我" },
     mute: (name: string) => `${name} 静音`, unmute: (name: string) => `${name} 取消静音`, close: "关闭",
     message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手", newChat: "新对话",
-    send: "发送", talk: (name: string) => `和 ${name} 说话`, stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
+    send: "发送", talk: (name: string) => `和 ${name} 开始语音对话`, noVoice: "当前浏览器不支持语音，请直接打字。",
+    voiceChat: "语音对话", endVoice: "结束语音对话", interrupt: "打断", sendNow: "说完了",
+    voiceHint: "直接说话就行，每次回答完我会继续听。", paused: "一直没听到声音，语音对话已暂停。点麦克风继续。",
     voiceLanguage: { en: "语音输入：英文，点按切换到中文", zh: "语音输入：中文，点按切换到英文" },
     denied: "麦克风权限被拒绝，可以改为打字。", left: (count: number) => `今天还剩 ${count} 次免费搜索`,
     earlier: (count: number, labels: string) => `之前 · ${count} 个结果${labels ? ` · ${labels}` : ""}`,
@@ -185,10 +190,47 @@ function Thread({ entries, search, busy, language, onQuickReply, onRemoveChip, o
 type Speech = ReturnType<typeof useSpeechInput>;
 
 type ComposerProps = {
-  language: Language; name: string; speech: Speech; voiceLanguage: SpokenLanguage; onVoiceLanguage(next: SpokenLanguage): void; onSend(text: string): void;
+  language: Language; name: string; speech: Speech; voiceLanguage: SpokenLanguage; ended: VoiceEnd;
+  onVoiceLanguage(next: SpokenLanguage): void; onVoice(): void; onSend(text: string): void;
 };
 
-function Composer({ language, name, speech, voiceLanguage, onVoiceLanguage, onSend }: ComposerProps) {
+type ToggleProps = { language: Language; voiceLanguage: SpokenLanguage; disabled: boolean; onVoiceLanguage(next: SpokenLanguage): void };
+
+function VoiceLanguageToggle({ language, voiceLanguage, disabled, onVoiceLanguage }: ToggleProps) {
+  return (
+    <button type="button" className="ask-voice-lang" aria-label={copy[language].voiceLanguage[voiceLanguage]}
+      onClick={() => onVoiceLanguage(voiceLanguage === "zh" ? "en" : "zh")} disabled={disabled}>
+      {voiceLanguage === "zh" ? "中" : "EN"}
+    </button>
+  );
+}
+
+type VoiceBarProps = {
+  language: Language; state: BotState; speech: Speech; speaking: boolean; voiceLanguage: SpokenLanguage;
+  onVoiceLanguage(next: SpokenLanguage): void; onInterrupt(): void; onEnd(): void;
+};
+
+/** Stands in for the composer during a voice chat: what it hears, what it's doing, and a way out. */
+function VoiceBar({ language, state, speech, speaking, voiceLanguage, onVoiceLanguage, onInterrupt, onEnd }: VoiceBarProps) {
+  const content = copy[language];
+  const endButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => { endButton.current?.focus(); }, []);
+  const line = speech.interim || (state === "listening" || state === "idle" || state === "sleeping" ? content.voiceHint : content.status[state]);
+  return (
+    <div className="ask-voicebar" role="group" aria-label={content.voiceChat} data-state={state}>
+      <span className="ask-wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+      <p className="ask-voice-line" aria-live="polite">{line}</p>
+      {speaking ? <button type="button" className="ask-voice-action" onClick={onInterrupt}>{content.interrupt}</button>
+        : speech.listening && speech.interim ? <button type="button" className="ask-voice-action" onClick={speech.stop}>{content.sendNow}</button> : null}
+      <VoiceLanguageToggle language={language} voiceLanguage={voiceLanguage} disabled={speech.listening} onVoiceLanguage={onVoiceLanguage} />
+      <button ref={endButton} type="button" className="ask-voice-end" aria-label={content.endVoice} onClick={onEnd}>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>
+      </button>
+    </div>
+  );
+}
+
+function Composer({ language, name, speech, voiceLanguage, ended, onVoiceLanguage, onVoice, onSend }: ComposerProps) {
   const content = copy[language];
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -199,23 +241,17 @@ function Composer({ language, name, speech, voiceLanguage, onVoiceLanguage, onSe
     onSend(text);
     setText("");
   }
-  const hint = speech.listening ? content.status.listening : !speech.supported ? content.noVoice : speech.error === "denied" ? content.denied : null;
+  const hint = !speech.supported ? content.noVoice : speech.error === "denied" || ended === "denied" ? content.denied : ended === "quiet" ? content.paused : null;
   return (
     <form className="ask-composer" aria-label={content.message(name)} onSubmit={submit}>
       {speech.supported ? (
-        <button type="button" className="ask-mic" data-listening={speech.listening || undefined}
-          aria-label={speech.listening ? content.stopTalking : content.talk(name)} onClick={speech.listening ? speech.stop : speech.start}>
+        <button type="button" className="ask-mic" aria-label={content.talk(name)} onClick={onVoice}>
           <MicIcon />
         </button>
       ) : null}
-      {speech.supported ? (
-        <button type="button" className="ask-voice-lang" aria-label={content.voiceLanguage[voiceLanguage]}
-          onClick={() => onVoiceLanguage(voiceLanguage === "zh" ? "en" : "zh")} disabled={speech.listening}>
-          {voiceLanguage === "zh" ? "中" : "EN"}
-        </button>
-      ) : null}
+      {speech.supported ? <VoiceLanguageToggle language={language} voiceLanguage={voiceLanguage} disabled={false} onVoiceLanguage={onVoiceLanguage} /> : null}
       <input ref={input} aria-label={content.message(name)} placeholder={content.placeholder} maxLength={300}
-        value={speech.listening && speech.interim ? speech.interim : text} onChange={(event) => setText(event.target.value)} />
+        value={text} onChange={(event) => setText(event.target.value)} />
       <button type="submit" className="ask-send">{content.send}</button>
       {hint ? <p className="ask-input-hint" aria-live="polite">{hint}</p> : null}
     </form>
@@ -256,7 +292,8 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   // The mic listens in the language the visitor talks in, which may differ from the site's.
   const [voiceLanguage, setVoiceLanguage] = useState<SpokenLanguage>(() => readVoiceLanguage() ?? language);
   const chooseVoiceLanguage = (next: SpokenLanguage) => { setVoiceLanguage(next); writeVoiceLanguage(next); };
-  const speech = useSpeechInput({ language: voiceLanguage, onFinal: (text) => chat.send(text, "voice") });
+  const heardRef = useRef(() => {});
+  const speech = useSpeechInput({ language: voiceLanguage, onFinal: (text) => { heardRef.current(); chat.send(text, "voice"); } });
   const stopListening = speech.cancel;
   const [muted, setMuted] = useState(readMuted);
   const line = currentLine(chat.entries, search.state);
@@ -265,16 +302,20 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   const microphone = useMicTurn(speech, silence, active);
   useEffect(() => { cancelMic.current = microphone.cancel; }, [microphone.cancel]);
   const busy = search.state.status === "thinking" || search.state.status === "streaming";
+  const voice = useVoiceConversation({ microphone, speaking, busy, active, silence });
+  useEffect(() => { heardRef.current = voice.noteHeard; }, [voice.noteHeard]);
+  const { end: endVoice } = voice;
+  const close = useCallback(() => { endVoice(); onClose(); }, [endVoice, onClose]);
   const { state, mood } = useBotFace(speech.listening, speaking, search.state);
   const { remaining } = search.state;
   // Quick replies disappear once used, which drops focus outside the dialog, so Escape
   // is handled for the whole document while the overlay is open.
   useEffect(() => {
     if (!active) return;
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") close(); };
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [active, onClose]);
+  }, [active, close]);
   useEffect(() => {
     if (active) document.querySelector<HTMLInputElement>(".ask-composer input")?.focus();
     else stopListening();
@@ -283,6 +324,7 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   function pick(id: AssistantId) {
     setPicking(false);
     if (id === assistant.id) return;
+    voice.end();
     microphone.cancel();
     silence();
     setAssistant(id);
@@ -293,13 +335,19 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
       <div className="ask-panel">
         <div className="ask-top">
           <AssistantHeader active={active} assistant={assistant} state={state} mood={mood} language={language} muted={muted} picking={picking}
-            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={() => { microphone.cancel(); silence(); chat.restart(); }} onClose={onClose} />
+            onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={() => { voice.end(); microphone.cancel(); silence(); chat.restart(); }} onClose={close} />
           {active && picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
         </div>
         <Thread entries={chat.entries} search={search.state} busy={busy} language={language}
           onQuickReply={(text) => chat.send(text, "text")} onRemoveChip={(key) => void search.removeChip(key, language)} onSound={silence} />
-        <Composer language={language} name={assistant.name} speech={microphone} voiceLanguage={voiceLanguage} onVoiceLanguage={chooseVoiceLanguage}
-          onSend={(text) => { if (languageOf(text) !== voiceLanguage) chooseVoiceLanguage(languageOf(text)); microphone.cancel(); silence(); chat.send(text, "text"); }} />
+        {voice.on ? (
+          <VoiceBar language={language} state={state} speech={microphone} speaking={speaking} voiceLanguage={voiceLanguage}
+            onVoiceLanguage={chooseVoiceLanguage} onInterrupt={silence} onEnd={voice.end} />
+        ) : (
+          <Composer language={language} name={assistant.name} speech={microphone} voiceLanguage={voiceLanguage} ended={voice.ended}
+            onVoiceLanguage={chooseVoiceLanguage} onVoice={voice.start}
+            onSend={(text) => { if (languageOf(text) !== voiceLanguage) chooseVoiceLanguage(languageOf(text)); microphone.cancel(); silence(); chat.send(text, "text"); }} />
+        )}
         <footer className="ask-footer">
           <Link href="/plans">{language === "zh" ? "我的行程" : "My plans"}</Link>
           {remaining !== null ? <span>{content.left(remaining)}</span> : null}

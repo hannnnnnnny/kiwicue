@@ -121,3 +121,40 @@ test("a shelf of mixed results scrolls inside its row, never the chat", async ({
   expect(await page.locator(".ask-thread").evaluate((thread) => thread.scrollWidth <= thread.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test("one tap starts a voice chat that listens again after each spoken reply", async ({ page }) => {
+  await page.addInitScript(() => {
+    type Fake = { onresult: ((event: unknown) => void) | null; onend: (() => void) | null; start(): void; stop(): void; abort(): void };
+    const sessions: Fake[] = [];
+    Object.assign(window, { __sessions: sessions });
+    class Recognition {
+      lang = ""; interimResults = false; continuous = false; onresult = null; onerror = null; onend: (() => void) | null = null;
+      start() { sessions.push(this as unknown as Fake); }
+      stop() { this.onend?.(); }
+      abort() {}
+    }
+    Object.assign(window, { SpeechRecognition: Recognition, webkitSpeechRecognition: Recognition });
+    // A voice that "finishes" each line after a moment, so the chat can move on.
+    const synth = { getVoices: () => [], cancel() {}, speak(utterance: { onend: (() => void) | null }) { setTimeout(() => utterance.onend?.(), 300); }, addEventListener() {}, removeEventListener() {} };
+    Object.defineProperty(window, "speechSynthesis", { value: synth });
+  });
+  const reply = [{ type: "reply", delta: "There's a jazz night on Saturday." }, { type: "done", remaining: 4, tier: "guest" }].map((line) => JSON.stringify(line)).join("\n");
+  await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/x-ndjson", body: reply }));
+  await page.goto("/events");
+  await page.getByRole("button", { name: "Ask KiwiCue" }).click();
+  await page.getByRole("button", { name: "Start voice chat with Fern" }).click();
+  const bar = page.getByRole("group", { name: "Voice chat" });
+  await expect(bar).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __sessions: unknown[] }).__sessions.length)).toBe(1);
+  await page.evaluate(() => {
+    const [session] = (window as unknown as { __sessions: Array<{ onresult(event: unknown): void; stop(): void }> }).__sessions;
+    session.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: "any jazz this weekend" }], { isFinal: true })] });
+    session.stop();
+  });
+  await expect(page.getByText("There's a jazz night on Saturday.")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __sessions: unknown[] }).__sessions.length), { timeout: 20_000 }).toBe(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByRole("button", { name: "End voice chat" }).click();
+  await expect(bar).toBeHidden();
+  await expect(page.getByRole("button", { name: "Start voice chat with Fern" })).toBeVisible();
+});

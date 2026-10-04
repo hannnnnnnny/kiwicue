@@ -41,6 +41,16 @@ describe("conversation and onScreen", () => {
 });
 
 describe("useAskChat", () => {
+  it("greets as the assistant chosen after loading, then keeps that greeting once the chat moves on", () => {
+    const search = vi.fn();
+    const { result, rerender } = renderHook(({ name }) => useAskChat({ language: "en", name, search, reset: vi.fn(), searchState: INITIAL_ASK_STATE }), { initialProps: { name: "Fern" } });
+    rerender({ name: "Iris" });
+    expect(result.current.entries[0]).toMatchObject({ text: "Hi, I'm Iris! What are you in the mood for in Auckland?" });
+    act(() => result.current.send("live music", "text"));
+    rerender({ name: "Kai" });
+    expect(result.current.entries[0]).toMatchObject({ text: "Hi, I'm Iris! What are you in the mood for in Auckland?" });
+  });
+
   it("greets with starters, then sends every message with the conversation so far", () => {
     const { result, rerender, search } = setup();
     expect(result.current.entries).toEqual([expect.objectContaining({ role: "assistant", text: "Hi, I'm Fern! What are you in the mood for in Auckland?" })]);
