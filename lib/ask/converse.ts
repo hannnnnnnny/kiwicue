@@ -6,6 +6,7 @@ import type { Assistant } from "../assistants";
 import { ASK_LAYOUTS, type AskChatTurn, type AskFilters, type AskShown } from "./schema";
 import { DEEPSEEK_MODEL, DEEPSEEK_NO_THINKING, type TokenUsage } from "./deepseek";
 import { ASK_MOODS } from "./mood";
+import { type TextLanguage } from "../text-language";
 import { PERSONAS } from "./personas";
 import { REPLY_STYLE } from "./reply-style";
 
@@ -77,6 +78,8 @@ const FACT_RULES = [
 const TOOL_RULES = [
   "- Search whenever the visitor wants something to do or changes what they want (day, time, area, budget, who is coming, kind of thing). Put every relevant detail from the whole conversation into the query.",
   "- Don't search for thanks, small talk, or questions about what's already on screen; answer from the conversation and the on-screen list.",
+  "- When the visitor turns the options down or asks for something else, search again with what you already know rather than asking them to choose a direction.",
+  "- Call search without writing anything first; speak once you have the results.",
 ].join("\n");
 
 // Style examples only: the facts in them are made up and must never be quoted as listings.
@@ -85,7 +88,7 @@ const EXAMPLES = [
   "(search finds a stadium gig, a comedy show, a theatre matinee and a food festival)",
   "You: Noah Kahan at Spark Arena — if you want one big night out, that's the one. If you'd rather laugh, Aaron Chen's on later at the Kiri Te Kanawa.",
   "Visitor: is the market free?",
-  "You: Yep, free to get in — you just pay for the food.",
+  "You: Yep, free entry.",
   "Visitor: perfect, thanks!",
   "You: Enjoy the show!",
   "",
@@ -101,18 +104,22 @@ const EXAMPLES = [
 ].join("\n");
 
 /** The assistant's brief: who it is, how it talks, what it may claim, how to use search, and examples. */
-export function conversePrompt(input: { assistant: Assistant; today: string; filters: AskFilters | null; shown: AskShown[] }): string {
-  const { assistant } = input;
-  const persona = PERSONAS[assistant.id];
+export function conversePrompt(input: { assistant: Assistant; today: string; filters: AskFilters | null; shown: AskShown[]; replyLanguage: TextLanguage }): string {
+  const { assistant, replyLanguage } = input;
+  // Only the persona for the reply language: Chinese guidance in an English chat pulls replies into Chinese.
+  const persona = replyLanguage === "zh" ? [`${assistant.style.zh}`, ...PERSONAS[assistant.id].zh] : [`${assistant.style.en} (${assistant.personality})`, ...PERSONAS[assistant.id].en];
+  const language = replyLanguage === "zh"
+    ? "The visitor's latest message is in Chinese: reply in Chinese (simplified), keeping proper names as they are."
+    : "The visitor's latest message is in English: reply in ENGLISH ONLY, even if listing text or earlier messages contain Chinese.";
   return [
     "# Role & Objective",
     `You are ${assistant.name}, the ${assistant.role.en.toLowerCase()} assistant on KiwiCue, a guide to things to do in Auckland, New Zealand. Help the visitor pick something they'll enjoy, the way a friend who knows the city would. Today is ${input.today} in Auckland.`,
     "",
+    "# Language",
+    language,
+    "",
     "# Personality & Tone",
-    `${assistant.style.en} (${assistant.personality})`,
-    ...persona.en.map((line) => `- ${line}`),
-    `Chinese replies: ${assistant.style.zh}`,
-    ...persona.zh.map((line) => `- ${line}`),
+    ...persona.map((line) => `- ${line}`),
     "",
     "# How to talk",
     REPLY_STYLE,

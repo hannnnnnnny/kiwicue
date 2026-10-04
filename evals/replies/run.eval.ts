@@ -3,6 +3,7 @@ import { tool } from "ai";
 import { expect, it } from "vitest";
 import { conversePrompt, deepseekConverse, SEARCH_TOOL_DESCRIPTION, searchInputSchema, toModelMessages } from "../../lib/ask/converse";
 import { moodFilter } from "../../lib/ask/mood";
+import { languageOf } from "../../lib/text-language";
 import { ASSISTANTS } from "../../lib/assistants";
 import { legacyConversePrompt } from "./legacy-prompt";
 import { measure, type ReplyMetrics } from "./metrics";
@@ -23,7 +24,7 @@ async function reply(scenario: Scenario, variant: Variant): Promise<Omit<Sample,
       execute: async () => { searches += 1; return scenario.search ?? { found: 0, loosened: [], options: [] }; },
     }),
   };
-  const system = VARIANTS[variant]({ assistant: ASSISTANTS[scenario.assistant], today: TODAY, filters: scenario.filters, shown: scenario.shown });
+  const system = VARIANTS[variant]({ assistant: ASSISTANTS[scenario.assistant], today: TODAY, filters: scenario.filters, shown: scenario.shown, replyLanguage: languageOf(scenario.message) });
   const turn = deepseekConverse({ system, messages: toModelMessages(scenario.history, scenario.message), tools, abortSignal: AbortSignal.timeout(45_000) });
   let text = "";
   let mood: string | null = null;

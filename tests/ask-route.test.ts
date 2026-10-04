@@ -75,6 +75,7 @@ describe("POST /api/ask", () => {
 
     const call = vi.mocked(d.converse).mock.calls[0][0];
     expect(call.system).toContain("You are Sunny");
+    expect(call.system).toContain("reply in ENGLISH ONLY");
     expect(call.messages).toEqual([{ role: "user", content: "hi" }, { role: "assistant", content: "Hey!" }, { role: "user", content: "Anything for the kids on Saturday?" }]);
     // Jev 500 + 500 input (understand, rank), DeepSeek 2000 input and 100 output.
     expect(d.quota!.recordCost).toHaveBeenCalledWith("u1", expect.any(Number), false);
