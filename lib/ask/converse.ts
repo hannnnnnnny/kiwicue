@@ -42,9 +42,10 @@ export async function* replyText(parts: AsyncIterable<StreamPart>): AsyncGenerat
   }
 }
 
-export const deepseekConverse: ConverseModel = ({ system, messages, tools, abortSignal }) => {
+/** A DeepSeek-backed conversation; the eval passes other model ids to compare them. */
+export const createDeepseekConverse = (modelId: string = DEEPSEEK_MODEL): ConverseModel => ({ system, messages, tools, abortSignal }) => {
   const result = streamText({
-    model: deepSeek(DEEPSEEK_MODEL), system, messages, tools, abortSignal,
+    model: deepSeek(modelId), system, messages, tools, abortSignal,
     stopWhen: isStepCount(MAX_STEPS), maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: TEMPERATURE, maxRetries: 0,
     // The last step must speak: a model that keeps searching would otherwise end with no reply at all.
     prepareStep: lastStepSpeaks,
@@ -55,6 +56,8 @@ export const deepseekConverse: ConverseModel = ({ system, messages, tools, abort
     usage: Promise.resolve(result.usage).then((usage) => ({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })),
   };
 };
+
+export const deepseekConverse: ConverseModel = createDeepseekConverse();
 
 export const searchInputSchema = z.object({
   query: z.string().trim().min(1).max(300)
