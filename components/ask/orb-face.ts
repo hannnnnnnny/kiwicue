@@ -50,3 +50,12 @@ export function faceFor(state: BotState, mood: AskMood | null): Face {
   // Talking keeps its bob whatever the mood.
   return state === "speaking" ? { ...face, bob: 1 } : face;
 }
+
+/** Where the pointer is relative to the orb, -1…1 each way; positive y is above it. */
+export function pointerGaze(pointer: { x: number; y: number }, orb: DOMRect, viewport: { width: number; height: number }): { x: number; y: number } {
+  const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+  return {
+    x: clamp((pointer.x - (orb.left + orb.width / 2)) / (viewport.width / 2)),
+    y: clamp(((orb.top + orb.height / 2) - pointer.y) / (viewport.height / 2)),
+  };
+}
