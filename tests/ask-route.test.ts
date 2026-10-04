@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ConverseModel, SearchInput } from "../lib/ask/converse";
+import { REPLY_RESET, type ConverseModel, type SearchInput } from "../lib/ask/converse";
 import type { Evaluate, JevAnswer } from "../lib/ask/jev";
 import { readEvents } from "../lib/ask/ndjson";
 import { handleAsk, type AskDeps } from "../lib/ask/pipeline";
@@ -80,6 +80,14 @@ describe("POST /api/ask", () => {
     // Jev 500 + 500 input (understand, rank), DeepSeek 2000 input and 100 output.
     expect(d.quota!.recordCost).toHaveBeenCalledWith("u1", expect.any(Number), false);
     expect(vi.mocked(d.quota!.recordCost).mock.calls[0][1]).toBeGreaterThan(0);
+  });
+
+  it("withdraws what the assistant said before searching", async () => {
+    const d = deps({ converse: model([search], ["Let me check. ", REPLY_RESET, "Bundle Baby looks perfect."]) });
+    const received = await events(await handleAsk(post(ask), d));
+    const types = received.map((event) => event.type);
+    expect(types.indexOf("reply-reset")).toBeGreaterThan(types.indexOf("reply"));
+    expect(received.filter((event) => event.type === "reply").map((event) => event.delta)).toEqual(["Let me check. ", "Bundle Baby looks perfect."]);
   });
 
   it("just talks when no search is needed", async () => {

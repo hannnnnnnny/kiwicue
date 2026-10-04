@@ -36,6 +36,8 @@ function applyEvent(state: AskViewState, event: AskStreamEvent): AskViewState {
     };
     case "layout": return { ...state, layout: event.layout, searching: false };
     case "mood": return { ...state, mood: event.mood };
+    // The assistant withdrew what it said before searching; its answer after the results follows.
+    case "reply-reset": return { ...state, reply: "" };
     case "reply": return { ...state, status: "streaming", reply: state.reply + event.delta, searching: false };
     case "notice": return { ...state, notices: [...new Set([...state.notices, event.message])] };
     case "done": return { ...state, status: "done", remaining: event.remaining, searching: false };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conversePrompt, lastStepSpeaks, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
+import { conversePrompt, lastStepSpeaks, REPLY_RESET, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
 import { EMPTY_FILTERS } from "../lib/ask/schema";
 import { PERSONAS } from "../lib/ask/personas";
 import { ASSISTANTS } from "../lib/assistants";
@@ -46,9 +46,10 @@ describe("conversePrompt", () => {
   it("asks for an opinion instead of a read-out of the cards", () => {
     const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
     expect(prompt).toContain("NEVER walk through the list");
-    expect(prompt).toContain("NEVER offer a menu of choices");
+    expect(prompt).toContain("NEVER as a menu");
+    expect(prompt).toContain("First react to what they actually said");
     expect(prompt).toContain("Most replies end without a question");
-    expect(prompt).toContain("Otherwise say nothing about prices");
+    expect(prompt).toContain("Money comes up only when they mention price");
     expect(prompt).toContain("VARIETY");
     expect(prompt).toContain("search again with what you already know");
     expect(prompt).toContain("Call search without writing anything first");
@@ -58,10 +59,18 @@ describe("conversePrompt", () => {
     expect(order.map((heading) => prompt.indexOf(heading))).toEqual([...order.map((heading) => prompt.indexOf(heading))].sort((a, b) => a - b));
   });
 
+  it("writes Chinese guidance and examples in Chinese for a Chinese chat", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [], replyLanguage: "zh" });
+    expect(prompt).toContain("像微信上跟朋友聊天那样回");
+    expect(prompt).toContain("你：确实，演出票不便宜。");
+    expect(prompt).not.toContain("Talk like a friend texting back");
+    expect(prompt).not.toContain("Visitor: hey, bored tonight");
+  });
+
   it("handles possible voice feedback gently while preserving intentional quotations", () => {
     const prompt = conversePrompt({ assistant: ASSISTANTS.iris, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
     expect(prompt).toContain("the mic may have caught your own voice");
-    expect(prompt).toContain("Don't blame the visitor");
+    expect(prompt).toContain("Don't blame them");
     expect(prompt).toContain("If the visitor intentionally quotes you");
   });
 
@@ -89,11 +98,11 @@ describe("replyText", () => {
     return text;
   }
 
-  it("keeps a line said before a search as its own paragraph", async () => {
+  it("withdraws what was said before a search, so the answer isn't repeated", async () => {
     expect(await collect([
       { type: "start-step" }, { type: "text-delta", text: "Let me look." }, { type: "tool-call" }, { type: "finish-step" },
       { type: "start-step" }, { type: "text-delta", text: "Wonderverse " }, { type: "text-delta", text: "is lovely." },
-    ])).toBe("Let me look.\n\nWonderverse is lovely.");
+    ])).toBe(`Let me look.${REPLY_RESET}Wonderverse is lovely.`);
   });
 
   it("leaves a reply that searched first, or never searched, as it is", async () => {

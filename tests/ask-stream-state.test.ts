@@ -33,6 +33,8 @@ describe("askReducer mood and searching", () => {
     state = askReducer(state, { type: "event", event: { type: "done", remaining: 3, tier: "guest" } });
     expect(state.mood).toBe("excited");
     expect(askReducer(state, { type: "start", text: "more" }).mood).toBeNull();
+    const withdrawn = askReducer(askReducer(state, { type: "event", event: { type: "reply", delta: "Let me check." } }), { type: "event", event: { type: "reply-reset" } });
+    expect(withdrawn.reply).toBe("");
   });
 });
 

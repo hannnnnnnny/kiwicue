@@ -38,8 +38,11 @@ export function pickVoice<T extends VoiceInfo>(voices: readonly T[], language: L
   const ranked = unique.map((voice) => ({ voice, score: score(voice, language) })).filter(({ score: value }) => value >= 0)
     .sort((left, right) => right.score - left.score || left.voice.name.localeCompare(right.voice.name));
   if (!ranked.length) return null;
+  // Assistants share out only the best-sounding voices; working down the list would hand some of
+  // them an old robotic system voice. With one good voice, pitch and rate tell them apart.
+  const best = ranked.filter(({ score: value }) => value === ranked[0].score);
   const index = profile ? ASSISTANT_IDS.indexOf(profile) : 0;
-  return ranked[index % ranked.length]?.voice ?? ranked[0].voice;
+  return best[index % best.length].voice;
 }
 
 function browserSynth(): SynthLike | undefined {

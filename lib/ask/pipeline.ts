@@ -2,7 +2,7 @@ import "server-only";
 import { tool } from "ai";
 import { ASSISTANTS } from "../assistants";
 import type { CandidateSources } from "./candidates";
-import { conversePrompt, SEARCH_TOOL_DESCRIPTION, searchInputSchema, toModelMessages, type ConverseModel, type SearchInput } from "./converse";
+import { conversePrompt, REPLY_RESET, SEARCH_TOOL_DESCRIPTION, searchInputSchema, toModelMessages, type ConverseModel, type SearchInput } from "./converse";
 import { addUsage, costMicroUsd, ZERO_USAGE, type AskUsage } from "./cost";
 import type { Evaluate } from "./jev";
 import { logAskFailure } from "./log";
@@ -123,10 +123,15 @@ async function converse(input: AskRequest, ctx: Context, emit: Emit, search: Ret
   const tools = { search: tool({ description: SEARCH_TOOL_DESCRIPTION, inputSchema: searchInputSchema, execute: search.fromTool }) };
   const system = conversePrompt({ assistant: ASSISTANTS[input.assistant], today: todayLabel(ctx.now), filters: input.previous, shown: input.shown, replyLanguage: languageOf(input.text) });
   let wrote = false;
-  const reply = moodFilter((delta) => { wrote = true; emit({ type: "reply", delta }); }, (mood) => emit({ type: "mood", mood }));
+  const newReply = () => moodFilter((delta) => { wrote = true; emit({ type: "reply", delta }); }, (mood) => emit({ type: "mood", mood }));
+  let reply = newReply();
   try {
     const turn = ctx.deps.converse({ system, messages: toModelMessages(input.history, input.text), tools, abortSignal: AbortSignal.timeout(CONVERSE_TIMEOUT_MS) });
-    for await (const delta of turn.textStream) reply.push(delta);
+    for await (const delta of turn.textStream) {
+      if (delta !== REPLY_RESET) { reply.push(delta); continue; }
+      emit({ type: "reply-reset" });
+      reply = newReply();
+    }
     reply.flush();
     const usage = await turn.usage;
     if (!wrote) logAskFailure("reply", { code: "empty_reply" });

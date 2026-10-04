@@ -8,7 +8,7 @@ import { DEEPSEEK_MODEL, DEEPSEEK_NO_THINKING, type TokenUsage } from "./deepsee
 import { ASK_MOODS } from "./mood";
 import { type TextLanguage } from "../text-language";
 import { PERSONAS } from "./personas";
-import { REPLY_STYLE } from "./reply-style";
+import { REPLY_EXAMPLES, REPLY_STYLE } from "./reply-style";
 
 // Decide (search or not) → search → reply is three steps at most.
 const MAX_STEPS = 3;
@@ -25,25 +25,27 @@ export function lastStepSpeaks({ stepNumber }: { stepNumber: number }): { toolCh
   return stepNumber >= MAX_STEPS - 1 ? { toolChoice: "none" } : undefined;
 }
 
+/** Yielded in place of text when what was said so far should be withdrawn. */
+export const REPLY_RESET = "\u0000reset";
+
 /**
- * The reply text across steps. Anything said before a search ("Let me look…") stays as its own
- * paragraph instead of running straight into the answer that follows the results.
+ * The reply text across steps. When the model talks and then searches anyway, what it said first
+ * is withdrawn: the answer after the results replaces it rather than repeating it.
  */
 export async function* replyText(parts: AsyncIterable<StreamPart>): AsyncGenerator<string> {
   let wrote = false;
-  let searchedAfterText = false;
   for await (const part of parts) {
-    if (part.type === "tool-call" && wrote) searchedAfterText = true;
+    if (part.type === "tool-call" && wrote) { yield REPLY_RESET; wrote = false; }
     if (part.type !== "text-delta" || !part.text) continue;
-    if (searchedAfterText) { yield "\n\n"; searchedAfterText = false; }
     wrote = true;
     yield part.text;
   }
 }
 
-export const deepseekConverse: ConverseModel = ({ system, messages, tools, abortSignal }) => {
+/** A DeepSeek-backed conversation; the eval passes other model ids to compare them. */
+export const createDeepseekConverse = (modelId: string = DEEPSEEK_MODEL): ConverseModel => ({ system, messages, tools, abortSignal }) => {
   const result = streamText({
-    model: deepSeek(DEEPSEEK_MODEL), system, messages, tools, abortSignal,
+    model: deepSeek(modelId), system, messages, tools, abortSignal,
     stopWhen: isStepCount(MAX_STEPS), maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: TEMPERATURE, maxRetries: 0,
     // The last step must speak: a model that keeps searching would otherwise end with no reply at all.
     prepareStep: lastStepSpeaks,
@@ -54,6 +56,8 @@ export const deepseekConverse: ConverseModel = ({ system, messages, tools, abort
     usage: Promise.resolve(result.usage).then((usage) => ({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })),
   };
 };
+
+export const deepseekConverse: ConverseModel = createDeepseekConverse();
 
 export const searchInputSchema = z.object({
   query: z.string().trim().min(1).max(300)
@@ -107,27 +111,6 @@ const TOOL_RULES = [
   "- If a search finds nothing, don't run the same search again: say so and offer to widen it.",
 ].join("\n");
 
-// Style examples only: the facts in them are made up and must never be quoted as listings.
-const EXAMPLES = [
-  "Visitor: what's on saturday night?",
-  "(search finds a stadium gig, a comedy show, a theatre matinee and a food festival)",
-  "You: Noah Kahan at Spark Arena — if you want one big night out, that's the one. If you'd rather laugh, Aaron Chen's on later at the Kiri Te Kanawa.",
-  "Visitor: is the market free?",
-  "You: Yep, free entry.",
-  "Visitor: perfect, thanks!",
-  "You: Enjoy the show!",
-  "",
-  "访客：这个周末带孩子去哪？",
-  "（搜索找到博物馆展览、一场儿童剧和一个夜市）",
-  "你：周六上午去博物馆看 The Imaginarium 吧，场次多，不用赶时间。",
-  "访客：预算一百块，两个人",
-  "你：Classic Comedy Club 的晚场两个人大概 40 块起，最稳妥；夜市免费入场，吃多少看自己。",
-  "",
-  "Visitor: live jazz in Devonport tonight?",
-  "(search finds nothing)",
-  "You: Nothing jazzy in Devonport tonight, sorry. Want me to look across the whole city?",
-].join("\n");
-
 /** The assistant's brief: who it is, how it talks, what it may claim, how to use search, and examples. */
 export function conversePrompt(input: { assistant: Assistant; today: string; filters: AskFilters | null; shown: AskShown[]; replyLanguage: TextLanguage }): string {
   const { assistant, replyLanguage } = input;
@@ -147,7 +130,7 @@ export function conversePrompt(input: { assistant: Assistant; today: string; fil
     ...persona.map((line) => `- ${line}`),
     "",
     "# How to talk",
-    REPLY_STYLE,
+    REPLY_STYLE[replyLanguage],
     "",
     "# Facts and limits",
     FACT_RULES,
@@ -156,7 +139,7 @@ export function conversePrompt(input: { assistant: Assistant; today: string; fil
     TOOL_RULES,
     "",
     "# Examples (style only — never reuse their facts)",
-    EXAMPLES,
+    REPLY_EXAMPLES[replyLanguage],
     "",
     "# Mood",
     `Begin your final reply with one hidden mood tag: ${ASK_MOODS.map((mood) => `[[${mood}]]`).join(" ")}. Great options → [[excited]] or [[happy]]; nothing fits → [[sorry]]; you need a detail → [[curious]].`,
