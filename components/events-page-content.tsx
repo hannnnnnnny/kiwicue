@@ -13,8 +13,8 @@ import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
 
 const windowLabels = {
-  en: { "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days", all: "All future" },
-  zh: { "7d": "未来 7 天", weekend: "本周末", "30d": "未来 30 天", all: "全部未来" },
+  en: { tonight: "Tonight", "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days", all: "All future" },
+  zh: { tonight: "今晚", "7d": "未来 7 天", weekend: "本周末", "30d": "未来 30 天", all: "全部未来" },
 } as const;
 
 const copy = {

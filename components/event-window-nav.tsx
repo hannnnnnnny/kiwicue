@@ -9,6 +9,7 @@ const copy = {
   en: {
     label: "Event time range",
     title: "When do you want to go?",
+    tonight: "Tonight",
     "7d": "Next 7 days",
     weekend: "This weekend",
     "30d": "Next 30 days",
@@ -17,6 +18,7 @@ const copy = {
   zh: {
     label: "时间范围",
     title: "你想什么时候去？",
+    tonight: "今晚",
     "7d": "未来 7 天",
     weekend: "本周末",
     "30d": "未来 30 天",
