@@ -107,7 +107,7 @@ export function SavedPageContent({
 
   return (
     <main className="saved-page">
-      <PortalHeader skipTarget="saved-events" currentPage="saved" />
+      <PortalHeader skipTarget="saved-events" currentPage="mine" />
       <section className="saved-masthead">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display">{content.title}</h1>

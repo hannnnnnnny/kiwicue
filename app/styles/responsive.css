@@ -119,7 +119,7 @@
   .portal-primary-nav { flex: 1; justify-content: space-between; }
   .portal-header-link,
   .language-toggle { min-width: 44px; padding-inline: var(--space-2); }
-  .saved-link strong { min-width: 20px; height: 20px; }
+  .portal-primary-nav [data-destination="mine"] strong { min-width: 20px; height: 20px; }
   .portal-command { padding-top: var(--space-6); }
   .events-page .portal-command { padding-top: 0; }
   .portal-command-inner { padding-block: var(--space-8); }

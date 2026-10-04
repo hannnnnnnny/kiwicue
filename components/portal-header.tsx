@@ -8,9 +8,9 @@ import { AccountControl } from "./account-control";
 import { useLanguage } from "./language-provider";
 import { DiscoveryIcon } from "./discovery-icon";
 import type { MouseEvent } from "react";
-import { navigateDiscovery, useDiscoveryCollection } from "./use-discovery-collection";
+import { navigateDiscovery } from "./use-discovery-collection";
 
-function navigateOnDiscoveryPage(event: MouseEvent<HTMLAnchorElement>, collection: "all" | "nearby") {
+function navigateOnDiscoveryPage(event: MouseEvent<HTMLAnchorElement>, collection: "all") {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   if (window.location.pathname !== "/events" && window.location.pathname !== "/") return;
   // Filters require a route navigation to restore the full discovery view.
@@ -31,14 +31,12 @@ const copy = {
     skipCinemaDirectory: "Skip to Auckland cinema links",
     skipMovieDetail: "Skip to movie details",
     skipRecommendations: "Skip to recommendations",
+    skipMain: "Skip to main content",
     homeLabel: "KiwiCue Auckland events home",
     primaryNavigation: "Primary navigation",
-    events: "Events",
-    movies: "Movies",
-    recommendations: "Picks",
-    forYou: "For You",
-    saved: "Saved",
-    savedLabel: (count: number) => `Saved events, ${count}`,
+    mobileNavigation: "Mobile navigation",
+    destinations: { discover: "Discover", "for-you": "For You", movies: "Movies", mine: "Mine" },
+    mineLabel: (count: number) => `Mine: saved events, plans and collections. ${count} saved`,
   },
   zh: {
     skip: "跳到活动结果",
@@ -51,19 +49,25 @@ const copy = {
     skipCinemaDirectory: "跳到奥克兰影院入口",
     skipMovieDetail: "跳到电影详情",
     skipRecommendations: "跳到推荐内容",
+    skipMain: "跳到主要内容",
     homeLabel: "KiwiCue 奥克兰活动首页",
     primaryNavigation: "主要导航",
-    events: "活动",
-    movies: "电影",
-    recommendations: "推荐",
-    forYou: "为你推荐",
-    saved: "收藏",
-    savedLabel: (count: number) => `收藏活动，${count} 个`,
+    mobileNavigation: "手机导航",
+    destinations: { discover: "发现", "for-you": "为你推荐", movies: "电影", mine: "我的" },
+    mineLabel: (count: number) => `我的：收藏、行程和清单，已收藏 ${count} 个`,
   },
 } as const;
 
-type PortalPage = "events" | "movies" | "recommendations" | "saved" | "for-you" | "plans";
-type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results" | "outing-plan-content";
+/** The four places every page links to, the same on desktop and mobile. */
+export type PortalPage = "discover" | "for-you" | "movies" | "mine" | "none";
+type Destination = Exclude<PortalPage, "none">;
+const DESTINATIONS: { id: Destination; href: string; icon: "search" | "spark" | "film" | "heart" }[] = [
+  { id: "discover", href: "/events", icon: "search" },
+  { id: "for-you", href: "/for-you", icon: "spark" },
+  { id: "movies", href: "/movies", icon: "film" },
+  { id: "mine", href: "/saved", icon: "heart" },
+];
+type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results" | "outing-plan-content" | "main-content";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
   const labels: Record<SkipTarget, string> = {
@@ -77,8 +81,20 @@ function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof c
     "movie-detail": content.skipMovieDetail,
     "recommendation-results": content.skipRecommendations,
     "outing-plan-content": content.skipPlans,
+    "main-content": content.skipMain,
   };
   return labels[skipTarget];
+}
+
+function DestinationLinks({ activePage, count, content }: { activePage: PortalPage; count: number; content: typeof copy.en | typeof copy.zh }) {
+  return DESTINATIONS.map(({ id, href, icon }) => (
+    <Link key={id} className="portal-header-link" href={href} data-destination={id}
+      aria-label={id === "mine" ? content.mineLabel(count) : undefined}
+      aria-current={activePage === id ? "page" : undefined}
+      onClick={id === "discover" ? event => navigateOnDiscoveryPage(event, "all") : undefined}>
+      <DiscoveryIcon name={icon} /><span>{content.destinations[id]}</span>{id === "mine" && count > 0 ? <strong>{count}</strong> : null}
+    </Link>
+  ));
 }
 
 export function PortalHeader({ skipTarget = "event-results", currentPage }: {
@@ -88,10 +104,8 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
   const { language } = useLanguage();
   const { count } = useBookmarks();
   const content = copy[language];
-  const activePage = currentPage ?? (skipTarget === "saved-events" ? "saved" : "events");
+  const activePage = currentPage ?? (skipTarget === "saved-events" ? "mine" : "discover");
   const skipLabel = getSkipLabel(skipTarget, content);
-  const collection = useDiscoveryCollection();
-  const isMap = activePage === "events" && collection === "nearby";
 
   return (
     <>
@@ -120,48 +134,15 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
           </Link>
           <div className="portal-header-actions">
             <nav className="portal-primary-nav" aria-label={content.primaryNavigation}>
-              <Link
-                className="portal-header-link"
-                href="/events"
-                aria-current={activePage === "events" ? "page" : undefined}
-              >
-                <DiscoveryIcon name="calendar" /><span>{content.events}</span>
-              </Link>
-              <Link
-                className="portal-header-link"
-                href="/recommendations"
-                aria-current={activePage === "recommendations" ? "page" : undefined}
-              >
-                <DiscoveryIcon name="star" /><span>{content.recommendations}</span>
-              </Link>
-              <Link className="portal-header-link" href="/for-you" aria-current={activePage === "for-you" ? "page" : undefined}><DiscoveryIcon name="spark" /><span>{content.forYou}</span></Link>
-              <Link
-                className="portal-header-link"
-                href="/movies"
-                aria-current={activePage === "movies" ? "page" : undefined}
-              >
-                <DiscoveryIcon name="film" /><span>{content.movies}</span>
-              </Link>
-              <Link
-                className="portal-header-link saved-link"
-                href="/saved"
-                aria-label={content.savedLabel(count)}
-                aria-current={activePage === "saved" ? "page" : undefined}
-              >
-                <DiscoveryIcon name="heart" /><span>{content.saved}</span><strong>{count}</strong>
-              </Link>
+              <DestinationLinks activePage={activePage} count={count} content={content} />
             </nav>
             <LanguageToggle />
             <AccountControl language={language} />
           </div>
         </header>
       </div>
-      <nav className="discovery-bottom-nav" aria-label={language === "zh" ? "手机导航" : "Mobile navigation"}>
-        <Link href="/events" onClick={event => navigateOnDiscoveryPage(event, "all")} aria-current={activePage === "events" && !isMap ? "page" : undefined}><DiscoveryIcon name="search" /><span>{language === "zh" ? "发现" : "Discover"}</span></Link>
-        <Link href="/events#map" onClick={event => navigateOnDiscoveryPage(event, "nearby")} aria-current={isMap ? "page" : undefined}><DiscoveryIcon name="map" /><span>{language === "zh" ? "地图" : "Map"}</span></Link>
-        <Link href="/recommendations" aria-current={activePage === "recommendations" ? "page" : undefined}><DiscoveryIcon name="star" /><span>{content.recommendations}</span></Link>
-        <Link href="/movies" aria-current={activePage === "movies" ? "page" : undefined}><DiscoveryIcon name="film" /><span>{content.movies}</span></Link>
-        <Link href="/saved" aria-current={activePage === "saved" ? "page" : undefined}><DiscoveryIcon name="heart" /><span>{content.saved}{count > 0 ? ` · ${count}` : ""}</span></Link>
+      <nav className="discovery-bottom-nav" aria-label={content.mobileNavigation}>
+        <DestinationLinks activePage={activePage} count={count} content={content} />
       </nav>
     </>
   );

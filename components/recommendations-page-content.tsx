@@ -199,7 +199,7 @@ export function RecommendationsPageContent({
 
   return (
     <main className="recommendations-page">
-      <PortalHeader currentPage="recommendations" skipTarget="recommendation-results" />
+      <PortalHeader currentPage="for-you" skipTarget="recommendation-results" />
       <section className="recommendations-hero" aria-labelledby="recommendations-title">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display" id="recommendations-title">{content.title}</h1>

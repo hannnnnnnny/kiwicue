@@ -183,7 +183,7 @@ export function EventDetailContent({
   function shell(body: React.ReactNode) {
     return (
       <main className="event-detail-page">
-        <PortalHeader skipTarget="event-detail" currentPage="events" />
+        <PortalHeader skipTarget="event-detail" currentPage="discover" />
         {body}
         <footer className="portal-footer">
           <span>KiwiCue / 纽村小报</span>

@@ -169,9 +169,11 @@ body { background: var(--portal-bg); }
   .event-detail-facts { grid-template-columns: 1fr; }
   .event-detail-section { display: block; padding: 24px 0; }
   .event-detail-section h2 { font-size: 1.3rem; margin-bottom: 12px; }
-  .discovery-bottom-nav { position: fixed; z-index: 40; bottom: 0; inset-inline: 0; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--portal-raised); border-top: 1px solid var(--portal-line); padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); }
+  .discovery-bottom-nav { position: fixed; z-index: 40; bottom: 0; inset-inline: 0; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--portal-raised); border-top: 1px solid var(--portal-line); padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); }
   .discovery-bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; color: var(--portal-muted); font-size: .7rem; text-decoration: none; }
   .discovery-bottom-nav a[aria-current="page"] { color: var(--portal-brand); font-weight: 700; }
+  .discovery-bottom-nav a { position: relative; }
+  .discovery-bottom-nav a strong { position: absolute; top: 2px; left: calc(50% + 8px); min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 4px; border-radius: var(--radius-pill); background: var(--portal-brand); color: var(--portal-white); font-size: .62rem; }
   :focus-visible { scroll-margin-block: 100px; }
 }
 @media (prefers-reduced-motion: reduce) {

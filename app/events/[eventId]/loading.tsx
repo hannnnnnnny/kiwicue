@@ -3,7 +3,7 @@ import { PortalHeader } from "../../../components/portal-header";
 export default function EventDetailLoading() {
   return (
     <main className="event-detail-page">
-      <PortalHeader skipTarget="event-detail" currentPage="events" />
+      <PortalHeader skipTarget="event-detail" currentPage="discover" />
       <section id="event-detail" className="event-state event-loading" role="status" aria-busy="true">
         <p>Loading event details</p>
         <div className="event-detail-loading-skeleton" aria-hidden="true">

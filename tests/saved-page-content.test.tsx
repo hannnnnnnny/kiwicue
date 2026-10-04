@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
@@ -89,7 +89,7 @@ describe("Saved events page", () => {
 
     expect(screen.getByRole("heading", { name: "Local Harbour Lights" })).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent("Refreshing 1 saved event");
-    expect(screen.getByRole("link", { name: "Saved events, 1" })).toHaveAttribute("href", "/saved");
+    expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Mine: saved events, plans and collections. 1 saved" })).toHaveAttribute("href", "/saved");
   });
 
   it("replaces saved copies with refreshed official details", async () => {
@@ -127,7 +127,7 @@ describe("Saved events page", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Remove First saved from saved events" }));
     expect(screen.queryByRole("heading", { name: "First saved" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Saved events, 1" })).toBeVisible();
+    expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Mine: saved events, plans and collections. 1 saved" })).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Clear all saved events" }));
     expect(screen.getByRole("heading", { name: "Second saved" })).toBeVisible();

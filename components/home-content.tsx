@@ -58,7 +58,7 @@ export function HomeContent() {
 
   return (
     <main className="home-page">
-      <PortalHeader currentPage="events" skipTarget="home-content" />
+      <PortalHeader currentPage="discover" skipTarget="home-content" />
 
       <section className="home-hero" id="home-content" aria-labelledby="hero-title">
         <div className="home-hero-copy">
