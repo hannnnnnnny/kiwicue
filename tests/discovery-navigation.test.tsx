@@ -15,14 +15,14 @@ afterEach(() => { cleanup(); localStorage.clear(); window.history.replaceState(n
 function mount() {
   return render(<LanguageProvider><BookmarkProvider><PortalHeader /><DiscoveryHub events={events} language="en" now={new Date("2026-09-26T05:00:00Z")} /></BookmarkProvider></LanguageProvider>);
 }
-it("synchronizes collection, history hash, and mobile active navigation", () => {
+it("synchronizes collection, history hash, and the Discover tab", () => {
   window.history.replaceState(null, "", "/events#map"); mount();
   const navigation = within(screen.getByRole("navigation", { name: "Mobile navigation" }));
-  expect(navigation.getByRole("link", { name: "Map" })).toHaveAttribute("aria-current", "page");
-  fireEvent.click(screen.getByRole("button", { name: /Back to discovery/ }));
-  expect(window.location.hash).toBe("");
+  expect(screen.getByRole("heading", { name: "Around Auckland" })).toBeVisible();
   expect(navigation.getByRole("link", { name: "Discover" })).toHaveAttribute("aria-current", "page");
-  fireEvent.click(navigation.getByRole("link", { name: "Map" }));
+  fireEvent.click(navigation.getByRole("link", { name: "Discover" }));
+  expect(window.location.hash).toBe("");
+  fireEvent.click(screen.getByRole("button", { name: /^Map$/ }));
   expect(screen.getByRole("heading", { name: "Around Auckland" })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: /^Tonight$/ }));
   expect(window.location.hash).toBe("#tonight");

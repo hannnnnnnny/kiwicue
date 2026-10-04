@@ -1,6 +1,7 @@
 "use client";
 
 import { BackLink } from "./back-link";
+import { categoryOfEvent, EVENT_CATEGORY_LABELS, type EventCategory } from "../lib/event-categories";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { EventCard } from "../app/events/event-card";
@@ -144,6 +145,22 @@ function formatAdmission(event: KiwiCueEventDetail, language: "en" | "zh"): stri
     : `${amount(event.admission.min)}–${amount(event.admission.max)}`;
 }
 
+/** Back to where the visitor came from, plus where this event sits: Discover › its category. */
+function EventTrail({ category, language, back }: { category: EventCategory | null; language: "en" | "zh"; back: string }) {
+  const list = category ? `/events?category=${category}` : "/events";
+  return (
+    <div className="event-detail-trail">
+      <BackLink className="event-detail-back" fallback={list}>← {back}</BackLink>
+      <nav className="event-breadcrumb" aria-label={language === "zh" ? "位置" : "Breadcrumb"}>
+        <ol>
+          <li><Link href="/events">{language === "zh" ? "发现" : "Discover"}</Link></li>
+          {category ? <li><Link href={list}>{EVENT_CATEGORY_LABELS[category][language]}</Link></li> : null}
+        </ol>
+      </nav>
+    </div>
+  );
+}
+
 export function EventDetailContent({
   eventId,
   initialEvent,
@@ -183,7 +200,7 @@ export function EventDetailContent({
   function shell(body: React.ReactNode) {
     return (
       <main className="event-detail-page">
-        <PortalHeader skipTarget="event-detail" currentPage="events" />
+        <PortalHeader skipTarget="event-detail" currentPage="discover" />
         {body}
         <footer className="portal-footer">
           <span>KiwiCue / 纽村小报</span>
@@ -256,7 +273,7 @@ export function EventDetailContent({
   return shell(
     <article id="event-detail" className="event-detail-shell" aria-labelledby="event-detail-title">
       <div className="event-detail-primary">
-        <BackLink className="event-detail-back" fallback="/events">← {content.back}</BackLink>
+        <EventTrail category={categoryOfEvent(event, isCuratedMarket)} language={language} back={content.back} />
         <div className="event-detail-hero">
           <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
           <header className="event-detail-heading">

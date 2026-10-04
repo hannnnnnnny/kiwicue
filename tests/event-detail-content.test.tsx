@@ -224,6 +224,10 @@ describe("event detail experience", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Grey Lynn Farmers Market" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Plan your visit" })).toBeVisible();
+    const trail = within(screen.getByRole("navigation", { name: "Breadcrumb" }));
+    expect(trail.getByRole("link", { name: "Discover" })).toHaveAttribute("href", "/events");
+    expect(trail.getByRole("link", { name: "Markets" })).toHaveAttribute("href", "/events?category=markets");
+    expect(screen.getByRole("link", { name: "← Back" })).toHaveAttribute("href", "/events?category=markets");
     expect(screen.getByRole("link", { name: "Check official schedule" })).toHaveAttribute(
       "href",
       marketDetail.source!.url,

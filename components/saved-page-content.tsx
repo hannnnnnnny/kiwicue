@@ -8,6 +8,7 @@ import { useBookmarks } from "./bookmark-provider";
 import { requestEventDetailFromApi } from "./event-detail-content";
 import { EventGridSkeleton } from "./event-grid-skeleton";
 import { useLanguage } from "./language-provider";
+import { MineTabs } from "./mine-tabs";
 import { PortalHeader } from "./portal-header";
 import { useAuth } from "./auth-provider";
 
@@ -107,7 +108,8 @@ export function SavedPageContent({
 
   return (
     <main className="saved-page">
-      <PortalHeader skipTarget="saved-events" currentPage="saved" />
+      <PortalHeader skipTarget="saved-events" currentPage="mine" />
+      <MineTabs current="saved" />
       <section className="saved-masthead">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display">{content.title}</h1>

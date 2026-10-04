@@ -42,6 +42,12 @@
 
 .event-detail-back:hover { color: var(--portal-brand); }
 
+.event-detail-trail { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+.event-breadcrumb ol { display: flex; flex-wrap: wrap; align-items: center; margin: 0; padding: 0; list-style: none; font-size: .78rem; }
+.event-breadcrumb li + li::before { content: "›"; margin: 0 8px; color: var(--portal-muted); }
+.event-breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; color: var(--portal-muted); font-weight: 700; text-decoration: none; }
+.event-breadcrumb a:hover { color: var(--portal-brand); }
+
 .event-detail-hero { padding-bottom: var(--space-4); }
 
 .event-detail-heading { padding: var(--space-6) 0 var(--space-8); }

@@ -8,6 +8,7 @@ import { useBookmarks } from "./bookmark-provider";
 import { EventCategoryNav } from "./event-category-nav";
 import { EventGridSkeleton } from "./event-grid-skeleton";
 import { useLanguage } from "./language-provider";
+import { PersonalPicks } from "./for-you-content";
 import { PortalHeader } from "./portal-header";
 import { RecommendationCard } from "./recommendation-card";
 
@@ -25,7 +26,7 @@ type FeedState =
 const copy = {
   en: {
     eyebrow: "Auckland shortlist",
-    title: "Picks for you",
+    title: "For You",
     intro: "A smaller, explainable shortlist built from timing, event detail and what you save.",
     privacyEmpty: "Save an event to tune future picks. Preferences stay in this browser and are never sent away.",
     privacySaved: (count: number) => `Uses ${count} ${count === 1 ? "event" : "events"} saved in this browser. KiwiCue never sends them away to build picks.`,
@@ -153,7 +154,7 @@ export function RecommendationsPageContent({
   const content = copy[language];
 
   useEffect(() => {
-    document.title = language === "zh" ? "奥克兰活动推荐 — KiwiCue" : "Auckland event picks — KiwiCue";
+    document.title = language === "zh" ? "为你推荐 — KiwiCue" : "For You — KiwiCue";
   }, [language]);
 
   useEffect(() => {
@@ -199,7 +200,7 @@ export function RecommendationsPageContent({
 
   return (
     <main className="recommendations-page">
-      <PortalHeader currentPage="recommendations" skipTarget="recommendation-results" />
+      <PortalHeader currentPage="for-you" skipTarget="recommendation-results" />
       <section className="recommendations-hero" aria-labelledby="recommendations-title">
         <p className="eyebrow">{content.eyebrow}</p>
         <h1 className="editorial-display" id="recommendations-title">{content.title}</h1>
@@ -234,6 +235,7 @@ export function RecommendationsPageContent({
             <Link href="/events">{content.browse}</Link>
           </section>
         )}
+        {currentState.status === "ready" && <PersonalPicks events={currentState.events} />}
         {sections && hasPicks && (
           <div className="recommendation-sections">
             {visibleSections.map((section, index) => {

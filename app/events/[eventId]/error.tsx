@@ -5,7 +5,7 @@ import { PortalHeader } from "../../../components/portal-header";
 export default function EventDetailError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <main className="event-detail-page">
-      <PortalHeader skipTarget="event-detail" currentPage="events" />
+      <PortalHeader skipTarget="event-detail" currentPage="discover" />
       <section id="event-detail" className="event-state event-error" role="alert">
         <span className="state-code" aria-hidden="true">DETAIL / RETRY</span>
         <h1>Event details are temporarily unavailable</h1>

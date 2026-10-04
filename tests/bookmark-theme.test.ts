@@ -14,7 +14,7 @@ describe("bookmark visual and app-shell contract", () => {
   });
 
   it("keeps every bookmark destination and action touchable", () => {
-    expect(css).toMatch(/\.saved-link\s*\{[^}]*min-height:\s*44px/s);
+    expect(css).toMatch(/\[data-destination="mine"\]\s*\{[^}]*min-height:\s*44px/s);
     expect(css).toMatch(/\.bookmark-button-card\s*\{[^}]*min-height:\s*44px/s);
     expect(css).toMatch(/\.bookmark-button-detail\s*\{[^}]*min-height:\s*52px/s);
     expect(css).toMatch(/\.saved-toolbar button\s*\{[^}]*min-height:\s*44px/s);

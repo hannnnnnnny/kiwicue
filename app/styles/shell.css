@@ -84,7 +84,7 @@
   color: var(--portal-ink);
 }
 
-.saved-link strong {
+.portal-header-link[data-destination="mine"] strong {
   min-width: 22px;
   height: 22px;
   display: grid;
@@ -96,7 +96,7 @@
   box-shadow: inset 0 0 0 1px var(--portal-line);
 }
 
-.saved-link { min-height: 44px; }
+.portal-header-link[data-destination="mine"] { min-height: 44px; }
 
 .portal-command { padding: var(--space-12) 0 var(--space-4); }
 

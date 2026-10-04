@@ -55,7 +55,7 @@ describe("RecommendationsPageContent", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Building your Auckland shortlist");
 
     expect(await screen.findByRole("heading", { name: "Start here" })).toBeInTheDocument();
-    expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Picks" })).toHaveAttribute("aria-current", "page");
+    expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "For You" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "This weekend" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Try something different" })).toBeInTheDocument();
     expect(screen.getByText("Matches what you save")).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe("RecommendationsPageContent", () => {
     expect(screen.getByRole("heading", { name: "为你推荐" })).toBeInTheDocument();
     expect(screen.getByText("01 / 精选")).toBeInTheDocument();
     expect(screen.getByText(/偏好只保存在当前浏览器/)).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe("奥克兰活动推荐 — KiwiCue"));
+    await waitFor(() => expect(document.title).toBe("为你推荐 — KiwiCue"));
     expect(requestFeed).toHaveBeenCalledTimes(2);
   });
 

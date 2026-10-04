@@ -236,7 +236,7 @@
     font-weight: 700;
   }
 
-  .saved-link strong { margin-left: auto; }
+  .portal-primary-nav [data-destination="mine"] strong { margin-left: auto; }
 
   /* Utilities sit at the foot of the rail, iOS-sidebar style. */
   .language-toggle {

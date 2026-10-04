@@ -2,4 +2,4 @@ import { NotificationsPageContent } from "../../components/notifications-page-co
 import { PortalHeader } from "../../components/portal-header";
 
 export const dynamic = "force-dynamic";
-export default function NotificationsPage() { return <main className="account-page"><PortalHeader /><NotificationsPageContent /></main>; }
+export default function NotificationsPage() { return <main className="account-page"><PortalHeader currentPage="none" skipTarget="main-content" /><div id="main-content"><NotificationsPageContent /></div></main>; }

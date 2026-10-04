@@ -136,15 +136,16 @@ describe("portal navigation", () => {
   it("exposes one global navigation with an explicit current page", () => {
     render(
       <LanguageProvider>
-        <PortalHeader currentPage="events" />
+        <PortalHeader currentPage="discover" />
       </LanguageProvider>,
     );
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("aria-current", "page");
+    const primary = within(screen.getByRole("navigation", { name: "Primary navigation" }));
+    expect(primary.getByRole("link", { name: "Discover" })).toHaveAttribute("aria-current", "page");
     expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Movies" })).toHaveAttribute("href", "/movies");
-    expect(screen.getByRole("link", { name: "Saved events, 0" })).not.toHaveAttribute("aria-current");
+    expect(primary.getByRole("link", { name: "Mine: saved events, plans and collections. 0 saved" })).not.toHaveAttribute("aria-current");
   });
 
   it("uses the responsive KiwiCue artwork without duplicating its accessible name", () => {
@@ -174,7 +175,9 @@ describe("portal navigation", () => {
     );
 
     const links = screen.getByRole("navigation", { name: "Primary navigation" }).querySelectorAll("a");
-    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Events", "Picks", "For You", "Movies", "Saved"]);
+    expect([...links].map((link) => link.textContent?.replace(/\d+$/, ""))).toEqual(["Discover", "For You", "Movies", "Mine"]);
+    const mobile = screen.getByRole("navigation", { name: "Mobile navigation" }).querySelectorAll("a");
+    expect([...mobile].map((link) => link.getAttribute("href"))).toEqual([...links].map((link) => link.getAttribute("href")));
     expect(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("link", { name: "Movies" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("Skip to movie sessions")).toHaveAttribute("href", "#movie-results");
   });
