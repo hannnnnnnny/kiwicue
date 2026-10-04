@@ -86,9 +86,9 @@ function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof c
   return labels[skipTarget];
 }
 
-function DestinationLinks({ activePage, count, content }: { activePage: PortalPage; count: number; content: typeof copy.en | typeof copy.zh }) {
+function DestinationLinks({ activePage, count, content, className }: { activePage: PortalPage; count: number; content: typeof copy.en | typeof copy.zh; className?: string }) {
   return DESTINATIONS.map(({ id, href, icon }) => (
-    <Link key={id} className="portal-header-link" href={href} data-destination={id}
+    <Link key={id} className={className} href={href} data-destination={id}
       aria-label={id === "mine" ? content.mineLabel(count) : undefined}
       aria-current={activePage === id ? "page" : undefined}
       onClick={id === "discover" ? event => navigateOnDiscoveryPage(event, "all") : undefined}>
@@ -134,7 +134,7 @@ export function PortalHeader({ skipTarget = "event-results", currentPage }: {
           </Link>
           <div className="portal-header-actions">
             <nav className="portal-primary-nav" aria-label={content.primaryNavigation}>
-              <DestinationLinks activePage={activePage} count={count} content={content} />
+              <DestinationLinks activePage={activePage} count={count} content={content} className="portal-header-link" />
             </nav>
             <LanguageToggle />
             <AccountControl language={language} />
