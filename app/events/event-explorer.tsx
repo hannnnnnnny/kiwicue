@@ -40,6 +40,25 @@ type ExplorerState =
   | { status: "empty"; requestKey: string; events: [] }
   | { status: "error"; requestKey: string; events: [] };
 
+type Settled = Exclude<ExplorerState, { status: "loading" }>;
+// Results shown this session, per data source, so Back to the list shows it at once and the
+// browser can put the visitor back where they were. Client only: the server never shares it.
+const RESULTS_FRESH_MS = 5 * 60_000;
+const shownResults = new WeakMap<RequestEvents, Map<string, { state: Settled; at: number }>>();
+
+function cachedResults(source: RequestEvents, requestKey: string): Settled | null {
+  if (typeof window === "undefined") return null;
+  const entry = shownResults.get(source)?.get(requestKey);
+  return entry && Date.now() - entry.at < RESULTS_FRESH_MS ? entry.state : null;
+}
+
+function rememberResults(source: RequestEvents, state: Settled) {
+  if (state.status === "error" || (state.status === "ready" && state.appendStatus === "loading")) return;
+  const entries = shownResults.get(source) ?? new Map<string, { state: Settled; at: number }>();
+  entries.set(state.requestKey, { state, at: Date.now() });
+  shownResults.set(source, entries);
+}
+
 async function requestEventsFromApi({
   window,
   category,
@@ -176,12 +195,7 @@ export function EventExplorer({
 }) {
   const { language } = useLanguage();
   const content = copy[language];
-  const [state, setState] = useState<ExplorerState>({ status: "loading", events: [] });
   const [attempt, setAttempt] = useState(0);
-  const [localFacetState, setLocalFacetState] = useState<{ requestKey: string; facet: EventLocalFacet }>({ requestKey: "", facet: "all" });
-  const generationRef = useRef(0);
-  const appendInFlightRef = useRef(false);
-  const resultsSummaryRef = useRef<HTMLParagraphElement>(null);
   const requestKey = JSON.stringify({
     category: category ?? null,
     window,
@@ -190,6 +204,12 @@ export function EventExplorer({
     sort,
     attempt,
   });
+  const [state, setState] = useState<ExplorerState>(() => cachedResults(requestEvents, requestKey) ?? { status: "loading", events: [] });
+  const restoredKey = useRef(state.status === "loading" ? null : requestKey);
+  const [localFacetState, setLocalFacetState] = useState<{ requestKey: string; facet: EventLocalFacet }>({ requestKey: "", facet: "all" });
+  const generationRef = useRef(0);
+  const appendInFlightRef = useRef(false);
+  const resultsSummaryRef = useRef<HTMLParagraphElement>(null);
   const isFiltered = Boolean(keyword || venueId || category || window !== "all" || sort !== "recommended");
   const isMarketCategory = category === "markets";
   const stateForRequest: ExplorerState = state.status !== "loading" && state.requestKey === requestKey
@@ -197,9 +217,18 @@ export function EventExplorer({
     : { status: "loading", events: [] };
 
   useEffect(() => {
+    if (state.status !== "loading") rememberResults(requestEvents, state);
+  }, [requestEvents, state]);
+
+  useEffect(() => {
     const generation = ++generationRef.current;
     let cancelled = false;
     appendInFlightRef.current = false;
+    if (restoredKey.current === requestKey) {
+      // Back to a list seen moments ago: it is already on screen as it was, so don't scan again.
+      restoredKey.current = null;
+      return;
+    }
 
     const options = buildRequestOptions(window, category, keyword, venueId);
     requestEvents(options)

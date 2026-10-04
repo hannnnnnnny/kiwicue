@@ -5,7 +5,7 @@ import { LanguageProvider } from "../components/language-provider";
 import { LanguageToggle } from "../components/language-toggle";
 import { readApplicationCss } from "./css-source";
 
-const router = vi.hoisted(() => ({ push: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
@@ -58,7 +58,7 @@ beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
   document.documentElement.lang = "en";
-  router.push.mockReset();
+  router.replace.mockReset();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(venueResponse()));
 });
 
@@ -105,8 +105,8 @@ describe("EventSearchPanel", () => {
     });
     fireEvent.submit(screen.getByRole("search"));
 
-    expect(router.push).toHaveBeenCalledTimes(1);
-    expect(router.push).toHaveBeenCalledWith(
+    expect(router.replace).toHaveBeenCalledTimes(1);
+    expect(router.replace).toHaveBeenCalledWith(
       "/events?category=concerts&q=Taylor+Swift&venue=s",
     );
     expect(sessionStorage.getItem("kiwicue:focus-results")).toBe("1");
@@ -148,7 +148,7 @@ describe("EventSearchPanel", () => {
     });
 
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(router.push).toHaveBeenCalledWith(
+    expect(router.replace).toHaveBeenCalledWith(
       "/events?window=30d&category=concerts&q=Laufey+-+A+Matter+Of+Time+Tour",
     );
   });

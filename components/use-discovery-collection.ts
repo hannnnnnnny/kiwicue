@@ -23,8 +23,9 @@ function getCollection(): DiscoveryCollection {
 export function navigateDiscovery(collection: DiscoveryCollection) {
   const hash = collection === "all" ? "" : `#${collection === "nearby" ? "map" : collection}`;
   if (window.location.hash !== hash) {
-    // Preserve Next's history state so browser Back remains compatible with the router.
-    window.history.pushState(window.history.state, "", `${window.location.pathname}${window.location.search}${hash}`);
+    // Switching collections refines the same page, so it replaces the entry: Back leaves the page in one step.
+    // Next's history state is kept so the router still recognises the entry.
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${hash}`);
   }
   window.dispatchEvent(new Event(navigationEvent));
 }

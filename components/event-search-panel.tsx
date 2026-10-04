@@ -186,7 +186,8 @@ function SearchForm({
     setSubmitting(true);
     setSubmittedHref(href);
     sessionStorage.setItem("kiwicue:focus-results", "1");
-    router.push(href);
+    // A new search refines the list in place; Back should leave the list, not replay each search.
+    router.replace(href);
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {

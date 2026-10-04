@@ -1,5 +1,6 @@
 "use client";
 
+import { BackLink } from "./back-link";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { EventCard } from "../app/events/event-card";
@@ -56,7 +57,7 @@ export async function requestEventDetailFromApi(eventId: string): Promise<KiwiCu
 const copy = {
   en: {
     loading: "Loading event details",
-    back: "Back to Auckland events",
+    back: "Back",
     eyebrow: "Auckland event details",
     bookingTitle: "How to book",
     bookingSteps: [
@@ -95,7 +96,7 @@ const copy = {
   },
   zh: {
     loading: "正在加载活动详情",
-    back: "返回奥克兰活动",
+    back: "返回",
     eyebrow: "奥克兰活动详情",
     bookingTitle: "预约或购票方式",
     bookingSteps: [
@@ -255,7 +256,7 @@ export function EventDetailContent({
   return shell(
     <article id="event-detail" className="event-detail-shell" aria-labelledby="event-detail-title">
       <div className="event-detail-primary">
-        <Link className="event-detail-back" href="/events">← {content.back}</Link>
+        <BackLink className="event-detail-back" fallback="/events">← {content.back}</BackLink>
         <div className="event-detail-hero">
           <EventEditorialPreviewMedia event={event} language={language} placement="detail" />
           <header className="event-detail-heading">

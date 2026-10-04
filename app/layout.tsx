@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AskLauncher } from "../components/ask/ask-launcher";
+import { NavigationTracker } from "../components/back-link";
 import { BookmarkProvider } from "../components/bookmark-provider";
 import { AuthProvider } from "../components/auth-provider";
 import { LanguageProvider } from "../components/language-provider";
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <LanguageProvider>
           <AuthProvider><BookmarkProvider>{children}</BookmarkProvider></AuthProvider>
           <DiscoveryMotion />
+          <NavigationTracker />
           <AskLauncher enabled={isAskConfigured()} />
         </LanguageProvider>
       </body>

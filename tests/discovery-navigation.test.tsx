@@ -29,6 +29,14 @@ it("synchronizes collection, history hash, and mobile active navigation", () => 
   act(() => { window.history.replaceState(null, "", "/events#map"); window.dispatchEvent(new PopStateEvent("popstate")); });
   expect(screen.getByRole("heading", { name: "Around Auckland" })).toBeVisible();
 });
+it("switches collections without adding history entries", () => {
+  mount();
+  const before = window.history.length;
+  fireEvent.click(screen.getByRole("button", { name: /^Tonight$/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Free$/ }));
+  expect(window.location.hash).toBe("#free");
+  expect(window.history.length).toBe(before);
+});
 it("lets users inspect another event venue without requesting their location", () => {
   mount(); fireEvent.click(screen.getByRole("button", { name: /^Map$/ }));
   expect(screen.getByTitle("Map of Venue 1")).toBeInTheDocument();

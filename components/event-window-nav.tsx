@@ -44,6 +44,8 @@ export function EventWindowNav({
           <Link
             className="portal-nav-link"
             href={eventSearchHref({ window: value, category, keyword, venueId, sort })}
+            replace
+            scroll={false}
             aria-current={window === value ? "page" : undefined}
             key={value}
           >

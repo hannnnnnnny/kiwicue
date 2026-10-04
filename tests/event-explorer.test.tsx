@@ -10,7 +10,7 @@ import type { AucklandEventsResult } from "../lib/events";
 import type { EventWindow } from "../lib/event-window";
 import { readApplicationCss } from "./css-source";
 
-const router = vi.hoisted(() => ({ push: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
@@ -120,6 +120,17 @@ async function findEventHeading(name: string) {
 }
 
 describe("Auckland event explorer", () => {
+  it("shows a list seen moments ago straight away when the visitor comes back to it", async () => {
+    const requestEvents = vi.fn(async () => eventResult as AucklandEventsResult);
+    const first = render(<LanguageProvider><EventExplorer requestEvents={requestEvents} /></LanguageProvider>);
+    await findEventHeading("Harbour Lights");
+    first.unmount();
+    render(<LanguageProvider><EventExplorer requestEvents={requestEvents} /></LanguageProvider>);
+    expect(getEventHeading("Harbour Lights")).toBeInTheDocument();
+    expect(screen.queryByRole("status", { busy: true })).not.toBeInTheDocument();
+    expect(requestEvents).toHaveBeenCalledTimes(1);
+  });
+
   it("provides a route and a client-side explorer", () => {
     expect(existsSync(resolve(projectRoot, "app/events/page.tsx"))).toBe(true);
     expect(existsSync(resolve(projectRoot, "app/events/event-explorer.tsx"))).toBe(true);
