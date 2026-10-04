@@ -122,7 +122,7 @@ describe("movie detail experience", () => {
       "href",
       "https://www.youtube.com/watch?v=Abc_123-x",
     );
-    expect(screen.getByRole("link", { name: "Back to movies" })).toHaveAttribute("href", "/movies");
+    expect(screen.getByRole("link", { name: "Back" })).toHaveAttribute("href", "/movies");
     expect(screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB.")).toBeVisible();
     expect(screen.getByRole("heading", { name: "More Auckland cinemas" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Academy Cinemas sessions/ })).toHaveAttribute("target", "_blank");

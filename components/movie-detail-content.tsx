@@ -1,5 +1,6 @@
 "use client";
 
+import { BackLink } from "./back-link";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AUCKLAND_CINEMAS } from "../lib/cinema-directory";
@@ -91,7 +92,7 @@ function isDetailResponse(value: unknown, movieId: string): value is MoviePrevie
 const copy = {
   en: {
     loading: "Loading movie preview",
-    back: "Back to movies",
+    back: "Back",
     source: {
       verified: "Showing in Auckland",
       unverified: "Movie preview",
@@ -123,7 +124,7 @@ const copy = {
   },
   zh: {
     loading: "正在加载电影预览",
-    back: "返回电影页面",
+    back: "返回",
     source: {
       verified: "奥克兰正在上映",
       unverified: "电影预览",
@@ -215,7 +216,7 @@ function MovieReady({ movie, language, sessionStatus, screenings, unavailableCha
   const content = copy[language];
   return (
     <article id="movie-detail" className="movie-detail-shell" aria-labelledby="movie-detail-title">
-      <Link aria-label={content.back} className="movie-detail-back" href="/movies">← {content.back}</Link>
+      <BackLink label={content.back} className="movie-detail-back" fallback="/movies">← {content.back}</BackLink>
       <div className="movie-detail-hero">
         <div className="movie-detail-poster"><MoviePoster src={movie.posterUrl} title={movie.title} language={language} loading="eager" /></div>
         <div className="movie-detail-summary">
