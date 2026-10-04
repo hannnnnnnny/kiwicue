@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { conversePrompt, searchInputSchema, toModelMessages } from "../lib/ask/converse";
+import { conversePrompt, lastStepSpeaks, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
 import { EMPTY_FILTERS } from "../lib/ask/schema";
+import { PERSONAS } from "../lib/ask/personas";
 import { ASSISTANTS } from "../lib/assistants";
 
 describe("conversePrompt", () => {
@@ -9,6 +10,7 @@ describe("conversePrompt", () => {
       assistant: ASSISTANTS.sunny, today: "2026-10-01 (Thursday)",
       filters: { ...EMPTY_FILTERS, category: "music", dates: ["2026-10-03"] },
       shown: [{ kind: "event", title: "Jazz at the Wynyard", when: "Sat 3 Oct, 7 pm", venue: "Wynyard Pavilion", price: "From $25" }],
+      replyLanguage: "en",
     });
     expect(prompt).toContain("You are Sunny");
     expect(prompt).toContain("Playful and a little witty");
@@ -20,36 +22,83 @@ describe("conversePrompt", () => {
   });
 
   it("says when nothing has been searched or shown yet", () => {
-    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01 (Thursday)", filters: null, shown: [] });
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01 (Thursday)", filters: null, shown: [], replyLanguage: "en" });
     expect(prompt).toContain("No search yet.");
     expect(prompt).toContain("Nothing on screen yet.");
   });
 
-  it.each(Object.values(ASSISTANTS))("gives $name native-language guidance without diluting evidence rules", (assistant) => {
-    const prompt = conversePrompt({ assistant, today: "2026-10-01", filters: null, shown: [] });
-    expect(prompt).toContain(assistant.style.zh);
-    expect(prompt).toContain("中文用日常聊天的说法");
-    expect(prompt).toContain("For a follow-up, answer that question first");
-    expect(prompt).toContain("已经知道的时间、人数和预算不要重新问");
-    expect(prompt).toContain("不能假装自己去过或亲身体验过");
-    expect(prompt).toContain("do not attach an obligatory follow-up question");
-    expect(prompt).not.toContain("Never open two replies the same way");
+  it.each(Object.values(ASSISTANTS))("gives $name a full persona in the reply language without diluting evidence rules", (assistant) => {
+    const zh = conversePrompt({ assistant, today: "2026-10-01", filters: null, shown: [], replyLanguage: "zh" });
+    expect(zh).toContain(assistant.style.zh);
+    for (const line of PERSONAS[assistant.id].zh) expect(zh).toContain(line);
+    expect(zh).toContain("reply in Chinese");
+    const prompt = conversePrompt({ assistant, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
+    for (const line of PERSONAS[assistant.id].en) expect(prompt).toContain(line);
+    // Chinese persona text in an English chat pulls replies into Chinese.
+    expect(prompt).not.toContain(assistant.style.zh);
+    expect(prompt).toContain("reply in ENGLISH ONLY");
     expect(prompt).toContain("never invent events, times, prices, links or details");
     expect(prompt).toContain("never say you already saved, booked");
+    expect(prompt).toContain("Never pretend you have been somewhere");
+    expect(prompt).toContain("Don't re-ask anything the visitor already told you");
+  });
+
+  it("asks for an opinion instead of a read-out of the cards", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
+    expect(prompt).toContain("NEVER walk through the list");
+    expect(prompt).toContain("NEVER offer a menu of choices");
+    expect(prompt).toContain("Most replies end without a question");
+    expect(prompt).toContain("Otherwise say nothing about prices");
+    expect(prompt).toContain("VARIETY");
+    expect(prompt).toContain("search again with what you already know");
+    expect(prompt).toContain("Call search without writing anything first");
+    expect(prompt).toContain("# Examples (style only — never reuse their facts)");
+    // Sections come in a fixed order, with the live context last.
+    const order = ["# Role & Objective", "# Language", "# Personality & Tone", "# How to talk", "# Facts and limits", "# Tools", "# Examples", "# Mood", "# Context"];
+    expect(order.map((heading) => prompt.indexOf(heading))).toEqual([...order.map((heading) => prompt.indexOf(heading))].sort((a, b) => a - b));
   });
 
   it("handles possible voice feedback gently while preserving intentional quotations", () => {
-    const prompt = conversePrompt({ assistant: ASSISTANTS.iris, today: "2026-10-01", filters: null, shown: [] });
-    expect(prompt).toContain("Do not accuse the visitor of copying");
-    expect(prompt).toContain("Keep this tentative");
+    const prompt = conversePrompt({ assistant: ASSISTANTS.iris, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
+    expect(prompt).toContain("the mic may have caught your own voice");
+    expect(prompt).toContain("Don't blame the visitor");
     expect(prompt).toContain("If the visitor intentionally quotes you");
   });
 
   it("keeps friendly practical advice grounded in source evidence", () => {
-    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [] });
-    expect(prompt).toContain("payment methods, reservations, accessibility, ticket types or age suitability require listing evidence");
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
+    expect(prompt).toContain("payment methods, reservations, accessibility, ticket types or age suitability require listing evidence".replace("payment", "Payment"));
     expect(prompt).toContain("do not invent a friendly tip");
-    expect(prompt).toContain("缺少信息就说‘还没查到’或‘这里没写’");
+    expect(prompt).toContain("Budgets are for the whole party");
+  });
+});
+
+describe("lastStepSpeaks", () => {
+  it("lets the model search in early steps but makes the last one a reply", () => {
+    expect(lastStepSpeaks({ stepNumber: 0 })).toBeUndefined();
+    expect(lastStepSpeaks({ stepNumber: 1 })).toBeUndefined();
+    expect(lastStepSpeaks({ stepNumber: 2 })).toEqual({ toolChoice: "none" });
+  });
+});
+
+describe("replyText", () => {
+  async function collect(parts: Array<{ type: string; text?: string }>) {
+    async function* stream() { yield* parts; }
+    let text = "";
+    for await (const delta of replyText(stream())) text += delta;
+    return text;
+  }
+
+  it("keeps a line said before a search as its own paragraph", async () => {
+    expect(await collect([
+      { type: "start-step" }, { type: "text-delta", text: "Let me look." }, { type: "tool-call" }, { type: "finish-step" },
+      { type: "start-step" }, { type: "text-delta", text: "Wonderverse " }, { type: "text-delta", text: "is lovely." },
+    ])).toBe("Let me look.\n\nWonderverse is lovely.");
+  });
+
+  it("leaves a reply that searched first, or never searched, as it is", async () => {
+    expect(await collect([{ type: "tool-call" }, { type: "text-delta", text: "Wonderverse." }])).toBe("Wonderverse.");
+    expect(await collect([{ type: "text-delta", text: "Enjoy!" }, { type: "reasoning-delta", text: "x" }])).toBe("Enjoy!");
   });
 });
 

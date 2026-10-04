@@ -7,6 +7,7 @@ import { addUsage, costMicroUsd, ZERO_USAGE, type AskUsage } from "./cost";
 import type { Evaluate } from "./jev";
 import { logAskFailure } from "./log";
 import { moodFilter } from "./mood";
+import { languageOf } from "../text-language";
 import type { MediaLookup } from "./media";
 import { encodeEvent } from "./ndjson";
 import type { QuotaStore } from "./quota";
@@ -120,7 +121,7 @@ function searcher(input: AskRequest, ctx: Context, emit: Emit) {
 /** The assistant replies in its own words, searching when it decides to. Falls back to a plain search. */
 async function converse(input: AskRequest, ctx: Context, emit: Emit, search: ReturnType<typeof searcher>): Promise<Partial<AskUsage>> {
   const tools = { search: tool({ description: SEARCH_TOOL_DESCRIPTION, inputSchema: searchInputSchema, execute: search.fromTool }) };
-  const system = conversePrompt({ assistant: ASSISTANTS[input.assistant], today: todayLabel(ctx.now), filters: input.previous, shown: input.shown });
+  const system = conversePrompt({ assistant: ASSISTANTS[input.assistant], today: todayLabel(ctx.now), filters: input.previous, shown: input.shown, replyLanguage: languageOf(input.text) });
   let wrote = false;
   const reply = moodFilter((delta) => { wrote = true; emit({ type: "reply", delta }); }, (mood) => emit({ type: "mood", mood }));
   try {
