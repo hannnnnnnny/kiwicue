@@ -105,8 +105,11 @@
 .account-verification .account-help a { color: var(--portal-brand); font-weight: 650; text-underline-offset: 3px; }
 
 /* Mine: Saved, Plans and Collections side by side. Tabs replace the entry so Back leaves Mine in one step. */
-.mine-tabs { display: flex; gap: 8px; width: min(100% - 32px, 1320px); margin: 24px auto 0; overflow-x: auto; }
-.outing-plans .mine-tabs, .saved-page .mine-tabs { width: auto; margin-inline: 0; }
+/* The tabs line up with each page's own content column. */
+.mine-tabs { display: flex; gap: 8px; width: min(var(--container), calc(100% - 48px)); margin: 24px auto 0; overflow-x: auto; }
+.outing-plans .mine-tabs { width: auto; margin-inline: 0; }
+.account-page .mine-tabs { width: min(100% - 32px, 760px); }
+@media (max-width: 768px) { .saved-page .mine-tabs { width: calc(100% - 32px); } }
 .mine-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--portal-line); border-radius: var(--radius-pill); background: var(--portal-raised); color: var(--portal-ink); font-weight: 700; text-decoration: none; white-space: nowrap; }
 .mine-tabs a:hover { border-color: var(--portal-brand); }
 .mine-tabs a[aria-current="page"] { border-color: var(--portal-brand); background: var(--portal-brand); color: var(--portal-white); }

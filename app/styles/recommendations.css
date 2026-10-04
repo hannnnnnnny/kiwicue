@@ -17,6 +17,7 @@
 .recommendations-hero aside { grid-column: 2; grid-row: 1 / span 3; align-self: end; padding: 1.25rem; border: 1px solid var(--portal-line); background: var(--portal-surface); line-height: 1.6; }
 
 .recommendation-sections { width: min(var(--container), calc(100% - 48px)); margin-inline: auto; }
+.recommendations-page .for-you-hint, .for-you-personal { width: min(var(--container), calc(100% - 48px)); margin-inline: auto; box-sizing: border-box; }
 .recommendation-section { padding: clamp(3rem, 6vw, 5.5rem) 0; border-bottom: 1px solid var(--portal-line); }
 .recommendation-section > header { display: grid; grid-template-columns: 8rem minmax(0, 1fr) minmax(16rem, 28rem); align-items: end; gap: 1.5rem; margin-bottom: 2rem; }
 .recommendation-section > header p { margin: 0; color: var(--portal-accent); font-size: .72rem; font-weight: 800; letter-spacing: .1em; }
