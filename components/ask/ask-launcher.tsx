@@ -28,7 +28,7 @@ export function AskLauncher({ enabled }: { enabled: boolean }) {
         aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpenOn(pathname)}>
         <AssistantOrb assistant={assistant} state="idle" size="small" />
       </button>
-      {open ? <AskOverlay onClose={close} /> : null}
+      <div hidden={!open}><AskOverlay onClose={close} active={open} /></div>
     </>
   );
 }

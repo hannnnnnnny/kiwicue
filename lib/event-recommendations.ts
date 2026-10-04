@@ -1,5 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { KiwiCueEvent } from "./events";
+import { groupEventSeries } from "./event-series";
 
 export type RecommendationReason =
   | "saved-affinity"
@@ -188,7 +189,9 @@ export function buildEventRecommendations(input: {
   now: Date;
 }): EventRecommendationSections {
   const context = createContext(input.savedEvents, input.now);
-  const available = candidates(input.events, context);
+  const eligible = candidates(input.events, context);
+  const nextSessions = new Set(groupEventSeries(eligible.map((item) => item.event)).map((series) => series.lead.id));
+  const available = eligible.filter((item) => nextSessions.has(item.event.id));
   const startHere = chooseDiverse(available, 3);
   const used = new Set(startHere.map((item) => item.event.id));
   const weekend = chooseDiverse(

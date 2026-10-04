@@ -59,4 +59,33 @@ describe("speech input", () => {
     act(() => FakeRecognition.last?.onerror?.({ error: "not-allowed" }));
     expect(hook.current.error).toBe("denied");
   });
+
+  it("discards results arriving after cancellation instead of sending speaker audio", () => {
+    vi.useFakeTimers();
+    const onFinal = vi.fn();
+    const { result } = renderHook(() => useSpeechInput({ language: "en", onFinal }));
+    act(() => result.current.start());
+    const old = FakeRecognition.last!;
+    act(() => old.onresult?.(results(["assistant playback", true])));
+    act(() => result.current.cancel());
+    act(() => { old.onresult?.(results(["late playback", true])); old.onend?.(); vi.advanceTimersByTime(SILENCE_MS); });
+    expect(onFinal).not.toHaveBeenCalled();
+    expect(result.current.interim).toBe("");
+    expect(result.current.listening).toBe(false);
+  });
+
+  it("ignores an older session's results, errors and end while the new turn listens", () => {
+    const onFinal = vi.fn();
+    const { result } = renderHook(() => useSpeechInput({ language: "en", onFinal }));
+    act(() => result.current.start());
+    const old = FakeRecognition.last!;
+    act(() => result.current.start());
+    act(() => { old.onresult?.(results(["old audio", true])); old.onerror?.({ error: "not-allowed" }); old.onend?.(); });
+    expect(result.current.listening).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(onFinal).not.toHaveBeenCalled();
+    act(() => FakeRecognition.last?.onresult?.(results(["my new question", true])));
+    act(() => result.current.stop());
+    expect(onFinal).toHaveBeenCalledWith("my new question");
+  });
 });

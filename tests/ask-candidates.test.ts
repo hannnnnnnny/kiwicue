@@ -40,6 +40,10 @@ function sources(overrides: Partial<CandidateSources> = {}): CandidateSources {
 }
 
 describe("loadCandidates", () => {
+  it("accepts a geographic movie place through its matching area", async () => {
+    const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "movies", area: "central", place: "central Auckland" }, language: "en", now: NOW, sources: sources() });
+    expect(result.cards.map((card) => card.title)).toEqual(["Resident Evil"]);
+  });
   afterEach(() => vi.restoreAllMocks());
 
   it("groups repeat sessions and films into cards across all domains", async () => {
@@ -49,7 +53,7 @@ describe("loadCandidates", () => {
     expect(byTitle["Bundle Baby"]).toMatchObject({ kind: "event", id: "a", sessionCount: 2, priceText: "Free", href: "/events/a", venue: "Herald Theatre" });
     expect(byTitle["Rock Night"].priceText).toBe("From $45");
     expect(byTitle["Night Market"]).toMatchObject({ kind: "market", imageUrl: null });
-    expect(byTitle["Paw Patrol"]).toMatchObject({ kind: "movie", sessionCount: 2, href: "/movies?q=Paw%20Patrol" });
+    expect(byTitle["Paw Patrol"]).toMatchObject({ kind: "movie", sessionCount: 2, href: expect.stringContaining("/movies?q=Paw+Patrol&date=all") });
     // 2026-10-03 02:00Z (15:00 NZDT) Paw Patrol is after Bundle Baby at 11:00 NZDT, even though "…T02" < "…T11" as text.
     expect(result.cards.map((card) => card.title).slice(0, 3)).toEqual(["Bundle Baby", "Night Market", "Paw Patrol"]);
   });
@@ -79,9 +83,9 @@ describe("loadCandidates", () => {
     expect(result.cards.length).toBeGreaterThan(0);
   });
 
-  it("treats kids as a ranking hint beside a category, so music with kids still finds music", async () => {
+  it("keeps children suitability strict even beside a music category", async () => {
     const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", kids: true }, language: "en", now: NOW, sources: sources() });
-    expect(result.cards.map((card) => card.title)).toEqual(["Rock Night"]);
+    expect(result.cards).toEqual([]);
     expect(result.relaxed).toEqual([]);
   });
 
@@ -92,23 +96,22 @@ describe("loadCandidates", () => {
     expect(result.cards.map((card) => card.title).sort()).toEqual(["Bundle Baby", "Mystery Gig"]);
   });
 
-  it("loosens one filter at a time, in order, until something matches", async () => {
+  it("never loosens a budget or time condition to fill results", async () => {
     const budget = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", maxPrice: 30 }, language: "en", now: NOW, sources: sources() });
-    expect(budget.cards.map((card) => card.title)).toEqual(["Rock Night"]);
-    expect(budget.relaxed).toEqual(["maxPrice"]);
+    expect(budget.cards).toEqual([]);
+    expect(budget.relaxed).toEqual([]);
 
     const daytime = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", timeOfDay: "day", maxPrice: 30 }, language: "en", now: NOW, sources: sources() });
-    expect(daytime.cards.map((card) => card.title)).toEqual(["Rock Night"]);
-    expect(daytime.relaxed).toEqual(["maxPrice", "timeOfDay"]);
+    expect(daytime.cards).toEqual([]);
+    expect(daytime.relaxed).toEqual([]);
   });
 
-  it("looks at nearby days, keeping the other filters, when the chosen day has nothing", async () => {
+  it("keeps the chosen date and does not silently query nearby days", async () => {
     const all = sources();
     const result = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", category: "music", dates: ["2026-10-06"] }, language: "en", now: NOW, sources: all });
-    expect(result.cards.map((card) => card.title)).toEqual(["Rock Night"]);
-    expect(result.relaxed).toEqual(["dates"]);
-    expect(all.events).toHaveBeenCalledTimes(2);
-    expect(all.events).toHaveBeenLastCalledWith({ start: new Date("2026-10-02T11:00:00Z"), end: new Date("2026-10-09T11:00:00Z") }, null);
+    expect(result.cards).toEqual([]);
+    expect(result.relaxed).toEqual([]);
+    expect(all.events).toHaveBeenCalledTimes(1);
   });
 
   it("returns nothing, with nothing relaxed, when there is truly nothing", async () => {
@@ -116,10 +119,10 @@ describe("loadCandidates", () => {
     expect(result).toEqual({ cards: [], relaxed: [], unavailable: [] });
   });
 
-  it("uses a place only when something is actually there", async () => {
+  it("does not substitute another location when the requested place has no matches", async () => {
     const near = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", place: "herald" }, language: "en", now: NOW, sources: sources() });
     expect(near.cards.map((card) => card.title)).toEqual(["Bundle Baby"]);
     const nowhere = await loadCandidates({ filters: { ...EMPTY_FILTERS, domain: "events", place: "Botany" }, language: "en", now: NOW, sources: sources() });
-    expect(nowhere.cards).toHaveLength(2);
+    expect(nowhere.cards).toHaveLength(0);
   });
 });

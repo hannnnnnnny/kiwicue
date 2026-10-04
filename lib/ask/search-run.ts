@@ -10,6 +10,8 @@ import { mergeFilters, type Slots } from "./merge-filters";
 import { BEST_MIN_SCORE, rankCards } from "./rank";
 import { askStreamEventSchema, type AskCard, type AskFilters, type AskStreamEvent } from "./schema";
 import { understandWithJev } from "./understand-jev";
+import { budgetIntent } from "./budget-intent";
+import { timeIntent } from "./time-intent";
 
 type Language = "en" | "zh";
 export type Emit = (event: AskStreamEvent) => void;
@@ -18,6 +20,7 @@ export type SearchRequest = {
   text: string; language: Language; previous: AskFilters | null;
   /** Filters to use exactly as given, skipping understanding (a removed chip). */
   exact?: AskFilters; slots?: Slots | null;
+  constraints?: string;
 };
 export type SearchOutcome = {
   filters: AskFilters; top: AskCard[]; loosened: string[]; usage: Partial<AskUsage>;
@@ -51,7 +54,9 @@ async function understand(request: SearchRequest, deps: SearchDeps, now: Date) {
   if (request.exact) return { filters: request.exact, inputTokens: 0, understood: true };
   const jev = await understandWithJev({ text: request.text, history: [], previous: request.previous, today: todayLabel(now), evaluate: deps.evaluate })
     .catch((error: unknown) => { logAskFailure("jev", error); return null; });
-  const filters = mergeFilters({ previous: request.previous, jev: jev?.understanding ?? null, slots: request.slots ?? null, now });
+  const merged = mergeFilters({ previous: request.previous, jev: jev?.understanding ?? null, slots: request.slots ?? null, now });
+  const filters = { ...merged, ...budgetIntent(request.text), ...timeIntent(request.text),
+    ...budgetIntent(request.constraints ?? ""), ...timeIntent(request.constraints ?? "") };
   return { filters, inputTokens: jev?.inputTokens ?? 0, understood: jev !== null };
 }
 

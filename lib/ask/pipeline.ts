@@ -73,6 +73,9 @@ function toolResult(outcome: SearchOutcome) {
     options: outcome.top.map((card, index) => ({
       n: index + 1, kind: card.kind, title: card.title, when: localWhen(card), venue: card.venue, price: card.priceText,
       sessions: card.sessionCount,
+      bookingUrl: card.bookingUrl ?? null, href: card.href,
+      budgetStatus: card.budgetStatus ?? "unknown", minPartyCost: card.minPartyCost ?? null,
+      durationMinutes: card.durationMinutes ?? null, indoor: card.indoor ?? false,
     })),
   };
 }
@@ -100,7 +103,9 @@ function searcher(input: AskRequest, ctx: Context, emit: Emit) {
     if (count >= MAX_SEARCHES_PER_MESSAGE) return { error: "Already searched enough for this message; reply with what you found." };
     const outcome = await run({
       text: args.query, language: input.language, previous: args.fresh ? null : current,
-      slots: { names: args.names, place: args.place, dates: sanitizeDates(args.dates, ctx.now), mode: args.fresh ? "new" : "refine", maxPrice: args.maxPrice },
+      constraints: input.text,
+      slots: { names: args.names, place: args.place, dates: sanitizeDates(args.dates, ctx.now), mode: args.fresh ? "new" : "refine", maxPrice: args.maxPrice,
+        totalBudget: args.totalBudget, partySize: args.partySize, startMinute: args.startMinute, endMinute: args.endMinute },
     });
     emit({ type: "layout", layout: args.layout });
     return toolResult(outcome);

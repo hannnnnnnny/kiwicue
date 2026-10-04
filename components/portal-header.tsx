@@ -25,6 +25,7 @@ const copy = {
     skipHome: "Skip to Auckland guide",
     skipDetail: "Skip to event details",
     skipSaved: "Skip to saved events",
+    skipPlans: "Skip to outing plans",
     skipMovies: "Skip to movie sessions",
     skipMoviePreviews: "Skip to movie previews",
     skipCinemaDirectory: "Skip to Auckland cinema links",
@@ -44,6 +45,7 @@ const copy = {
     skipHome: "跳到奥克兰指南",
     skipDetail: "跳到活动详情",
     skipSaved: "跳到收藏活动",
+    skipPlans: "跳到我的行程",
     skipMovies: "跳到电影场次",
     skipMoviePreviews: "跳到电影预览",
     skipCinemaDirectory: "跳到奥克兰影院入口",
@@ -60,8 +62,8 @@ const copy = {
   },
 } as const;
 
-type PortalPage = "events" | "movies" | "recommendations" | "saved" | "for-you";
-type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results";
+type PortalPage = "events" | "movies" | "recommendations" | "saved" | "for-you" | "plans";
+type SkipTarget = "home-content" | "event-results" | "event-detail" | "saved-events" | "movie-results" | "movie-previews" | "movie-detail" | "cinema-directory" | "recommendation-results" | "outing-plan-content";
 
 function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof copy.zh): string {
   const labels: Record<SkipTarget, string> = {
@@ -74,6 +76,7 @@ function getSkipLabel(skipTarget: SkipTarget, content: typeof copy.en | typeof c
     "cinema-directory": content.skipCinemaDirectory,
     "movie-detail": content.skipMovieDetail,
     "recommendation-results": content.skipRecommendations,
+    "outing-plan-content": content.skipPlans,
   };
   return labels[skipTarget];
 }

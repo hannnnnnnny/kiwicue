@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { AskCard } from "../../lib/ask/schema";
 import { EventImage } from "../event-image";
 import { AskCardHero } from "./ask-card-hero";
+import { trustedBookingUrl } from "../../lib/ask/booking";
 
 type Language = "en" | "zh";
 const copy = {
@@ -40,6 +41,17 @@ export function AskResultCard({ card, best, language, onSound }: { card: AskCard
           </span>
         </span>
       </Link>
+      <div className="ask-card-actions">
+        <span className="ask-price-note">{card.budgetStatus === "free"
+          ? language === "zh" ? "免费入场；餐饮交通另计" : "Free entry; food and travel extra"
+          : card.minPartyCost != null
+          ? language === "zh" ? `全组至少 $${card.minPartyCost}；票种及费用待确认` : `Party from $${card.minPartyCost}; ticket types and fees unconfirmed`
+          : language === "zh" ? "价格未知；预算未核实" : "Price unknown; budget unverified"}</span>
+        {trustedBookingUrl(card.bookingUrl) ? <a href={trustedBookingUrl(card.bookingUrl)!} target="_blank" rel="noopener noreferrer"
+          className="ask-booking" aria-label={language === "zh" ? `${card.title} 官方订票` : `Book ${card.title} on the official site`}>
+          {language === "zh" ? "官方订票 ↗" : "Official booking ↗"}
+        </a> : null}
+      </div>
     </article>
   );
 }
