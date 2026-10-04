@@ -3,12 +3,11 @@
 import { useEffect } from "react";
 import { EventExplorer } from "../app/events/event-explorer";
 import type { EventCategory } from "../lib/event-categories";
-import type { EventSort } from "../lib/event-search-params";
+import type { EventSort, EventView } from "../lib/event-search-params";
 import type { EventWindow } from "../lib/event-window";
-import { EventCategoryNav } from "./event-category-nav";
 import { CuratedMarketDiscovery } from "./curated-market-discovery";
-import { EventDiscoveryControls, EventFilterMeta } from "./event-discovery-controls";
-import { EventWindowNav } from "./event-window-nav";
+import { DiscoverFilters } from "./discover-filters";
+import { EventSearchPanel } from "./event-search-panel";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
 
@@ -22,8 +21,6 @@ const copy = {
     eyebrow: "Discover Auckland",
     title: "What do you feel like?",
     intro: "Find something worth going out for.",
-    filterTitle: "What are you into?",
-    filterBody: "Pick a date, find your scene, make it happen.",
     statusLabel: "Current event search",
     location: "Auckland",
     source: "Ticketmaster source",
@@ -38,8 +35,6 @@ const copy = {
     eyebrow: "探索奥克兰",
     title: "今天，想做点什么？",
     intro: "发现让你想出门的奥克兰。",
-    filterTitle: "今天，想去哪里？",
-    filterBody: "选个时间，找到喜欢的现场，然后出发。",
     statusLabel: "当前活动检索范围",
     location: "奥克兰",
     source: "Ticketmaster 官方来源",
@@ -52,18 +47,20 @@ const copy = {
   },
 } as const;
 
-export function EventsPageContent({ window, category, keyword, venueId, sort = "recommended" }: {
+export function EventsPageContent({ window, category, keyword, venueId, sort = "recommended", free = false, view = "list" }: {
   window: EventWindow;
   category: EventCategory | null;
   keyword: string | null;
   venueId: string | null;
   sort?: EventSort;
+  free?: boolean;
+  view?: EventView;
 }) {
   const { language } = useLanguage();
   const content = copy[language];
-  const searchState = { window, category, keyword, venueId, sort };
+  const searchState = { window, category, keyword, venueId, sort, free, view };
   const sourceLabel = category === "markets" ? content.marketSource : content.source;
-  const isFiltered = Boolean(category || keyword || venueId || window !== "all" || sort !== "recommended");
+  const isFiltered = Boolean(category || keyword || venueId || free || window !== "all" || sort !== "recommended");
 
   useEffect(() => {
     document.title = language === "zh"
@@ -86,26 +83,15 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
       </section>
 
       <div className="discovery-search" aria-label={language === "zh" ? "搜索与筛选" : "Search and filters"}>
-        <EventDiscoveryControls state={searchState} searchOnly />
-        <details className="discovery-advanced-filters" open={isFiltered || undefined}>
-          <summary>{language === "zh" ? "更多筛选与排序" : "More filters & sorting"}</summary>
-          <EventFilterMeta state={searchState} />
-          <section className="portal-navigation-shell" aria-labelledby="discovery-filter-title">
-            <div className="portal-filter-intro">
-              <h2 id="discovery-filter-title">{content.filterTitle}</h2>
-              <p>{content.filterBody}</p>
-            </div>
-            <EventCategoryNav {...searchState} />
-            <EventWindowNav {...searchState} />
-          </section>
-        </details>
+        <div className="event-discovery-controls"><EventSearchPanel {...searchState} /></div>
+        <DiscoverFilters state={searchState} />
       </div>
 
-      <div className="portal-status-strip" aria-label={content.statusLabel}>
+      {isFiltered ? <div className="portal-status-strip" aria-label={content.statusLabel}>
         <span>{content.location}</span>
         <span><i aria-hidden="true" /> {sourceLabel}</span>
         <span>{windowLabels[language][window]} · {sort === "date" ? content.orderDate : content.orderRecommended}</span>
-      </div>
+      </div> : null}
 
       <div id="event-results" tabIndex={-1}>
         <EventExplorer {...searchState} />

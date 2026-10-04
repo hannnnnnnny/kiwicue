@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EventsPageContent } from "../../components/events-page-content";
 import { parseEventCategory } from "../../lib/event-categories";
-import { parseEventKeyword, parseEventSort, parseVenueId } from "../../lib/event-search-params";
+import { parseEventFree, parseEventKeyword, parseEventSort, parseEventView, parseVenueId } from "../../lib/event-search-params";
 import { parseEventWindow } from "../../lib/event-window";
 
 export const metadata: Metadata = {
@@ -16,6 +16,8 @@ type EventsPageProps = {
     venue?: string | string[];
     window?: string | string[];
     sort?: string | string[];
+    free?: string | string[];
+    view?: string | string[];
   }>;
 };
 
@@ -28,6 +30,8 @@ export function parseEventPageSearchParams(
     keyword: parseEventKeyword(params.q),
     venueId: parseVenueId(params.venue),
     sort: parseEventSort(params.sort),
+    free: parseEventFree(params.free),
+    view: parseEventView(params.view),
   };
 }
 
@@ -43,6 +47,8 @@ export default async function EventsPage({
       venueId={filters.venueId}
       window={filters.window}
       sort={filters.sort}
+      free={filters.free}
+      view={filters.view}
     />
   );
 }

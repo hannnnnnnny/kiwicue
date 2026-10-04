@@ -1,8 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EventCategoryNav } from "../components/event-category-nav";
+import { DiscoverFilters } from "../components/discover-filters";
 import { EventSearchPanel } from "../components/event-search-panel";
-import { EventWindowNav } from "../components/event-window-nav";
 import { BookmarkProvider } from "../components/bookmark-provider";
 import { HomeContent } from "../components/home-content";
 import { LanguageProvider } from "../components/language-provider";
@@ -61,8 +60,7 @@ function renderPortalControls() {
     <LanguageProvider>
       <PortalHeader />
       <EventSearchPanel {...state} />
-      <EventCategoryNav {...state} />
-      <EventWindowNav {...state} />
+      <DiscoverFilters state={{ ...state, sort: "recommended", free: false, view: "list" }} />
     </LanguageProvider>,
   );
 }
@@ -182,38 +180,21 @@ describe("portal navigation", () => {
     expect(screen.getByText("Skip to movie sessions")).toHaveAttribute("href", "#movie-results");
   });
 
-  it("preserves every other filter while one navigation dimension changes", () => {
+  it("preserves every other filter while one filter changes", () => {
     renderPortalControls();
 
-    expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" }))
-      .toHaveAttribute("href", "/");
-    expect(screen.getByRole("search", { name: "Search Auckland events" }))
-      .toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Event categories" }))
-      .toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Concerts/ }))
-      .toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("Live sound")).toBeVisible();
-    expect(screen.getByText("Current category")).toBeVisible();
-    expect(screen.getByRole("navigation", { name: "Event categories" })
-      .querySelectorAll('.event-category-glyph[aria-hidden="true"]')).toHaveLength(6);
-    expect(screen.getByRole("link", { name: /Markets/ })).toHaveAttribute(
-      "href",
-      "/events?window=weekend&category=markets&q=Taylor&venue=venue-1",
-    );
-    expect(screen.getByRole("link", { name: /Sports/ })).toHaveAttribute(
-      "href",
-      "/events?window=weekend&category=sports&q=Taylor&venue=venue-1",
-    );
-    expect(screen.getByText("Live sport across Auckland")).toBeVisible();
-    expect(screen.getByRole("navigation", { name: "Event time range" }))
-      .toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "This weekend" }))
-      .toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Next 30 days" })).toHaveAttribute(
-      "href",
-      "/events?window=30d&category=concerts&q=Taylor&venue=venue-1",
-    );
+    expect(screen.getByRole("link", { name: "KiwiCue Auckland events home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
+    const what = within(screen.getByRole("navigation", { name: "What" }));
+    expect(what.getByRole("link", { name: "Concerts" })).toHaveAttribute("aria-current", "true");
+    expect(what.getByRole("link", { name: "Concerts" })).toHaveAttribute("href", "/events?window=weekend&q=Taylor&venue=venue-1");
+    expect(what.getByRole("link", { name: "Markets" })).toHaveAttribute("href", "/events?window=weekend&category=markets&q=Taylor&venue=venue-1");
+    expect(what.getByRole("link", { name: "Free" })).toHaveAttribute("href", "/events?window=weekend&category=concerts&q=Taylor&venue=venue-1&free=1");
+    const when = within(screen.getByRole("navigation", { name: "When" }));
+    expect(when.getByRole("link", { name: "This weekend" })).toHaveAttribute("aria-current", "true");
+    expect(when.getByRole("link", { name: "Tonight" })).toHaveAttribute("href", "/events?window=tonight&category=concerts&q=Taylor&venue=venue-1");
+    expect(within(screen.getByRole("navigation", { name: "View" })).getByRole("link", { name: "Map" }))
+      .toHaveAttribute("href", "/events?window=weekend&category=concerts&q=Taylor&venue=venue-1&view=map");
   });
 
   it("switches every portal label to Chinese without refetching venues", () => {
@@ -223,18 +204,13 @@ describe("portal navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "活动类型" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "时间范围" })).toBeInTheDocument();
-    const categoryNav = screen.getByRole("navigation", { name: "活动类型" });
-    for (const label of ["全部", "演唱会", "话剧演出", "市集", "节日活动", "体育赛事"]) {
-      expect(within(categoryNav).getByRole("link", { name: new RegExp(`^${label}`) })).toBeInTheDocument();
+    const what = within(screen.getByRole("navigation", { name: "类型" }));
+    for (const label of ["演唱会", "话剧演出", "市集", "节日活动", "体育赛事", "免费"]) {
+      expect(what.getByRole("link", { name: label })).toBeInTheDocument();
     }
-    for (const kicker of ["全部发现", "现场音乐", "舞台演出", "社区寻宝", "城市节庆", "比赛现场"]) {
-      expect(within(categoryNav).getByText(kicker)).toBeVisible();
-    }
-    expect(within(categoryNav).getByText("当前分类")).toBeVisible();
-    for (const label of ["未来 7 天", "本周末", "未来 30 天", "全部未来"]) {
-      expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
+    const when = within(screen.getByRole("navigation", { name: "时间" }));
+    for (const label of ["今晚", "本周末", "未来 7 天", "未来 30 天"]) {
+      expect(when.getByRole("link", { name: label })).toBeInTheDocument();
     }
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -242,7 +218,7 @@ describe("portal navigation", () => {
   it("gives every portal navigation target a real destination", () => {
     renderPortalControls();
     for (const link of screen.getAllByRole("link")) {
-      expect(link.getAttribute("href")).toMatch(/^(?:\/$|\/(?:events|movies|recommendations|for-you|saved)(?:\?|#map$|$)|#event-results$)/);
+      expect(link.getAttribute("href")).toMatch(/^(?:\/$|\/(?:events|movies|for-you|saved)(?:\?|$)|#event-results$)/);
       expect(link.getAttribute("href")).not.toBe("#");
     }
   });

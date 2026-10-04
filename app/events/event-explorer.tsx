@@ -9,7 +9,8 @@ import { DiscoveryHub } from "../../components/discovery-hub";
 import { DiscoverySkeleton } from "../../components/discovery-skeleton";
 import { EventLocalFacets } from "../../components/event-local-facets";
 import type { EventCategory } from "../../lib/event-categories";
-import type { EventSort } from "../../lib/event-search-params";
+import type { EventSort, EventView } from "../../lib/event-search-params";
+import { EventMapView } from "../../components/event-map-view";
 import { filterEligibleDiscoveryEvents } from "../../lib/event-discovery";
 import { buildEventFacetOptions, filterEventFacet, type EventLocalFacet } from "../../lib/event-facets";
 import type { AucklandEventsResult, KiwiCueEvent } from "../../lib/events";
@@ -184,6 +185,8 @@ export function EventExplorer({
   keyword = null,
   venueId = null,
   sort = "recommended",
+  free = false,
+  view = "list",
   requestEvents = requestEventsFromApi,
 }: {
   window?: EventWindow;
@@ -191,6 +194,8 @@ export function EventExplorer({
   keyword?: string | null;
   venueId?: string | null;
   sort?: EventSort;
+  free?: boolean;
+  view?: EventView;
   requestEvents?: RequestEvents;
 }) {
   const { language } = useLanguage();
@@ -210,7 +215,7 @@ export function EventExplorer({
   const generationRef = useRef(0);
   const appendInFlightRef = useRef(false);
   const resultsSummaryRef = useRef<HTMLParagraphElement>(null);
-  const isFiltered = Boolean(keyword || venueId || category || window !== "all" || sort !== "recommended");
+  const isFiltered = Boolean(keyword || venueId || category || free || window !== "all" || sort !== "recommended");
   const isMarketCategory = category === "markets";
   const stateForRequest: ExplorerState = state.status !== "loading" && state.requestKey === requestKey
     ? state
@@ -319,7 +324,9 @@ export function EventExplorer({
   }
 
   if (stateForRequest.status === "ready") {
-    const shownEvents = filterEligibleDiscoveryEvents(stateForRequest.events, new Date());
+    // Free is a property of each listing, so it narrows the loaded events rather than the request.
+    const eligible = filterEligibleDiscoveryEvents(stateForRequest.events, new Date());
+    const shownEvents = free ? eligible.filter((event) => event.admission?.kind === "free") : eligible;
     if (shownEvents.length === 0) {
       const canCheckMore = Boolean(stateForRequest.nextCursor);
       return (
@@ -352,7 +359,8 @@ export function EventExplorer({
           <h2>{content.feedTitle}</h2>
           <p>{content.feedIntro}</p>
         </header>}
-        {!isFiltered && !hasLocalRefinement && <DiscoveryHub events={refinedEvents} language={language} />}
+        {view === "map" ? <EventMapView events={refinedEvents} language={language} /> : null}
+        {view === "list" && !isFiltered && !hasLocalRefinement && <DiscoveryHub events={refinedEvents} language={language} />}
         <div className="event-feed-toolbar" data-discovery={!isFiltered && !hasLocalRefinement}>
           <p id="event-results-summary" ref={resultsSummaryRef} tabIndex={-1} aria-live="polite" aria-atomic="true">
             {isMarketCategory
@@ -366,7 +374,7 @@ export function EventExplorer({
           value={selectedFacet}
           onChange={(facet) => setLocalFacetState({ requestKey, facet })}
         /></details>
-        {(isFiltered || hasLocalRefinement) && refinedEvents.length > 0 && (
+        {view === "list" && (isFiltered || hasLocalRefinement) && refinedEvents.length > 0 && (
           <EventResultsView events={refinedEvents} language={language} state={{ window, category, keyword, venueId, sort }} />
         )}
         {refinedEvents.length === 0 && (

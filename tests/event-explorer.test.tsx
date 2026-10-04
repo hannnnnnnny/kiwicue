@@ -187,13 +187,13 @@ describe("Auckland event explorer", () => {
   it("renders editorial discovery by default and focused results for filters", async () => {
     const requestEvents = vi.fn().mockResolvedValue(eventResult);
     const view = render(<EventExplorer requestEvents={requestEvents} />);
-    expect(await screen.findByRole("navigation", { name: "Quick discovery" })).toBeVisible();
+    expect(await screen.findByRole("button", { name: "Surprise me" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Events in Auckland" })).toBeVisible();
     expect(screen.queryByText(/popular|trending/i)).not.toBeInTheDocument();
 
     view.rerender(<EventExplorer keyword="Harbour" requestEvents={requestEvents} />);
     expect(await screen.findByRole("heading", { name: "Results for “Harbour”" })).toBeVisible();
-    expect(screen.queryByRole("navigation", { name: "Quick discovery" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Surprise me" })).not.toBeInTheDocument();
   });
 
   it("reports an empty state when every loaded event is ineligible", async () => {
