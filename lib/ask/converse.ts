@@ -19,6 +19,24 @@ export type ConverseModel = (input: {
   system: string; messages: ModelMessage[]; tools: ToolSet; abortSignal: AbortSignal;
 }) => { textStream: AsyncIterable<string>; usage: PromiseLike<TokenUsage> };
 
+type StreamPart = { type: string; text?: string };
+
+/**
+ * The reply text across steps. Anything said before a search ("Let me look…") stays as its own
+ * paragraph instead of running straight into the answer that follows the results.
+ */
+export async function* replyText(parts: AsyncIterable<StreamPart>): AsyncGenerator<string> {
+  let wrote = false;
+  let searchedAfterText = false;
+  for await (const part of parts) {
+    if (part.type === "tool-call" && wrote) searchedAfterText = true;
+    if (part.type !== "text-delta" || !part.text) continue;
+    if (searchedAfterText) { yield "\n\n"; searchedAfterText = false; }
+    wrote = true;
+    yield part.text;
+  }
+}
+
 export const deepseekConverse: ConverseModel = ({ system, messages, tools, abortSignal }) => {
   const result = streamText({
     model: deepSeek(DEEPSEEK_MODEL), system, messages, tools, abortSignal,
@@ -26,7 +44,7 @@ export const deepseekConverse: ConverseModel = ({ system, messages, tools, abort
     providerOptions: DEEPSEEK_NO_THINKING,
   });
   return {
-    textStream: result.textStream,
+    textStream: replyText(result.fullStream),
     usage: Promise.resolve(result.usage).then((usage) => ({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })),
   };
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conversePrompt, searchInputSchema, toModelMessages } from "../lib/ask/converse";
+import { conversePrompt, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
 import { EMPTY_FILTERS } from "../lib/ask/schema";
 import { PERSONAS } from "../lib/ask/personas";
 import { ASSISTANTS } from "../lib/assistants";
@@ -70,6 +70,27 @@ describe("conversePrompt", () => {
     expect(prompt).toContain("payment methods, reservations, accessibility, ticket types or age suitability require listing evidence".replace("payment", "Payment"));
     expect(prompt).toContain("do not invent a friendly tip");
     expect(prompt).toContain("Budgets are for the whole party");
+  });
+});
+
+describe("replyText", () => {
+  async function collect(parts: Array<{ type: string; text?: string }>) {
+    async function* stream() { yield* parts; }
+    let text = "";
+    for await (const delta of replyText(stream())) text += delta;
+    return text;
+  }
+
+  it("keeps a line said before a search as its own paragraph", async () => {
+    expect(await collect([
+      { type: "start-step" }, { type: "text-delta", text: "Let me look." }, { type: "tool-call" }, { type: "finish-step" },
+      { type: "start-step" }, { type: "text-delta", text: "Wonderverse " }, { type: "text-delta", text: "is lovely." },
+    ])).toBe("Let me look.\n\nWonderverse is lovely.");
+  });
+
+  it("leaves a reply that searched first, or never searched, as it is", async () => {
+    expect(await collect([{ type: "tool-call" }, { type: "text-delta", text: "Wonderverse." }])).toBe("Wonderverse.");
+    expect(await collect([{ type: "text-delta", text: "Enjoy!" }, { type: "reasoning-delta", text: "x" }])).toBe("Enjoy!");
   });
 });
 
