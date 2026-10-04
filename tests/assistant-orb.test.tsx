@@ -23,13 +23,17 @@ describe("AssistantOrb", () => {
 
   it("loads the 3D model, passes state changes on, and cleans up", async () => {
     motion(false);
-    const scene = { setState: vi.fn(), dispose: vi.fn() };
+    const scene = { setState: vi.fn(), setMood: vi.fn(), dispose: vi.fn() };
     mountOrb.mockResolvedValue(scene);
     const { container, rerender, unmount } = render(<AssistantOrb assistant={ASSISTANTS.kai} state="idle" />);
     await waitFor(() => expect(container.querySelector(".ask-orb")).toHaveAttribute("data-ready", "true"));
     expect(mountOrb).toHaveBeenCalledWith(expect.any(HTMLCanvasElement), "/assistants/kai.glb");
     rerender(<AssistantOrb assistant={ASSISTANTS.kai} state="thinking" />);
     expect(scene.setState).toHaveBeenLastCalledWith("thinking");
+    rerender(<AssistantOrb assistant={ASSISTANTS.kai} state="speaking" mood="happy" />);
+    expect(scene.setMood).toHaveBeenLastCalledWith("happy");
+    expect(container.querySelector(".ask-orb")).toHaveAttribute("data-mood", "happy");
+    rerender(<AssistantOrb assistant={ASSISTANTS.kai} state="thinking" />);
     expect(container.querySelector(".ask-orb")).toHaveAttribute("data-state", "thinking");
     unmount();
     expect(scene.dispose).toHaveBeenCalled();

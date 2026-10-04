@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { AskMood } from "../../lib/ask/mood";
 import type { Assistant } from "../../lib/assistants";
+import type { BotState } from "./orb-face";
 import type { OrbScene } from "./orb-scene";
 
-export type BotState = "idle" | "listening" | "thinking" | "speaking";
+export type { BotState };
 
 function wantsMotion(): boolean {
   return typeof window.matchMedia !== "function" || !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -15,16 +17,19 @@ function wantsMotion(): boolean {
  * poster until it is ready, or instead of it when motion is reduced or WebGL fails. Decorative:
  * the overlay announces the same state in text.
  */
-export function AssistantOrb({ assistant, state, size = "large", active = true }: { assistant: Assistant; state: BotState; size?: "large" | "small"; active?: boolean }) {
+export function AssistantOrb({ assistant, state, mood = null, size = "large", active = true }: {
+  assistant: Assistant; state: BotState; mood?: AskMood | null; size?: "large" | "small"; active?: boolean;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const scene = useRef<OrbScene | null>(null);
   const [readyFor, setReadyFor] = useState<string | null>(null);
-  const latestState = useRef(state);
+  const latest = useRef({ state, mood });
 
   useEffect(() => {
-    latestState.current = state;
+    latest.current = { state, mood };
     scene.current?.setState(state);
-  }, [state]);
+    scene.current?.setMood(mood);
+  }, [state, mood]);
 
   useEffect(() => {
     const target = canvas.current;
@@ -35,7 +40,8 @@ export function AssistantOrb({ assistant, state, size = "large", active = true }
       .then((mounted) => {
         if (cancelled) { mounted.dispose(); return; }
         scene.current = mounted;
-        mounted.setState(latestState.current);
+        mounted.setState(latest.current.state);
+        mounted.setMood(latest.current.mood);
         setReadyFor(assistant.id);
       })
       .catch((error: unknown) => {
@@ -51,7 +57,7 @@ export function AssistantOrb({ assistant, state, size = "large", active = true }
 
   const ready = readyFor === assistant.id;
   return (
-    <span className="ask-orb" data-state={state} data-size={size} data-ready={ready || undefined} aria-hidden="true">
+    <span className="ask-orb" data-state={state} data-mood={mood ?? undefined} data-size={size} data-ready={ready || undefined} aria-hidden="true">
       {/* eslint-disable-next-line @next/next/no-img-element -- a 6 KB local poster; next/image adds nothing here */}
       <img src={assistant.poster} alt="" width={256} height={256} decoding="async" />
       {size === "large" ? <canvas ref={canvas} key={assistant.id} /> : null}

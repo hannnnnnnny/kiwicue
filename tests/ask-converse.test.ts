@@ -16,6 +16,7 @@ describe("conversePrompt", () => {
     expect(prompt).toContain('"category":"music"');
     expect(prompt).toContain("1. Jazz at the Wynyard — Sat 3 Oct, 7 pm · Wynyard Pavilion · From $25");
     expect(prompt).toMatch(/never invent/iu);
+    expect(prompt).toContain("[[happy]] [[excited]] [[curious]] [[sorry]] [[surprised]] [[calm]]");
   });
 
   it("says when nothing has been searched or shown yet", () => {

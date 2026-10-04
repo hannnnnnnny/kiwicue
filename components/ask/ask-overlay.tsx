@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import type { AskMood } from "../../lib/ask/mood";
 import { ASSISTANTS, type Assistant, type AssistantId } from "../../lib/assistants";
 import { useLanguage } from "../language-provider";
 import { useAssistant } from "../use-assistant";
@@ -12,6 +13,7 @@ import { AskResults } from "./ask-results";
 import { plainText, RichText } from "./rich-text";
 import { useAskChat, type ChatEntry } from "./use-ask-chat";
 import { useAskStream, type AskViewState } from "./use-ask-stream";
+import { useBotFace } from "./use-bot-face";
 import { useMicTurn } from "./use-mic-turn";
 import { useSpeechInput } from "./use-speech-input";
 import { languageOf, readVoiceLanguage, writeVoiceLanguage, type SpokenLanguage } from "./spoken-language";
@@ -20,7 +22,7 @@ import { createBrowserVoice, type Tone } from "./voice";
 type Language = "en" | "zh";
 const copy = {
   en: {
-    status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", speaking: "Speaking…" },
+    status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", searching: "Looking through listings…", speaking: "Speaking…", error: "Something went wrong", sleeping: "Dozing — say something to wake me" },
     mute: (name: string) => `Mute ${name}`, unmute: (name: string) => `Unmute ${name}`, close: "Close",
     message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant", newChat: "New chat",
     send: "Send", talk: (name: string) => `Talk to ${name}`, stopTalking: "Stop and send", noVoice: "Voice isn't supported in this browser. Type instead.",
@@ -30,7 +32,7 @@ const copy = {
     privacy: "Questions are processed by TypeSafe AI (US) and DeepSeek (China). No account details or location are sent.",
   },
   zh: {
-    status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", speaking: "正在说…" },
+    status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", searching: "正在翻找活动…", speaking: "正在说…", error: "出了点问题", sleeping: "打盹中，说句话叫醒我" },
     mute: (name: string) => `${name} 静音`, unmute: (name: string) => `${name} 取消静音`, close: "关闭",
     message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手", newChat: "新对话",
     send: "发送", talk: (name: string) => `和 ${name} 说话`, stopTalking: "说完了，发送", noVoice: "当前浏览器不支持语音，请直接打字。",
@@ -222,16 +224,16 @@ function Composer({ language, name, speech, voiceLanguage, onVoiceLanguage, onSe
 
 type HeaderProps = {
   active: boolean;
-  assistant: Assistant; state: BotState; language: Language; muted: boolean; picking: boolean;
+  assistant: Assistant; state: BotState; mood: AskMood | null; language: Language; muted: boolean; picking: boolean;
   onPickToggle(): void; onMute(): void; onRestart(): void; onClose(): void;
 };
 
-function AssistantHeader({ assistant, state, language, muted, picking, onPickToggle, onMute, onRestart, onClose, active }: HeaderProps) {
+function AssistantHeader({ assistant, state, mood, language, muted, picking, onPickToggle, onMute, onRestart, onClose, active }: HeaderProps) {
   const content = copy[language];
   return (
     <header className="ask-header">
       <button type="button" className="ask-orb-button" aria-label={content.change} aria-expanded={picking} onClick={onPickToggle}>
-        <AssistantOrb key={active ? "visible" : "hidden"} assistant={assistant} state={state} active={active} />
+        <AssistantOrb key={active ? "visible" : "hidden"} assistant={assistant} state={state} mood={mood} active={active} />
       </button>
       <div className="ask-header-text">
         <h2 id="ask-title">{assistant.name}</h2>
@@ -242,12 +244,6 @@ function AssistantHeader({ assistant, state, language, muted, picking, onPickTog
       <button type="button" className="ask-close" aria-label={content.close} onClick={onClose}>×</button>
     </header>
   );
-}
-
-function botState(listening: boolean, speaking: boolean, busy: boolean): BotState {
-  if (listening) return "listening";
-  if (speaking) return "speaking";
-  return busy ? "thinking" : "idle";
 }
 
 export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): void; fetchImpl?: typeof fetch; active?: boolean }) {
@@ -269,7 +265,7 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
   const microphone = useMicTurn(speech, silence, active);
   useEffect(() => { cancelMic.current = microphone.cancel; }, [microphone.cancel]);
   const busy = search.state.status === "thinking" || search.state.status === "streaming";
-  const state = botState(speech.listening, speaking, busy);
+  const { state, mood } = useBotFace(speech.listening, speaking, search.state);
   const { remaining } = search.state;
   // Quick replies disappear once used, which drops focus outside the dialog, so Escape
   // is handled for the whole document while the overlay is open.
@@ -296,7 +292,7 @@ export function AskOverlay({ onClose, fetchImpl, active = true }: { onClose(): v
     <div className="ask-overlay" role="dialog" aria-modal="true" aria-labelledby="ask-title" onKeyDown={trapFocus}>
       <div className="ask-panel">
         <div className="ask-top">
-          <AssistantHeader active={active} assistant={assistant} state={state} language={language} muted={muted} picking={picking}
+          <AssistantHeader active={active} assistant={assistant} state={state} mood={mood} language={language} muted={muted} picking={picking}
             onPickToggle={() => setPicking(!picking)} onMute={toggleMute} onRestart={() => { microphone.cancel(); silence(); chat.restart(); }} onClose={onClose} />
           {active && picking ? <AssistantPicker current={assistant} language={language} onPick={pick} /> : null}
         </div>

@@ -22,6 +22,20 @@ describe("askReducer", () => {
   });
 });
 
+describe("askReducer mood and searching", () => {
+  it("knows while a search has found nothing yet, and keeps the reply's mood until the next message", () => {
+    let state = askReducer(INITIAL_ASK_STATE, { type: "start", text: "jazz" });
+    state = askReducer(state, { type: "event", event: { type: "understood", filters: EMPTY_FILTERS, chips: [] } });
+    expect(state.searching).toBe(true);
+    state = askReducer(state, { type: "event", event: { type: "result", card } });
+    expect(state.searching).toBe(false);
+    state = askReducer(state, { type: "event", event: { type: "mood", mood: "excited" } });
+    state = askReducer(state, { type: "event", event: { type: "done", remaining: 3, tier: "guest" } });
+    expect(state.mood).toBe("excited");
+    expect(askReducer(state, { type: "start", text: "more" }).mood).toBeNull();
+  });
+});
+
 describe("askReducer relaxation", () => {
   it("fills in a card's picture and trailer when they arrive", () => {
     const withCard = askReducer(INITIAL_ASK_STATE, { type: "event", event: { type: "result", card } });

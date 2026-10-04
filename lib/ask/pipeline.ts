@@ -6,6 +6,7 @@ import { conversePrompt, SEARCH_TOOL_DESCRIPTION, searchInputSchema, toModelMess
 import { addUsage, costMicroUsd, ZERO_USAGE, type AskUsage } from "./cost";
 import type { Evaluate } from "./jev";
 import { logAskFailure } from "./log";
+import { moodFilter } from "./mood";
 import type { MediaLookup } from "./media";
 import { encodeEvent } from "./ndjson";
 import type { QuotaStore } from "./quota";
@@ -121,12 +122,11 @@ async function converse(input: AskRequest, ctx: Context, emit: Emit, search: Ret
   const tools = { search: tool({ description: SEARCH_TOOL_DESCRIPTION, inputSchema: searchInputSchema, execute: search.fromTool }) };
   const system = conversePrompt({ assistant: ASSISTANTS[input.assistant], today: todayLabel(ctx.now), filters: input.previous, shown: input.shown });
   let wrote = false;
+  const reply = moodFilter((delta) => { wrote = true; emit({ type: "reply", delta }); }, (mood) => emit({ type: "mood", mood }));
   try {
     const turn = ctx.deps.converse({ system, messages: toModelMessages(input.history, input.text), tools, abortSignal: AbortSignal.timeout(CONVERSE_TIMEOUT_MS) });
-    for await (const delta of turn.textStream) {
-      wrote ||= delta.length > 0;
-      emit({ type: "reply", delta });
-    }
+    for await (const delta of turn.textStream) reply.push(delta);
+    reply.flush();
     const usage = await turn.usage;
     if (!wrote) logAskFailure("reply", { code: "empty_reply" });
     return { deepseekInputTokens: usage.inputTokens, deepseekOutputTokens: usage.outputTokens };

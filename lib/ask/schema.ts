@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ASSISTANT_IDS, DEFAULT_ASSISTANT } from "../assistants";
+import { ASK_MOODS } from "./mood";
 import { trustedBookingUrl } from "./booking";
 
 export const ASK_DOMAINS = ["any", "events", "movies", "markets"] as const;
@@ -110,6 +111,7 @@ export const askStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("layout"), layout: z.enum(ASK_LAYOUTS) }),
   z.object({ type: z.literal("relaxed"), keys: z.array(chipSchema.shape.key).max(8) }),
   z.object({ type: z.literal("reply"), delta: z.string().max(400) }),
+  z.object({ type: z.literal("mood"), mood: z.enum(ASK_MOODS) }),
   z.object({ type: z.literal("notice"), code: z.enum(["ai_degraded", "source_unavailable"]), message: z.string().max(200) }),
   z.object({ type: z.literal("done"), remaining: z.number().int().min(0), tier: z.enum(["guest", "free", "plus"]) }),
   z.object({ type: z.literal("error"), code: z.enum(ASK_ERROR_CODES), message: z.string().max(200) }),

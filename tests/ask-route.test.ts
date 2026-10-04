@@ -62,11 +62,13 @@ afterEach(() => vi.restoreAllMocks());
 describe("POST /api/ask", () => {
   it("lets the assistant search, streams the cards, then its own reply, and records the cost", async () => {
     const seen: unknown[] = [];
-    const d = deps({ converse: model([search], ["Bundle Baby ", "looks perfect."], seen) });
+    const d = deps({ converse: model([search], ["[[exci", "ted]] Bundle Baby ", "looks perfect."], seen) });
     const response = await handleAsk(post(ask), d);
     expect(response.headers.get("content-type")).toBe("application/x-ndjson; charset=utf-8");
     const received = await events(response);
-    expect(received.map((event) => event.type)).toEqual(["understood", "result", "best", "layout", "reply", "reply", "done"]);
+    expect(received.map((event) => event.type)).toEqual(["understood", "result", "best", "layout", "mood", "reply", "reply", "done"]);
+    expect(received[4]).toEqual({ type: "mood", mood: "excited" });
+    expect(received.filter((event) => event.type === "reply").map((event) => event.delta).join("")).toBe("Bundle Baby looks perfect.");
     expect(received[0]).toMatchObject({ type: "understood", filters: { domain: "events", dates: ["2026-10-03"] } });
     expect(received[3]).toEqual({ type: "layout", layout: "spotlight" });
     expect(seen[0]).toMatchObject({ found: 1, options: [{ n: 1, title: "Bundle Baby", when: "Sat, 3 Oct, 10:00 am", venue: "Aotea Centre" }] });

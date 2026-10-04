@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { clearChip } from "../../lib/ask/chips";
+import type { AskMood } from "../../lib/ask/mood";
 import { readEvents } from "../../lib/ask/ndjson";
 import type { AskCard, AskChatTurn, AskChip, AskErrorCode, AskFilters, AskLayout, AskShown, AskStreamEvent } from "../../lib/ask/schema";
 import { DEFAULT_ASSISTANT, type AssistantId } from "../../lib/assistants";
@@ -13,9 +14,11 @@ export type AskViewState = {
   status: "idle" | "thinking" | "streaming" | "done" | "error";
   text: string; filters: AskFilters | null; chips: AskChip[]; cards: AskCard[]; bestId: string | null; layout: AskLayout | null;
   reply: string; notices: string[]; relaxed: string[]; error: { code: AskErrorCode; message: string } | null; remaining: number | null;
+  /** How the assistant feels about its reply, and whether a search is running with nothing found yet. */
+  mood: AskMood | null; searching: boolean;
 };
 export const INITIAL_ASK_STATE: AskViewState = {
-  status: "idle", text: "", filters: null, chips: [], cards: [], bestId: null, layout: null, reply: "", notices: [], relaxed: [], error: null, remaining: null,
+  status: "idle", text: "", filters: null, chips: [], cards: [], bestId: null, layout: null, reply: "", notices: [], relaxed: [], error: null, remaining: null, mood: null, searching: false,
 };
 export type AskContext = { history: AskChatTurn[]; shown: AskShown[] };
 type Action = { type: "start"; text: string } | { type: "event"; event: AskStreamEvent } | { type: "fail"; message: string } | { type: "reset" };
@@ -23,27 +26,28 @@ type Action = { type: "start"; text: string } | { type: "event"; event: AskStrea
 function applyEvent(state: AskViewState, event: AskStreamEvent): AskViewState {
   switch (event.type) {
     // A second search in the same answer replaces the first one's cards.
-    case "understood": return { ...state, status: "streaming", filters: event.filters, chips: event.chips, cards: [], bestId: null, relaxed: [], layout: null };
-    case "result": return { ...state, cards: [...state.cards, event.card] };
+    case "understood": return { ...state, status: "streaming", filters: event.filters, chips: event.chips, cards: [], bestId: null, relaxed: [], layout: null, searching: true };
+    case "result": return { ...state, cards: [...state.cards, event.card], searching: false };
     case "best": return { ...state, bestId: event.id };
-    case "layout": return { ...state, layout: event.layout };
     case "relaxed": return { ...state, relaxed: event.keys };
     case "media": return {
       ...state,
       cards: state.cards.map((item) => item.id === event.id ? { ...item, imageUrl: event.imageUrl ?? item.imageUrl, trailerKey: event.trailerKey } : item),
     };
-    case "reply": return { ...state, status: "streaming", reply: state.reply + event.delta };
+    case "layout": return { ...state, layout: event.layout, searching: false };
+    case "mood": return { ...state, mood: event.mood };
+    case "reply": return { ...state, status: "streaming", reply: state.reply + event.delta, searching: false };
     case "notice": return { ...state, notices: [...new Set([...state.notices, event.message])] };
-    case "done": return { ...state, status: "done", remaining: event.remaining };
-    case "error": return { ...state, status: "error", error: { code: event.code, message: event.message } };
+    case "done": return { ...state, status: "done", remaining: event.remaining, searching: false };
+    case "error": return { ...state, status: "error", error: { code: event.code, message: event.message }, searching: false };
   }
 }
 
 /** Each message starts with no cards or reply of its own; the filters carry over so the next message can refine them. */
 export function askReducer(state: AskViewState, action: Action): AskViewState {
   if (action.type === "reset") return INITIAL_ASK_STATE;
-  if (action.type === "fail") return { ...state, status: "error", error: { code: "internal", message: action.message } };
-  if (action.type === "start") return { ...state, status: "thinking", text: action.text, chips: [], cards: [], bestId: null, layout: null, reply: "", notices: [], relaxed: [], error: null };
+  if (action.type === "fail") return { ...state, status: "error", error: { code: "internal", message: action.message }, searching: false };
+  if (action.type === "start") return { ...state, status: "thinking", text: action.text, chips: [], cards: [], bestId: null, layout: null, reply: "", notices: [], relaxed: [], error: null, mood: null, searching: false };
   return applyEvent(state, action.event);
 }
 
