@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
-import { RecommendationsPageContent } from "../../components/recommendations-page-content";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Auckland event picks — KiwiCue",
-  description: "A smaller, explainable shortlist of upcoming Auckland events and markets.",
-};
-
+// Picks and For You are one page now; old links and bookmarks land there.
 export default function RecommendationsPage() {
-  return <RecommendationsPageContent />;
+  permanentRedirect("/for-you");
 }

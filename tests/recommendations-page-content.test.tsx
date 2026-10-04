@@ -120,7 +120,7 @@ describe("RecommendationsPageContent", () => {
     expect(screen.getByRole("heading", { name: "为你推荐" })).toBeInTheDocument();
     expect(screen.getByText("01 / 精选")).toBeInTheDocument();
     expect(screen.getByText(/偏好只保存在当前浏览器/)).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe("奥克兰活动推荐 — KiwiCue"));
+    await waitFor(() => expect(document.title).toBe("为你推荐 — KiwiCue"));
     expect(requestFeed).toHaveBeenCalledTimes(2);
   });
 

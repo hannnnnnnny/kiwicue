@@ -136,7 +136,7 @@ export function DiscoveryHub({ events, language, now = new Date() }: { events: K
     </section>
     {collection === "all" && <>
       {available.length > 1 && <div className="discovery-stacks">{(["tonight", "weekend", "free", "music"] as const).map(id => <EventStack key={id} title={content[id]} events={selectCollectionEvents(events, id, now)} language={language} onOpen={() => open(id)} />)}</div>}
-      <p className="discovery-scope">{content.scope} <Link href="/recommendations">{language === "zh" ? "浏览本地精选" : "Browse local picks"}</Link></p>
+      <p className="discovery-scope">{content.scope} <Link href="/for-you">{language === "zh" ? "浏览本地精选" : "Browse local picks"}</Link></p>
     </>}
   </div>;
 }

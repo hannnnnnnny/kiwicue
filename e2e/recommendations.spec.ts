@@ -59,12 +59,13 @@ async function installRecommendationRoutes(page: Page) {
   });
 }
 
-test("recommendations provide a responsive, bilingual path from the main navigation", async ({ page }, testInfo) => {
+test("For You (formerly Picks) provides a responsive, bilingual path from the main navigation", async ({ page }, testInfo) => {
   await installRecommendationRoutes(page);
   await page.goto("/recommendations");
 
-  await expect(page.getByRole("heading", { name: "Picks for you" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Picks" })).toHaveAttribute("aria-current", "page");
+  await expect(page).toHaveURL(/\/for-you$/);
+  await expect(page.getByRole("heading", { name: "For You", level: 1 })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "For You" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Start here" })).toBeVisible();
   await expect(page.getByText(/A broad mix beyond the first shortlist/)).toBeVisible();
   await expect(page.getByText(/Preferences stay in this browser/)).toBeVisible();
