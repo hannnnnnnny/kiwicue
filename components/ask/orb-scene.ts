@@ -17,7 +17,8 @@ const EASE_PER_SECOND = 8;
 const IMPULSE_DECAY_PER_SECOND = 2.5;
 // How far a full look turns the orb (radians) and slides its eyes (share of the orb's radius).
 const TURN = { x: 0.32, y: 0.22, tilt: 0.16 };
-const EYE_SHIFT = 0.07;
+const EYE_SHIFT = 0.025;
+const GAZE_PER_SECOND = 6;
 const MORPHS = ["Wide", "Squint", "HalfBlink", "Blink"] as const;
 const MOTIONS = ["lookX", "lookY", "follow", "scan", "tilt", "hop", "bob", "sink"] as const;
 type Pose = Record<(typeof MORPHS)[number] | (typeof MOTIONS)[number], number>;
@@ -127,11 +128,13 @@ export async function mountOrb(canvas: HTMLCanvasElement, modelUrl: string): Pro
     face = next;
   };
 
-  const place = (t: number) => {
-    pointer.gazeX += (pointer.x - pointer.gazeX) * 0.12;
-    pointer.gazeY += (pointer.y - pointer.gazeY) * 0.12;
-    const x = pose.lookX + pointer.gazeX * pose.follow + Math.sin(t * 6) * 0.7 * pose.scan;
-    const y = pose.lookY + pointer.gazeY * pose.follow;
+  const place = (t: number, dt: number) => {
+    const follow = Math.min(1, dt * GAZE_PER_SECOND);
+    pointer.gazeX += (pointer.x - pointer.gazeX) * follow;
+    pointer.gazeY += (pointer.y - pointer.gazeY) * follow;
+    const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+    const x = clamp(pose.lookX + pointer.gazeX * pose.follow + Math.sin(t * 6) * 0.7 * pose.scan);
+    const y = clamp(pose.lookY + pointer.gazeY * pose.follow);
     slid.x = x; slid.y = y;
     slide(1);
     model.rotation.set(-y * TURN.y, x * TURN.x + Math.sin(t * 45) * 0.12 * impulse.shake, pose.tilt * TURN.tilt);
@@ -152,7 +155,7 @@ export async function mountOrb(canvas: HTMLCanvasElement, modelUrl: string): Pro
     impulse.shake = Math.max(0, impulse.shake - dt * IMPULSE_DECAY_PER_SECOND);
     impulse.pop = Math.max(0, impulse.pop - dt * IMPULSE_DECAY_PER_SECOND);
     shapeEyes(eyes, pose);
-    place(clock.elapsedTime);
+    place(clock.elapsedTime, dt);
     renderer.render(scene, camera);
   };
   draw();
