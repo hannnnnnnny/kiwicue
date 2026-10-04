@@ -1,0 +1,93 @@
+/* Discover: one row of filters under search. Rows scroll sideways on their own; the page never does. */
+.discover-filters { display: grid; gap: 10px; margin-top: 16px; min-width: 0; }
+.discover-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.discover-filter-row::-webkit-scrollbar { display: none; }
+.discover-filter-label {
+  flex: 0 0 auto;
+  min-width: 52px;
+  color: var(--portal-muted);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.discover-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  background: var(--portal-raised);
+  color: var(--portal-ink);
+  font-size: .88rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.discover-chip:hover { border-color: var(--portal-brand); }
+.discover-chip[aria-current="true"] { border-color: var(--portal-brand); background: var(--portal-brand); color: var(--portal-white); }
+.discover-filter-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.discover-segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  background: var(--portal-raised);
+}
+.discover-segmented .discover-chip { min-height: 40px; padding: 0 14px; border: 0; background: none; }
+.discover-segmented .discover-chip[aria-current="true"] { background: var(--portal-brand); color: var(--portal-white); }
+.discover-clear {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--portal-brand);
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+/* The unfiltered feed's heading shares its row with "Surprise me". */
+.discovery-list-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.discovery-surprise {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  background: var(--portal-raised);
+  color: var(--portal-ink);
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.discovery-surprise:hover { border-color: var(--portal-brand); }
+.discovery-surprise:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Previews are links now. */
+a.event-stack { color: inherit; text-decoration: none; }
+.discovery-collection header a { display: inline-flex; align-items: center; min-height: 44px; color: var(--portal-muted); font-size: .82rem; text-decoration: none; }
+.discovery-collection header a:hover { color: var(--portal-brand); }
+
+@media (max-width: 420px) {
+  .discover-filter-label { min-width: 40px; }
+  .discover-chip { padding: 0 13px; font-size: .84rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-chip { transition: none; }
+}

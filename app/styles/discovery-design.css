@@ -12,26 +12,18 @@ body { background: var(--portal-bg); }
 .discovery-search > summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; cursor: pointer; color: var(--portal-muted); font-size: .9rem; list-style: none; }
 .discovery-search > summary span { font-size: 1.8rem; }
 .discovery-search[open] > summary { margin-bottom: 12px; color: var(--portal-brand); }
-.discovery-search .portal-navigation-shell { border: 0; margin-top: 16px; padding: 0; background: none; box-shadow: none; }
-.discovery-search .portal-filter-intro { display: none; }
 .portal-status-strip { font-size: .75rem; margin: 12px 0; padding: 12px 0; }
-.events-page:has(.discovery-advanced-filters:not([open])) .portal-status-strip { display: none; }
 .event-feed { padding-top: 12px; }
 .event-feed:has(.discovery-hub) > .event-feed-toolbar { margin-top: 24px; }
 .discovery-refine { margin: 12px 0; }
 .discovery-refine > summary { cursor: pointer; color: var(--portal-muted); min-height: 44px; align-content: center; }
-.discovery-chips { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
-.discovery-chips button { min-height: 48px; border: 1px solid transparent; border-radius: var(--radius-pill); display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 10px; font: inherit; font-size: .88rem; font-weight: 650; cursor: pointer; transition: opacity 200ms cubic-bezier(.25,.1,.25,1), transform 200ms cubic-bezier(.25,.1,.25,1); }
-.discovery-chips svg { flex-shrink: 0; }
 [data-tone="tonight"] { background: var(--chip-lavender); color: var(--chip-lavender-ink); }
 [data-tone="nearby"] { background: var(--chip-coral); color: var(--chip-coral-ink); }
 [data-tone="free"] { background: var(--chip-mint); color: var(--chip-mint-ink); }
 [data-tone="weekend"] { background: var(--chip-blue); color: var(--chip-blue-ink); }
 [data-tone="music"] { background: var(--chip-pink); color: var(--chip-pink-ink); }
 [data-tone="surprise"] { background: var(--chip-yellow); color: var(--chip-yellow-ink); }
-.discovery-chips button[aria-pressed="true"] { border-color: currentColor; }
-.discovery-chips button:disabled { opacity: .55; cursor: not-allowed; }
-.discovery-chips button:active, .event-stack:active { transform: scale(.98); }
+.event-stack:active { transform: scale(.98); }
 .discovery-feature-layout { display: block; }
 .discovery-feature { position: relative; isolation: isolate; border-radius: var(--radius-panel); overflow: hidden; background: var(--portal-brand-soft); }
 .discovery-feature > a { display: block; aspect-ratio: 21/8; position: relative; color: var(--portal-white); text-decoration: none; }
@@ -57,9 +49,8 @@ body { background: var(--portal-bg); }
 .event-stack-caption > span { font-size: .74rem; }
 .discovery-scope { margin: 24px 0; color: var(--portal-muted); font-size: .78rem; }
 .discovery-scope a { color: var(--portal-brand); text-underline-offset: 3px; }
-.discovery-back { min-height: 44px; border: 0; background: none; color: var(--portal-brand); font: inherit; cursor: pointer; padding: 0; }
 .discovery-list-section { margin-top: 28px; scroll-margin-top: 100px; }
-.discovery-list-section > h2 { font-size: 1.6rem; letter-spacing: -.04em; margin-bottom: 20px; }
+.discovery-list-header > h2 { font-size: 1.6rem; letter-spacing: -.04em; margin-bottom: 20px; }
 .discovery-feed { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .discovery-feed > li { min-width: 0; }
 .discovery-image-fallback { display: grid; place-items: center; padding: 24px; width: 100%; height: 100%; background: var(--portal-brand-soft); color: var(--portal-brand); font-size: 1.3rem; font-weight: 700; }
@@ -122,11 +113,10 @@ body { background: var(--portal-bg); }
 .event-map iframe { height: 220px; }
 .discovery-bottom-nav { display: none; }
 @media (hover: hover) {
-  .event-stack:hover, .portal-event-card:hover, .discovery-chips button:hover { transform: translateY(-2px); }
+  .event-stack:hover, .portal-event-card:hover { transform: translateY(-2px); }
 }
 @media (max-width: 900px) {
   .discovery-skeleton-rows { grid-template-columns: 1fr; }
-  .discovery-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .discovery-stacks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .discovery-feed { grid-template-columns: 1fr; }
 }
@@ -145,9 +135,6 @@ body { background: var(--portal-bg); }
   .discovery-search { margin-top: 0; }
   .discovery-search > summary { font-size: .82rem; min-height: 44px; }
   .event-feed { padding-top: 4px; }
-  .discovery-chips { gap: 8px; margin-bottom: 18px; }
-  .discovery-chips button { font-size: .75rem; padding: 8px 4px; gap: 5px; }
-  .discovery-chips svg { width: 18px; height: 18px; }
   .discovery-feature > a { aspect-ratio: 4/3; }
   .discovery-feature-caption { inset: auto 0 0; padding: 16px; }
   .discovery-feature-caption h2 { font-size: 1.4rem; }
@@ -177,5 +164,5 @@ body { background: var(--portal-bg); }
   :focus-visible { scroll-margin-block: 100px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .event-stack, .discovery-chips button, .portal-event-card { transition: none; }
+  .event-stack, .portal-event-card { transition: none; }
 }

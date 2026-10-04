@@ -73,7 +73,7 @@
 
 /* ---------- Section rows ---------- */
 .discovery-collection h2,
-.discovery-list-section > h2 {
+.discovery-list-header > h2 {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -83,7 +83,7 @@
 }
 
 .discovery-collection h2::before,
-.discovery-list-section > h2::before {
+.discovery-list-header > h2::before {
   content: "";
   width: 4px;
   height: 1.1em;
