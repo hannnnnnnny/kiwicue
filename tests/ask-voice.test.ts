@@ -26,6 +26,12 @@ describe("pickVoice", () => {
     expect(ASSISTANT_IDS.map((id) => pickVoice([...catalog].reverse(), language, id)?.voiceURI)).toEqual(selected);
   });
 
+  it("never hands an assistant a worse voice just to be different", () => {
+    for (const id of ASSISTANT_IDS) expect(pickVoice(voices, "zh", id)?.name).toContain("Xiaoxiao");
+    const english = ASSISTANT_IDS.map((id) => pickVoice(voices, "en", id)?.name);
+    expect(new Set(english)).toEqual(new Set(["Google US English"]));
+  });
+
   it("deduplicates voices and never substitutes the wrong language to create variety", () => {
     const chinese = { name: "Mandarin", lang: "zh-CN", voiceURI: "zh" };
     const catalog = [chinese, { ...chinese }, { name: "English", lang: "en-NZ" }];
