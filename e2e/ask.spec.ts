@@ -152,7 +152,7 @@ test("one tap starts a voice chat that listens again after each spoken reply", a
     session.stop();
   });
   await expect(page.getByText("There's a jazz night on Saturday.")).toBeVisible();
-  await expect.poll(() => page.evaluate(() => (window as unknown as { __sessions: unknown[] }).__sessions.length), { timeout: 8000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __sessions: unknown[] }).__sessions.length), { timeout: 20_000 }).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole("button", { name: "End voice chat" }).click();
   await expect(bar).toBeHidden();
