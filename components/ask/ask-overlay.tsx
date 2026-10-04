@@ -215,7 +215,7 @@ function VoiceBar({ language, state, speech, speaking, voiceLanguage, onVoiceLan
   const content = copy[language];
   const endButton = useRef<HTMLButtonElement>(null);
   useEffect(() => { endButton.current?.focus(); }, []);
-  const line = speech.interim || (state === "listening" ? content.voiceHint : content.status[state]);
+  const line = speech.interim || (state === "listening" || state === "idle" || state === "sleeping" ? content.voiceHint : content.status[state]);
   return (
     <div className="ask-voicebar" role="group" aria-label={content.voiceChat} data-state={state}>
       <span className="ask-wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>
