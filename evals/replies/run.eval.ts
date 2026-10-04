@@ -43,7 +43,7 @@ function average(samples: Sample[], pick: (metrics: ReplyMetrics) => number | bo
 function report(samples: Sample[]): string {
   const rows = (Object.keys(VARIANTS) as Variant[]).map((variant) => {
     const mine = samples.filter((sample) => sample.variant === variant);
-    return `| ${variant} | ${average(mine, (m) => m.length)} | ${average(mine, (m) => m.titlesNamed)} | ${average(mine, (m) => m.timesRead)} | ${average(mine, (m) => m.priceCaveat)} | ${average(mine, (m) => m.endsWithQuestion)} | ${average(mine, (m) => m.menuQuestion)} | ${mine.reduce((total, sample) => total + sample.tokens.input + sample.tokens.output, 0)} |`;
+    return `| ${variant} | ${average(mine, (m) => m.length)} | ${average(mine, (m) => m.titlesNamed)} | ${average(mine, (m) => m.timesRead)} | ${average(mine, (m) => m.priceCaveat)} | ${average(mine, (m) => m.endsWithQuestion)} | ${average(mine, (m) => m.menuQuestion)} | ${average(mine, (m) => m.wrongLanguage)} | ${mine.reduce((total, sample) => total + sample.tokens.input + sample.tokens.output, 0)} |`;
   });
   const replies = SCENARIOS.map((scenario) => [
     `### ${scenario.id} (${scenario.assistant}) — “${scenario.message}”`,
@@ -51,8 +51,8 @@ function report(samples: Sample[]): string {
   ].join("\n"));
   return [
     `# Reply eval — ${new Date().toISOString()} — ${RUNS} run(s) per scenario`, "",
-    "| prompt | length | titles named | times read | price caveat | ends with ? | menu question | tokens |",
-    "|---|---|---|---|---|---|---|---|", ...rows, "", ...replies,
+    "| prompt | length | titles named | times read | price caveat | ends with ? | menu question | wrong language | tokens |",
+    "|---|---|---|---|---|---|---|---|---|", ...rows, "", ...replies,
   ].join("\n");
 }
 
@@ -67,7 +67,7 @@ it("compares the shipped reply prompt with the current one on fixed conversation
     const batch = await Promise.all(jobs.slice(index, index + 4).map(async ({ scenario, variant, run }) => {
       const result = await reply(scenario, variant);
       const titles = (scenario.search?.options ?? []).map((option) => option.title).concat(scenario.shown.map((item) => item.title));
-      return { scenario: scenario.id, variant, run, ...result, metrics: measure(result.reply, titles) };
+      return { scenario: scenario.id, variant, run, ...result, metrics: measure(result.reply, titles, languageOf(scenario.message)) };
     }));
     samples.push(...batch);
   }

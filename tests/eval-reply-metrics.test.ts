@@ -9,6 +9,11 @@ describe("reply metrics", () => {
     });
   });
 
+  it("flags a reply in the wrong language", () => {
+    expect(measure("Devonport 今晚没有爵士乐。", [], "en").wrongLanguage).toBe(true);
+    expect(measure("Nothing in Devonport tonight.", [], "en").wrongLanguage).toBe(false);
+  });
+
   it("passes a short, opinionated reply", () => {
     const metrics = measure("I'd go to Noah Kahan — it's the big night out of the weekend, and Spark Arena is easy to get to.", ["Noah Kahan - The Great Divide Tour", "Cabaret"]);
     expect(metrics).toMatchObject({ titlesNamed: 1, timesRead: 0, priceCaveat: false, endsWithQuestion: false, menuQuestion: false });
