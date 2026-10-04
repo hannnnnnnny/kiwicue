@@ -46,9 +46,10 @@ describe("conversePrompt", () => {
   it("asks for an opinion instead of a read-out of the cards", () => {
     const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
     expect(prompt).toContain("NEVER walk through the list");
-    expect(prompt).toContain("NEVER offer a menu of choices");
+    expect(prompt).toContain("NEVER as a menu");
+    expect(prompt).toContain("First react to what they actually said");
     expect(prompt).toContain("Most replies end without a question");
-    expect(prompt).toContain("Otherwise say nothing about prices");
+    expect(prompt).toContain("Money comes up only when they mention price");
     expect(prompt).toContain("VARIETY");
     expect(prompt).toContain("search again with what you already know");
     expect(prompt).toContain("Call search without writing anything first");
@@ -58,10 +59,18 @@ describe("conversePrompt", () => {
     expect(order.map((heading) => prompt.indexOf(heading))).toEqual([...order.map((heading) => prompt.indexOf(heading))].sort((a, b) => a - b));
   });
 
+  it("writes Chinese guidance and examples in Chinese for a Chinese chat", () => {
+    const prompt = conversePrompt({ assistant: ASSISTANTS.fern, today: "2026-10-01", filters: null, shown: [], replyLanguage: "zh" });
+    expect(prompt).toContain("像微信上跟朋友聊天那样回");
+    expect(prompt).toContain("你：确实，演出票不便宜。");
+    expect(prompt).not.toContain("Talk like a friend texting back");
+    expect(prompt).not.toContain("Visitor: hey, bored tonight");
+  });
+
   it("handles possible voice feedback gently while preserving intentional quotations", () => {
     const prompt = conversePrompt({ assistant: ASSISTANTS.iris, today: "2026-10-01", filters: null, shown: [], replyLanguage: "en" });
     expect(prompt).toContain("the mic may have caught your own voice");
-    expect(prompt).toContain("Don't blame the visitor");
+    expect(prompt).toContain("Don't blame them");
     expect(prompt).toContain("If the visitor intentionally quotes you");
   });
 
