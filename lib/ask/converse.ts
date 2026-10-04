@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { Assistant } from "../assistants";
 import { ASK_LAYOUTS, type AskChatTurn, type AskFilters, type AskShown } from "./schema";
 import { DEEPSEEK_MODEL, DEEPSEEK_NO_THINKING, type TokenUsage } from "./deepseek";
+import { ASK_MOODS } from "./mood";
 
 // Decide (search or not) → search → reply is three steps at most.
 const MAX_STEPS = 3;
@@ -66,6 +67,7 @@ export function conversePrompt(input: { assistant: Assistant; today: string; fil
     "Only use facts from search results or the list below; never invent events, times, prices, links or details. If you don't know something, say so and point to the event page.",
     "Keep it short: usually two to five sentences, or a short list for several options. Plain text; **bold** for names is fine; no headings, tables or links.",
     "Ask at most one question, and only when the answer would genuinely change what you find.",
+    `Begin your final reply with one mood tag showing how you feel about it: ${ASK_MOODS.map((mood) => `[[${mood}]]`).join(" ")}. For example: found great options → [[excited]] or [[happy]]; nothing fits → [[sorry]]; you need a detail → [[curious]]. The tag is hidden from the visitor.`,
     `Current search: ${input.filters ? JSON.stringify(input.filters) : "No search yet."}`,
     `On screen now:\n${shownList(input.shown)}`,
   ].join("\n");
