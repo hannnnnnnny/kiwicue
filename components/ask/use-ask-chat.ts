@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useReducer } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { MAX_HISTORY, MAX_SHOWN, type AskCard, type AskChatTurn, type AskShown } from "../../lib/ask/schema";
 import type { AskContext, AskViewState } from "./use-ask-stream";
 import { trustedBookingUrl } from "../../lib/ask/booking";
@@ -11,7 +11,8 @@ export type ChatEntry =
   | { id: string; role: "assistant"; text: string; quickReplies: string[] }
   | { id: string; role: "user"; text: string }
   | { id: string; role: "results"; snapshot: AskViewState | null };
-type ChatState = { entries: ChatEntry[]; lastInput: InputMode };
+// `greeting` is the opening message, which follows the chosen assistant until the visitor says something.
+type ChatState = { entries: ChatEntry[]; lastInput: InputMode; greeting?: string };
 type Action =
   | { type: "restart"; text: string; quickReplies: string[] }
   | { type: "user"; text: string; via: InputMode; snapshot: AskViewState }
@@ -42,7 +43,10 @@ function freezeResults(entries: ChatEntry[], snapshot: AskViewState): ChatEntry[
   return entries.map((entry) => entry.role === "results" && !entry.snapshot ? { ...entry, snapshot } : entry);
 }
 
-function reducer(state: ChatState, action: Action): ChatState {
+function reducer(state: ChatState, action: Action | { type: "freeze"; text: string }): ChatState {
+  if (action.type === "freeze") {
+    return { ...state, greeting: undefined, entries: state.entries.map((entry) => entry.id === state.greeting && entry.role === "assistant" ? { ...entry, text: action.text } : entry) };
+  }
   if (action.type === "restart") return { lastInput: "text", entries: [{ id: id(), role: "assistant", text: action.text, quickReplies: action.quickReplies }] };
   if (action.type === "user") {
     return {
@@ -84,18 +88,25 @@ export function onScreen(entries: ChatEntry[], live: AskViewState): AskShown[] {
 export function useAskChat({ language, name, search, reset, searchState }: {
   language: Language; name: string; search(text: string, context: AskContext): void; reset(): void; searchState: AskViewState;
 }) {
-  const [state, dispatch] = useReducer(reducer, language, (initial): ChatState => ({
-    entries: [{ id: id(), role: "assistant", text: copy[initial].greeting(name), quickReplies: [...copy[initial].starters] }],
-    lastInput: "text",
-  }));
+  const [state, dispatch] = useReducer(reducer, language, (initial): ChatState => {
+    const greeting = id();
+    return { entries: [{ id: greeting, role: "assistant", text: copy[initial].greeting(name), quickReplies: [...copy[initial].starters] }], lastInput: "text", greeting };
+  });
+  // The saved assistant is only known after hydration, so the untouched greeting is re-worded with the current name.
+  const entries = useMemo(() => {
+    if (!state.greeting) return state.entries;
+    return state.entries.map((entry) => entry.id === state.greeting && entry.role === "assistant" ? { ...entry, text: copy[language].greeting(name) } : entry);
+  }, [language, name, state.entries, state.greeting]);
 
   const send = useCallback((text: string, via: InputMode) => {
     const trimmed = text.trim().slice(0, MAX_TEXT);
     if (!trimmed) return;
-    const context = { history: conversation(state.entries, searchState), shown: onScreen(state.entries, searchState) };
+    const context = { history: conversation(entries, searchState), shown: onScreen(entries, searchState) };
+    // From the first reply on, the greeting stays as it was said.
+    if (state.greeting) dispatch({ type: "freeze", text: copy[language].greeting(name) });
     dispatch({ type: "user", text: trimmed, via, snapshot: searchState });
     search(trimmed, context);
-  }, [search, searchState, state.entries]);
+  }, [entries, language, name, search, searchState, state.greeting]);
 
   const restart = useCallback(() => {
     dispatch({ type: "restart", text: copy[language].restart, quickReplies: [...copy[language].starters] });
@@ -103,7 +114,9 @@ export function useAskChat({ language, name, search, reset, searchState }: {
   }, [language, reset]);
 
   /** A newly chosen assistant says hello, keeping the conversation and results so far. */
-  const introduce = useCallback((nextName: string) =>
-    dispatch({ type: "say", text: copy[language].introduce(nextName), quickReplies: [], snapshot: searchState }), [language, searchState]);
-  return { ...state, send, restart, introduce };
+  const introduce = useCallback((nextName: string) => {
+    if (state.greeting) dispatch({ type: "freeze", text: copy[language].greeting(name) });
+    dispatch({ type: "say", text: copy[language].introduce(nextName), quickReplies: [], snapshot: searchState });
+  }, [language, name, searchState, state.greeting]);
+  return { entries, lastInput: state.lastInput, send, restart, introduce };
 }
