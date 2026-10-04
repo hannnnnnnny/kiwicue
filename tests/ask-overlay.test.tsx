@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AskOverlay } from "../components/ask/ask-overlay";
 import { LanguageProvider } from "../components/language-provider";
@@ -36,7 +36,7 @@ const SLOW = { timeout: 3000 };
 afterEach(() => { cleanup(); localStorage.clear(); delete document.documentElement.dataset.assistant; });
 
 describe("AskOverlay", () => {
-  it("never reopens the microphone when a voice reply finishes", async () => {
+  it("keeps a voice chat going after one tap, but never listens while the reply is spoken", async () => {
     const started = vi.fn();
     const utterances: Array<{ onend: (() => void) | null }> = [];
     class Recognition {
@@ -53,16 +53,21 @@ describe("AskOverlay", () => {
     try {
       const fetchImpl = server([chatOnly]);
       renderOverlay(fetchImpl);
-      fireEvent.click(screen.getByRole("button", { name: "Talk to Fern" }));
+      fireEvent.click(screen.getByRole("button", { name: "Start voice chat with Fern" }));
       await waitFor(() => expect(started).toHaveBeenCalledOnce());
+      expect(screen.getByRole("group", { name: "Voice chat" })).toBeVisible();
       Recognition.last.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: "Is it free?" }], { isFinal: true })] });
-      fireEvent.click(screen.getByRole("button", { name: "Stop and send" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Done" }));
       await screen.findByText("Yes — it's free, so no tickets needed.", {}, SLOW);
       await waitFor(() => expect(utterances).toHaveLength(2));
-      utterances.at(-1)?.onend?.();
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 900));
       expect(started).toHaveBeenCalledOnce();
+      act(() => utterances.at(-1)?.onend?.());
+      await waitFor(() => expect(started).toHaveBeenCalledTimes(2), SLOW);
       expect(fetchImpl).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByRole("button", { name: "End voice chat" }));
+      expect(screen.queryByRole("group", { name: "Voice chat" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Start voice chat with Fern" })).toBeVisible();
     } finally { vi.unstubAllGlobals(); }
   });
   it("answers the first message with cards and a natural reply", async () => {
@@ -169,7 +174,7 @@ describe("AskOverlay", () => {
     await waitFor(() => expect(spoken.at(-1)).toMatchObject({ lang: "zh-CN" }), SLOW);
     expect(spoken[0]).toMatchObject({ lang: "en-NZ" });
     expect(screen.getByRole("button", { name: "Voice input: Chinese. Switch to English" })).toHaveTextContent("中");
-    fireEvent.click(screen.getByRole("button", { name: "Talk to Fern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start voice chat with Fern" }));
     await waitFor(() => expect(heard.at(-1)).toMatchObject({ lang: "zh-CN" }), SLOW);
     expect(localStorage.getItem("kiwicue.ask.voiceLanguage")).toBe("zh");
     vi.unstubAllGlobals();
@@ -185,7 +190,7 @@ describe("AskOverlay", () => {
   it("offers typing only when speech is unsupported, and closes on Escape", async () => {
     const onClose = vi.fn();
     renderOverlay(server(), onClose);
-    expect(screen.queryByRole("button", { name: "Talk to Fern" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start voice chat with Fern" })).not.toBeInTheDocument();
     expect(screen.getByText("Voice isn't supported in this browser. Type instead.")).toBeVisible();
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     await waitFor(() => expect(onClose).toHaveBeenCalled());
