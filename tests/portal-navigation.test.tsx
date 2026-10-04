@@ -9,7 +9,7 @@ import { LanguageProvider } from "../components/language-provider";
 import { PortalHeader } from "../components/portal-header";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
 const state = {

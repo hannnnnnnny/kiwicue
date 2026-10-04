@@ -5,7 +5,7 @@ import { LanguageProvider } from "../components/language-provider";
 import { readApplicationCss } from "./css-source";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
 const eventResult = {

@@ -4,7 +4,7 @@ import { EventDiscoveryControls } from "../components/event-discovery-controls";
 import { LanguageProvider } from "../components/language-provider";
 import { LanguageToggle } from "../components/language-toggle";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
 
 describe("event discovery controls", () => {
   it("exposes removable active filters, sort and clear-all links", () => {

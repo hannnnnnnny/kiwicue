@@ -30,13 +30,13 @@ export function EventFilterMeta({ state }: { state: Required<EventSearchState> }
   return (
     <div className="event-control-meta">
         {chips.length > 0 && <nav className="event-active-filters" aria-label={content.active}>
-          {chips.map((chip) => <Link key={chip.id} href={eventSearchHref(chip.next)} aria-label={content.remove(chip.label)}>{chip.label}<span aria-hidden="true"> ×</span></Link>)}
+          {chips.map((chip) => <Link key={chip.id} href={eventSearchHref(chip.next)} replace scroll={false} aria-label={content.remove(chip.label)}>{chip.label}<span aria-hidden="true"> ×</span></Link>)}
         </nav>}
         <nav className="event-sort-links" aria-label={content.sort}>
-          <Link href={eventSearchHref({ ...state, sort: "recommended" })} aria-label={language === "en" ? "Sort by recommended" : "按推荐排序"} aria-current={state.sort === "recommended" ? "page" : undefined}>{content.recommended}</Link>
-          <Link href={eventSearchHref({ ...state, sort: "date" })} aria-label={language === "en" ? "Sort by date" : "按日期排序"} aria-current={state.sort === "date" ? "page" : undefined}>{content.date}</Link>
+          <Link href={eventSearchHref({ ...state, sort: "recommended" })} replace scroll={false} aria-label={language === "en" ? "Sort by recommended" : "按推荐排序"} aria-current={state.sort === "recommended" ? "page" : undefined}>{content.recommended}</Link>
+          <Link href={eventSearchHref({ ...state, sort: "date" })} replace scroll={false} aria-label={language === "en" ? "Sort by date" : "按日期排序"} aria-current={state.sort === "date" ? "page" : undefined}>{content.date}</Link>
         </nav>
-        {hasFilters && <Link className="event-clear-all" href="/events">{content.clear}</Link>}
+        {hasFilters && <Link className="event-clear-all" href="/events" replace scroll={false}>{content.clear}</Link>}
     </div>
   );
 }

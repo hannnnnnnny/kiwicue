@@ -97,6 +97,8 @@ export function EventCategoryNav({
               className="event-category-card"
               data-category={categoryKey}
               href={eventSearchHref({ window, category: value, keyword, venueId, sort })}
+              replace
+              scroll={false}
               aria-label={`${item.label}. ${item.description}${isCurrent ? `. ${content.current}` : ""}`}
               aria-current={isCurrent ? "page" : undefined}
               key={categoryKey}
