@@ -7,17 +7,6 @@ import { LanguageToggle } from "./language-toggle";
 import { AccountControl } from "./account-control";
 import { useLanguage } from "./language-provider";
 import { DiscoveryIcon } from "./discovery-icon";
-import type { MouseEvent } from "react";
-import { navigateDiscovery } from "./use-discovery-collection";
-
-function navigateOnDiscoveryPage(event: MouseEvent<HTMLAnchorElement>, collection: "all") {
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-  if (window.location.pathname !== "/events" && window.location.pathname !== "/") return;
-  // Filters require a route navigation to restore the full discovery view.
-  if (window.location.search) return;
-  event.preventDefault();
-  navigateDiscovery(collection);
-}
 
 const copy = {
   en: {
@@ -90,8 +79,7 @@ function DestinationLinks({ activePage, count, content, className }: { activePag
   return DESTINATIONS.map(({ id, href, icon }) => (
     <Link key={id} className={className} href={href} data-destination={id}
       aria-label={id === "mine" ? content.mineLabel(count) : undefined}
-      aria-current={activePage === id ? "page" : undefined}
-      onClick={id === "discover" ? event => navigateOnDiscoveryPage(event, "all") : undefined}>
+      aria-current={activePage === id ? "page" : undefined}>
       <DiscoveryIcon name={icon} /><span>{content.destinations[id]}</span>{id === "mine" && count > 0 ? <strong>{count}</strong> : null}
     </Link>
   ));

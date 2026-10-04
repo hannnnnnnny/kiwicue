@@ -34,6 +34,8 @@ describe("bilingual route content", () => {
       keyword: "Taylor Swift",
       venueId: "venue-1",
       sort: "recommended",
+      free: false,
+      view: "list",
     });
 
     expect(parseEventPageSearchParams({
@@ -41,7 +43,8 @@ describe("bilingual route content", () => {
       venue: ["one", "two"],
       category: ["concerts", "theatre"],
       window: ["7d", "30d"],
-    })).toEqual({ window: "all", category: null, keyword: null, venueId: null, sort: "recommended" });
+    })).toEqual({ window: "all", category: null, keyword: null, venueId: null, sort: "recommended", free: false, view: "list" });
+    expect(parseEventPageSearchParams({ free: "1", view: "map", window: "tonight" })).toMatchObject({ free: true, view: "map", window: "tonight" });
   });
 
   it("switches the event-page framing without changing the data request", async () => {
@@ -56,11 +59,9 @@ describe("bilingual route content", () => {
 
     expect(screen.getByRole("heading", { name: "What do you feel like?" })).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeVisible();
-    fireEvent.click(screen.getByText("More filters & sorting"));
-    expect(screen.getByRole("heading", { name: "What are you into?" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Event categories" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Event time range" })).toBeInTheDocument();
-    expect(screen.getByText("All future · Recommended within each date")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "When" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "What" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "View" })).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "Search Auckland events" })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe("Auckland events — KiwiCue"));
     expect(fetch).toHaveBeenCalledTimes(3);
@@ -68,10 +69,8 @@ describe("bilingual route content", () => {
     fireEvent.click(screen.getByRole("button", { name: "切换到中文" }));
 
     expect(screen.getByRole("heading", { name: "今天，想做点什么？" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "今天，想去哪里？" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "活动类型" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "时间范围" })).toBeInTheDocument();
-    expect(screen.getByText("全部未来 · 同日活动按推荐排序")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "时间" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "类型" })).toBeInTheDocument();
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
     expect(screen.getByLabelText("活动名称")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toBeInTheDocument();
@@ -88,10 +87,11 @@ describe("bilingual route content", () => {
 
     render(<LanguageProvider>{filteredPage}</LanguageProvider>);
 
-    const categoryNav = screen.getByRole("navigation", { name: "Event categories" });
-    expect(within(categoryNav).getByRole("link", { name: /Concerts/ })).toHaveAttribute("aria-current", "page");
-    expect(within(categoryNav).getByRole("link", { name: /^All/ })).toHaveAttribute("href", "/events");
-    expect(screen.queryByRole("link", { name: "Clear filters" })).not.toBeInTheDocument();
+    const categoryNav = screen.getByRole("navigation", { name: "What" });
+    expect(within(categoryNav).getByRole("link", { name: "Concerts" })).toHaveAttribute("aria-current", "true");
+    // Tapping the chosen category again clears it.
+    expect(within(categoryNav).getByRole("link", { name: "Concerts" })).toHaveAttribute("href", "/events");
+    expect(screen.getByRole("link", { name: "Clear all" })).toHaveAttribute("href", "/events");
 
     cleanup();
     const invalidPage = await EventsPage({
@@ -99,8 +99,8 @@ describe("bilingual route content", () => {
     });
     render(<LanguageProvider>{invalidPage}</LanguageProvider>);
 
-    const invalidCategoryNav = screen.getByRole("navigation", { name: "Event categories" });
-    expect(within(invalidCategoryNav).getByRole("link", { name: /^All/ })).toHaveAttribute("aria-current", "page");
+    const invalidCategoryNav = screen.getByRole("navigation", { name: "What" });
+    expect(within(invalidCategoryNav).queryAllByRole("link").filter((link) => link.getAttribute("aria-current"))).toHaveLength(0);
   });
 
   it("keeps date-only sorting visible with its search controls", async () => {

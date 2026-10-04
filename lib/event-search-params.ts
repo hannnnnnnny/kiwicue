@@ -11,6 +11,17 @@ export type EventSearchFilters = {
   venueId: string | null;
 };
 
+export const EVENT_VIEWS = ["list", "map"] as const;
+export type EventView = (typeof EVENT_VIEWS)[number];
+
+export function parseEventView(value: PublicValue): EventView {
+  return value === "map" ? "map" : "list";
+}
+
+export function parseEventFree(value: PublicValue): boolean {
+  return value === "1";
+}
+
 export function parseEventSort(value: PublicValue): EventSort {
   return typeof value === "string" && EVENT_SORTS.includes(value as EventSort)
     ? value as EventSort

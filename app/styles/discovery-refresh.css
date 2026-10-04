@@ -28,61 +28,17 @@
   min-height: 0;
 }
 
-.events-page .event-control-meta {
-  margin-top: 8px;
-}
-
-.events-page .discovery-advanced-filters > summary {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  margin-top: 6px;
-  color: var(--portal-brand);
-  cursor: pointer;
-  font-size: .86rem;
-  font-weight: 650;
-  list-style: none;
-}
-
-.events-page .discovery-advanced-filters > summary::after {
-  content: "⌄";
-  margin-left: 8px;
-  font-size: 1.2rem;
-}
-
-.events-page .discovery-advanced-filters[open] > summary::after {
-  transform: rotate(180deg);
-}
-
-.events-page .discovery-advanced-filters > summary::-webkit-details-marker {
-  display: none;
-}
-
-.events-page .portal-navigation-shell {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin: 14px 0 0;
-  padding: 0;
-}
-
 .events-page .event-category-group {
   grid-column: 1;
   grid-row: 1;
   padding-top: 0;
 }
 
-.events-page .event-window-group {
-  grid-column: 2;
-  grid-row: 1;
-}
-
 .events-page .portal-filter-label {
   margin-bottom: 8px;
 }
 
-.events-page .event-category-grid,
-.events-page .portal-nav-track {
+.events-page .event-category-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 8px;
@@ -106,8 +62,7 @@
   transform: none;
 }
 
-.events-page .event-category-card[aria-current="page"],
-.events-page .portal-nav-link[aria-current="page"] {
+.events-page .event-category-card[aria-current="page"] {
   border-color: var(--portal-brand);
   background: var(--portal-brand-soft);
   color: var(--portal-brand);
@@ -127,19 +82,12 @@
   display: none;
 }
 
-.events-page .portal-nav-link {
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
-}
-
 /* Results precede editorial highlights, with source facts remaining readable. */
 .events-page .discovery-list-section {
   margin-top: 12px;
 }
 
-.events-page .discovery-list-section > h2 {
+.events-page .discovery-list-header > h2 {
   margin: 0 0 16px;
   font-size: clamp(1.5rem, 2.5vw, 2rem);
 }
@@ -203,22 +151,7 @@
   margin-top: 32px;
 }
 
-.events-page .discovery-chips button[aria-pressed="true"] {
-  border: 2px solid var(--portal-brand);
-  background: var(--portal-brand-soft);
-  color: var(--portal-brand);
-}
-
 @media (max-width: 900px) {
-  .events-page .portal-navigation-shell {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .events-page .event-window-group {
-    grid-column: 1;
-    grid-row: 2;
-  }
 
   .events-page .discovery-feed {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -286,8 +219,7 @@
     font-size: .78rem;
   }
 
-  .events-page .event-category-grid,
-  .events-page .portal-nav-track {
+  .events-page .event-category-grid {
     display: grid;
     overflow: visible;
   }
@@ -296,13 +228,8 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .events-page .portal-nav-track {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .events-page .event-category-card,
-  .events-page .event-category-card[aria-current="page"],
-  .events-page .portal-nav-link {
+  .events-page .event-category-card[aria-current="page"] {
     width: 100%;
     min-width: 0;
     padding-inline: 6px;

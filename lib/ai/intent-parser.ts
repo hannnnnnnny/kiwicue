@@ -2,12 +2,12 @@ import { z } from "zod";
 import { EVENT_CATEGORIES, type EventCategory } from "../event-categories";
 import type { KiwiCueEvent } from "../events";
 import { parseEventKeyword } from "../event-search-params";
-import { resolveEventWindow, type EventWindow } from "../event-window";
+import { EVENT_WINDOWS, resolveEventWindow, type EventWindow } from "../event-window";
 
 export const eventIntentSchema = z.object({
   query: z.string().max(100).optional(),
   categories: z.array(z.enum(EVENT_CATEGORIES)).max(5).optional(),
-  dateWindow: z.enum(["7d", "weekend", "30d", "all"]).optional(),
+  dateWindow: z.enum(EVENT_WINDOWS).optional(),
   location: z.string().max(80).optional(),
   timeOfDay: z.enum(["morning", "afternoon", "evening"]).optional(),
 }).strict();

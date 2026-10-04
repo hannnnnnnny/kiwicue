@@ -7,6 +7,7 @@ describe("Auckland event windows", () => {
     [null, "all"],
     ["", "all"],
     ["all", "all"],
+    ["tonight", "tonight"],
     ["7d", "7d"],
     ["weekend", "weekend"],
     ["30d", "30d"],
@@ -14,6 +15,17 @@ describe("Auckland event windows", () => {
     [["7d", "30d"], "all"],
   ] as const)("parses %j", (value, expected) => {
     expect(parseEventWindow(value)).toBe(expected);
+  });
+
+  it("resolves tonight as 5 pm to 3 am Auckland time, starting now if later", () => {
+    // 10 am NZST on Fri 31 Jul 2026 (UTC+12).
+    expect(resolveEventWindow("tonight", new Date("2026-07-30T22:00:00.000Z"))).toEqual({
+      id: "tonight", start: new Date("2026-07-31T05:00:00.000Z"), end: new Date("2026-07-31T15:00:00.000Z"),
+    });
+    // 8 pm: starts now.
+    expect(resolveEventWindow("tonight", new Date("2026-07-31T08:00:00.000Z")).start).toEqual(new Date("2026-07-31T08:00:00.000Z"));
+    // 1 am Saturday is still Friday night.
+    expect(resolveEventWindow("tonight", new Date("2026-07-31T13:00:00.000Z")).end).toEqual(new Date("2026-07-31T15:00:00.000Z"));
   });
 
   it("resolves rolling windows from the exact request anchor", () => {

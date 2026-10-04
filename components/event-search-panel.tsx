@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { EventCategory } from "../lib/event-categories";
-import { parseEventKeyword, parseVenueId, type EventSort } from "../lib/event-search-params";
+import { parseEventKeyword, parseVenueId, type EventSort, type EventView } from "../lib/event-search-params";
 import { eventSearchHref } from "../lib/event-search-url";
 import type { EventWindow } from "../lib/event-window";
 import { EventNameCombobox } from "./event-name-combobox";
@@ -23,6 +23,8 @@ type EventSearchPanelProps = {
   keyword: string | null;
   venueId: string | null;
   sort?: EventSort;
+  free?: boolean;
+  view?: EventView;
 };
 
 const copy = {
@@ -96,6 +98,8 @@ export function EventSearchPanel({
   keyword,
   venueId,
   sort = "recommended",
+  free = false,
+  view = "list",
 }: EventSearchPanelProps) {
   const { language } = useLanguage();
   const content = copy[language];
@@ -135,6 +139,8 @@ export function EventSearchPanel({
       keyword={keyword}
       venueId={venueId}
       sort={sort}
+      free={free}
+      view={view}
       venues={venues}
       venueStatus={venueStatus}
       content={content}
@@ -148,6 +154,8 @@ function SearchForm({
   keyword,
   venueId,
   sort = "recommended",
+  free = false,
+  view = "list",
   venues,
   venueStatus,
   content,
@@ -161,7 +169,7 @@ function SearchForm({
   const [draftVenue, setDraftVenue] = useState(venueId ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [submittedHref, setSubmittedHref] = useState<string | null>(null);
-  const appliedHref = eventSearchHref({ window: eventWindow, category, keyword, venueId, sort });
+  const appliedHref = eventSearchHref({ window: eventWindow, category, keyword, venueId, sort, free, view });
 
   useEffect(() => {
     if (!submitting || submittedHref !== appliedHref) return;
@@ -182,6 +190,8 @@ function SearchForm({
       keyword: normalizedKeyword,
       venueId: normalizedVenue,
       sort,
+      free,
+      view,
     });
     setSubmitting(true);
     setSubmittedHref(href);

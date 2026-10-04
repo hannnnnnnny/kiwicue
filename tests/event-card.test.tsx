@@ -142,7 +142,6 @@ describe("portal event card", () => {
     expect(css).toMatch(/\.event-grid,[\s\S]*?grid-template-columns:\s*repeat\(2,/s);
     expect(css).toMatch(/\.event-grid\s*>\s*li:first-child\s*\{[^}]*grid-column:\s*span\s*2/s);
     expect(css).toMatch(/\.events-page \.event-feed-heading[^}]*font-size:\s*clamp\(/s);
-    expect(css).toMatch(/\.events-page \.portal-navigation-shell[^}]*background:\s*var\(--portal-raised\)/s);
     expect(css).toMatch(/\.event-category-grid\s*\{[^}]*grid-auto-flow:\s*column/s);
     expect(css).toMatch(/\.event-category-card\s*\{[^}]*border:\s*0/s);
     expect(css).toMatch(/\.event-category-card\[aria-current="page"\][^}]*grid-column:\s*span\s*2/s);
