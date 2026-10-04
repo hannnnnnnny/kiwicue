@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conversePrompt, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
+import { conversePrompt, lastStepSpeaks, replyText, searchInputSchema, toModelMessages } from "../lib/ask/converse";
 import { EMPTY_FILTERS } from "../lib/ask/schema";
 import { PERSONAS } from "../lib/ask/personas";
 import { ASSISTANTS } from "../lib/assistants";
@@ -70,6 +70,14 @@ describe("conversePrompt", () => {
     expect(prompt).toContain("payment methods, reservations, accessibility, ticket types or age suitability require listing evidence".replace("payment", "Payment"));
     expect(prompt).toContain("do not invent a friendly tip");
     expect(prompt).toContain("Budgets are for the whole party");
+  });
+});
+
+describe("lastStepSpeaks", () => {
+  it("lets the model search in early steps but makes the last one a reply", () => {
+    expect(lastStepSpeaks({ stepNumber: 0 })).toBeUndefined();
+    expect(lastStepSpeaks({ stepNumber: 1 })).toBeUndefined();
+    expect(lastStepSpeaks({ stepNumber: 2 })).toEqual({ toolChoice: "none" });
   });
 });
 

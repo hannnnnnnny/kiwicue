@@ -21,6 +21,10 @@ export type ConverseModel = (input: {
 
 type StreamPart = { type: string; text?: string };
 
+export function lastStepSpeaks({ stepNumber }: { stepNumber: number }): { toolChoice: "none" } | undefined {
+  return stepNumber >= MAX_STEPS - 1 ? { toolChoice: "none" } : undefined;
+}
+
 /**
  * The reply text across steps. Anything said before a search ("Let me look…") stays as its own
  * paragraph instead of running straight into the answer that follows the results.
@@ -41,6 +45,8 @@ export const deepseekConverse: ConverseModel = ({ system, messages, tools, abort
   const result = streamText({
     model: deepSeek(DEEPSEEK_MODEL), system, messages, tools, abortSignal,
     stopWhen: isStepCount(MAX_STEPS), maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: TEMPERATURE, maxRetries: 0,
+    // The last step must speak: a model that keeps searching would otherwise end with no reply at all.
+    prepareStep: lastStepSpeaks,
     providerOptions: DEEPSEEK_NO_THINKING,
   });
   return {
@@ -98,6 +104,7 @@ const TOOL_RULES = [
   "- Don't search for thanks, small talk, or questions about what's already on screen; answer from the conversation and the on-screen list.",
   "- When the visitor turns the options down or asks for something else, search again with what you already know rather than asking them to choose a direction.",
   "- Call search without writing anything first; speak once you have the results.",
+  "- If a search finds nothing, don't run the same search again: say so and offer to widen it.",
 ].join("\n");
 
 // Style examples only: the facts in them are made up and must never be quoted as listings.
