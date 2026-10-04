@@ -1,14 +1,9 @@
-export type SpokenLanguage = "en" | "zh";
+import { languageOf, type TextLanguage } from "../../lib/text-language";
+
+export { languageOf };
+export type SpokenLanguage = TextLanguage;
 
 const STORAGE_KEY = "kiwicue.ask.voiceLanguage";
-const HAN = /\p{Script=Han}/gu;
-// A couple of Chinese characters in a short line is a Chinese sentence; one stray character is not.
-const MIN_HAN = 2;
-
-/** Which language a line is in, so it is spoken with the right voice and the mic listens for it. */
-export function languageOf(text: string): SpokenLanguage {
-  return (text.match(HAN)?.length ?? 0) >= MIN_HAN ? "zh" : "en";
-}
 
 export function readVoiceLanguage(): SpokenLanguage | null {
   try {
