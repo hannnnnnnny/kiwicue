@@ -11,6 +11,7 @@ import { useLanguage } from "./language-provider";
 import { MineTabs } from "./mine-tabs";
 import { PortalHeader } from "./portal-header";
 import { useAuth } from "./auth-provider";
+import { SiteFooter } from "./site-footer";
 
 type RefreshState = {
   key: string;
@@ -158,10 +159,7 @@ export function SavedPageContent({
         </section>
       )}
 
-      <footer className="portal-footer">
-        <span>KiwiCue / 纽村小报</span>
-        <span>{content.footer}</span>
-      </footer>
+      <SiteFooter tagline={content.footer} />
     </main>
   );
 }

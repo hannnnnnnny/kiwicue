@@ -16,6 +16,7 @@ import { MovieScreeningFeed, type MovieFeedState } from "./movie-screening-feed"
 import { MovieSearchPanel } from "./movie-search-panel";
 import { MoviePreviewGrid, type MoviePreviewState } from "./movie-preview-grid";
 import { PortalHeader } from "./portal-header";
+import { SiteFooter } from "./site-footer";
 
 type FeedResponse = {
   films: MovieShowing[];
@@ -310,7 +311,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
         />
         {showLiveFeed ? cinemaAccess : null}
       </div>
-      <footer className="portal-footer"><span>KiwiCue / 纽村小报</span><span>{content.footer}</span></footer>
+      <SiteFooter tagline={content.footer} />
     </main>
   );
 }

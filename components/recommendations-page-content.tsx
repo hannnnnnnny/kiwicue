@@ -11,6 +11,7 @@ import { useLanguage } from "./language-provider";
 import { PersonalPicks } from "./for-you-content";
 import { PortalHeader } from "./portal-header";
 import { RecommendationCard } from "./recommendation-card";
+import { SiteFooter } from "./site-footer";
 
 export type RecommendationFeed = "events" | "markets";
 export type RecommendationFeedRequest = (
@@ -255,7 +256,7 @@ export function RecommendationsPageContent({
           </>
         )}
       </div>
-      <footer className="portal-footer"><span>KiwiCue / 纽村小报</span><span>{content.footer}</span></footer>
+      <SiteFooter tagline={content.footer} />
     </main>
   );
 }
