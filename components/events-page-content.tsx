@@ -10,6 +10,7 @@ import { DiscoverFilters } from "./discover-filters";
 import { EventSearchPanel } from "./event-search-panel";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
+import { SiteFooter } from "./site-footer";
 
 const windowLabels = {
   en: { tonight: "Tonight", "7d": "Next 7 days", weekend: "This weekend", "30d": "Next 30 days", all: "All future" },
@@ -103,10 +104,7 @@ export function EventsPageContent({ window, category, keyword, venueId, sort = "
         <p>{content.aboutBody}</p>
       </section>
 
-      <footer className="portal-footer">
-        <span>KiwiCue / 纽村小报</span>
-        <span>{content.footer}</span>
-      </footer>
+      <SiteFooter tagline={content.footer} />
     </main>
   );
 }

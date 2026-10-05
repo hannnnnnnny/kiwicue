@@ -4,6 +4,7 @@ import Link from "next/link";
 import { HomeEventPreview } from "./home-event-preview";
 import { useLanguage } from "./language-provider";
 import { PortalHeader } from "./portal-header";
+import { SiteFooter } from "./site-footer";
 
 const copy = {
   en: {
@@ -98,10 +99,7 @@ export function HomeContent() {
         </div>
       </section>
 
-      <footer className="portal-footer">
-        <span>KiwiCue / 纽村小报</span>
-        <span>{content.footer}</span>
-      </footer>
+      <SiteFooter tagline={content.footer} />
     </main>
   );
 }

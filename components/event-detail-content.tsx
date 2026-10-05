@@ -30,6 +30,7 @@ import { EventIntent } from "./event-intent";
 import { SaveToCollection } from "./save-to-collection";
 import { EventDiscussion } from "./event-discussion";
 import { EventSocialProof } from "./event-social-proof";
+import { SiteFooter } from "./site-footer";
 
 type DetailState =
   | { status: "loading" }
@@ -202,10 +203,7 @@ export function EventDetailContent({
       <main className="event-detail-page">
         <PortalHeader skipTarget="event-detail" currentPage="discover" />
         {body}
-        <footer className="portal-footer">
-          <span>KiwiCue / 纽村小报</span>
-          <span>{content.footer}</span>
-        </footer>
+        <SiteFooter tagline={content.footer} />
       </main>
     );
   }

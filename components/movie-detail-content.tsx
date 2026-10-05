@@ -17,6 +17,7 @@ import { MoviePoster } from "./movie-poster";
 import { MovieDetailSessions } from "./movie-detail-sessions";
 import { PortalHeader } from "./portal-header";
 import { TmdbAttribution } from "./tmdb-attribution";
+import { SiteFooter } from "./site-footer";
 
 type DetailState =
   | { status: "loading" }
@@ -292,7 +293,7 @@ export function MovieDetailContent({ movieId, requestMovieDetail = requestMovieD
           setAttempt((value) => value + 1);
         }} />
       )}
-      <footer className="portal-footer"><span>KiwiCue / 纽村小报</span><span>{content.footer}</span></footer>
+      <SiteFooter tagline={content.footer} />
     </main>
   );
 }
