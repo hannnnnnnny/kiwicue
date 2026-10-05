@@ -15,7 +15,7 @@ export function SiteFooter({ tagline }: { tagline: string }) {
   const { language } = useLanguage();
   return (
     <footer className="portal-footer">
-      <span>KiwiCue / 纽村小报</span>
+      <span>KiwiCue</span>
       <span>{tagline}</span>
       <span className="portal-footer-credit">© {YEAR} · {credit[language]}</span>
     </footer>
