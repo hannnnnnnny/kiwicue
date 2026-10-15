@@ -1,35 +1,45 @@
 # README preview recordings / README 动图录制说明
 
-Recorded from the live [KiwiCue deployment](https://kiwicue.nz) on 16 October 2026 (Pacific/Auckland). The deployed interface can differ from a checked-out feature branch. The five assistants were also checked against `origin/main` at `849e20b`.
+Recorded from the live [KiwiCue deployment](https://kiwicue.nz) on 16 October 2026 (Pacific/Auckland).
 
-于新西兰时间 2026 年 10 月 16 日录制自 [KiwiCue 线上站点](https://kiwicue.nz)。线上界面可能与本地功能分支不同；五位助手的信息也已对照 `origin/main` 的 `849e20b` 核实。
+于新西兰时间 2026 年 10 月 16 日录制自 [KiwiCue 线上站点](https://kiwicue.nz)。
 
-## What the GIFs show / 录制范围
+## Jev activity matching / Jev 活动匹配
 
-- `ai-bot.gif`: opening the assistant, choosing all five characters, animated orbs, matching colour themes, typing a question and switching the voice-input language. The text is entered without sending a question.
-- `demo.gif`: real event discovery, event details, saving as a guest, finding the saved event and switching the interface language.
-- Both GIFs include an overlaid mouse pointer that follows actual Playwright mouse movements. Clicks have a coloured halo. Character animation is sampled from the running page.
+The main `ai-bot.gif` records one real guest request: **“Markets this weekend”**. The bot understands the market and weekend conditions, searches the covered listings, and displays five matching activity cards ranked with Jev. The recorded cards fall on 17–18 October in Auckland local time and have positive relevance scores. Their prices remain labelled unknown where the source has no verified price.
 
-- `ai-bot.gif`：打开助手、切换全部五位角色、动态球体、主题配色、输入问题和切换语音输入语言；问题仅输入，不发送。
-- `demo.gif`：真实活动浏览、详情、访客收藏、收藏页和界面语言切换。
-- 两张 GIF 都带有跟随真实 Playwright 鼠标移动的指针，点击时显示彩色光圈；角色动画逐帧采样自实际页面。
+主图 `ai-bot.gif` 实录一次真实访客提问：**“Markets this weekend”**。Bot 理解“市集”和“本周末”的条件，查询已覆盖的来源，再显示经 Jev 排序的五张匹配活动卡片。返回活动的奥克兰本地日期均为 10 月 17–18 日，匹配分数为正；来源没有核实票价时，卡片保留“价格未知”说明。
 
-## API limitation at capture time / 录制时的接口限制
+In this recording, the first visible card was observed about **4.3 seconds** after submission. This is one browser observation during screenshot capture, not a benchmark or a latency guarantee. The GIF preserves the recorded waiting time. Its loop opens on the completed result list so the README thumbnail shows the feature, then plays the question and response sequence. No results are injected or mocked.
 
-The live `POST /api/ask` returned HTTP 503 during the attempted question recording. The AI preview therefore covers the working interface interactions. It does not include a successful generated reply or recommendation sequence. No model responses or recommendation results were fabricated.
+本次录制中，提交问题约 **4.3 秒**后观察到第一张活动卡片。这是截图录制时的一次浏览器观测，不是性能基准或延迟保证。GIF 保留录制时的实际等待时间；循环从已完成的结果列表开始，让 README 缩略图直接展示功能，再播放提问和返回结果的过程。没有注入或模拟推荐结果。
 
-尝试录制提问时，线上 `POST /api/ask` 返回 HTTP 503。因此当前 AI 动图展示可用的界面交互，不包含成功的生成回复或推荐过程；未伪造模型回复或推荐结果。
+DeepSeek handles the conversation and calls search; Jev evaluates outing preferences and candidate relevance. The application applies the conditions against its actual listings. [Response evidence](./ai-bot-evidence.json) records the submitted question, returned filters, cards, scores and observed timings. The earlier character-only preview was recorded while the Supabase project was paused; the project was resumed before this replacement capture.
+
+DeepSeek 负责对话并调用搜索；Jev 判断出行偏好、评估候选活动相关性；应用用条件筛选实际活动数据。[响应证据](./ai-bot-evidence.json)记录了提交的问题、返回条件、活动卡片、分数及观测时间。上一版角色展示录制时 Supabase 项目处于暂停状态；本次替换录制前已恢复项目。
+
+## Other preview / 其他预览
+
+`demo.gif` retains the separate walkthrough of event details, guest saves, the saved-events page and the Chinese language switch. Both GIFs include a visible pointer following actual mouse movement and a click halo. GIFs are silent.
+
+`demo.gif` 保留独立的活动详情、访客收藏、收藏页和中文切换演示。两张 GIF 都有跟随实际鼠标移动的可见指针，以及点击光圈。GIF 无音轨。
 
 ## Re-recording / 重新录制
 
-Run the commands in the README from the repository root. The scripts require the project's Playwright dependency, a Playwright Chromium installation and Python with Pillow (`python -m pip install Pillow` if needed).
+Run from the repository root with the project's Playwright dependency, Playwright Chromium and Python with Pillow (`python -m pip install Pillow` if needed):
 
-在仓库根目录运行 README 中的命令。需要项目已有的 Playwright、Playwright 的 Chromium，以及安装了 Pillow 的 Python（缺少时运行 `python -m pip install Pillow`）。
+在仓库根目录运行，需使用项目已有的 Playwright、Playwright Chromium，以及安装了 Pillow 的 Python（缺少时运行 `python -m pip install Pillow`）：
 
-Use `--with-reply` only when the AI service is available. It sends one real question through the normal public flow and records its result. It consumes the configured quota and model budget. The default capture sends no AI requests and uses a fresh guest browser context, with no account credentials.
+```bash
+npx playwright install chromium
+node scripts/capture-readme-demo.mjs
+python scripts/encode-readme-demo.py ai
+```
 
-AI 服务恢复后，可使用 `--with-reply` 发送一次真实问题并录制结果；请求遵循正常公开流程，消耗配置的次数和模型预算。默认录制不发送 AI 请求，使用全新的访客浏览器上下文，不包含账号凭据。
+This sends one real question and consumes the configured quota and model budget. It uses a fresh guest session. A read-only clone of the live response stream supplies evidence without changing the response delivered to the UI. Capture fails on API errors, missing or nonmatching cards, relaxed conditions, absent positive relevance scores, or tool-protocol text in the reply.
 
-Temporary PNG frames and manifests stay in `output/playwright/`. Only the finished GIFs, still images and these recording notes are intended for Git. GIFs are silent; voice controls are visible, but audio playback needs the live site.
+这会提交一次真实问题，消耗正常次数额度和模型预算，并使用全新的访客会话。脚本只读取真实响应流的副本以保留证据，不改变界面接收到的响应。接口报错、卡片缺失或不匹配、条件放宽、没有正向相关性分数，或回复中出现工具协议文本时，录制会失败。
 
-PNG 临时帧及清单保存在 `output/playwright/`，只把成品 GIF、静态截图和录制说明加入 Git。GIF 无音轨；动图可展示语音控件，实际语音播放请在线体验。
+To also regenerate the general walkthrough, add `--product` to the capture command and run `python scripts/encode-readme-demo.py demo`. Temporary PNG frames and manifests stay in the ignored `output/playwright/` directory. The published outputs are the finished AI GIF, results screenshot and response evidence.
+
+如需重录普通活动流程，在录制命令后添加 `--product`，再运行 `python scripts/encode-readme-demo.py demo`。临时 PNG 帧和清单保存在 Git 忽略的 `output/playwright/`；发布内容为 AI 动图、结果截图和响应证据。
