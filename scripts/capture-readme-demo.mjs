@@ -12,7 +12,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 960 
 const page = await context.newPage();
 const frames = [];
 const captureProduct = process.argv.includes("--product");
-const question = "Markets this weekend";
+const question = "Concerts this weekend";
 let frameNumber = 0;
 let pointer = { x: 1100, y: 490, pressed: false };
 let stage = "Discover Auckland";
@@ -105,7 +105,7 @@ async function captureDiscovery() {
 async function captureAssistant() {
   await page.getByRole("button", { name: "Ask KiwiCue", exact: true }).click();
   await page.getByRole("textbox", { name: /^Message / }).waitFor();
-  stage = "Ask for markets this weekend";
+  stage = "Ask for concerts this weekend";
   await frame();
   await askQuestion();
 }
@@ -163,12 +163,25 @@ async function askQuestion() {
   const result = await captureStream(submittedAt);
   await writeFile(resolve(output, "readme-ai-last-response.json"), JSON.stringify(result, null, 2));
   validateResults(result);
-  await settleImages();
+  await verifyEventPosters();
   stage = "Matching activities, ranked with Jev";
   await page.locator(".ask-card").first().scrollIntoViewIfNeeded();
   await hold(3000);
   await page.screenshot({ path: resolve("docs/readme/ai-bot.jpg"), type: "jpeg", quality: 90 });
   await writeFile(resolve("docs/readme/ai-bot-evidence.json"), JSON.stringify(result, null, 2));
+}
+
+async function verifyEventPosters() {
+  const cards = page.locator(".ask-card");
+  for (const card of await cards.all()) {
+    await card.scrollIntoViewIfNeeded();
+    const poster = card.locator("img").first();
+    await poster.waitFor({ state: "visible" });
+    await poster.evaluate(async image => {
+      await image.decode();
+      if (image.naturalWidth === 0) throw new Error("The event poster did not load");
+    });
+  }
 }
 
 async function captureStream(submittedAt) {
@@ -197,14 +210,14 @@ function validateResults(result) {
   const cards = events.filter(event => event.type === "result").map(event => event.card);
   if (result.status !== 200 || events.some(event => event.type === "error")) throw new Error("AI request failed; no preview was published");
   if (!events.some(event => event.type === "done") || cards.length < 2) throw new Error("Capture requires a completed response with multiple matching cards");
-  if (understood?.filters.domain !== "markets" || understood.filters.dates.length === 0) throw new Error("The search did not retain the requested market and date filters");
+  if (understood?.filters.domain !== "events" || understood.filters.category !== "music" || understood.filters.dates.length === 0) throw new Error("The search did not retain the requested concert and date filters");
   if (events.some(event => event.type === "relaxed" && event.keys.length > 0)) throw new Error("The preview requires exact matches, without relaxed filters");
   if (!cards.some(card => card.score > 0)) throw new Error("No positive Jev relevance scores were returned");
   const reply = events.filter(event => event.type === "reply").map(event => event.delta).join("");
   if (/DSML/u.test(reply)) throw new Error("The response contains tool protocol markup");
   for (const card of cards) {
     const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Auckland" }).format(new Date(card.when));
-    if (card.kind !== "market" || !understood.filters.dates.includes(date)) {
+    if (card.kind !== "event" || !understood.filters.dates.includes(date) || !card.imageUrl?.startsWith("https://")) {
       throw new Error("A result does not match the requested type or dates");
     }
   }

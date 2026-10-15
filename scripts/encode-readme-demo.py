@@ -20,11 +20,11 @@ def shared_palette(frames, kind):
     sample = Image.new("RGB", (280 * 6, 187 * 6), "white")
     count = min(36, len(frames))
     for index in range(count):
-        position = index % 18 if kind == "ai" else index
-        steps = 17 if kind == "ai" else max(1, count - 1)
+        position = index % 30 if kind == "ai" else index
+        steps = 29 if kind == "ai" else max(1, count - 1)
         selected = frames[round(position * (len(frames) - 1) / steps)]
         # Give the small animated orbs enough palette space for their gradients.
-        if kind == "ai" and index >= 18:
+        if kind == "ai" and index >= 30:
             selected = selected.crop((265, 20, 335, 90))
         sample.paste(ImageOps.fit(selected, (280, 187)), ((index % 6) * 280, (index // 6) * 187))
     return sample.quantize(colors=256)
