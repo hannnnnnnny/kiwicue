@@ -1,24 +1,49 @@
 <div align="center">
   <img src="./public/brand/kiwicue-wordmark.png" alt="KiwiCue" width="420" />
 
-  <h3>在奥克兰，找点值得出门的事。</h3>
+  <h3>下一次奥克兰出行，从聊一句开始。</h3>
 
-  <p>演唱会、话剧、市集、节日和电影，汇集在一个中英双语指南里，按时间先后排好。</p>
+  <p>五位有个性的动态 AI 向导，用中文或英文，帮你发现演出、电影和街角市集。</p>
 
   <p>
-    <a href="https://kiwicue.nz"><strong>🥝 打开 kiwicue.nz →</strong></a>
+    <a href="https://kiwicue.nz"><strong>🥝 体验 KiwiCue →</strong></a> ·
+    <a href="#认识你的-ai-向导">认识 AI 向导</a> ·
+    <a href="#能做什么">功能</a> ·
+    <a href="#本地运行">本地运行</a>
   </p>
 
   <p><a href="./README.md">English</a> · <strong>简体中文</strong></p>
 </div>
 
 <p align="center">
-  <img src="./docs/readme/desktop.jpg" alt="KiwiCue 桌面端：左侧导航、搜索、快捷筛选和精选奥克兰活动" width="72%" />
-  &nbsp;
-  <img src="./docs/readme/mobile.jpg" alt="KiwiCue 手机端，底部标签栏" width="21%" />
+  <img src="./docs/readme/ai-bot.gif" alt="带可见鼠标的 KiwiCue AI Bot 演示：打开助手，切换 Iris、Rua、Sunny、Kai 和 Fern，查看动态球体和主题变化，输入问题并切换中文语音输入" width="1120" />
 </p>
 
+<p align="center"><em>五种性格，动态 3D 伙伴，跟随选择变化的界面主题。</em><br /><a href="./docs/readme/ai-bot.jpg">查看静态预览</a></p>
+
 ---
+
+## 在线体验
+
+打开 [kiwicue.nz](https://kiwicue.nz)，点击右下角的助手球体。选一位向导，直接打字提问，或在支持的浏览器中使用麦克风。访客也能开始体验。
+
+可以试试 **“这个周末带孩子去哪玩？”** 或 **“Show me Auckland markets this weekend”**。
+
+## 认识你的 AI 向导
+
+KiwiCue 的 AI Bot 是一位有形象、有性格的出行伙伴。动态 3D 球体会随着倾听、思考和说话产生变化。切换助手，网站配色、建议风格和语音配置也会跟着切换。
+
+| 向导 | 风格 | 颜色 |
+| --- | --- | --- |
+| **Iris** · 策略家 | 平和简洁，说清推荐的理由 | 紫色 |
+| **Rua** · 指挥官 | 明确爽快，帮你拿主意 | 红色 |
+| **Sunny** · 发明家 | 轻松有趣，带一点幽默 | 黄色 |
+| **Fern** · 守护者 | 温和细心，留意实用细节 | 绿色 |
+| **Kai** · 实干家 | 短句直说，实用优先 | 蓝色 |
+
+五位助手共用同一套搜索工具。你可以询问活动、电影或市集，在对话中继续调整需求，查看推荐选项，再前往官方订票。语音输入支持中英文，回复可朗读；实际可用的音色取决于浏览器和设备。
+
+上方动图实录了角色切换、球体动画、主题变化，以及文字输入和语音语言控制，带有可见鼠标和点击高亮。录制范围及当前接口限制见[录制说明](./docs/readme/RECORDING.md)。
 
 ## 能做什么
 
@@ -32,7 +57,22 @@
 | 💬 **社交**（可选） | 标记“感兴趣 / 要去 / 去过”，发表评论，分享公开合集。 |
 | 🌏 **双语** | 随时在英文和简体中文之间切换。 |
 
-桌面端使用左侧导航，手机端使用底部标签栏。
+支持桌面端和手机端，也可以直接浏览、筛选和搜索；不注册就能收藏活动。
+
+<p align="center">
+  <img src="./docs/readme/demo.gif" alt="带可见鼠标的 KiwiCue 功能实录：打开真实活动，访客收藏，进入收藏页，并切换中文" width="1120" />
+</p>
+
+<details>
+<summary><strong>桌面端和手机端截图</strong></summary>
+
+<p align="center">
+  <img src="./docs/readme/desktop.jpg" alt="KiwiCue 桌面端活动发现、搜索、筛选和奥克兰活动列表" width="72%" />
+  &nbsp;
+  <img src="./docs/readme/mobile.jpg" alt="KiwiCue 手机端活动发现与底部导航" width="21%" />
+</p>
+
+</details>
 
 ## 为什么做 KiwiCue
 
@@ -74,15 +114,17 @@ API 密钥只留在服务端 —— 外部数据在路由处理器里获取并�
 
 ## 本地运行
 
-**需要：** Node.js 20+、npm，以及 Ticketmaster 和 TMDB 的 API 密钥。影院场次不需要密钥。
+**需要：** Node.js 20.9+、npm，以及 Ticketmaster 和 TMDB 的 API 密钥。影院场次不需要密钥。
 
 ```bash
 git clone https://github.com/hannnnnnnny/kiwicue.git
 cd kiwicue
-npm install
+npm ci
 cp .env.example .env.local   # 然后填入下面的密钥
 npm run dev                  # http://localhost:3000
 ```
+
+Windows PowerShell 请用 `Copy-Item .env.example .env.local` 复制环境变量文件。
 
 ```env
 TICKETMASTER_API_KEY=your_ticketmaster_consumer_key
@@ -118,7 +160,7 @@ TMDB_READ_ACCESS_TOKEN=your_tmdb_read_access_token
    {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery
    ```
 
-6. **语音问答（可选）** —— 执行 `supabase/migrations/202610010001_ask_usage.sql`，再把 `TYPESAFE_AI_API_KEY`、`DEEPSEEK_API_KEY` 和 `ASK_HASH_SALT`（16 位以上的随机字符串）设为 Sensitive 环境变量并重新部署。三者都设置后才会显示麦克风按钮。次数额度（未登录每天 15 次、登录 50 次）和每天 NZ$0.50、每月 NZ$8 的预算保存在 `ask_limits` 和 `ask_settings` 表里，修改不需要重新部署。
+6. **AI Bot（可选）** —— 助手还需要 Supabase 公共配置、服务端 Secret 和当前分支的全部数据库迁移。把 `TYPESAFE_AI_API_KEY`、`DEEPSEEK_API_KEY` 和 `ASK_HASH_SALT`（16 位以上随机字符串）设为 Sensitive 服务端环境变量并重新部署。从 `supabase/migrations/202610010001_ask_usage.sql` 开始，按文件名顺序执行后续迁移。搜索额度和费用预算由 `ask_limits`、`ask_settings` 配置。配置齐全后才会显示助手入口；完成配置后请实际提问一次，确认数据库权限、额度函数和模型服务都可用。
 
 7. **Kiwi** —— 再执行 `supabase/migrations/202610010002_ask_chat.sql` 和 `202610010003_ask_free_quota.sql`。助手（五个可选，换助手整站换色）能真正对话：DeepSeek 会读最近 12 轮对话和屏幕上的结果，只在用户想找东西或改条件时调用搜索，然后用自己的语气回复；回复开头带一个隐藏的 `[[mood]]` 情绪标签，由 3D 助手表现出来（它还会显示搜索中、出错等状态，眼睛跟随鼠标，闲置时会打盹）。每条消息占用一次每日额度。
 
@@ -177,6 +219,22 @@ npm run test:e2e    # 端到端测试
 npm run lint
 npm run build
 ```
+
+<details>
+<summary><strong>重新录制 README 动图</strong></summary>
+
+使用仓库已有的 Playwright，以及安装了 Pillow 的 Python。脚本会在 [kiwicue.nz](https://kiwicue.nz) 创建全新的访客会话，录制鼠标移动和点击高亮；临时帧保存在 Git 忽略的 `output/playwright/` 目录中。
+
+```bash
+npx playwright install chromium
+node scripts/capture-readme-demo.mjs
+python scripts/encode-readme-demo.py ai
+python scripts/encode-readme-demo.py demo
+```
+
+运行后会更新 `docs/readme/` 中的两张 GIF 和静态截图。默认 AI 预览展示界面交互，不提交付费 AI 请求。接口可用时，可改用 `node scripts/capture-readme-demo.mjs --with-reply` 录制真实问答和推荐结果；这会正常消耗 AI 次数与模型预算。详见[录制说明](./docs/readme/RECORDING.md)。
+
+</details>
 
 ## 部署
 

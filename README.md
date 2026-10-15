@@ -1,12 +1,15 @@
 <div align="center">
   <img src="./public/brand/kiwicue-wordmark.png" alt="KiwiCue" width="420" />
 
-  <h3>Find something worth going out for in Auckland.</h3>
+  <h3>Your next Auckland outing starts with a conversation.</h3>
 
-  <p>Concerts, theatre, markets, festivals and movies in one bilingual guide — sorted by what's coming up soon.</p>
+  <p>Meet five animated AI guides. Find concerts, movies and neighbourhood markets in English or Chinese.</p>
 
   <p>
-    <a href="https://kiwicue.nz"><strong>🥝 Open kiwicue.nz →</strong></a>
+    <a href="https://kiwicue.nz"><strong>🥝 Try KiwiCue →</strong></a> ·
+    <a href="#meet-your-ai-guide">Meet the AI guides</a> ·
+    <a href="#what-you-can-do">Features</a> ·
+    <a href="#run-it-locally">Run locally</a>
   </p>
 
   <p><strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a></p>
@@ -21,12 +24,34 @@
 </div>
 
 <p align="center">
-  <img src="./docs/readme/desktop.jpg" alt="KiwiCue on desktop: side navigation, search, quick filters and a featured Auckland event" width="72%" />
-  &nbsp;
-  <img src="./docs/readme/mobile.jpg" alt="KiwiCue on mobile with bottom tab bar" width="21%" />
+  <img src="./docs/readme/ai-bot.gif" alt="KiwiCue AI bot preview with a visible mouse: open the assistant, meet Iris, Rua, Sunny, Kai and Fern, watch their animated orbs and matching themes, type a question and switch voice input to Chinese" width="1120" />
 </p>
 
+<p align="center"><em>Five personalities. Animated 3D companions. A theme that follows your choice.</em><br /><a href="./docs/readme/ai-bot.jpg">View a still image</a></p>
+
 ---
+
+## Try it live
+
+Open [kiwicue.nz](https://kiwicue.nz) and click the assistant orb in the bottom-right corner. Pick a guide, then type a question or use the microphone in a supported browser. You can start as a guest.
+
+Try **“Show me Auckland markets this weekend”** or **“这个周末带孩子去哪玩？”**
+
+## Meet your AI guide
+
+KiwiCue's AI bot is an outing companion with a face and a personality. Its animated 3D orb responds as it listens, thinks and speaks. Change assistants to change the site's colours, advice style and voice profile.
+
+| Guide | Style | Colour |
+| --- | --- | --- |
+| **Iris** · Strategist | Calm, concise advice with a clear reason | Purple |
+| **Rua** · Commander | Decisive, upbeat suggestions | Red |
+| **Sunny** · Inventor | Playful ideas with a little wit | Yellow |
+| **Fern** · Guardian | Warm advice with practical details | Green |
+| **Kai** · Maker | Relaxed, direct and practical | Blue |
+
+All five share the same search tools. Ask about events, movies or markets; refine your request in conversation, inspect the suggested options and follow official booking links. Voice input supports English and Chinese, and replies can be spoken aloud. Available voices depend on your browser and device.
+
+The preview above shows real character selection, orb animation, theme changes and text/voice-language controls, with a visible mouse and click highlights. See [recording notes](./docs/readme/RECORDING.md) for the capture's scope and current API limitation.
 
 ## What you can do
 
@@ -40,7 +65,22 @@
 | 💬 **Social** *(optional)* | Mark events as Interested / Going / Went, comment, and share public collections. |
 | 🌏 **Bilingual** | Switch between English and Simplified Chinese anywhere. |
 
-Works on desktop (side navigation) and mobile (bottom tab bar).
+Works on desktop and mobile. Browse manually whenever you prefer, and save events without creating an account.
+
+<p align="center">
+  <img src="./docs/readme/demo.gif" alt="KiwiCue product walkthrough with a visible mouse: open a real event, save it as a guest, find it in saved events and switch to Chinese" width="1120" />
+</p>
+
+<details>
+<summary><strong>Desktop and mobile screenshots</strong></summary>
+
+<p align="center">
+  <img src="./docs/readme/desktop.jpg" alt="KiwiCue desktop event discovery, search, filters and Auckland listings" width="72%" />
+  &nbsp;
+  <img src="./docs/readme/mobile.jpg" alt="KiwiCue mobile event discovery with bottom navigation" width="21%" />
+</p>
+
+</details>
 
 ## Why KiwiCue
 
@@ -82,15 +122,17 @@ API keys stay on the server — external data is fetched and validated in route 
 
 ## Run it locally
 
-**You need:** Node.js 20+, npm, and API keys for Ticketmaster and TMDB. Cinema sessions need no key.
+**You need:** Node.js 20.9+, npm, and API keys for Ticketmaster and TMDB. Cinema sessions need no key.
 
 ```bash
 git clone https://github.com/hannnnnnnny/kiwicue.git
 cd kiwicue
-npm install
+npm ci
 cp .env.example .env.local   # then fill in the keys below
 npm run dev                  # http://localhost:3000
 ```
+
+On Windows PowerShell, use `Copy-Item .env.example .env.local` for the environment-file step.
 
 ```env
 TICKETMASTER_API_KEY=your_ticketmaster_consumer_key
@@ -126,7 +168,7 @@ Browsing, search and guest saves work with just these keys. Accounts are optiona
    {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery
    ```
 
-6. **Voice ask (optional)** — apply `supabase/migrations/202610010001_ask_usage.sql`, then set `TYPESAFE_AI_API_KEY`, `DEEPSEEK_API_KEY` and `ASK_HASH_SALT` (any random string of 16+ characters) as Sensitive variables and redeploy. The mic button appears only when all three are set. Quotas (guest 15, signed-in 50 searches a day) and the NZ$0.50/day, NZ$8/month budget live in the `ask_limits` and `ask_settings` tables, so they can change without a deploy.
+6. **AI bot (optional)** — the assistant also needs the Supabase public configuration, server secret and all migrations from your checked-out branch. Set `TYPESAFE_AI_API_KEY`, `DEEPSEEK_API_KEY` and `ASK_HASH_SALT` (a random string of 16+ characters) as Sensitive server variables and redeploy. Start with `supabase/migrations/202610010001_ask_usage.sql` and apply later migrations in filename order. Search quotas and spending budgets are configured in `ask_limits` and `ask_settings`. The launcher appears only when the required configuration is present; verify an actual question after setup to check database permissions, quota functions and providers.
 
 7. **Kiwi** — also apply `supabase/migrations/202610010002_ask_chat.sql` and `202610010003_ask_free_quota.sql`. The assistant (five to choose from, each re-themes the site) holds a real conversation: DeepSeek reads the last 12 turns and what is on screen, calls the search tool only when the visitor wants something or changes what they want, and replies in its own voice, opening with a hidden `[[mood]]` tag that the 3D assistant acts out (it also shows searching and error states, follows the pointer and dozes when idle). Each message uses one question from the daily quota.
 
@@ -185,6 +227,22 @@ npm run test:e2e    # end-to-end tests
 npm run lint
 npm run build
 ```
+
+<details>
+<summary><strong>Regenerate the README previews</strong></summary>
+
+The capture uses Playwright from this repository and Python with Pillow. It records a fresh guest session on [kiwicue.nz](https://kiwicue.nz), adds a visible mouse and click highlights, and writes temporary frames under the ignored `output/playwright/` directory.
+
+```bash
+npx playwright install chromium
+node scripts/capture-readme-demo.mjs
+python scripts/encode-readme-demo.py ai
+python scripts/encode-readme-demo.py demo
+```
+
+This updates the two GIFs and the still images in `docs/readme/`. The default AI preview demonstrates the interface without submitting a paid AI request. For a live question and recommendation capture, use `node scripts/capture-readme-demo.mjs --with-reply` after checking service availability; this uses the normal AI quota and provider budget. See [recording notes](./docs/readme/RECORDING.md) for details.
+
+</details>
 
 ## Deployment
 
