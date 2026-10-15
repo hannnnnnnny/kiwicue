@@ -11,7 +11,8 @@ const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
 const page = await context.newPage();
 const frames = [];
-const withReply = process.argv.includes("--with-reply");
+const captureProduct = process.argv.includes("--product");
+const question = "Markets this weekend";
 let frameNumber = 0;
 let pointer = { x: 1100, y: 490, pressed: false };
 let stage = "Discover Auckland";
@@ -34,10 +35,13 @@ async function paintPointer() {
 
 async function frame(duration = 120) {
   await paintPointer();
+  const capturedAt = performance.now();
+  const previous = frames.at(-1);
+  if (previous) previous.duration = Math.max(20, Math.round((capturedAt - previous.capturedAt) / 10) * 10);
   // Frame numbers span both GIFs so resetting the manifest cannot overwrite the AI capture.
   const file = resolve(directory, `${String(frameNumber++).padStart(4, "0")}.png`);
   await page.screenshot({ path: file });
-  frames.push({ file, duration, stage, pointer: { ...pointer } });
+  frames.push({ file, duration, capturedAt, stage, pointer: { ...pointer } });
 }
 
 async function hold(duration) {
@@ -49,7 +53,7 @@ async function hold(duration) {
 
 async function saveManifest(name) {
   const manifest = resolve(output, `readme-${name}-frames.json`);
-  await writeFile(manifest, JSON.stringify({ origin, viewport: { width: 1440, height: 960 }, withReply, frames }, null, 2));
+  await writeFile(manifest, JSON.stringify({ origin, viewport: { width: 1440, height: 960 }, question, realTime: true, frames }, null, 2));
   process.stdout.write(`Captured ${frames.length} ${name} frames. Manifest: ${manifest}\n`);
 }
 
@@ -95,74 +99,121 @@ async function captureDiscovery() {
   await page.goto(origin);
   await page.getByRole("button", { name: /^Save / }).first().waitFor({ timeout: 60_000 });
   await settleImages();
-  await page.screenshot({ path: resolve("docs/readme/desktop.jpg"), type: "jpeg", quality: 88 });
-  await frame(1600);
+  if (captureProduct) await page.screenshot({ path: resolve("docs/readme/desktop.jpg"), type: "jpeg", quality: 88 });
 }
 
 async function captureAssistant() {
-  stage = "Ask the AI outing guide";
-  await click(page.getByRole("button", { name: "Ask KiwiCue", exact: true }));
-  await hold(960);
-  stage = "Choose from five animated assistants";
-  await click(page.getByRole("button", { name: "Change assistant", exact: true }));
-  await hold(1200);
-  await page.screenshot({ path: resolve("docs/readme/ai-bot.jpg"), type: "jpeg", quality: 90 });
-  for (const name of ["Iris", "Rua", "Sunny", "Kai", "Fern"]) {
-    stage = `Meet ${name}`;
-    await click(page.locator(`[data-assistant-option="${name.toLowerCase()}"]`));
-    await page.getByRole("heading", { name, exact: true }).waitFor();
-    await hold(840);
-    if (name !== "Fern") await click(page.getByRole("button", { name: "Change assistant", exact: true }));
-  }
-  if (withReply) await askQuestion();
-  else await previewInput();
+  await page.getByRole("button", { name: "Ask KiwiCue", exact: true }).click();
+  await page.getByRole("textbox", { name: /^Message / }).waitFor();
+  stage = "Ask for markets this weekend";
+  await frame();
+  await askQuestion();
 }
 
-async function previewInput() {
-  stage = "Type a natural-language question";
-  const input = page.getByRole("textbox", { name: "Message Fern", exact: true });
-  await moveTo(input);
-  const question = "Show me Auckland markets this weekend";
-  for (let length = 4; length < question.length + 4; length += 4) {
-    await input.fill(question.slice(0, length));
-    await frame(180);
-  }
-  await hold(1200);
-  stage = "Choose the voice input language";
-  await click(page.getByRole("button", { name: "Voice input: English. Switch to Chinese", exact: true }));
-  await hold(960);
+async function installStreamCapture() {
+  await page.addInitScript(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const target = args[0] instanceof Request ? args[0].url : String(args[0]);
+      if (new URL(target, location.origin).pathname !== "/api/ask") return originalFetch(...args);
+      const capture = { status: 0, body: "", finished: false, error: null };
+      window.__readmeAskCapture = capture;
+      try {
+        const response = await originalFetch(...args);
+        capture.status = response.status;
+        // Read a clone so recording observes the real stream without delaying UI delivery.
+        void readClone(response.clone(), capture);
+        return response;
+      } catch (error) {
+        capture.error = error.message;
+        capture.finished = true;
+        throw error;
+      }
+    };
+    async function readClone(response, capture) {
+      try {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let step;
+        while (!(step = await reader.read()).done) capture.body += decoder.decode(step.value, { stream: true });
+        capture.body += decoder.decode();
+      } catch (error) {
+        capture.error = error.message;
+      } finally {
+        capture.finished = true;
+      }
+    }
+  });
 }
 
 async function askQuestion() {
-  stage = "Ask in natural language";
-  const input = page.getByRole("textbox", { name: "Message Fern", exact: true });
+  const input = page.getByRole("textbox", { name: /^Message / });
   await moveTo(input);
-  const question = "Show me Auckland markets this weekend";
   for (let length = 4; length < question.length + 4; length += 4) {
     await input.fill(question.slice(0, length));
     await frame(180);
   }
-  await frame(900);
-  const response = page.waitForResponse(result => result.url() === `${origin}/api/ask`);
-  await click(page.getByRole("button", { name: "Send", exact: true }));
-  const result = await response;
-  if (!result.ok()) throw new Error(`AI request returned ${result.status()}: ${await result.text()}`);
-  stage = "AI filters and recommendations";
-  for (let index = 0; index < 14; index++) {
-    await frame(180);
-    await page.waitForTimeout(180);
-  }
-  await result.finished();
-  await page.locator(".ask-card").first().waitFor({ timeout: 60_000 });
+  await hold(600);
+  await moveTo(page.getByRole("button", { name: "Send", exact: true }));
+  pointer.pressed = true;
+  await frame();
+  const submittedAt = performance.now();
+  await page.mouse.click(pointer.x, pointer.y);
+  pointer.pressed = false;
+  const result = await captureStream(submittedAt);
+  await writeFile(resolve(output, "readme-ai-last-response.json"), JSON.stringify(result, null, 2));
+  validateResults(result);
   await settleImages();
-  await frame(3500);
-  await writeFile(resolve(output, "readme-ai-response.txt"), await page.getByRole("dialog").innerText());
+  stage = "Matching activities, ranked with Jev";
+  await page.locator(".ask-card").first().scrollIntoViewIfNeeded();
+  await hold(3000);
+  await page.screenshot({ path: resolve("docs/readme/ai-bot.jpg"), type: "jpeg", quality: 90 });
+  await writeFile(resolve("docs/readme/ai-bot-evidence.json"), JSON.stringify(result, null, 2));
+}
+
+async function captureStream(submittedAt) {
+  stage = "Jev understands and ranks matching activities";
+  let result = null;
+  let firstCardMs = null;
+  while (!result?.finished && performance.now() - submittedAt < 65_000) {
+    await frame();
+    if (firstCardMs === null && await page.locator(".ask-card").first().isVisible()) {
+      firstCardMs = Math.round(performance.now() - submittedAt);
+      stage = "Matching activity cards arrive";
+    }
+    result = await page.evaluate(() => window.__readmeAskCapture ?? null);
+    await page.waitForTimeout(120);
+  }
+  if (!result?.finished) throw new Error("AI response did not finish within 65 seconds");
+  if (result.error) throw new Error(result.error);
+  const events = result.body.trim().split("\n").filter(Boolean).map(line => JSON.parse(line));
+  return { origin, question, recordedAt: new Date().toISOString(), status: result.status, firstCardMs,
+    completeMs: Math.round(performance.now() - submittedAt), events };
+}
+
+function validateResults(result) {
+  const events = result.events;
+  const understood = events.find(event => event.type === "understood");
+  const cards = events.filter(event => event.type === "result").map(event => event.card);
+  if (result.status !== 200 || events.some(event => event.type === "error")) throw new Error("AI request failed; no preview was published");
+  if (!events.some(event => event.type === "done") || cards.length < 2) throw new Error("Capture requires a completed response with multiple matching cards");
+  if (understood?.filters.domain !== "markets" || understood.filters.dates.length === 0) throw new Error("The search did not retain the requested market and date filters");
+  if (events.some(event => event.type === "relaxed" && event.keys.length > 0)) throw new Error("The preview requires exact matches, without relaxed filters");
+  if (!cards.some(card => card.score > 0)) throw new Error("No positive Jev relevance scores were returned");
+  const reply = events.filter(event => event.type === "reply").map(event => event.delta).join("");
+  if (/DSML/u.test(reply)) throw new Error("The response contains tool protocol markup");
+  for (const card of cards) {
+    const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Auckland" }).format(new Date(card.when));
+    if (card.kind !== "market" || !understood.filters.dates.includes(date)) {
+      throw new Error("A result does not match the requested type or dates");
+    }
+  }
+  process.stdout.write(`Verified ${cards.length} matching activity cards; first visible card ${result.firstCardMs} ms after submit\n`);
 }
 
 async function captureDetails() {
   stage = "Open event details";
-  if (withReply) await click(page.locator(".ask-card-link").first());
-  else await click(page.getByRole("link", { name: /^View .* details$/ }).first());
+  await click(page.locator(".ask-card-link").first());
   const save = page.getByRole("button", { name: /^Save / }).first();
   await save.waitFor({ timeout: 60_000 });
   await settleImages();
@@ -203,16 +254,18 @@ async function captureReturnAndMobile() {
 }
 
 try {
+  await installStreamCapture();
   await captureDiscovery();
   await captureAssistant();
   await saveManifest("ai");
-  if (!withReply) await click(page.getByRole("button", { name: "Close", exact: true }));
-  frames.length = 0;
-  await frame(1600);
-  await captureDetails();
-  await captureSavedAndLanguage();
-  await captureReturnAndMobile();
-  await saveManifest("demo");
+  if (captureProduct) {
+    frames.length = 0;
+    await frame();
+    await captureDetails();
+    await captureSavedAndLanguage();
+    await captureReturnAndMobile();
+    await saveManifest("demo");
+  }
 } finally {
   await browser.close();
 }
