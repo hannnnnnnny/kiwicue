@@ -24,10 +24,10 @@
 </div>
 
 <p align="center">
-  <img src="./docs/readme/ai-bot.gif" alt="Real KiwiCue bot search with a visible mouse: ask for markets this weekend, submit the question and see matching Auckland activity cards ranked with Jev" width="1120" />
+  <img src="./docs/readme/ai-bot.gif" alt="Real KiwiCue bot search with a visible mouse: ask for concerts this weekend and see matching Auckland events with posters, ranked with Jev" width="1120" />
 </p>
 
-<p align="center"><em>“Markets this weekend” → matching activities, with dates and venues.</em><br /><a href="./docs/readme/ai-bot.jpg">View the results as a still image</a></p>
+<p align="center"><em>“Concerts this weekend” → matching events, with posters, dates and venues.</em><br /><a href="./docs/readme/ai-bot.jpg">View the results as a still image</a></p>
 
 ---
 
@@ -35,7 +35,7 @@
 
 Open [kiwicue.nz](https://kiwicue.nz) and click the assistant orb in the bottom-right corner. Pick a guide, then type a question or use the microphone in a supported browser. You can start as a guest.
 
-Try **“Markets this weekend”** or **“这个周末有哪些市集？”**
+Try **“Concerts this weekend”** or **“这个周末有哪些演唱会？”**
 
 ## Find activities with Jev
 

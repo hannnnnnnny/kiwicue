@@ -16,10 +16,10 @@
 </div>
 
 <p align="center">
-  <img src="./docs/readme/ai-bot.gif" alt="带可见鼠标的真实 Bot 搜索：输入本周末市集的条件，提交问题，查看通过 Jev 评估排序的奥克兰匹配活动卡片" width="1120" />
+  <img src="./docs/readme/ai-bot.gif" alt="带可见鼠标的真实 Bot 搜索：询问本周末演唱会，查看通过 Jev 评估排序、带真实海报的奥克兰活动卡片" width="1120" />
 </p>
 
-<p align="center"><em>“这个周末有哪些市集？” → 列出符合条件的活动、时间和地点。</em><br /><a href="./docs/readme/ai-bot.jpg">查看结果截图</a></p>
+<p align="center"><em>“Concerts this weekend”（这个周末有哪些演唱会？） → 列出符合条件的活动海报、时间和地点。</em><br /><a href="./docs/readme/ai-bot.jpg">查看结果截图</a></p>
 
 ---
 
@@ -27,7 +27,7 @@
 
 打开 [kiwicue.nz](https://kiwicue.nz)，点击右下角的助手球体。选一位向导，直接打字提问，或在支持的浏览器中使用麦克风。访客也能开始体验。
 
-可以试试 **“这个周末有哪些市集？”** 或 **“Markets this weekend”**。
+可以试试 **“这个周末有哪些演唱会？”** 或 **“Concerts this weekend”**。
 
 ## 用 Jev 找符合条件的活动
 
