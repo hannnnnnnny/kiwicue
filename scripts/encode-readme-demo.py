@@ -20,11 +20,11 @@ def shared_palette(frames, kind):
     sample = Image.new("RGB", (280 * 6, 187 * 6), "white")
     count = min(36, len(frames))
     for index in range(count):
-        position = index % 18 if kind == "ai" else index
-        steps = 17 if kind == "ai" else max(1, count - 1)
+        position = index % 30 if kind == "ai" else index
+        steps = 29 if kind == "ai" else max(1, count - 1)
         selected = frames[round(position * (len(frames) - 1) / steps)]
         # Give the small animated orbs enough palette space for their gradients.
-        if kind == "ai" and index >= 18:
+        if kind == "ai" and index >= 30:
             selected = selected.crop((265, 20, 335, 90))
         sample.paste(ImageOps.fit(selected, (280, 187)), ((index % 6) * 280, (index // 6) * 187))
     return sample.quantize(colors=256)
@@ -41,15 +41,13 @@ def verify_sources(manifest, kind):
         assert not files.intersection(other_files), "AI and product captures must use separate frame files"
 
 
-def start_with_assistants(manifest):
-    # Rotate the loop to make the five guides visible before a viewer presses anything.
+def start_with_results(manifest):
+    # The README thumbnail shows actual matches; the loop still preserves the real search wait.
     frames = manifest["frames"]
-    for index in range(1, len(frames)):
-        current = frames[index]
-        if (current["stage"] == "Choose from five animated assistants"
-                and not current["pointer"]["pressed"] and frames[index - 1]["pointer"]["pressed"]):
+    for index, frame in enumerate(frames):
+        if frame["stage"] == "Matching activities, ranked with Jev":
             return {**manifest, "frames": frames[index:] + frames[:index]}
-    raise ValueError("The AI capture is missing the assistant picker")
+    raise ValueError("A matching-results frame is required for the AI preview")
 
 
 def encode():
@@ -59,7 +57,7 @@ def encode():
     manifest = json.loads(Path(f"output/playwright/readme-{kind}-frames.json").read_text(encoding="utf-8"))
     verify_sources(manifest, kind)
     if kind == "ai":
-        manifest = start_with_assistants(manifest)
+        manifest = start_with_results(manifest)
     frames = load_frames(manifest)
     palette = shared_palette(frames, kind)
     indexed = [frame.quantize(palette=palette, dither=Image.Dither.NONE) for frame in frames]

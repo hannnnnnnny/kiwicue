@@ -1,13 +1,13 @@
 <div align="center">
   <img src="./public/brand/kiwicue-wordmark.png" alt="KiwiCue" width="420" />
 
-  <h3>下一次奥克兰出行，从聊一句开始。</h3>
+  <h3>说出想去哪，Bot 列出符合条件的活动。</h3>
 
-  <p>五位有个性的动态 AI 向导，用中文或英文，帮你发现演出、电影和街角市集。</p>
+  <p>Jev 理解出行条件、评估活动匹配度，帮你找到奥克兰的演出、电影和市集。中英文都能问。</p>
 
   <p>
     <a href="https://kiwicue.nz"><strong>🥝 体验 KiwiCue →</strong></a> ·
-    <a href="#认识你的-ai-向导">认识 AI 向导</a> ·
+    <a href="#用-jev-找符合条件的活动">Jev 活动匹配</a> ·
     <a href="#能做什么">功能</a> ·
     <a href="#本地运行">本地运行</a>
   </p>
@@ -16,10 +16,10 @@
 </div>
 
 <p align="center">
-  <img src="./docs/readme/ai-bot.gif" alt="带可见鼠标的 KiwiCue AI Bot 演示：打开助手，切换 Iris、Rua、Sunny、Kai 和 Fern，查看动态球体和主题变化，输入问题并切换中文语音输入" width="1120" />
+  <img src="./docs/readme/ai-bot.gif" alt="带可见鼠标的真实 Bot 搜索：询问本周末演唱会，查看通过 Jev 评估排序、带真实海报的奥克兰活动卡片" width="1120" />
 </p>
 
-<p align="center"><em>五种性格，动态 3D 伙伴，跟随选择变化的界面主题。</em><br /><a href="./docs/readme/ai-bot.jpg">查看静态预览</a></p>
+<p align="center"><em>“Concerts this weekend”（这个周末有哪些演唱会？） → 列出符合条件的活动海报、时间和地点。</em><br /><a href="./docs/readme/ai-bot.jpg">查看结果截图</a></p>
 
 ---
 
@@ -27,11 +27,22 @@
 
 打开 [kiwicue.nz](https://kiwicue.nz)，点击右下角的助手球体。选一位向导，直接打字提问，或在支持的浏览器中使用麦克风。访客也能开始体验。
 
-可以试试 **“这个周末带孩子去哪玩？”** 或 **“Show me Auckland markets this weekend”**。
+可以试试 **“这个周末有哪些演唱会？”** 或 **“Concerts this weekend”**。
 
-## 认识你的 AI 向导
+## 用 Jev 找符合条件的活动
 
-KiwiCue 的 AI Bot 是一位有形象、有性格的出行伙伴。动态 3D 球体会随着倾听、思考和说话产生变化。切换助手，网站配色、建议风格和语音配置也会跟着切换。
+告诉 Bot 什么时候出门、想做什么，以及免费入场、奥克兰某个区域等条件，它会把需求变成可以直接查看的活动列表：
+
+1. **理解条件。** Jev 识别活动类型、日期、区域、是否免费等偏好。
+2. **查找并排序。** KiwiCue 用这些条件筛选已覆盖的活动来源，再由 Jev 评估候选活动与需求的匹配度。
+3. **列出活动。** 对话中显示带时间、场馆和详情入口的活动卡片；还可以继续调整条件，或前往官方订票。
+
+DeepSeek 负责自然对话并决定何时搜索，Jev 负责偏好判断和匹配度评分。上方动图实录了提交真实问题和返回匹配活动卡片的过程，保留实际等待时间。提问内容、结果校验和录制方式见[录制说明](./docs/readme/RECORDING.md)。
+
+<details>
+<summary><strong>五位动态向导，共用一套搜索能力</strong></summary>
+
+切换助手可改变网站配色、建议风格和语音配置；动态 3D 球体会随倾听、思考和说话产生变化。
 
 | 向导 | 风格 | 颜色 |
 | --- | --- | --- |
@@ -41,14 +52,15 @@ KiwiCue 的 AI Bot 是一位有形象、有性格的出行伙伴。动态 3D 球
 | **Fern** · 守护者 | 温和细心，留意实用细节 | 绿色 |
 | **Kai** · 实干家 | 短句直说，实用优先 | 蓝色 |
 
-五位助手共用同一套搜索工具。你可以询问活动、电影或市集，在对话中继续调整需求，查看推荐选项，再前往官方订票。语音输入支持中英文，回复可朗读；实际可用的音色取决于浏览器和设备。
+语音输入支持中英文，回复可朗读；实际可用的音色取决于浏览器和设备。
 
-上方动图实录了角色切换、球体动画、主题变化，以及文字输入和语音语言控制，带有可见鼠标和点击高亮。录制范围及当前接口限制见[录制说明](./docs/readme/RECORDING.md)。
+</details>
 
 ## 能做什么
 
 | | |
 | --- | --- |
+| 🤖 **问 Bot** | 说出出行需求，由 Jev 判断偏好、评估匹配活动；支持中英文继续调整条件。 |
 | 🔎 **发现** | 按分类浏览，或点快捷筛选：*今晚*、*这个周末*、*免费*、*现场音乐*、*随便看看*。可按活动名或场馆搜索。 |
 | 🗺️ **规划** | 日期、场馆、地图一目了然，一键跳转官方购票页面。 |
 | 🎬 **电影** | 查看奥克兰 HOYTS 和 EVENT Cinemas 正在放映的电影：哪些影院在放、场次时间、影厅类型（LUX、Gold Class、V-Max 等）以及 HOYTS 票价。 |
@@ -229,10 +241,9 @@ npm run build
 npx playwright install chromium
 node scripts/capture-readme-demo.mjs
 python scripts/encode-readme-demo.py ai
-python scripts/encode-readme-demo.py demo
 ```
 
-运行后会更新 `docs/readme/` 中的两张 GIF 和静态截图。默认 AI 预览展示界面交互，不提交付费 AI 请求。接口可用时，可改用 `node scripts/capture-readme-demo.mjs --with-reply` 录制真实问答和推荐结果；这会正常消耗 AI 次数与模型预算。详见[录制说明](./docs/readme/RECORDING.md)。
+默认录制会提交一次真实问题，正常消耗 AI 次数和模型预算，并更新 AI 帧、结果截图及响应证据。使用 `node scripts/capture-readme-demo.mjs --product` 可同时录制普通活动流程，再运行 `python scripts/encode-readme-demo.py demo`。如果请求失败、没有多条匹配结果、搜索放宽了原条件，或没有返回正向 Jev 匹配分数，录制会直接报错。详见[录制说明](./docs/readme/RECORDING.md)。
 
 </details>
 

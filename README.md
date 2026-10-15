@@ -1,13 +1,13 @@
 <div align="center">
   <img src="./public/brand/kiwicue-wordmark.png" alt="KiwiCue" width="420" />
 
-  <h3>Your next Auckland outing starts with a conversation.</h3>
+  <h3>Tell the bot what you want. See the activities that fit.</h3>
 
-  <p>Meet five animated AI guides. Find concerts, movies and neighbourhood markets in English or Chinese.</p>
+  <p>Jev helps KiwiCue understand your plans and rank matching Auckland events, movies and markets. Ask in English or Chinese.</p>
 
   <p>
     <a href="https://kiwicue.nz"><strong>🥝 Try KiwiCue →</strong></a> ·
-    <a href="#meet-your-ai-guide">Meet the AI guides</a> ·
+    <a href="#find-activities-with-jev">Find activities with Jev</a> ·
     <a href="#what-you-can-do">Features</a> ·
     <a href="#run-it-locally">Run locally</a>
   </p>
@@ -24,10 +24,10 @@
 </div>
 
 <p align="center">
-  <img src="./docs/readme/ai-bot.gif" alt="KiwiCue AI bot preview with a visible mouse: open the assistant, meet Iris, Rua, Sunny, Kai and Fern, watch their animated orbs and matching themes, type a question and switch voice input to Chinese" width="1120" />
+  <img src="./docs/readme/ai-bot.gif" alt="Real KiwiCue bot search with a visible mouse: ask for concerts this weekend and see matching Auckland events with posters, ranked with Jev" width="1120" />
 </p>
 
-<p align="center"><em>Five personalities. Animated 3D companions. A theme that follows your choice.</em><br /><a href="./docs/readme/ai-bot.jpg">View a still image</a></p>
+<p align="center"><em>“Concerts this weekend” → matching events, with posters, dates and venues.</em><br /><a href="./docs/readme/ai-bot.jpg">View the results as a still image</a></p>
 
 ---
 
@@ -35,11 +35,22 @@
 
 Open [kiwicue.nz](https://kiwicue.nz) and click the assistant orb in the bottom-right corner. Pick a guide, then type a question or use the microphone in a supported browser. You can start as a guest.
 
-Try **“Show me Auckland markets this weekend”** or **“这个周末带孩子去哪玩？”**
+Try **“Concerts this weekend”** or **“这个周末有哪些演唱会？”**
 
-## Meet your AI guide
+## Find activities with Jev
 
-KiwiCue's AI bot is an outing companion with a face and a personality. Its animated 3D orb responds as it listens, thinks and speaks. Change assistants to change the site's colours, advice style and voice profile.
+Say when you want to go, what you enjoy and any constraints, such as free entry or an area of Auckland. The bot turns that request into a list you can act on:
+
+1. **Understand the request.** Jev identifies preferences such as outing type, dates, area and free entry.
+2. **Find and rank matches.** KiwiCue checks those conditions against its covered listings, then Jev scores the candidates for relevance.
+3. **Show the activities.** Cards arrive in the chat with dates, venues and links to details. Refine your request in conversation or follow an official booking link.
+
+DeepSeek handles the conversation and decides when to search; Jev handles preference evaluation and relevance scoring. The preview records a real submitted question and the matching result cards, with the actual wait preserved. See [recording notes](./docs/readme/RECORDING.md) for the query, checks and capture method.
+
+<details>
+<summary><strong>Five animated guides, one shared search</strong></summary>
+
+The guides share the same search tools. Choosing one changes the site's colours, advice style and voice profile. The animated 3D orb responds as it listens, thinks and speaks.
 
 | Guide | Style | Colour |
 | --- | --- | --- |
@@ -49,14 +60,15 @@ KiwiCue's AI bot is an outing companion with a face and a personality. Its anima
 | **Fern** · Guardian | Warm advice with practical details | Green |
 | **Kai** · Maker | Relaxed, direct and practical | Blue |
 
-All five share the same search tools. Ask about events, movies or markets; refine your request in conversation, inspect the suggested options and follow official booking links. Voice input supports English and Chinese, and replies can be spoken aloud. Available voices depend on your browser and device.
+Voice input supports English and Chinese, and replies can be spoken aloud. Available voices depend on your browser and device.
 
-The preview above shows real character selection, orb animation, theme changes and text/voice-language controls, with a visible mouse and click highlights. See [recording notes](./docs/readme/RECORDING.md) for the capture's scope and current API limitation.
+</details>
 
 ## What you can do
 
 | | |
 | --- | --- |
+| 🤖 **Ask the bot** | Describe your plans; Jev evaluates your preferences and ranks matching activities. Refine the request in English or Chinese. |
 | 🔎 **Discover** | Browse by category or tap a quick filter — *Tonight*, *This weekend*, *Free*, *Live music*, or *Surprise me*. Search by event name or venue. |
 | 🗺️ **Plan** | See dates, venues and maps at a glance, then go straight to the official ticket page. |
 | 🎬 **Movies** | See what's on at HOYTS and EVENT Cinemas across Auckland: every cinema showing a film, session times, screen types (LUX, Gold Class, V-Max…) and HOYTS ticket prices. |
@@ -237,10 +249,9 @@ The capture uses Playwright from this repository and Python with Pillow. It reco
 npx playwright install chromium
 node scripts/capture-readme-demo.mjs
 python scripts/encode-readme-demo.py ai
-python scripts/encode-readme-demo.py demo
 ```
 
-This updates the two GIFs and the still images in `docs/readme/`. The default AI preview demonstrates the interface without submitting a paid AI request. For a live question and recommendation capture, use `node scripts/capture-readme-demo.mjs --with-reply` after checking service availability; this uses the normal AI quota and provider budget. See [recording notes](./docs/readme/RECORDING.md) for details.
+The default capture sends one real question, consumes normal AI quota and provider budget, and updates the AI frames, result screenshot and response evidence. Use `node scripts/capture-readme-demo.mjs --product` to also capture the general event walkthrough, then run `python scripts/encode-readme-demo.py demo`. The capture fails if the request fails, has no multiple matches, relaxes the requested filters or returns no positive Jev relevance scores. See [recording notes](./docs/readme/RECORDING.md) for details.
 
 </details>
 

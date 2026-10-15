@@ -1,0 +1,417 @@
+{
+  "origin": "https://kiwicue.nz",
+  "question": "Concerts this weekend",
+  "recordedAt": "2026-10-15T17:52:53.672Z",
+  "status": 200,
+  "firstCardMs": 3133,
+  "completeMs": 5719,
+  "events": [
+    {
+      "type": "understood",
+      "filters": {
+        "domain": "events",
+        "dates": [
+          "2026-10-17",
+          "2026-10-18"
+        ],
+        "timeOfDay": "any",
+        "area": "any",
+        "category": "music",
+        "kids": false,
+        "free": false,
+        "names": [],
+        "place": null,
+        "maxPrice": null,
+        "totalBudget": null,
+        "partySize": 1,
+        "startMinute": null,
+        "endMinute": null
+      },
+      "chips": [
+        {
+          "key": "domain",
+          "label": "Events"
+        },
+        {
+          "key": "dates",
+          "label": "Sat 17 Oct – Sun 18 Oct"
+        },
+        {
+          "key": "category",
+          "label": "Music"
+        }
+      ]
+    },
+    {
+      "type": "result",
+      "card": {
+        "kind": "event",
+        "id": "17aZv0G65EoSw-r",
+        "title": "Macy Gray Live",
+        "when": "2026-10-17T07:00:00Z",
+        "venue": "The Civic, Auckland",
+        "href": "/events/17aZv0G65EoSw-r",
+        "imageUrl": "https://s1.ticketm.net/dam/a/011/7c110656-de83-4a89-9f13-a56a3c4af011_SOURCE",
+        "priceText": null,
+        "sessionCount": 1,
+        "score": 0.8166666666666668,
+        "bookingUrl": "https://www.ticketmaster.co.nz/macy-gray-live-auckland-17-10-2026/event/240064B9D1CF285E",
+        "budgetStatus": "unknown",
+        "minPartyCost": null,
+        "durationMinutes": null
+      }
+    },
+    {
+      "type": "result",
+      "card": {
+        "kind": "event",
+        "id": "1A0ZkowGkegkNHY",
+        "title": "Bjorn Again: ABBA FOREVER TOUR",
+        "when": "2026-10-17T06:30:00Z",
+        "venue": "Kiri Te Kanawa Theatre",
+        "href": "/events/1A0ZkowGkegkNHY",
+        "imageUrl": "https://s1.ticketm.net/dam/a/4fd/cf368d1a-75b2-44b8-a433-ba0f8a1e04fd_SOURCE",
+        "priceText": null,
+        "sessionCount": 1,
+        "score": 0.7566666666666667,
+        "bookingUrl": "https://www.ticketmaster.co.nz/bjorn-again-abba-forever-tour-auckland-17-10-2026/event/24006472B51A3F30",
+        "budgetStatus": "unknown",
+        "minPartyCost": null,
+        "durationMinutes": null
+      }
+    },
+    {
+      "type": "best",
+      "id": "17aZv0G65EoSw-r"
+    },
+    {
+      "type": "layout",
+      "layout": "shelf"
+    },
+    {
+      "type": "mood",
+      "mood": "happy"
+    },
+    {
+      "type": "reply",
+      "delta": "Two"
+    },
+    {
+      "type": "reply",
+      "delta": " on"
+    },
+    {
+      "type": "reply",
+      "delta": " Saturday"
+    },
+    {
+      "type": "reply",
+      "delta": " night"
+    },
+    {
+      "type": "reply",
+      "delta": ","
+    },
+    {
+      "type": "reply",
+      "delta": " both"
+    },
+    {
+      "type": "reply",
+      "delta": " in"
+    },
+    {
+      "type": "reply",
+      "delta": " the"
+    },
+    {
+      "type": "reply",
+      "delta": " city"
+    },
+    {
+      "type": "reply",
+      "delta": "."
+    },
+    {
+      "type": "reply",
+      "delta": " M"
+    },
+    {
+      "type": "reply",
+      "delta": "acy"
+    },
+    {
+      "type": "reply",
+      "delta": " Gray"
+    },
+    {
+      "type": "reply",
+      "delta": " at"
+    },
+    {
+      "type": "reply",
+      "delta": " The"
+    },
+    {
+      "type": "reply",
+      "delta": " Civic"
+    },
+    {
+      "type": "reply",
+      "delta": " is"
+    },
+    {
+      "type": "reply",
+      "delta": " the"
+    },
+    {
+      "type": "reply",
+      "delta": " real"
+    },
+    {
+      "type": "reply",
+      "delta": "-de"
+    },
+    {
+      "type": "reply",
+      "delta": "al"
+    },
+    {
+      "type": "reply",
+      "delta": " soul"
+    },
+    {
+      "type": "reply",
+      "delta": " and"
+    },
+    {
+      "type": "reply",
+      "delta": " R"
+    },
+    {
+      "type": "reply",
+      "delta": "&B"
+    },
+    {
+      "type": "reply",
+      "delta": " voice"
+    },
+    {
+      "type": "reply",
+      "delta": ";"
+    },
+    {
+      "type": "reply",
+      "delta": " Bj"
+    },
+    {
+      "type": "reply",
+      "delta": "orn"
+    },
+    {
+      "type": "reply",
+      "delta": " Again"
+    },
+    {
+      "type": "reply",
+      "delta": " at"
+    },
+    {
+      "type": "reply",
+      "delta": " K"
+    },
+    {
+      "type": "reply",
+      "delta": "iri"
+    },
+    {
+      "type": "reply",
+      "delta": " Te"
+    },
+    {
+      "type": "reply",
+      "delta": " Kan"
+    },
+    {
+      "type": "reply",
+      "delta": "awa"
+    },
+    {
+      "type": "reply",
+      "delta": " Theatre"
+    },
+    {
+      "type": "reply",
+      "delta": " is"
+    },
+    {
+      "type": "reply",
+      "delta": " the"
+    },
+    {
+      "type": "reply",
+      "delta": " AB"
+    },
+    {
+      "type": "reply",
+      "delta": "BA"
+    },
+    {
+      "type": "reply",
+      "delta": " tribute"
+    },
+    {
+      "type": "reply",
+      "delta": " if"
+    },
+    {
+      "type": "reply",
+      "delta": " you"
+    },
+    {
+      "type": "reply",
+      "delta": "'d"
+    },
+    {
+      "type": "reply",
+      "delta": " rather"
+    },
+    {
+      "type": "reply",
+      "delta": " sing"
+    },
+    {
+      "type": "reply",
+      "delta": " along"
+    },
+    {
+      "type": "reply",
+      "delta": " all"
+    },
+    {
+      "type": "reply",
+      "delta": " night"
+    },
+    {
+      "type": "reply",
+      "delta": ".\n\n"
+    },
+    {
+      "type": "reply",
+      "delta": "Nothing"
+    },
+    {
+      "type": "reply",
+      "delta": " listed"
+    },
+    {
+      "type": "reply",
+      "delta": " for"
+    },
+    {
+      "type": "reply",
+      "delta": " Sunday"
+    },
+    {
+      "type": "reply",
+      "delta": ","
+    },
+    {
+      "type": "reply",
+      "delta": " so"
+    },
+    {
+      "type": "reply",
+      "delta": " it"
+    },
+    {
+      "type": "reply",
+      "delta": "'s"
+    },
+    {
+      "type": "reply",
+      "delta": " Saturday"
+    },
+    {
+      "type": "reply",
+      "delta": " or"
+    },
+    {
+      "type": "reply",
+      "delta": " nothing"
+    },
+    {
+      "type": "reply",
+      "delta": " this"
+    },
+    {
+      "type": "reply",
+      "delta": " weekend"
+    },
+    {
+      "type": "reply",
+      "delta": "."
+    },
+    {
+      "type": "reply",
+      "delta": " Prices"
+    },
+    {
+      "type": "reply",
+      "delta": " aren"
+    },
+    {
+      "type": "reply",
+      "delta": "'t"
+    },
+    {
+      "type": "reply",
+      "delta": " showing"
+    },
+    {
+      "type": "reply",
+      "delta": " on"
+    },
+    {
+      "type": "reply",
+      "delta": " either"
+    },
+    {
+      "type": "reply",
+      "delta": " —"
+    },
+    {
+      "type": "reply",
+      "delta": " the"
+    },
+    {
+      "type": "reply",
+      "delta": " event"
+    },
+    {
+      "type": "reply",
+      "delta": " pages"
+    },
+    {
+      "type": "reply",
+      "delta": " will"
+    },
+    {
+      "type": "reply",
+      "delta": " have"
+    },
+    {
+      "type": "reply",
+      "delta": " them"
+    },
+    {
+      "type": "reply",
+      "delta": "."
+    },
+    {
+      "type": "done",
+      "remaining": 7,
+      "tier": "guest"
+    }
+  ]
+}
