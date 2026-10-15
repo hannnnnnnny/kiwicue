@@ -15,13 +15,18 @@ def load_frames(manifest):
     return frames
 
 
-def shared_palette(frames):
+def shared_palette(frames, kind):
     # A shared palette keeps colours stable as the pointer moves over the page.
     sample = Image.new("RGB", (280 * 6, 187 * 6), "white")
     count = min(36, len(frames))
     for index in range(count):
-        selected = frames[round(index * (len(frames) - 1) / max(1, count - 1))]
-        sample.paste(ImageOps.contain(selected, (280, 187)), ((index % 6) * 280, (index // 6) * 187))
+        position = index % 18 if kind == "ai" else index
+        steps = 17 if kind == "ai" else max(1, count - 1)
+        selected = frames[round(position * (len(frames) - 1) / steps)]
+        # Give the small animated orbs enough palette space for their gradients.
+        if kind == "ai" and index >= 18:
+            selected = selected.crop((265, 20, 335, 90))
+        sample.paste(ImageOps.fit(selected, (280, 187)), ((index % 6) * 280, (index // 6) * 187))
     return sample.quantize(colors=256)
 
 
@@ -56,7 +61,7 @@ def encode():
     if kind == "ai":
         manifest = start_with_assistants(manifest)
     frames = load_frames(manifest)
-    palette = shared_palette(frames)
+    palette = shared_palette(frames, kind)
     indexed = [frame.quantize(palette=palette, dither=Image.Dither.NONE) for frame in frames]
     destination = Path("docs/readme/ai-bot.gif" if kind == "ai" else "docs/readme/demo.gif")
     indexed[0].save(
