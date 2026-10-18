@@ -4,6 +4,9 @@ import { BookmarkProvider } from "../components/bookmark-provider";
 import { LanguageProvider } from "../components/language-provider";
 import { MoviesPageContent } from "../components/movies-page-content";
 
+const push = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }) }));
+
 function showing(title: string, overrides: Record<string, unknown> = {}) {
   return {
     id: title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(), title, rating: "R16", runtimeMinutes: 139,
@@ -124,6 +127,23 @@ describe("movies page", () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ));
     expect(screen.getByLabelText("Movie, cinema, or suburb")).toHaveValue("Local Only");
+  });
+
+  it("opens a film's page straight away when Find this film finds it", async () => {
+    push.mockClear();
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/movies")) return Promise.resolve(Response.json(feed([showing("Local Only")])));
+      const movies = url.includes("q=Local+Only")
+        ? [{ id: 77, title: "Local Only", originalTitle: null, overview: "", posterUrl: null, releaseDate: "2026-10-01", rating: 7, ratingCount: 10 }]
+        : [];
+      return Promise.resolve(Response.json({ movies, page: { number: 1, totalPages: 1, totalResults: movies.length } }));
+    }));
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Find this film" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/movies/77"));
   });
 
   it("keeps a verified preview when Chinese localization changes every visible title", async () => {
