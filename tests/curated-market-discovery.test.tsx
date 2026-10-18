@@ -37,7 +37,7 @@ describe("independent market discovery", () => {
     const requestMarkets = vi.fn().mockResolvedValue(result([event("one")]));
     renderDiscovery(requestMarkets, "concerts");
     expect(requestMarkets).not.toHaveBeenCalled();
-    expect(screen.queryByText("Neighbourhood markets, alongside the main feed")).not.toBeInTheDocument();
+    expect(screen.queryByText("Markets around Auckland")).not.toBeInTheDocument();
   });
 
   it("deduplicates schedules, previews three and keeps the rest expandable", async () => {
@@ -46,8 +46,8 @@ describe("independent market discovery", () => {
     ], 5));
     renderDiscovery(requestMarkets);
 
-    expect((await screen.findByText("Neighbourhood markets, alongside the main feed")).textContent).toBe("Neighbourhood markets, alongside the main feed");
-    expect(screen.getByText("3 of 5 organiser schedules")).toBeInTheDocument();
+    expect((await screen.findByText("Markets around Auckland")).textContent).toBe("Markets around Auckland");
+    expect(screen.getByText("3 of 5 markets")).toBeInTheDocument();
     const previewList = document.querySelector(".curated-market-discovery > ol");
     expect(previewList).not.toBeNull();
     expect(within(previewList as HTMLElement).getAllByRole("heading", { name: /^Market / })).toHaveLength(3);
@@ -65,7 +65,7 @@ describe("independent market discovery", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Market schedules are temporarily unavailable");
     expect(screen.queryByText("private upstream detail")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Retry market schedules" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "Market recovered" })).toBeInTheDocument();
     await waitFor(() => expect(requestMarkets).toHaveBeenCalledTimes(2));
   });
