@@ -12,6 +12,11 @@ describe("discovery collections", () => {
     const items = [event("past", "16:00:00"), event("tonight", "20:00:00"), event("unknown-time", "20:00:00", { status: "postponed" })];
     expect(selectCollectionEvents(items, "tonight", now).map(e => e.id)).toEqual(["tonight"]);
   });
+  it("Tonight matches the Tonight filter: after midnight it is the coming evening, including shows before 3 am", () => {
+    const earlyMorning = new Date("2026-09-25T15:00:00Z"); // 3 am NZST Sat 26 Sep
+    const items = [event("evening", "20:00:00"), event("late", "01:30:00", { start: { localDate: "2026-09-27", localTime: "01:30:00", dateTime: null, timezone: "Pacific/Auckland" } }), event("daytime", "11:00:00")];
+    expect(selectCollectionEvents(items, "tonight", earlyMorning).map(e => e.id)).toEqual(["evening", "late"]);
+  });
   it("only explicit free admission qualifies", () => {
     expect(selectCollectionEvents([event("unknown", "20:00:00"), event("free", "20:00:00", { admission: { kind: "free", currency: "NZD" } })], "free", now).map(e => e.id)).toEqual(["free"]);
   });

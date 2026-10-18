@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+import { listCuratedMarketVenues } from "../lib/curated-markets";
 import {
   collectAucklandVenues,
   collectCombinedAucklandVenues,
@@ -109,6 +110,11 @@ describe("collectAucklandVenues", () => {
 });
 
 describe("collectCombinedAucklandVenues", () => {
+  it("lists North Harbour Stadium once: the Albany night market uses Ticketmaster's venue", () => {
+    const stadium = listCuratedMarketVenues().filter((venue) => venue.name === "North Harbour Stadium");
+    expect(stadium).toEqual([expect.objectContaining({ id: "KovZpZA6natA" })]);
+  });
+
   it("merges curated venues with Ticketmaster and deduplicates IDs", async () => {
     const loadTicketmaster = vi.fn().mockResolvedValue([
       { id: "spark-arena", name: "Spark Arena" },

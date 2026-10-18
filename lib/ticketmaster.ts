@@ -281,6 +281,9 @@ export function buildAucklandEventsUrl({
   return url;
 }
 
+// Ticketmaster's own test venues (e.g. "LN, TM and Mosh HQ NZL Test") leak into the public feed.
+const TEST_VENUE = /\btest\b/iu;
+
 export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): KiwiCueEvent | null {
   const localDate = event.dates?.start?.localDate;
   const eventId = parseEventId(event.id);
@@ -293,6 +296,7 @@ export function normalizeTicketmasterEvent(event: TicketmasterEventPayload): Kiw
   const classification = event.classifications?.[0];
   const tags = normalizeClassificationTags(event.classifications);
   const venue = normalizeVenue(event._embedded?.venues?.[0]);
+  if (venue && TEST_VENUE.test(venue.name)) return null;
   const admission = normalizeAdmission(event.priceRanges?.[0]);
   const organiserName = normalizeText(event.promoter?.name, 120) ?? undefined;
 

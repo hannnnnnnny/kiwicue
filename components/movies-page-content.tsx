@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AUCKLAND_CINEMAS,
@@ -115,6 +116,17 @@ async function requestMoviePreviewPage(
   return payload;
 }
 
+const FIND_TIMEOUT_MS = 8_000;
+
+/** The detail page id for a film showing in Auckland, matched by title against a preview search. */
+async function findMovieId(title: string, language: "en" | "zh"): Promise<number | null> {
+  const key = normalizedMovieTitle(title);
+  const { localized, verificationMovies } = await requestMoviePreviews(parseMovieQuery(title), language, AbortSignal.timeout(FIND_TIMEOUT_MS));
+  const match = [...verificationMovies, ...localized.movies]
+    .find((movie) => [movie.title, movie.originalTitle].some((name) => name && normalizedMovieTitle(name) === key));
+  return match?.id ?? null;
+}
+
 async function requestMoviePreviews(
   query: string | null,
   language: "en" | "zh",
@@ -147,6 +159,7 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
   const content = copy[language];
   const [query, setQuery] = useState(initialQuery ?? "");
   const [activeQuery, setActiveQuery] = useState(initialQuery);
+  const router = useRouter();
   const [date, setDate] = useState(initialDate);
   const [films, setFilms] = useState<MovieShowing[]>([]);
   const [unavailableChains, setUnavailableChains] = useState<CinemaChain[]>([]);
@@ -236,14 +249,24 @@ export function MoviesPageContent({ initialQuery, initialDate }: {
     setActiveQuery(nextQuery);
   }
 
-  function findFilm(title: string) {
+  // A film without a known detail page is looked up first, so the button opens its page in one tap.
+  async function findFilm(title: string) {
+    // A failed lookup only means there is no page to open; the list still shows the film.
+    const id = await findMovieId(title, language).catch(() => null);
+    if (id === null) showFilm(title);
+    else router.push(`/movies/${id}`);
+  }
+
+  // No detail page: narrow the list to this film and bring the list into view.
+  function showFilm(title: string) {
     const nextQuery = parseMovieQuery(title);
     setQuery(title);
-    if (nextQuery === activeQuery) return;
-    setFeedState("loading");
-    setPreviewState("loading");
-    setActiveQuery(nextQuery);
-    document.getElementById("movie-previews")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    if (nextQuery !== activeQuery) {
+      setFeedState("loading");
+      setPreviewState("loading");
+      setActiveQuery(nextQuery);
+    }
+    document.getElementById("movie-results")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
   function clearSearch() {

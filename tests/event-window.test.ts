@@ -24,8 +24,10 @@ describe("Auckland event windows", () => {
     });
     // 8 pm: starts now.
     expect(resolveEventWindow("tonight", new Date("2026-07-31T08:00:00.000Z")).start).toEqual(new Date("2026-07-31T08:00:00.000Z"));
-    // 1 am Saturday is still Friday night.
-    expect(resolveEventWindow("tonight", new Date("2026-07-31T13:00:00.000Z")).end).toEqual(new Date("2026-07-31T15:00:00.000Z"));
+    // At 1 am Saturday, Friday night is over: tonight is Saturday evening.
+    expect(resolveEventWindow("tonight", new Date("2026-07-31T13:00:00.000Z"))).toEqual({
+      id: "tonight", start: new Date("2026-08-01T05:00:00.000Z"), end: new Date("2026-08-01T15:00:00.000Z"),
+    });
   });
 
   it("resolves rolling windows from the exact request anchor", () => {

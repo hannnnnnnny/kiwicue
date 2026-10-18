@@ -152,6 +152,16 @@ describe("Ticketmaster Discovery client", () => {
     expect(url.searchParams.get("sort")).toBe("date,asc");
   });
 
+  it("drops Ticketmaster's internal test listings", () => {
+    expect(normalizeTicketmasterEvent({
+      id: "event-test",
+      name: "Test Event",
+      url: "https://www.ticketmaster.co.nz/event/event-test",
+      dates: { start: { localDate: "2026-08-01", localTime: "19:30:00" } },
+      _embedded: { venues: [{ id: "KovZ917AxXw", name: "LN, TM and Mosh HQ NZL Test", city: { name: "Auckland" } }] },
+    })).toBeNull();
+  });
+
   it("normalizes only the event fields KiwiCue needs", () => {
     const event = normalizeTicketmasterEvent({
       id: "event-123",
