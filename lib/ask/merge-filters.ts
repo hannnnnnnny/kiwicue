@@ -1,9 +1,10 @@
+import type { LoosenKey } from "./chips";
 import { datesForWhen, sanitizeDates } from "./resolve-dates";
 import { EMPTY_FILTERS, type AskFilters } from "./schema";
 import type { JevUnderstanding, Toggle } from "./understand-jev";
 
 /** Open-ended details Jev cannot enumerate, supplied by the conversation model's search call. */
-export type Slots = { names: string[]; place: string | null; dates: string[]; mode: "refine" | "new"; maxPrice?: number | null; totalBudget?: number | null; partySize?: number; startMinute?: number | null; endMinute?: number | null };
+export type Slots = { names: string[]; place: string | null; dates: string[]; mode: "refine" | "new"; maxPrice?: number | null; totalBudget?: number | null; partySize?: number; startMinute?: number | null; endMinute?: number | null; loosen?: LoosenKey[] };
 
 function toggle(value: Toggle | undefined, current: boolean): boolean {
   return value === undefined ? current : value === "on";

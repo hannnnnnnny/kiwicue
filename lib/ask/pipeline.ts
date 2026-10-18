@@ -106,7 +106,7 @@ function searcher(input: AskRequest, ctx: Context, emit: Emit) {
       text: args.query, language: input.language, previous: args.fresh ? null : current,
       constraints: input.text,
       slots: { names: args.names, place: args.place, dates: sanitizeDates(args.dates, ctx.now), mode: args.fresh ? "new" : "refine", maxPrice: args.maxPrice,
-        totalBudget: args.totalBudget, partySize: args.partySize, startMinute: args.startMinute, endMinute: args.endMinute },
+        totalBudget: args.totalBudget, partySize: args.partySize, startMinute: args.startMinute, endMinute: args.endMinute, loosen: args.loosen },
     });
     emit({ type: "layout", layout: args.layout });
     return toolResult(outcome);

@@ -1,7 +1,7 @@
 import "server-only";
 import { aucklandDate } from "../cinemas/auckland-time";
 import { loadCandidates, type CandidateSources } from "./candidates";
-import { chipsFor } from "./chips";
+import { chipsFor, loosenFilters } from "./chips";
 import type { AskUsage } from "./cost";
 import type { Evaluate } from "./jev";
 import { logAskFailure } from "./log";
@@ -51,22 +51,25 @@ async function emitMedia(cards: AskCard[], bestId: string | null, language: Lang
 }
 
 async function understand(request: SearchRequest, deps: SearchDeps, now: Date) {
-  if (request.exact) return { filters: request.exact, inputTokens: 0, understood: true };
+  if (request.exact) return { filters: request.exact, dropped: [], inputTokens: 0, understood: true };
   const jev = await understandWithJev({ text: request.text, history: [], previous: request.previous, today: todayLabel(now), evaluate: deps.evaluate })
     .catch((error: unknown) => { logAskFailure("jev", error); return null; });
   const merged = mergeFilters({ previous: request.previous, jev: jev?.understanding ?? null, slots: request.slots ?? null, now });
-  const filters = { ...merged, ...budgetIntent(request.text), ...timeIntent(request.text),
+  const understood = { ...merged, ...budgetIntent(request.text), ...timeIntent(request.text),
     ...budgetIntent(request.constraints ?? ""), ...timeIntent(request.constraints ?? "") };
-  return { filters, inputTokens: jev?.inputTokens ?? 0, understood: jev !== null };
+  // Loosening goes last, so nothing understood from the wording can put a dropped condition back.
+  const { filters, dropped } = loosenFilters(understood, request.slots?.loosen ?? [], request.language);
+  return { filters, dropped, inputTokens: jev?.inputTokens ?? 0, understood: jev !== null };
 }
 
 /** One search: understand, find, loosen if needed, rank, and stream the cards as they are ready. */
 export async function runSearch(request: SearchRequest, deps: SearchDeps, now: Date, emit: Emit): Promise<SearchOutcome> {
-  const { filters, inputTokens, understood } = await understand(request, deps, now);
+  const { filters, dropped, inputTokens, understood } = await understand(request, deps, now);
   const chips = chipsFor(filters, request.language);
   emit({ type: "understood", filters, chips });
   const candidates = await loadCandidates({ filters, language: request.language, now, sources: deps.sources });
-  if (candidates.relaxed.length > 0) emit({ type: "relaxed", keys: candidates.relaxed });
+  const relaxed = [...dropped.map((chip) => chip.key), ...candidates.relaxed];
+  if (relaxed.length > 0) emit({ type: "relaxed", keys: relaxed });
   const ranked = await rankCards({ text: request.text, filters, cards: candidates.cards, evaluate: deps.evaluate });
   ranked.ranked.forEach((card) => emit({ type: "result", card }));
   const best = ranked.ranked[0];
@@ -75,7 +78,7 @@ export async function runSearch(request: SearchRequest, deps: SearchDeps, now: D
   return {
     filters,
     top: ranked.ranked.slice(0, 6),
-    loosened: candidates.relaxed.flatMap((key) => chips.filter((chip) => chip.key === key).map((chip) => chip.label)),
+    loosened: [...dropped.map((chip) => chip.label), ...candidates.relaxed.flatMap((key) => chips.filter((chip) => chip.key === key).map((chip) => chip.label))],
     usage: { jevInputTokens: inputTokens + ranked.inputTokens },
     understood,
     unavailable: candidates.unavailable.length > 0,

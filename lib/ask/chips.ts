@@ -74,3 +74,21 @@ export function clearChip(filters: AskFilters, key: string): AskFilters {
     default: return filters;
   }
 }
+
+/** What the assistant can drop when the visitor agrees to widen a search. */
+export const LOOSEN_KEYS = ["domain", "dates", "timeOfDay", "area", "category", "kids", "free", "budget", "place", "names"] as const;
+export type LoosenKey = (typeof LOOSEN_KEYS)[number];
+
+function loosens(key: LoosenKey, chipKey: string): boolean {
+  if (key === "budget") return chipKey === "maxPrice" || chipKey === "totalBudget";
+  if (key === "names") return chipKey.startsWith("name:");
+  if (key === "timeOfDay") return chipKey === "timeOfDay" || chipKey === "startMinute" || chipKey === "endMinute";
+  return chipKey === key;
+}
+
+/** Drops the named conditions and returns the chips that went, so the visitor can be told what changed. */
+export function loosenFilters(filters: AskFilters, keys: readonly LoosenKey[], language: Language): { filters: AskFilters; dropped: AskChip[] } {
+  const dropped = chipsFor(filters, language).filter((chip) => keys.some((key) => loosens(key, chip.key)));
+  const cleared = dropped.reduce((current, chip) => chip.key.startsWith("name:") ? current : clearChip(current, chip.key), filters);
+  return { filters: keys.includes("names") ? { ...cleared, names: [] } : cleared, dropped };
+}

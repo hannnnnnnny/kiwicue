@@ -82,6 +82,18 @@ describe("POST /api/ask", () => {
     expect(vi.mocked(d.quota!.recordCost).mock.calls[0][1]).toBeGreaterThan(0);
   });
 
+  it("widens a search by dropping the conditions the assistant names, and says which", async () => {
+    const seen: unknown[] = [];
+    const previous = { domain: "any", dates: ["2026-10-03"], timeOfDay: "any", area: "any", category: "family", kids: true, free: false, names: [], place: null, maxPrice: null, totalBudget: 100, partySize: 3, startMinute: null, endMinute: null };
+    const widen: SearchInput = { query: "things to do on Saturday", fresh: false, dates: [], names: [], place: null, maxPrice: null, loosen: ["kids", "budget", "category"], layout: "grid" };
+    const response = await handleAsk(post({ ...ask, text: "sure, widen it", previous }), deps({ converse: model([widen], ["Here you go."], seen) }));
+    const received = await events(response);
+    const understood = received.find((event) => event.type === "understood");
+    expect(understood).toMatchObject({ filters: { kids: false, totalBudget: null, maxPrice: null, category: "any", dates: ["2026-10-03"] } });
+    expect(received).toContainEqual({ type: "relaxed", keys: ["category", "kids", "totalBudget"] });
+    expect(seen[0]).toMatchObject({ loosened: ["Family", "With kids", "Total budget $100"] });
+  });
+
   it("withdraws what the assistant said before searching", async () => {
     const d = deps({ converse: model([search], ["Let me check. ", REPLY_RESET, "Bundle Baby looks perfect."]) });
     const received = await events(await handleAsk(post(ask), d));
