@@ -266,7 +266,7 @@ describe("EventSearchPanel", () => {
 
     expect(screen.getByRole("search", { name: "搜索奥克兰活动" })).toBeInTheDocument();
     expect(screen.getByLabelText("活动名称")).toHaveValue("Taylor");
-    expect(screen.getByText("输入活动或艺人名称的一部分，例如 lauf")).toBeInTheDocument();
+    expect(screen.getByText("名字记不全也没关系，输入一部分就行，比如“night market”。")).toBeInTheDocument();
     expect(screen.getByLabelText("场馆")).toHaveValue("s");
     expect(screen.getByRole("option", { name: "所有场馆" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "搜索活动" })).toBeEnabled();

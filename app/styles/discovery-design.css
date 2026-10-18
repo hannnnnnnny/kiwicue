@@ -127,7 +127,7 @@ body { background: var(--portal-bg); }
   .portal-header { min-height: 66px; display: flex; flex-wrap: nowrap; }
   .portal-brand-wordmark { display: block; width: 144px; height: auto; }
   .portal-brand-symbol { display: none; }
-  .portal-header-actions { width: auto; margin: 0; gap: 0; }
+  .portal-header-actions { width: auto; margin: 0; gap: 0; border-top: 0; }
   .portal-primary-nav { display: none; }
   .portal-command-inner { padding: 22px 0 4px; }
   .events-page .portal-command h1 { font-size: 1.65rem; }

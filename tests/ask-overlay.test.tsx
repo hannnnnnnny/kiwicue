@@ -59,7 +59,8 @@ describe("AskOverlay", () => {
       Recognition.last.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: "Is it free?" }], { isFinal: true })] });
       fireEvent.click(await screen.findByRole("button", { name: "Done" }));
       await screen.findByText("Yes — it's free, so no tickets needed.", {}, SLOW);
-      await waitFor(() => expect(utterances).toHaveLength(2));
+      // The greeting stays silent; only the reply is spoken.
+      await waitFor(() => expect(utterances).toHaveLength(1));
       await new Promise((resolve) => setTimeout(resolve, 900));
       expect(started).toHaveBeenCalledOnce();
       act(() => utterances.at(-1)?.onend?.());
@@ -172,7 +173,7 @@ describe("AskOverlay", () => {
     say("周末带小朋友去哪玩");
     expect(await screen.findByText("好的！这个周末有几个适合小朋友的活动。", {}, SLOW)).toBeVisible();
     await waitFor(() => expect(spoken.at(-1)).toMatchObject({ lang: "zh-CN" }), SLOW);
-    expect(spoken[0]).toMatchObject({ lang: "en-NZ" });
+    expect(spoken).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Voice input: Chinese. Switch to English" })).toHaveTextContent("中");
     fireEvent.click(screen.getByRole("button", { name: "Start voice chat with Fern" }));
     await waitFor(() => expect(heard.at(-1)).toMatchObject({ lang: "zh-CN" }), SLOW);

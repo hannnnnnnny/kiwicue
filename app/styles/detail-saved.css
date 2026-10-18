@@ -140,6 +140,7 @@
 
 .event-detail-section > p,
 .event-detail-section > ol { margin: 0; color: var(--portal-muted); line-height: 1.75; }
+.event-detail-section > p { white-space: pre-line; }
 
 .event-detail-section ol { padding-left: 1.2rem; }
 .event-detail-section li { padding-left: var(--space-2); }
@@ -173,7 +174,7 @@
 }
 
 .event-organiser-note h3 { margin: 0 0 var(--space-2); font-size: .84rem; }
-.event-organiser-note p { margin: 0; color: var(--portal-muted); line-height: 1.65; }
+.event-organiser-note p { margin: 0; color: var(--portal-muted); line-height: 1.65; white-space: pre-line; }
 
 .event-detail-venue {
   position: sticky;
@@ -397,6 +398,30 @@
   border-top: 1px solid var(--portal-line);
   border-left: 0;
 }
+
+.event-more-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-more-dates a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-pill);
+  color: var(--portal-ink);
+  font-size: .86rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.event-more-dates a:hover { border-color: var(--portal-accent); color: var(--portal-accent); }
 
 .event-detail-related {
   padding: var(--space-12) 0;

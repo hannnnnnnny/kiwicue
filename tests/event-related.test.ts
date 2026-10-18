@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectRelatedEvents } from "../lib/event-related";
+import { selectOtherSessions, selectRelatedEvents } from "../lib/event-related";
 import type { KiwiCueEvent } from "../lib/events";
 
 function event(id: string, overrides: Partial<KiwiCueEvent> = {}): KiwiCueEvent {
@@ -29,6 +29,31 @@ function event(id: string, overrides: Partial<KiwiCueEvent> = {}): KiwiCueEvent 
 }
 
 describe("related events", () => {
+  it("suggests other shows, not more dates of this one, and each show once", () => {
+    const current = event("cabaret", { name: "Cabaret" });
+    const later = (id: string, name: string, day: string) => event(id, { name, start: { ...current.start, localDate: day, dateTime: `${day}T07:00:00Z` } });
+    const result = selectRelatedEvents(current, [
+      later("cabaret-2", "Cabaret", "2026-09-13"),
+      later("musical-1", "Musical", "2026-09-14"),
+      later("musical-2", "Musical", "2026-09-15"),
+      later("gig", "Gig", "2026-09-16"),
+    ], new Date("2026-09-01T00:00:00Z"), 3);
+    expect(result.map(({ id }) => id)).toEqual(["musical-1", "gig"]);
+  });
+
+  it("lists this show's other upcoming dates in order", () => {
+    const current = event("cabaret", { name: "Cabaret" });
+    const on = (id: string, day: string, extra: Partial<KiwiCueEvent> = {}) => event(id, { name: "Cabaret", start: { ...current.start, localDate: day, dateTime: `${day}T07:00:00Z` }, ...extra });
+    const result = selectOtherSessions(current, [
+      on("late", "2026-09-20"),
+      on("soon", "2026-09-13"),
+      on("elsewhere", "2026-09-14", { venue: { ...current.venue!, id: "town-hall", name: "Town Hall" } }),
+      on("gone", "2026-08-01"),
+      current,
+    ], new Date("2026-09-01T00:00:00Z"));
+    expect(result.map(({ id }) => id)).toEqual(["soon", "late"]);
+  });
+
   it("ranks truthful future alternatives by category, venue, area, then date", () => {
     const current = event("current");
     const result = selectRelatedEvents(current, [

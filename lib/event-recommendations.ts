@@ -169,9 +169,10 @@ function chooseDiverse(items: Candidate[], limit: number): Candidate[] {
   return chosen;
 }
 
-function reasonFor(candidate: Candidate, context: RecommendationContext): RecommendationReason {
+// Inside the weekend section "fits this weekend" says nothing new, so the next reason shows instead.
+function reasonFor(candidate: Candidate, context: RecommendationContext, inWeekendSection: boolean): RecommendationReason {
   if (candidate.affinity) return "saved-affinity";
-  if (isWeekend(candidate.instant, context)) return "weekend";
+  if (!inWeekendSection && isWeekend(candidate.instant, context)) return "weekend";
   const daysAway = daysBetween(context.now, candidate.instant);
   if (daysAway <= 7) return "soon";
   if (candidate.event.source) return "verified";
@@ -179,8 +180,8 @@ function reasonFor(candidate: Candidate, context: RecommendationContext): Recomm
   return "upcoming";
 }
 
-function recommendations(items: Candidate[], context: RecommendationContext) {
-  return items.map((candidate) => ({ event: candidate.event, reason: reasonFor(candidate, context) }));
+function recommendations(items: Candidate[], context: RecommendationContext, inWeekendSection = false) {
+  return items.map((candidate) => ({ event: candidate.event, reason: reasonFor(candidate, context, inWeekendSection) }));
 }
 
 export function buildEventRecommendations(input: {
@@ -192,13 +193,11 @@ export function buildEventRecommendations(input: {
   const eligible = candidates(input.events, context);
   const nextSessions = new Set(groupEventSeries(eligible.map((item) => item.event)).map((series) => series.lead.id));
   const available = eligible.filter((item) => nextSessions.has(item.event.id));
-  const startHere = chooseDiverse(available, 3);
-  const used = new Set(startHere.map((item) => item.event.id));
-  const weekend = chooseDiverse(
-    available.filter((item) => !used.has(item.event.id) && isWeekend(item.instant, context)),
-    4,
-  );
-  weekend.forEach((item) => used.add(item.event.id));
+  // The weekend gets its own section, so Start here leads with what else is on before it doubles up.
+  const weekend = chooseDiverse(available.filter((item) => isWeekend(item.instant, context)), 4);
+  const used = new Set(weekend.map((item) => item.event.id));
+  const startHere = chooseDiverse(available.filter((item) => !used.has(item.event.id)), 3);
+  startHere.forEach((item) => used.add(item.event.id));
   const remaining = available.filter((item) => !used.has(item.event.id));
   const differentPool = context.dominantCategory
     ? remaining.filter((item) => item.category !== context.dominantCategory)
@@ -206,7 +205,7 @@ export function buildEventRecommendations(input: {
   const different = chooseDiverse(differentPool, 4);
   return {
     startHere: recommendations(startHere, context),
-    weekend: recommendations(weekend, context),
+    weekend: recommendations(weekend, context, true),
     somethingDifferent: recommendations(different, context),
   };
 }

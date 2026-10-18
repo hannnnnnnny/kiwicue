@@ -70,6 +70,7 @@ const copy = {
     information: "Event information",
     organiser: "Organiser",
     related: "You may also like",
+    moreDates: "More dates",
     note: "Organiser note",
     venue: "Venue and map",
     addressUnavailable: "Street address is not available yet.",
@@ -109,6 +110,7 @@ const copy = {
     information: "活动说明",
     organiser: "主办方",
     related: "你可能也喜欢",
+    moreDates: "其他场次",
     note: "主办方提示",
     venue: "场馆与地图",
     addressUnavailable: "场馆暂未提供街道地址。",
@@ -166,11 +168,13 @@ export function EventDetailContent({
   eventId,
   initialEvent,
   relatedEvents = [],
+  otherSessions = [],
   requestEventDetail = requestEventDetailFromApi,
 }: {
   eventId?: string;
   initialEvent?: KiwiCueEventDetail;
   relatedEvents?: KiwiCueEvent[];
+  otherSessions?: KiwiCueEvent[];
   requestEventDetail?: (eventId: string) => Promise<KiwiCueEventDetail>;
 }) {
   const { language } = useLanguage();
@@ -308,6 +312,21 @@ export function EventDetailContent({
             <SaveToCollection event={event} />
           </header>
         </div>
+
+        {otherSessions.length > 0 && (
+          <section className="event-detail-section" aria-labelledby="more-dates-title">
+            <h2 id="more-dates-title">{content.moreDates}</h2>
+            <ul className="event-more-dates">
+              {otherSessions.map((session) => (
+                <li key={session.id}>
+                  <Link href={`/events/${session.id}`} replace>
+                    {formatEventDate(session.start.localDate, language)} · {formatEventTime(session.start.localTime, language)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="event-detail-section" aria-labelledby="booking-title">
           <h2 id="booking-title">{bookingTitle}</h2>

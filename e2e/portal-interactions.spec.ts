@@ -671,7 +671,7 @@ test("load more de-duplicates and the event detail opens a noopener official boo
     body: "<!doctype html><title>Official fixture</title>",
   }));
   await page.goto("/events");
-  const more = page.getByRole("button", { name: "Check for more events" });
+  const more = page.getByRole("button", { name: "Show more events" });
   await expect(more).toBeVisible();
   await more.scrollIntoViewIfNeeded();
   const layoutBefore = await measureLoadMoreLayout(page);
@@ -745,7 +745,7 @@ test("curated markets can be filtered, opened, mapped, saved, and read in Chines
   }));
 
   await page.goto("/events?category=markets");
-  await expect(page.getByText("2 verified market schedules shown · 2 source records checked")).toBeVisible();
+  await expect(page.getByText("2 markets")).toBeVisible();
   await expect(page.getByText("Verified official market links")).toHaveCount(1);
   await expect(page.locator(".source-disclaimer")).not.toContainText("Ticketmaster");
 
@@ -826,7 +826,7 @@ test("venue, empty, initial error, retry, and append error states stay usable", 
   await resetApiRoutes(page);
   await installRoutes(page, { appendFailures: 1 });
   await page.goto("/events");
-  await page.getByRole("button", { name: "Check for more events" }).click();
+  await page.getByRole("button", { name: "Show more events" }).click();
   await expect(page.locator(".event-load-more-error")).toContainText("shown events are still here");
   await expect(page.locator(".discovery-feed").getByRole("heading", { name: "Harbour Lights" })).toBeVisible();
   await page.getByRole("button", { name: "Retry loading more events" }).click();

@@ -135,6 +135,18 @@ function normalizeText(value?: string, maximumLength = 12_000): string | null {
   return normalized ? normalized.slice(0, maximumLength) : null;
 }
 
+// Ticketmaster text arrives with HTML line breaks, sometimes half-cut ("Tickets br> Resale").
+const LINE_BREAK = /(?:<\s*|\b)br\s*\/?>/giu;
+const TAG = /<\/?[a-z][^>]*>/giu;
+
+/** Listing prose: markup becomes line breaks, other tags are dropped, spacing is tidied per line. */
+function normalizeListingText(value?: string): string | null {
+  if (!value) return null;
+  const lines = value.normalize("NFC").replace(LINE_BREAK, "\n").replace(TAG, "")
+    .split("\n").map((line) => line.replace(/\s+/gu, " ").trim()).filter(Boolean);
+  return lines.length > 0 ? lines.join("\n").slice(0, 12_000) : null;
+}
+
 const OMITTED_CLASSIFICATION_LABELS = new Set(["undefined", "n/a", "na", "none"]);
 
 function normalizeClassificationTags(
@@ -327,8 +339,8 @@ export function normalizeTicketmasterEventDetail(
   if (!normalized) return null;
   return {
     ...normalized,
-    description: normalizeText(event.info),
-    note: normalizeText(event.pleaseNote),
+    description: normalizeListingText(event.info),
+    note: normalizeListingText(event.pleaseNote),
   };
 }
 
