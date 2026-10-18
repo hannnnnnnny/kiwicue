@@ -60,7 +60,8 @@ describe("loadCandidates", () => {
 
   it("applies kids, evening, free and area filters", async () => {
     const kids = await loadCandidates({ filters: { ...EMPTY_FILTERS, kids: true }, language: "zh", now: NOW, sources: sources() });
-    expect(kids.cards.map((card) => card.title).sort()).toEqual(["Bundle Baby", "Paw Patrol"]);
+    // Markets are all-ages outings, so they stay in a search with kids.
+    expect(kids.cards.map((card) => card.title).sort()).toEqual(["Bundle Baby", "Night Market", "Paw Patrol"]);
     expect(kids.cards.find((card) => card.title === "Bundle Baby")?.priceText).toBe("免费");
 
     const evening = await loadCandidates({ filters: { ...EMPTY_FILTERS, timeOfDay: "evening", domain: "events" }, language: "en", now: NOW, sources: sources() });

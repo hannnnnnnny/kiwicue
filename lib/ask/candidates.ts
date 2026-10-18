@@ -56,7 +56,8 @@ function keepEvent(event: KiwiCueEvent, filters: AskFilters): boolean {
     && matchesTimeWindow(localMinute(event.start.localTime), filters)
     && (filters.area === "any" || deriveEventArea(event) === filters.area)
     && (filters.category === "any" || section === filters.category)
-    && (!filters.kids || section === "family");
+    // Markets are all-ages outings; Ticketmaster events need a family listing to count as kid-friendly.
+    && (!filters.kids || section === "family" || event.id.startsWith(MARKET_PREFIX));
 }
 
 /** Never silently substitute a different place when nothing matches. */
