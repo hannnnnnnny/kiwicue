@@ -25,7 +25,7 @@ const copy = {
   en: {
     status: { idle: "Ask me anything", listening: "Listening…", thinking: "Thinking…", searching: "Looking through listings…", speaking: "Speaking…", error: "Something went wrong", sleeping: "Dozing — say something to wake me" },
     mute: (name: string) => `Mute ${name}`, unmute: (name: string) => `Unmute ${name}`, close: "Close",
-    message: (name: string) => `Message ${name}`, placeholder: "Type or tap the mic", change: "Change assistant", newChat: "New chat",
+    message: (name: string) => `Message ${name}`, placeholder: "Ask anything", change: "Change assistant", newChat: "New chat",
     send: "Send", talk: (name: string) => `Start voice chat with ${name}`, noVoice: "Voice isn't supported in this browser. Type instead.",
     voiceChat: "Voice chat", endVoice: "End voice chat", interrupt: "Interrupt", sendNow: "Done",
     voiceHint: "Just talk — I'll listen again after each reply.", paused: "Voice chat paused after a quiet spell. Tap the mic to carry on.",
@@ -37,7 +37,7 @@ const copy = {
   zh: {
     status: { idle: "有什么想问的", listening: "正在听…", thinking: "正在想…", searching: "正在翻找活动…", speaking: "正在说…", error: "出了点问题", sleeping: "打盹中，说句话叫醒我" },
     mute: (name: string) => `${name} 静音`, unmute: (name: string) => `${name} 取消静音`, close: "关闭",
-    message: (name: string) => `发给 ${name}`, placeholder: "打字，或点麦克风说话", change: "换个助手", newChat: "新对话",
+    message: (name: string) => `发给 ${name}`, placeholder: "想找点什么？", change: "换个助手", newChat: "新对话",
     send: "发送", talk: (name: string) => `和 ${name} 开始语音对话`, noVoice: "当前浏览器不支持语音，请直接打字。",
     voiceChat: "语音对话", endVoice: "结束语音对话", interrupt: "打断", sendNow: "说完了",
     voiceHint: "直接说话就行，每次回答完我会继续听。", paused: "一直没听到声音，语音对话已暂停。点麦克风继续。",
@@ -80,8 +80,12 @@ function MicIcon() {
 
 type Line = { key: string; text: string } | null;
 
-/** The line the assistant should say now: its newest message, or its finished reply, read without formatting. */
+/**
+ * The line the assistant should say now: its newest message, or its finished reply, read without formatting.
+ * Nothing is said until the visitor has spoken or typed: a greeting read aloud on open startles people in quiet places.
+ */
 function currentLine(entries: ChatEntry[], search: AskViewState): Line {
+  if (!entries.some((entry) => entry.role === "user")) return null;
   const latest = entries[entries.length - 1];
   if (latest?.role === "assistant") return { key: latest.id, text: latest.text };
   if (latest?.role === "results" && search.status === "done" && search.reply.trim()) return { key: latest.id, text: plainText(search.reply) };
