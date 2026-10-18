@@ -19,6 +19,11 @@ function startKey(event: KiwiCueEvent): string {
   return event.start.dateTime ?? `${event.start.localDate}T${event.start.localTime ?? "00:00:00"}`;
 }
 
+/** Sessions of one show share a key: same name at the same venue. */
+export function seriesKeyOf(event: KiwiCueEvent): string {
+  return `${normalizedName(event.name)}|${event.venue?.id ?? normalizedName(event.venue?.name ?? "")}`;
+}
+
 /**
  * Ticketmaster lists every performance as its own event, so a children's show with three
  * sessions a day would otherwise fill the page. Sessions are grouped only when the name and
@@ -29,7 +34,7 @@ function startKey(event: KiwiCueEvent): string {
 export function groupEventSeries(events: KiwiCueEvent[]): EventSeries[] {
   const series = new Map<string, KiwiCueEvent[]>();
   for (const event of events) {
-    const key = `${normalizedName(event.name)}|${event.venue?.id ?? normalizedName(event.venue?.name ?? "")}`;
+    const key = seriesKeyOf(event);
     const sessions = series.get(key) ?? [];
     if (!sessions.some(({ id }) => id === event.id)) sessions.push(event);
     series.set(key, sessions);
