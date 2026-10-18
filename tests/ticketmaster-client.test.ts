@@ -319,6 +319,17 @@ describe("Ticketmaster Discovery client", () => {
     expect(url.searchParams.get("locale")).toBe("*");
   });
 
+  it("turns broken line-break markup in listing text into real line breaks", () => {
+    const normalized = normalizeTicketmasterEventDetail({
+      id: "event-123",
+      name: "Cabaret",
+      url: "https://www.ticketmaster.co.nz/event/event-123",
+      pleaseNote: "Fees for Primary Tickets<br>A handling fee applies. Fees for Resale Tickets br>   Resale fees apply.<b>Bold</b>",
+      dates: { start: { localDate: "2026-08-08" } },
+    });
+    expect(normalized?.note).toBe("Fees for Primary Tickets\nA handling fee applies. Fees for Resale Tickets\nResale fees apply.Bold");
+  });
+
   it("normalizes verified details, complete venue data, and an HTTPS official URL", () => {
     const normalized = normalizeTicketmasterEventDetail({
       id: "event-123",
