@@ -93,8 +93,9 @@ describe("buildEventRecommendations", () => {
       now: NOW,
     });
 
-    expect(result.startHere.map((item) => item.event.id)).toEqual(["sat", "sat-later", "sun"]);
-    expect(result.weekend.map((item) => item.event.id)).toEqual(["sun-later"]);
+    expect(result.weekend.map((item) => item.event.id).sort()).toEqual(["sat", "sat-later", "sun", "sun-later"]);
+    expect(result.weekend.every((item) => item.reason !== "weekend")).toBe(true);
+    expect(result.startHere.map((item) => item.event.id)).toEqual(["monday"]);
     expect(new Set(recommendedIds(result)).size).toBe(recommendedIds(result).length);
   });
 

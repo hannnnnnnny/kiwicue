@@ -48,6 +48,8 @@ describe("RecommendationsPageContent", () => {
           event("weekend-four", "2026-08-30T09:00:00.000Z", "Comedy"),
           event("familiar", "2026-08-31T07:00:00.000Z"),
           event("theatre", "2026-09-12T07:00:00.000Z", "Arts & Theatre"),
+          event("gig", "2026-09-15T07:00:00.000Z", "Sports"),
+          event("comedy", "2026-09-18T07:00:00.000Z", "Comedy"),
         ]
       : [event("market", "2026-09-13T07:00:00.000Z", "Market")]);
 
@@ -60,7 +62,7 @@ describe("RecommendationsPageContent", () => {
     expect(screen.getByRole("heading", { name: "Try something different" })).toBeInTheDocument();
     expect(screen.getByText("Matches what you save")).toBeInTheDocument();
     expect(screen.getByText(/Uses 1 event saved in this browser/)).toBeInTheDocument();
-    expect(screen.getByText("Reviewed 7 upcoming listings from 2 available feeds.")).toBeInTheDocument();
+    expect(screen.getByText("Reviewed 9 upcoming listings from 2 available feeds.")).toBeInTheDocument();
     expect(screen.getByText(/Final details and availability remain with the official source/)).toBeInTheDocument();
     const categories = screen.getByRole("navigation", { name: "Event categories" });
     expect(categories).toBeInTheDocument();
