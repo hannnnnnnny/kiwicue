@@ -178,7 +178,8 @@ const MARKET_DEFINITIONS: readonly MarketDefinition[] = [
     "Albany",
     "Albany",
     venue(
-      "kc-venue-night-albany",
+      // Ticketmaster's id for the same stadium, so the venue list shows it once.
+      "KovZpZA6natA",
       "North Harbour Stadium",
       "Stadium Drive, Albany",
       "0632",
