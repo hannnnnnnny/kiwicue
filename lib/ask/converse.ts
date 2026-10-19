@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { Assistant } from "../assistants";
 import { ASK_LAYOUTS, type AskChatTurn, type AskFilters, type AskShown } from "./schema";
 import { DEEPSEEK_MODEL, DEEPSEEK_NO_THINKING, type TokenUsage } from "./deepseek";
+import { LOOSEN_KEYS } from "./chips";
 import { ASK_MOODS } from "./mood";
 import { type TextLanguage } from "../text-language";
 import { PERSONAS } from "./personas";
@@ -72,6 +73,8 @@ export const searchInputSchema = z.object({
   partySize: z.number().int().min(1).max(30).optional().describe("Number of people including adults and children."),
   startMinute: z.number().int().min(0).max(1439).nullable().optional().describe("Earliest Auckland local start time in minutes after midnight."),
   endMinute: z.number().int().min(1).max(1440).nullable().optional().describe("Exclusive latest Auckland local start time in minutes after midnight."),
+  loosen: z.array(z.enum(LOOSEN_KEYS)).max(LOOSEN_KEYS.length).optional()
+    .describe("Conditions to drop from the current search when the visitor agrees to widen it, e.g. [\"kids\", \"budget\"]; otherwise omit."),
   layout: z.enum(ASK_LAYOUTS)
     .describe("spotlight: one option clearly stands out. timeline: plans for one day or evening, in time order. shelf: many mixed options worth browsing by type. grid: anything else."),
 });
@@ -108,7 +111,8 @@ const TOOL_RULES = [
   "- Don't search for thanks, small talk, or questions about what's already on screen; answer from the conversation and the on-screen list.",
   "- When the visitor turns the options down or asks for something else, search again with what you already know rather than asking them to choose a direction.",
   "- Call search without writing anything first; speak once you have the results.",
-  "- If a search finds nothing, don't run the same search again: say so and offer to widen it.",
+  "- If a search finds nothing, don't run the same search again: say so and offer to widen it, naming what you'd drop.",
+  "- When the visitor agrees to widen, search with fresh=false and `loosen` naming the conditions to drop. Widening never adds a condition.",
 ].join("\n");
 
 /** The assistant's brief: who it is, how it talks, what it may claim, how to use search, and examples. */

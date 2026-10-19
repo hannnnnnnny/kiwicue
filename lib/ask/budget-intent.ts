@@ -6,7 +6,10 @@ const number = (value: string) => counts[value.toLowerCase()] ?? Number(value);
 export function partySizeFrom(text: string): number | undefined {
   const grouped = [...text.matchAll(/(\d+|one|two|three|four|five|six|[一二两三四五六七八九十])\s*(?:个|位)?\s*(adults?|child(?:ren)?|kids?|大人|成人|孩子|小孩|大|小)(?![a-z])/giu)];
   let count = grouped.reduce((sum, match) => sum + number(match[1]), 0);
-  if (count > 0 && !grouped.some((match) => /child(?:ren)?|kids?|孩子|小孩|小$/iu.test(match[0])) && /\b(?:a|one|1|\d+)\s+\d+[- ]year[- ]old\b|一个\d+岁/u.test(text)) count += 1;
+  const isChild = (match: RegExpMatchArray) => /child(?:ren)?|kids?|孩子|小孩|小$/iu.test(match[0]);
+  if (count > 0 && !grouped.some(isChild) && /\b(?:a|one|1|\d+)\s+\d+[- ]year[- ]old\b|一个\d+岁/u.test(text)) count += 1;
+  // "Taking two kids" counts the kids only; someone is taking them.
+  if (grouped.length > 0 && grouped.every(isChild)) count += 1;
   const total = text.match(/(?:for|party of|group of|all)\s+(\d+|one|two|three|four|five|six)\s*(?:people|persons|of us)\b|(\d+|[一二两三四五六七八九十])\s*(?:个|位)?\s*人/iu);
   const explicit = text.match(/(?:party of|group of)\s+(\d+|one|two|three|four|five|six)\b/iu);
   if (total) count = number(total[1] ?? total[2]);

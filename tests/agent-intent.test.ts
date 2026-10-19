@@ -52,6 +52,8 @@ it("count party: party of 5", () => { expect(partySizeFrom("party of 5")).toBe(5
 
 it("count party: 2\u59272\u5c0f", () => { expect(partySizeFrom("2\u59272\u5c0f")).toBe(4); });
 
+it("count party: two kids also brings the adult taking them", () => { expect(partySizeFrom("这周末想带两个小孩出去玩")).toBe(3); expect(partySizeFrom("taking my 2 kids out")).toBe(3); });
+
 it("count party: four adults", () => { expect(partySizeFrom("four adults")).toBe(4); });
 
 it("count party: for 30 people", () => { expect(partySizeFrom("for 30 people")).toBe(30); });
