@@ -152,6 +152,7 @@ function compareCandidates(a: Candidate, b: Candidate) {
 
 function chooseDiverse(items: Candidate[], limit: number): Candidate[] {
   const chosen: Candidate[] = [];
+  if (limit <= 0) return chosen;
   const categories = new Set<string>();
   const venues = new Set<string>();
   for (const item of items) {
@@ -196,7 +197,9 @@ export function buildEventRecommendations(input: {
   // The weekend gets its own section, so Start here leads with what else is on before it doubles up.
   const weekend = chooseDiverse(available.filter((item) => isWeekend(item.instant, context)), 4);
   const used = new Set(weekend.map((item) => item.event.id));
-  const startHere = chooseDiverse(available.filter((item) => !used.has(item.event.id)), 3);
+  const left = available.filter((item) => !used.has(item.event.id));
+  const otherDays = chooseDiverse(left.filter((item) => !isWeekend(item.instant, context)), 3);
+  const startHere = [...otherDays, ...chooseDiverse(left.filter((item) => isWeekend(item.instant, context)), 3 - otherDays.length)];
   startHere.forEach((item) => used.add(item.event.id));
   const remaining = available.filter((item) => !used.has(item.event.id));
   const differentPool = context.dominantCategory

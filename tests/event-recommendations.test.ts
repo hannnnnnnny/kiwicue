@@ -80,6 +80,18 @@ describe("buildEventRecommendations", () => {
     expect(result.startHere[0]).toMatchObject({ event: { id: "familiar" }, reason: "saved-affinity" });
   });
 
+  it("leads Start here with other days even when the weekend has more than its section holds", () => {
+    const categories = ["Music", "Sports", "Market", "Festival", "Comedy", "Family"];
+    const weekendEvents = categories.map((category, index) => event(`weekend-${index}`, `2026-08-29T0${index}:00:00.000Z`, { category }));
+    const result = buildEventRecommendations({
+      events: [...weekendEvents, event("tuesday", "2026-09-01T07:00:00.000Z", { category: "Arts & Theatre" }), event("thursday", "2026-09-03T07:00:00.000Z")],
+      savedEvents: [],
+      now: NOW,
+    });
+
+    expect(result.startHere.slice(0, 2).map((item) => item.event.id).sort()).toEqual(["thursday", "tuesday"]);
+  });
+
   it("builds a dedicated Auckland-weekend section and never duplicates events", () => {
     const result = buildEventRecommendations({
       events: [
